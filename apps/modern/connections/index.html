@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connections</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background: #000;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        #game-container {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        webview {
+            flex: 1;
+            width: 100%;
+            border: none;
+        }
+
+        /* Loading screen */
+        #loading {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #121212;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            color: #fff;
+            z-index: 1000;
+            transition: opacity 0.3s ease;
+        }
+
+        #loading.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            border-top-color: #5a59b0;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            font-size: 16px;
+            opacity: 0.8;
+        }
+
+        /* Debug info */
+        #debug-info {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            color: #0f0;
+            padding: 10px;
+            font-family: monospace;
+            font-size: 12px;
+            max-width: 300px;
+            z-index: 2000;
+            border: 1px solid #0f0;
+            display: none;
+        }
+
+        #debug-info.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div id="debug-info">
+        <div id="debug-messages"></div>
+    </div>
+
+    <div id="game-container">
+        <div id="loading">
+            <div class="spinner"></div>
+            <div class="loading-text">Loading Connections...</div>
+        </div>
+        <webview id="game-view"
+                 src="https://www.nytimes.com/games/connections"
+                 partition="persist:nytgames"
+                 allowpopups
+                 nodeintegration="false"
+                 disablewebsecurity
+                 webpreferences="allowRunningInsecureContent">
+        </webview>
+    </div>
+
+    <script>
+        const webview = document.getElementById('game-view');
+        const loading = document.getElementById('loading');
+        const loadingText = loading.querySelector('.loading-text');
+        const debugInfo = document.getElementById('debug-info');
+        const debugMessages = document.getElementById('debug-messages');
+
+        // Toggle debug panel with Ctrl+D
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey && e.key === 'd') {
+                debugInfo.classList.toggle('show');
+            }
+        });
+
+        function addDebug(msg) {
+            const time = new Date().toLocaleTimeString();
+            debugMessages.innerHTML += `<div>[${time}] ${msg}</div>`;
+            console.log(msg);
+        }
+
+        addDebug('Connections app starting...');
+        addDebug('Webview element: ' + (webview ? 'FOUND' : 'NOT FOUND'));
+
+        // Debug: Check if webview is properly initialized
+        if (!webview) {
+            addDebug('ERROR: Webview element not found!');
+            loadingText.textContent = 'Error: Webview not supported';
+            loadingText.style.color = '#ff4444';
+        } else {
+            addDebug('Webview found, attaching event listeners...');
+
+            // Check if webview has getWebContentsId method (indicates proper initialization)
+            setTimeout(() => {
+                if (typeof webview.getWebContentsId === 'function') {
+                    addDebug('Webview has getWebContentsId - properly initialized');
+                } else {
+                    addDebug('WARNING: Webview missing getWebContentsId - may not be ready');
+                }
+            }, 100);
+        }
+
+        // Hide loading screen when page loads
+        webview.addEventListener('did-start-loading', () => {
+            addDebug('Event: did-start-loading');
+            loadingText.textContent = 'Loading Connections...';
+        });
+
+        webview.addEventListener('did-finish-load', () => {
+            addDebug('Event: did-finish-load - SUCCESS!');
+            setTimeout(() => {
+                loading.classList.add('hidden');
+            }, 500);
+        });
+
+        // Handle navigation errors
+        webview.addEventListener('did-fail-load', (event) => {
+            addDebug(`Event: did-fail-load - Code: ${event.errorCode}, Desc: ${event.errorDescription}`);
+            if (event.errorCode !== -3) { // -3 is aborted, which is normal
+                loadingText.textContent = `Error ${event.errorCode}: ${event.errorDescription}`;
+                loadingText.style.color = '#ff4444';
+            }
+        });
+
+        // Additional debugging events
+        webview.addEventListener('load-commit', (event) => {
+            addDebug(`Event: load-commit - URL: ${event.url}`);
+        });
+
+        webview.addEventListener('did-navigate', (event) => {
+            addDebug(`Event: did-navigate - URL: ${event.url}`);
+        });
+
+        webview.addEventListener('did-navigate-in-page', (event) => {
+            addDebug(`Event: did-navigate-in-page - URL: ${event.url}`);
+        });
+
+        // Log console messages from the webview for debugging
+        webview.addEventListener('console-message', (e) => {
+            addDebug(`[Webview Console] ${e.level}: ${e.message}`);
+        });
+
+        // Check webview readiness
+        webview.addEventListener('dom-ready', () => {
+            addDebug('Event: dom-ready');
+        });
+
+        // New page title event
+        webview.addEventListener('page-title-updated', (event) => {
+            addDebug(`Event: page-title-updated - "${event.title}"`);
+        });
+
+        // Timeout fallback - if nothing loads in 10 seconds, show error
+        setTimeout(() => {
+            if (!loading.classList.contains('hidden')) {
+                addDebug('TIMEOUT: No successful load after 10 seconds');
+                loadingText.textContent = 'Loading timeout. Press Ctrl+D for debug info.\nCheck console for details.';
+                loadingText.style.color = '#ff4444';
+                loadingText.style.whiteSpace = 'pre-line';
+                debugInfo.classList.add('show'); // Auto-show debug on timeout
+            }
+        }, 10000);
+    </script>
+</body>
+</html>

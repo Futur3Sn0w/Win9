@@ -1,0 +1,96 @@
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 12pt;
+    background: #f0f0f0;
+    color: #1a1a1a;
+}
+
+.run-dialog {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    height: 100%;
+    box-sizing: border-box;
+    /* padding: 20px 24px 16px 24px; */
+    background: #ffffff;
+}
+
+.run-dialog-header {
+    display: flex;
+    gap: 8px;
+    margin-top: 13px;
+}
+
+.run-dialog-icon {
+    width: 54px;
+    height: 54px;
+    flex: 0 0 54px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.run-dialog-icon img {
+    width: 32px;
+    height: 32px;
+    display: block;
+}
+
+.run-textbox {
+    display: flex;
+    align-items: center;
+    width: 100%;
+
+    box-sizing: border-box;
+    padding-left: 11px;
+    gap: 20px;
+}
+
+.run-dialog-text {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    justify-content: center;
+}
+
+.run-dialog-description {
+    margin: 0;
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.run-dialog-form {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
+.run-dialog-label {
+    font-size: 12px;
+    color: #1a1a1a;
+    margin-bottom: 6px;
+}
+
+.run-dialog-input-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.run-dialog-input-group input {
+    width: 320px;
+    height: 23px;
+    font-size: 12px;
+    padding: 2px 5px 4px 5px;
+    border: 1px solid #8f8f8f;
+    outline: none;
+}
+
+.run-dialog-input-group input:focus {
+    border-color: #4890e2;
+}
+
+.run-dialog-footer {
+    margin-top: auto;
+}

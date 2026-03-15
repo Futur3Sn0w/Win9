@@ -1,0 +1,642 @@
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #000000;
+    background: #1a1a1a;
+    overflow: hidden;
+}
+
+.classic-app-container[data-app-id="photo-viewer"] .classic-window-content {
+    border: none;
+}
+
+.photo-viewer-window {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.photo-viewer-window>.classic-command-bar {
+    border-radius: 2px;
+    box-sizing: border-box;
+    border: 1px solid #A0AFC3;
+    height: 31px;
+    width: calc(100% - 2px);
+    position: relative;
+    top: 1px;
+    left: 1px;
+    overflow: hidden;
+    z-index: 10;
+
+    & .classic-command-bar-item {
+        position: relative;
+        z-index: 100;
+        padding: 4px 16px;
+
+        &:hover {
+            padding: 3px 15px;
+        }
+    }
+
+    &::before,
+    &::after {
+        content: '';
+
+        width: 100%;
+        height: 50%;
+
+        position: absolute;
+        left: 0;
+        z-index: 5;
+    }
+
+    &::before {
+        top: 0;
+        background: linear-gradient(to bottom, #F4FAFE, #E4EFF9);
+    }
+
+    &::after {
+        bottom: 0;
+        background: linear-gradient(to bottom, #D8E5F2, #D9E6F4);
+    }
+}
+
+/* Image Display Area */
+.photo-viewer-content {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: auto;
+    background: #EEF3FA;
+    padding-top: 1px;
+    position: relative;
+
+    &::after {
+        content: '';
+
+        position: absolute;
+        z-index: 0;
+        width: 100%;
+        height: calc(100% + 31px);
+
+        box-sizing: border-box;
+        top: -31px;
+        left: 0;
+
+        border: 1px solid #000;
+        opacity: .33;
+    }
+}
+
+.photo-viewer-image-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+}
+
+.photo-viewer-image {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    display: block;
+    transition: width 0.2s ease;
+}
+
+/* Control Bar */
+.photo-viewer-controls {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* padding: 8px 12px; */
+    flex-shrink: 0;
+    gap: 0;
+    z-index: 1;
+    width: 400px;
+    height: 55px;
+    margin: 0 auto;
+    --backplate-height: 51px;
+    --backplate-edge-width: 16px;
+    --backplate-center-width: 40px;
+    --backplate-stretch-height: 33px;
+    --backplate-stretch-tile-width: 5px;
+}
+
+.controls-backplate {
+    position: absolute;
+    left: 12px;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    height: var(--backplate-height);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    z-index: 0;
+    gap: 0;
+}
+
+.backplate-segment {
+    height: 100%;
+    background-repeat: no-repeat;
+    background-position: left center;
+}
+
+.backplate-left-edge {
+    flex: 0 0 var(--backplate-edge-width);
+    background-image: url('resources/PNG/@1x/backplate_left-edge.png');
+    background-size: var(--backplate-edge-width) var(--backplate-stretch-height);
+    background-position: left center;
+}
+
+.backplate-right-edge {
+    flex: 0 0 var(--backplate-edge-width);
+    background-image: url('resources/PNG/@1x/backplate_right-edge.png');
+    background-size: var(--backplate-edge-width) var(--backplate-stretch-height);
+    background-position: right center;
+}
+
+.backplate-center {
+    flex: 0 0 var(--backplate-center-width);
+    background-image: url('resources/PNG/@1x/backplate_center.png');
+    background-size: var(--backplate-center-width) var(--backplate-height);
+    background-position: center center;
+    transform: translateY(.475px);
+}
+
+.backplate-stretch {
+    flex: 1 1 auto;
+    min-width: var(--backplate-stretch-tile-width);
+    background-image: url('resources/PNG/@1x/backplate_stretch.png');
+    background-repeat: repeat-x;
+    background-size: var(--backplate-stretch-tile-width) var(--backplate-stretch-height);
+    background-position: left center;
+}
+
+.control-button {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    color: #000;
+    user-select: none;
+    position: relative;
+    padding: 0;
+    z-index: 1;
+
+    transform: translateX(10.475px);
+}
+
+.control-button:disabled {
+    cursor: not-allowed;
+}
+
+/* Sprite button base - uses background images from spritesheet */
+.control-button.sprite-button {
+    position: relative;
+    background: none;
+    border: none;
+    outline: none;
+    box-shadow: none;
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: pixelated;
+    --sprite-hover-fade-duration: 500ms;
+}
+
+/* Remove all default button styling */
+.control-button.sprite-button:focus {
+    outline: none;
+    box-shadow: none;
+}
+
+.control-button.sprite-button::before,
+.control-button.sprite-button::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-repeat: no-repeat;
+    pointer-events: none;
+    background-image: var(--sprite-image, none);
+    background-size: var(--sprite-sheet-size, 100% 100%);
+    background-position: var(--sprite-disabled-offset, 0px 0px);
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: pixelated;
+    mask-image: var(--sprite-mask-image, none);
+    mask-size: var(--sprite-sheet-size, 100% 100%);
+    mask-position: var(--sprite-disabled-offset, 0px 0px);
+    mask-repeat: no-repeat;
+    -webkit-mask-image: var(--sprite-mask-image, none);
+    -webkit-mask-size: var(--sprite-sheet-size, 100% 100%);
+    -webkit-mask-position: var(--sprite-disabled-offset, 0px 0px);
+    -webkit-mask-repeat: no-repeat;
+}
+
+.control-button.sprite-button::after {
+    opacity: 0;
+    transition: opacity var(--sprite-hover-fade-duration, 500ms) ease;
+    background-position: var(--sprite-hover-offset, var(--sprite-rest-offset, 0px 0px));
+    mask-position: var(--sprite-hover-offset, var(--sprite-rest-offset, 0px 0px));
+    -webkit-mask-position: var(--sprite-hover-offset, var(--sprite-rest-offset, 0px 0px));
+}
+
+.control-button.sprite-button:not(:disabled):hover {
+    --sprite-hover-fade-duration: 150ms;
+}
+
+.control-button.sprite-button:not(:disabled)::before {
+    background-position: var(--sprite-rest-offset, 0px 0px);
+    mask-position: var(--sprite-rest-offset, 0px 0px);
+    -webkit-mask-position: var(--sprite-rest-offset, 0px 0px);
+}
+
+.control-button.sprite-button:not(:disabled):active::before {
+    background-position: var(--sprite-active-offset, var(--sprite-rest-offset, 0px 0px));
+    mask-position: var(--sprite-active-offset, var(--sprite-rest-offset, 0px 0px));
+    -webkit-mask-position: var(--sprite-active-offset, var(--sprite-rest-offset, 0px 0px));
+}
+
+.control-button.sprite-button:not(:disabled):hover::after {
+    opacity: 1;
+}
+
+.control-button.sprite-button:not(:disabled):active::after,
+.control-button.sprite-button:disabled::after {
+    opacity: 0;
+    transition: none;
+}
+
+
+/* Individual sprite button styles */
+/* Standard resolution (@1x) - defined first as base */
+.control-button.sprite-delete {
+    --sprite-image: url('resources/PNG/@1x/delete.png');
+    --sprite-sheet-size: 100px 25px;
+    --sprite-rest-offset: -25px 0px;
+    --sprite-hover-offset: -50px 0px;
+    --sprite-active-offset: -75px 0px;
+    width: 25px;
+    height: 25px;
+}
+
+.control-button.sprite-rotateL {
+    --sprite-image: url('resources/PNG/@1x/rotateL.png');
+    --sprite-sheet-size: 100px 25px;
+    --sprite-rest-offset: -25px 0px;
+    --sprite-hover-offset: -50px 0px;
+    --sprite-active-offset: -75px 0px;
+    width: 25px;
+    height: 25px;
+}
+
+.control-button.sprite-rotateR {
+    --sprite-image: url('resources/PNG/@1x/rotateR.png');
+    --sprite-sheet-size: 100px 25px;
+    --sprite-rest-offset: -25px 0px;
+    --sprite-hover-offset: -50px 0px;
+    --sprite-active-offset: -75px 0px;
+    width: 25px;
+    height: 25px;
+}
+
+.control-button.sprite-zoom {
+    --sprite-image: url('resources/PNG/@1x/zoom.png');
+    --sprite-sheet-size: 148px 25px;
+    --sprite-rest-offset: -37px 0px;
+    --sprite-hover-offset: -74px 0px;
+    --sprite-active-offset: -111px 0px;
+    width: 37px;
+    height: 25px;
+}
+
+.control-button.sprite-actualsize {
+    --sprite-image: url('resources/PNG/@1x/actualsize.png');
+    --sprite-sheet-size: 108px 25px;
+    --sprite-rest-offset: -27px 0px;
+    --sprite-hover-offset: -54px 0px;
+    --sprite-active-offset: -81px 0px;
+    width: 27px;
+    height: 25px;
+}
+
+.control-button.sprite-slideshow {
+    --sprite-image: url('resources/PNG/@1x/slideshow.png');
+    --sprite-sheet-size: 176px 48px;
+    --sprite-rest-offset: -44px 0px;
+    --sprite-hover-offset: -88px 0px;
+    --sprite-active-offset: -132px 0px;
+    width: 44px;
+    height: 48px;
+}
+
+.control-button.sprite-prev,
+.control-button.sprite-next {
+    width: 51px;
+    height: 25px;
+    --sprite-mask-image: var(--sprite-image);
+}
+
+.control-button.sprite-prev {
+    --sprite-image: url('resources/PNG/@1x/prev.png');
+    --sprite-sheet-size: 204px 25px;
+    --sprite-rest-offset: -51px 0px;
+    --sprite-hover-offset: -102px 0px;
+    --sprite-active-offset: -153px 0px;
+}
+
+.control-button.sprite-next {
+    --sprite-image: url('resources/PNG/@1x/next.png');
+    --sprite-sheet-size: 204px 25px;
+    --sprite-rest-offset: -51px 0px;
+    --sprite-hover-offset: -102px 0px;
+    --sprite-active-offset: -153px 0px;
+}
+
+.control-button.sprite-button.sprite-no-hover-fade::after {
+    transition: none !important;
+}
+
+/* Retina displays - use @2x assets with their native dimensions */
+@media (-webkit-min-device-pixel-ratio: 2),
+(min-resolution: 192dpi) {
+    .photo-viewer-controls {
+        width: 520px;
+        height: 71px;
+    }
+
+    .control-button {
+        transform: translate(7.2px, -.475px);
+    }
+
+    .control-button.sprite-delete {
+        --sprite-image: url('resources/PNG/@2x/delete.png');
+        --sprite-sheet-size: 124px 31px;
+        --sprite-rest-offset: -31px 0px;
+        --sprite-hover-offset: -62px 0px;
+        --sprite-active-offset: -93px 0px;
+        width: 31px;
+        height: 31px;
+
+        margin-left: 11px;
+    }
+
+    .control-button.sprite-rotateL {
+        --sprite-image: url('resources/PNG/@2x/rotateL.png');
+        --sprite-sheet-size: 124px 31px;
+        --sprite-rest-offset: -31px 0px;
+        --sprite-hover-offset: -62px 0px;
+        --sprite-active-offset: -93px 0px;
+        width: 31px;
+        height: 31px;
+
+        margin-left: 13px;
+    }
+
+    .control-button.sprite-rotateR {
+        --sprite-image: url('resources/PNG/@2x/rotateR.png');
+        --sprite-sheet-size: 124px 31px;
+        --sprite-rest-offset: -31px 0px;
+        --sprite-hover-offset: -62px 0px;
+        --sprite-active-offset: -93px 0px;
+        width: 31px;
+        height: 31px;
+
+        margin: 0 7px;
+
+    }
+
+    .control-button.sprite-zoom {
+        --sprite-image: url('resources/PNG/@2x/zoom.png');
+        --sprite-sheet-size: 184px 31px;
+        --sprite-rest-offset: -46px 0px;
+        --sprite-hover-offset: -92px 0px;
+        --sprite-active-offset: -138px 0px;
+        width: 46px;
+        height: 31px;
+    }
+
+    .control-button.sprite-actualsize {
+        --sprite-image: url('resources/PNG/@2x/actualsize.png');
+        --sprite-sheet-size: 132px 31px;
+        --sprite-rest-offset: -33px 0px;
+        --sprite-hover-offset: -66px 0px;
+        --sprite-active-offset: -99px 0px;
+        width: 33px;
+        height: 31px;
+
+        margin-left: 23px;
+    }
+
+    .control-button.sprite-slideshow {
+        --sprite-image: url('resources/PNG/@2x/slideshow.png');
+        --sprite-sheet-size: 204px 60px;
+        --sprite-rest-offset: -51px 0px;
+        --sprite-hover-offset: -102px 0px;
+        --sprite-active-offset: -153px 0px;
+        width: 51px;
+        height: 60px;
+    }
+
+    .control-button.sprite-prev,
+    .control-button.sprite-next {
+        width: 64px;
+        height: 31px;
+    }
+
+    .control-button.sprite-prev {
+        --sprite-image: url('resources/PNG/@2x/prev.png');
+        --sprite-sheet-size: 256px 31px;
+        --sprite-rest-offset: -64px 0px;
+        --sprite-hover-offset: -128px 0px;
+        --sprite-active-offset: -192px 0px;
+
+        margin-left: 23px;
+        margin-right: -1px;
+    }
+
+    .control-button.sprite-next {
+        --sprite-image: url('resources/PNG/@2x/next.png');
+        --sprite-sheet-size: 256px 31px;
+        --sprite-rest-offset: -64px 0px;
+        --sprite-hover-offset: -128px 0px;
+        --sprite-active-offset: -192px 0px;
+
+        margin-left: -2px;
+    }
+
+    .photo-viewer-controls {
+        --backplate-height: 64px;
+        --backplate-edge-width: 20px;
+        --backplate-center-width: 55px;
+        --backplate-stretch-height: 41px;
+        --backplate-stretch-tile-width: 6px;
+    }
+
+    .backplate-left-edge {
+        background-image: url('resources/PNG/@2x/backplate_left-edge.png');
+    }
+
+    .backplate-right-edge {
+        background-image: url('resources/PNG/@2x/backplate_right-edge.png');
+    }
+
+    .backplate-center {
+        background-image: url('resources/PNG/@2x/backplate_center.png');
+    }
+
+    .backplate-stretch {
+        background-image: url('resources/PNG/@2x/backplate_stretch.png');
+    }
+}
+
+.control-icon {
+    font-size: 14px;
+    line-height: 1;
+}
+
+.slideshow-button {
+    width: 40px;
+}
+
+.nav-button .control-icon {
+    font-size: 12px;
+}
+
+.control-separator {
+    width: 1px;
+    height: 24px;
+    background: #d4d4d4;
+    margin: 0 4px;
+    position: relative;
+    z-index: 1;
+}
+
+/* Zoom Panel */
+.photo-viewer-zoom-panel {
+    position: absolute;
+    bottom: 70px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #f0f0f0;
+    border: 1px solid #acacac;
+    border-radius: 4px;
+    padding: 8px 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    display: none;
+    z-index: 100;
+}
+
+.photo-viewer-zoom-panel.visible {
+    display: block;
+}
+
+.zoom-panel-content {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.zoom-button {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(to bottom, #f0f0f0, #e5e5e5);
+    border: 1px solid #acacac;
+    border-radius: 2px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+    color: #000;
+    user-select: none;
+}
+
+.zoom-button:hover {
+    background: linear-gradient(to bottom, #ECF4FC, #DCECFC);
+    border-color: #7EB4EA;
+}
+
+.zoom-button:active {
+    background: #cce8ff;
+}
+
+#zoom-slider {
+    width: 120px;
+    height: 4px;
+    -webkit-appearance: none;
+    appearance: none;
+    background: #d4d4d4;
+    outline: none;
+    border-radius: 2px;
+}
+
+#zoom-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    background: #0078d7;
+    cursor: pointer;
+    border-radius: 50%;
+    border: 1px solid #005a9e;
+}
+
+#zoom-slider::-webkit-slider-thumb:hover {
+    background: #1084d8;
+}
+
+#zoom-slider::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    background: #0078d7;
+    cursor: pointer;
+    border-radius: 50%;
+    border: 1px solid #005a9e;
+}
+
+.zoom-percentage {
+    font-size: 11px;
+    color: #000;
+    min-width: 40px;
+    text-align: center;
+    user-select: none;
+}
+
+
+/* Command Bar Overrides for Dark Background */
+.classic-command-bar {
+    background: #f0f0f0;
+    border-bottom: 1px solid #d4d4d4;
+}
+
+/* Image container scrollbar styling */
+.photo-viewer-image-container::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+}
+
+.photo-viewer-image-container::-webkit-scrollbar-track {
+    background: #2a2a2a;
+}
+
+.photo-viewer-image-container::-webkit-scrollbar-thumb {
+    background: #5a5a5a;
+    border-radius: 6px;
+}
+
+.photo-viewer-image-container::-webkit-scrollbar-thumb:hover {
+    background: #6a6a6a;
+}

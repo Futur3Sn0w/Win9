@@ -1,0 +1,1125 @@
+/* ===== START SCREEN ===== */
+#start-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: transparent;
+    display: block;
+    opacity: 0;
+    pointer-events: none;
+    overflow: hidden;
+    z-index: 100000;
+    transition: opacity 0.3s ease-out;
+
+    &:not(.visible),
+    &:not(.visible) * {
+        pointer-events: none !important;
+    }
+}
+
+/* Background layer that scrolls with views */
+.start-screen-background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    pointer-events: none;
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+#start-screen.all-apps-open .start-screen-background {
+    transform: translateY(-100%);
+}
+
+#start-screen.visible {
+    opacity: 1;
+    pointer-events: all;
+}
+
+/* Background that fades in - used for opening from desktop */
+/* Disabled to allow custom backgrounds to show through */
+#start-screen::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: transparent;
+    opacity: 0;
+    transition: opacity 0.3s ease-out;
+    z-index: 0;
+    pointer-events: none;
+}
+
+#start-screen.fade-background::before {
+    opacity: 0;
+}
+
+/* Solid background overlay - used for login screen slide-in animation */
+/* Disabled to allow custom backgrounds to show through */
+#start-screen::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: transparent;
+    opacity: 0;
+    z-index: 0;
+    transition: opacity 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+    pointer-events: none;
+}
+
+#start-screen.slide-in::after {
+    opacity: 0;
+}
+
+/* Container for all start screen UI elements */
+.start-screen-content {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+}
+
+/* Initial login animation - tiles slide in from right, UI fades */
+.start-screen-content .tiles {
+    transform: translateX(100%);
+    opacity: 0;
+    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease-out;
+}
+
+#start-screen.show-content .tiles {
+    transform: translateX(0);
+    opacity: 1;
+}
+
+/* Fade in header and footer during initial login */
+.start-screen-content .start-header,
+.start-screen-content .start-footer {
+    opacity: 0;
+    transition: opacity 0.3s ease-out;
+}
+
+#start-screen.show-content .start-header,
+#start-screen.show-content .start-footer {
+    opacity: 1;
+}
+
+/* Shorter slide-in animation for opening from desktop (slides from center to left) */
+/* Only animate tiles - other UI elements will fade */
+#start-screen.opening-from-desktop .start-screen-content {
+    /* Reset transform for the container - we'll animate tiles individually */
+    transform: translateX(0);
+}
+
+/* Position tiles at 50% initially and keep hidden */
+#start-screen.opening-from-desktop .tiles {
+    transform: translateX(50%);
+    opacity: 0;
+    transition: none;
+    /* Disable transition for instant positioning */
+}
+
+/* When ready to animate, fade in tiles and slide to final position */
+#start-screen.opening-from-desktop.show-content-from-desktop .tiles {
+    transform: translateX(0);
+    opacity: 1;
+    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease-out;
+}
+
+/* Fade in other UI elements (header, footer) */
+#start-screen.opening-from-desktop .start-header,
+#start-screen.opening-from-desktop .start-footer {
+    opacity: 0;
+    transition: none;
+}
+
+#start-screen.opening-from-desktop.show-content-from-desktop .start-header,
+#start-screen.opening-from-desktop.show-content-from-desktop .start-footer {
+    opacity: 1;
+    transition: opacity 0.3s ease-out;
+}
+
+/* Exit to desktop animation - smooth crossfade */
+/* Background fade out */
+#start-screen.exit-to-desktop::before,
+#start-screen.exit-to-desktop::after {
+    opacity: 0;
+    transition: opacity 0.3s ease-out;
+}
+
+/* Tiles container zooms out to 50% and fades to 0 */
+#start-screen.exit-to-desktop .tiles {
+    transform: scale(0.75);
+    opacity: 0;
+    transition: transform 0.25s ease-out, opacity 0.2s ease-out;
+}
+
+/* UI elements fade out */
+#start-screen.exit-to-desktop .start-header,
+#start-screen.exit-to-desktop .start-footer,
+#start-screen.exit-to-desktop .all-apps-view {
+    opacity: 0;
+    transition: opacity 0.3s ease-out;
+}
+
+.start-header {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    padding: 60px 40px 20px 120px;
+    color: #fff;
+    font-size: 58px;
+    font-weight: 200;
+    z-index: 100020;
+    background: transparent;
+    pointer-events: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.start-header-title {
+    pointer-events: none;
+    display: inline-block;
+    position: relative;
+    width: max-content;
+}
+
+.start-views-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+#start-screen.all-apps-open .start-views-container {
+    transform: translateY(calc(-100%));
+}
+
+.start-view {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+}
+
+.pinned-view {
+    top: 0;
+    padding: 190px 40px 100px 120px;
+}
+
+.all-apps-view {
+    top: 100%;
+    padding: 190px 40px 100px 120px;
+}
+
+.start-footer {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 80px;
+    background: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    padding-left: 120px;
+    z-index: 100020;
+    pointer-events: none;
+}
+
+/* Tiles Layout */
+.tiles {
+    display: grid;
+    grid-auto-flow: dense;
+    /* grid-template-rows will be set dynamically by JavaScript */
+    grid-template-columns: repeat(auto-fit, 70.5px);
+    grid-auto-columns: 70.5px;
+    gap: 9px;
+    transform-origin: center center;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease-out;
+    width: max-content;
+}
+
+/* Compact mode - smaller tiles */
+body.tiles-compact .tiles {
+    /* grid-template-rows will be set dynamically by JavaScript */
+    grid-template-columns: repeat(auto-fit, 56.5px);
+    grid-auto-columns: 56.5px;
+    gap: 7px;
+}
+
+.tiles__group {
+    display: contents;
+}
+
+.tiles__col {
+    display: contents;
+}
+
+.tiles__tile {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    text-decoration: none;
+    box-shadow: inset 0 0 1px rgba(255, 255, 255, 0.4);
+
+    /* 3D Transform setup */
+    transform-origin: 50% 50%;
+    transform-style: preserve-3d;
+    transition: transform 1.1s ease, opacity 0.6s ease;
+    outline: 1px solid transparent;
+    -webkit-font-smoothing: antialiased;
+}
+
+.tiles__tile>i,
+.tiles__tile>span {
+    pointer-events: none;
+}
+
+.tiles__tile {
+    &.tiles__tile--small>i {
+        margin-top: -4px;
+    }
+
+    &.tiles__tile--medium>i,
+    &.tiles__tile--wide>i {
+        margin-top: -8px;
+    }
+
+    &.tiles__tile--large>i {
+        margin-top: -16px;
+    }
+
+    &>i {
+        display: block;
+        font-size: 64px;
+        font-style: normal;
+        text-align: center;
+    }
+
+    &>i.tile-icon-image {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    &>i img {
+        width: 64px;
+        height: 64px;
+        display: block;
+        margin: 0 auto;
+        object-fit: contain;
+    }
+
+    &.tiles__tile--small>i img {
+        width: 36px;
+        height: 36px;
+    }
+
+    &.tiles__tile--medium>i img,
+    &.tiles__tile--wide>i img {
+        width: 56px;
+        height: 56px;
+    }
+
+    &.tiles__tile--large>i img {
+        width: 72px;
+        height: 72px;
+    }
+}
+
+.tiles__tile>span {
+    position: absolute;
+    left: 18px;
+    bottom: 9px;
+    font-size: 13px;
+    font-weight: 400;
+}
+
+/* Image Tiles - Modifier for tiles that display images */
+.tiles__tile--image {
+    padding: 0;
+    /* overflow: hidden; */
+}
+
+.tiles__tile--image>i {
+    display: none !important;
+}
+
+.tiles__tile-image {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    z-index: 0;
+    box-shadow: inset 0 0 0 10000px #00000011;
+}
+
+/* 
+.tiles__tile--image>span {
+    z-index: 1;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.8) 0%, transparent 100%);
+    padding: 4px 8px 4px 8px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+} */
+
+.tiles__tile:hover::after {
+    content: '';
+    position: absolute;
+    z-index: 100;
+
+    width: 100%;
+    height: 100%;
+
+    box-shadow:
+        0 0 0 4px #ffffff22,
+        0 0 0 4px var(--ui-accent),
+        0 0 0 1px rgba(255, 255, 255, 0.4);
+}
+
+/* Tile Sizes - Grid-based */
+/* Small tiles: 1 half-row × 1 half-column (70px × 70px) */
+.tiles__tile--small {
+    grid-row: span 1;
+    grid-column: span 1;
+    width: 70px;
+    height: 70px;
+}
+
+/* Medium/Normal tiles: 2 half-rows × 2 half-columns (150px × 150px) */
+.tiles__tile:not(.tiles__tile--small):not(.tiles__tile--wide):not(.tiles__tile--large) {
+    grid-row: span 2;
+    grid-column: span 2;
+    width: 150px;
+    height: 150px;
+}
+
+/* Wide tiles: 2 half-rows × 4 half-columns (150px × 310px) */
+.tiles__tile--wide {
+    grid-row: span 2;
+    grid-column: span 4;
+    width: 310px;
+    height: 150px;
+}
+
+/* Large tiles: 4 half-rows × 4 half-columns (310px × 310px) */
+.tiles__tile--large {
+    grid-row: span 4;
+    grid-column: span 4;
+    width: 310px;
+    height: 310px;
+}
+
+.tiles__tile--wide,
+.tiles__tile--small {
+    & i {
+        margin-top: -15px;
+    }
+}
+
+.tiles__tile--large>i {
+    margin-top: 90px;
+}
+
+.tiles__tile--small>i {
+    font-size: 32px;
+    margin-top: 16px;
+}
+
+.tiles__tile--small>span {
+    display: none;
+}
+
+/* Tile Colors with Gradients */
+.tiles__tile--teal {
+    background: linear-gradient(to right, #008299 0%, #00A0B1 100%);
+}
+
+.tiles__tile--blue {
+    background: linear-gradient(to right, #094AB2 0%, #0A5BC4 100%);
+}
+
+.tiles__tile--magenta {
+    background: linear-gradient(to right, #8C0095 0%, #A700AE 100%);
+}
+
+.tiles__tile--purple {
+    background: linear-gradient(to right, #5133AB 0%, #643EBF 100%);
+}
+
+.tiles__tile--red {
+    background: linear-gradient(to right, #AC193D 0%, #BF1E4B 100%);
+}
+
+.tiles__tile--orange {
+    background: linear-gradient(to right, #D24726 0%, #DC572E 100%);
+}
+
+.tiles__tile--green {
+    background: linear-gradient(to right, #008A00 0%, #00A600 100%);
+}
+
+.tiles__tile--sky {
+    background: linear-gradient(to right, #2672EC 0%, #2E8DEF 100%);
+}
+
+.tiles__tile--grey {
+    background: linear-gradient(to right, #595959 0%, #7D7D7D 100%);
+}
+
+/* All Apps Toggle Button */
+.all-apps-toggle {
+    width: 36px;
+    height: 36px;
+    background: var(--ui-accent);
+    border: 2px solid #fff;
+    border-radius: 50%;
+    color: #fff;
+    font-size: 16px;
+
+    box-sizing: border-box;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s, opacity 0.3s ease;
+    pointer-events: auto;
+
+    &:hover {
+        background: rgba(255, 255, 255, 0.1);
+    }
+
+    &:active {
+        background: rgba(255, 255, 255, 1);
+        color: var(--ui-accent);
+    }
+}
+
+.all-apps-toggle-icon {
+    line-height: 1;
+}
+
+/* Arrow button positioning */
+.pinned-apps-toggle {
+    padding-top: 2px;
+}
+
+/* Fade out class for idle state */
+.all-apps-up-toggle.fade-idle {
+    opacity: 0;
+}
+
+.all-apps-toggle-text {
+    display: none;
+}
+
+.all-apps-list {
+    display: grid;
+    grid-auto-flow: column;
+    grid-template-rows: repeat(auto-fill, 50px);
+    grid-auto-columns: 200px;
+    gap: 5px;
+    height: 100%;
+}
+
+/* App List Headers (alphabetical sections) */
+.app-list-header {
+    width: 200px;
+    height: 50px;
+    color: var(--ui-accent-plus, #fff);
+    font-size: 32px;
+    font-weight: 200;
+    padding-left: 5px;
+    display: flex;
+    align-items: center;
+
+    /* Ensure header always has at least one app below it */
+    break-inside: avoid-column;
+    page-break-inside: avoid;
+}
+
+.app-list-header:first-child {
+    margin-top: 0;
+}
+
+/* Spacer element to push headers to next column */
+.app-list-spacer {
+    width: 200px;
+    height: 50px;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+/* Desktop app headers (individual app names) - styled like the screenshot */
+.app-list-header--desktop {
+    font-size: 20px;
+    font-weight: 300;
+    color: var(--ui-accent-plus, #fff);
+}
+
+/* App List Items */
+.app-list-item {
+    width: 200px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-sizing: border-box;
+    padding: 5px;
+    color: #fff;
+
+    transition: background 0.2s;
+    position: relative;
+}
+
+.app-list-item:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.app-list-item__icon {
+    font-size: 30px;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.app-list-item__icon img {
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 5px !important;
+}
+
+.app-list-item__icon span {
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 25px;
+    padding: 5px !important;
+}
+
+.app-list-item__icon[class*="app-icon-plate--"] {
+    box-shadow: inset 0 0 0 1px #ffffff28;
+}
+
+/* Colored plate backgrounds for modern app icons in All Apps list */
+.app-icon-plate--teal {
+    background: linear-gradient(to right, #008299 0%, #00A0B1 100%);
+}
+
+.app-icon-plate--blue {
+    background: linear-gradient(to right, #094AB2 0%, #0A5BC4 100%);
+}
+
+.app-icon-plate--magenta {
+    background: linear-gradient(to right, #8C0095 0%, #A700AE 100%);
+}
+
+.app-icon-plate--purple {
+    background: linear-gradient(to right, #5133AB 0%, #643EBF 100%);
+}
+
+.app-icon-plate--red {
+    background: linear-gradient(to right, #AC193D 0%, #BF1E4B 100%);
+}
+
+.app-icon-plate--orange {
+    background: linear-gradient(to right, #D24726 0%, #DC572E 100%);
+}
+
+.app-icon-plate--green {
+    background: linear-gradient(to right, #008A00 0%, #00A600 100%);
+}
+
+.app-icon-plate--sky {
+    background: linear-gradient(to right, #2672EC 0%, #2E8DEF 100%);
+}
+
+.app-icon-plate--grey {
+    background: linear-gradient(to right, #595959 0%, #7D7D7D 100%);
+}
+
+/* Accent color plate for classic apps */
+.app-icon-plate--accent {
+    background: linear-gradient(to right, var(--ui-accent-plus) 0%, var(--ui-accent) 100%);
+}
+
+.app-list-item__name {
+    flex: 1;
+    font-size: 15px;
+}
+
+/* ===== TILE CONTEXT MENU ===== */
+.context-menu {
+    position: fixed;
+    background: #fff;
+    border: 1px solid #A0A0A0;
+    min-width: 200px;
+    padding: 4px 2px;
+    z-index: 100010;
+    display: none;
+    box-shadow: 4px 4px 5px rgba(0, 0, 0, 0.4);
+}
+
+.context-menu.active {
+    display: block;
+}
+
+.context-menu-item {
+    position: relative;
+    padding: 0 12px 2px 32px;
+    height: 22px;
+    color: #000;
+    font-size: 12px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: background 0.1s;
+    user-select: none;
+}
+
+.context-menu-item:hover {
+    background: #E5E5E5;
+}
+
+.context-menu-item-text {
+    flex: 1;
+}
+
+.context-menu-item-check {
+    position: absolute;
+    left: 12px;
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.context-menu-item-check::before {
+    content: '✓';
+    opacity: 0;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.context-menu-item.checked .context-menu-item-check::before {
+    opacity: 1;
+}
+
+.context-menu-item-arrow {
+    margin-left: 12px;
+    font-size: 10px;
+    opacity: 0.7;
+}
+
+.context-menu-item-submenu {
+    position: relative;
+}
+
+.context-submenu {
+    position: absolute;
+    left: 100%;
+    top: -4px;
+    background: #fff;
+    border: 1px solid #A0A0A0;
+    min-width: 160px;
+    padding: 4px 2px;
+    display: none;
+    box-shadow: 4px 4px 5px rgba(0, 0, 0, 0.4);
+    z-index: 100011;
+}
+
+.context-menu-item-submenu:hover>.context-submenu {
+    display: block;
+}
+
+/* ===== TILE TOOLTIP ===== */
+.tile-tooltip {
+    position: fixed;
+    background: rgba(255, 255, 255, 0.95);
+    border: 2px solid rgb(120, 120, 120);
+    color: rgb(120, 120, 120);
+    padding: 8px 12px;
+    font-size: 14px;
+    z-index: 1001;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+    white-space: nowrap;
+}
+
+.tile-tooltip.visible {
+    opacity: 1;
+}
+
+/* ===== BACKGROUND PATTERN ALIGNMENT STYLES ===== */
+
+/* Split background container */
+.split-bg-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.split-bg-top,
+.split-bg-bottom {
+    pointer-events: none;
+}
+
+/* ===== USER TILE ===== */
+.user-tile.active~.user-tile {
+    background-color: transparent !important;
+}
+
+.user-tile {
+    pointer-events: auto;
+    display: flex;
+    flex-direction: row-reverse;
+    align-items: center;
+    gap: 12px;
+
+    position: relative;
+    font-size: 16px;
+    font-weight: 400;
+
+    box-sizing: border-box;
+    padding: 0 10px;
+    height: 57px;
+
+    &:hover,
+    &.active {
+        background-color: var(--ui-accent-plus);
+    }
+}
+
+.user-tile-icon {
+    width: 40px;
+    height: 40px;
+    object-fit: cover;
+}
+
+.user-tile-name {
+    font-size: 16px;
+    font-weight: 400;
+    color: #fff;
+}
+
+/* User Tile Dropdown */
+.user-tile-dropdown {
+    width: 200px;
+    position: fixed;
+    /* Position will be set dynamically by JavaScript */
+}
+
+.user-tile-dropdown.active {
+    opacity: 1;
+    pointer-events: all;
+    transform: translateY(0);
+}
+
+.user-tile-dropdown:not(.active) {
+    transform: translateY(-15px);
+}
+
+/* ===== START HEADER BUTTONS ===== */
+.start-header-buttons {
+    pointer-events: auto;
+    display: flex;
+    flex-direction: row-reverse;
+    align-items: center;
+    gap: 2px;
+}
+
+.start-header-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    position: relative;
+    box-sizing: border-box;
+    padding: 0;
+    width: 57px;
+    height: 57px;
+
+    font-size: 20px;
+    font-family: inherit;
+    color: #fff;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+
+    &:hover,
+    &.active {
+        background-color: var(--ui-accent-plus);
+    }
+}
+
+/* Power button dropdown */
+.power-button {
+    position: relative;
+}
+
+.start-power-menu {
+    width: 200px;
+    position: fixed;
+    /* Position will be set dynamically by JavaScript */
+}
+
+.start-power-menu.active {
+    opacity: 1;
+    pointer-events: all;
+    transform: translateY(0);
+}
+
+.start-power-menu:not(.active) {
+    transform: translateY(-15px);
+}
+
+/* ===== TILE DRAG AND DROP (Sortable.js) ===== */
+.tiles__tile {
+    user-select: none;
+    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
+    cursor: default;
+}
+
+/* When any tile is being dragged, shrink all other tiles */
+body.tile-drag-active .tiles__tile:not(.sortable-drag):not(.tile-drag-ghost) {
+    transform: scale(0.95);
+}
+
+/* The tile being dragged (Sortable.js adds sortable-drag class) */
+.tiles__tile.sortable-drag {
+    opacity: 0.8;
+    transform: scale(1.05) !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+/* Ghost placeholder (Sortable.js) - completely invisible but takes up space */
+.tiles__tile.tile-drag-ghost {
+    opacity: 0 !important;
+    pointer-events: none;
+}
+
+/* Fallback for browsers without HTML5 drag */
+.tiles__tile.tile-drag-fallback {
+    opacity: 0.8;
+    transform: scale(1.05);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+/* ===== TILE FLIP ANIMATION (App Launch) ===== */
+.tile-flip-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 100100;
+    pointer-events: none;
+}
+
+/* Background that fills the screen */
+.tile-flip-background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    transition: opacity 0.3s ease-out;
+}
+
+.tile-flip-background.visible {
+    opacity: 1;
+}
+
+.tile-flip-background.fade-out {
+    opacity: 0;
+    transition: opacity 0.4s ease-out;
+}
+
+/* The animated tile that expands */
+.tile-flip-tile {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transform-style: preserve-3d;
+    perspective: 1000px;
+    box-shadow: inset 0 0 1px rgba(255, 255, 255, 0.4);
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Icon inside the tile */
+.tile-flip-icon {
+    font-size: 64px;
+    color: #fff;
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    transform-style: preserve-3d;
+    backface-visibility: visible;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.tile-flip-icon img {
+    width: 64px;
+    height: 64px;
+    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease-out;
+    object-fit: contain;
+}
+
+/* Animation states */
+.tile-flip-tile.flipping {
+    transform: rotateY(180deg) !important;
+}
+
+/* Counter-rotate the icon to prevent it from being mirrored */
+.tile-flip-tile.flipping .tile-flip-icon {
+    transform: rotateY(-180deg);
+}
+
+.tile-flip-tile.expanding .tile-flip-icon {
+    font-size: 120px;
+}
+
+.tile-flip-tile.expanding .tile-flip-icon img {
+    transform: scale(1.875);
+}
+
+/* When both expanding and flipping, apply both transforms to the icon */
+.tile-flip-tile.expanding.flipping .tile-flip-icon img {
+    transform: scale(1.875) rotateY(-180deg);
+}
+
+.tile-flip-tile.fade-out {
+    opacity: 0;
+    transform: scale(1.1);
+    transition: opacity 0.4s ease-out, transform 0.4s ease-out;
+}
+
+.tile-flip-tile.fade-out .tile-flip-icon {
+    opacity: 0;
+    transition: opacity 0.4s ease-out;
+}
+
+.tile-flip-tile.fade-out .tile-flip-icon img {
+    opacity: 0;
+}
+
+/* ===================================
+   Compact Tiles Mode
+   =================================== */
+
+/* Compact mode tile sizes remain the same in grid units, just smaller pixels */
+body.tiles-compact .tiles__tile--small {
+    grid-row: span 1;
+    grid-column: span 1;
+    width: 56px;
+    height: 56px;
+}
+
+body.tiles-compact .tiles__tile:not(.tiles__tile--small):not(.tiles__tile--wide):not(.tiles__tile--large) {
+    grid-row: span 2;
+    grid-column: span 2;
+    width: 120px;
+    height: 120px;
+}
+
+body.tiles-compact .tiles__tile--wide {
+    grid-row: span 2;
+    grid-column: span 4;
+    width: 248px;
+    height: 120px;
+}
+
+body.tiles-compact .tiles__tile--large {
+    grid-row: span 4;
+    grid-column: span 4;
+    width: 248px;
+    height: 248px;
+}
+
+/* Compact mode - icon adjustments for medium tiles */
+body.tiles-compact .tiles__tile>i img {
+    width: 48px;
+    height: 48px;
+}
+
+/* Compact mode - icon adjustments for small tiles */
+body.tiles-compact .tiles__tile--small>i {
+    font-size: 24px;
+    margin-top: 2px;
+}
+
+body.tiles-compact .tiles__tile--small>i img {
+    width: 28px;
+    height: 28px;
+}
+
+/* Compact mode - icon adjustments for wide/medium tiles */
+body.tiles-compact .tiles__tile--medium>i img,
+body.tiles-compact .tiles__tile--wide>i img {
+    width: 42px;
+    height: 42px;
+}
+
+/* Compact mode - icon adjustments for large tiles (now compact wide) */
+body.tiles-compact .tiles__tile--large>i {
+    margin-top: 0;
+}
+
+body.tiles-compact .tiles__tile--large>i img {
+    width: 48px;
+    height: 48px;
+}
+
+/* Compact mode - text label adjustments */
+body.tiles-compact .tiles__tile>span {
+    left: 14px;
+    bottom: 7px;
+    font-size: 11px;
+}
+
+/* Compact mode - small wrap container */
+body.tiles-compact .small-wrap {
+    width: 120px;
+    height: 120px;
+    margin-bottom: 7px;
+}

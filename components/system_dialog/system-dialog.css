@@ -1,0 +1,54 @@
+/* System Dialog - Uses classic-app-container from classic-windows.css */
+
+/* Dialog Window Content Wrapper */
+.system-dialog-window-content {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Dialog Content Area */
+.system-dialog-content {
+    display: flex;
+    align-items: flex-start;
+    padding: 12px;
+    gap: 12px;
+    flex: 1;
+}
+
+/* Dialog Icon */
+.system-dialog-icon {
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    margin-top: 2px;
+}
+
+.system-dialog-icon svg {
+    width: 32px;
+    height: 32px;
+}
+
+/* Dialog Body Text */
+.system-dialog-body {
+    flex: 1;
+    font-size: 14px;
+    font-weight: 400;
+    color: #000;
+    line-height: 1.4;
+    word-wrap: break-word;
+    white-space: pre-wrap;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Ensure dialogs don't resize */
+.system-dialog .classic-window-resize-handle {
+    display: none !important;
+}
+
+/* Remove any bold text */
+.system-dialog * {
+    font-weight: 400 !important;
+}

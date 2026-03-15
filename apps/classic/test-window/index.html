@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Window</title>
+
+    <link rel="stylesheet" href="../../../css/classic-windows.css">
+    <link rel="stylesheet" href="../../../css/classic-controls.css">
+    <link rel="stylesheet" href="../../../css/styles.css">
+    <link rel="stylesheet" href="../../../css/fonts.css">
+
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: white;
+            overflow: auto;
+        }
+
+        .container {
+            max-width: 100%;
+        }
+
+        h1 {
+            color: #333;
+            margin-top: 0;
+            font-size: 24px;
+        }
+
+        .section {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f5f5f5;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .section h2 {
+            margin-top: 0;
+            font-size: 16px;
+            color: #0078d4;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 10px;
+            font-size: 14px;
+        }
+
+        .info-label {
+            font-weight: bold;
+            color: #555;
+        }
+
+        .info-value {
+            color: #333;
+            font-family: 'Consolas', monospace;
+        }
+
+        button {
+            background: #0078d4;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            margin: 5px;
+            border-radius: 3px;
+            font-size: 14px;
+        }
+
+        button:hover {
+            background: #005a9e;
+        }
+
+        button:active {
+            background: #004578;
+        }
+
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            background: #e8f4f8;
+            border-left: 4px solid #0078d4;
+            font-size: 14px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Window Debug Tool</h1>
+        <p>Use this window to test snapping, resizing, minimizing, maximizing, and other window behaviors.</p>
+
+        <div class="section">
+            <h2>Window State Information</h2>
+            <div class="info-grid">
+                <span class="info-label">Window Size:</span>
+                <span class="info-value" id="windowSize">-</span>
+
+                <span class="info-label">Viewport Size:</span>
+                <span class="info-value" id="viewportSize">-</span>
+
+                <span class="info-label">Screen Size:</span>
+                <span class="info-value" id="screenSize">-</span>
+
+                <span class="info-label">Window Position:</span>
+                <span class="info-value" id="windowPosition">-</span>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Test Actions</h2>
+            <button onclick="updateInfo()">Refresh Info</button>
+            <button onclick="testResize()">Test Resize Event</button>
+            <button onclick="logToConsole()">Log to Console</button>
+        </div>
+
+        <div class="section">
+            <h2>Event Log</h2>
+            <div id="eventLog" class="status">
+                Window loaded - Ready for testing!
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Content Area</h2>
+            <p>This area demonstrates how content behaves during window operations:</p>
+            <ul>
+                <li>Try resizing this window</li>
+                <li>Try snapping to screen edges</li>
+                <li>Try maximizing and restoring</li>
+                <li>Try minimizing and restoring</li>
+                <li>Watch how the content reflows</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        function updateInfo() {
+            document.getElementById('windowSize').textContent =
+                `${window.outerWidth} × ${window.outerHeight}px`;
+
+            document.getElementById('viewportSize').textContent =
+                `${window.innerWidth} × ${window.innerHeight}px`;
+
+            document.getElementById('screenSize').textContent =
+                `${screen.width} × ${screen.height}px`;
+
+            document.getElementById('windowPosition').textContent =
+                `X: ${window.screenX}, Y: ${window.screenY}`;
+        }
+
+        function logEvent(message) {
+            const log = document.getElementById('eventLog');
+            const timestamp = new Date().toLocaleTimeString();
+            log.textContent = `[${timestamp}] ${message}`;
+        }
+
+        function testResize() {
+            logEvent('Manual resize test triggered');
+            updateInfo();
+        }
+
+        function logToConsole() {
+            console.log('Test Window Debug Info:', {
+                windowSize: { width: window.outerWidth, height: window.outerHeight },
+                viewportSize: { width: window.innerWidth, height: window.innerHeight },
+                screenSize: { width: screen.width, height: screen.height },
+                position: { x: window.screenX, y: window.screenY }
+            });
+            logEvent('Information logged to console');
+        }
+
+        // Update info on load
+        window.addEventListener('load', () => {
+            updateInfo();
+            logEvent('Window loaded successfully');
+        });
+
+        // Track resize events
+        window.addEventListener('resize', () => {
+            updateInfo();
+            logEvent('Window resized');
+        });
+
+        // Track other relevant events
+        window.addEventListener('focus', () => {
+            logEvent('Window gained focus');
+        });
+
+        window.addEventListener('blur', () => {
+            logEvent('Window lost focus');
+        });
+
+        // Update info periodically
+        setInterval(updateInfo, 1000);
+    </script>
+</body>
+
+</html>

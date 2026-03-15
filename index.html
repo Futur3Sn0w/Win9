@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Windows</title>
+    <link rel="stylesheet" href="css/css.css">
+    <link rel="stylesheet" href="css/classic-windows.css">
+    <link rel="stylesheet" href="css/classic-controls.css">
+    <link rel="stylesheet" href="components/notification/notification.css">
+    <link rel="stylesheet" href="components/system_dialog/system-dialog.css">
+    <link href="https://cdn.metroui.org.ua/4.5.12/icons.css" rel="stylesheet">
+</head>
+
+<body>
+    <!-- BOOT SCREEN -->
+    <div id="boot-screen">
+        <div class="windows-logo">
+            <img src="resources/images/betta.svg" alt="Windows Logo">
+        </div>
+        <div class="progress-ring">
+            <div class="progress-ring__wrap">
+                <div class="progress-ring__circle"></div>
+            </div>
+            <div class="progress-ring__wrap">
+                <div class="progress-ring__circle"></div>
+            </div>
+            <div class="progress-ring__wrap">
+                <div class="progress-ring__circle"></div>
+            </div>
+            <div class="progress-ring__wrap">
+                <div class="progress-ring__circle"></div>
+            </div>
+            <div class="progress-ring__wrap">
+                <div class="progress-ring__circle"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- INTERMEDIARY SCREEN -->
+    <div id="intermediary-screen">
+        <div class="intermediary-content">
+            <div class="intermediary-loader">
+                <div class="circle"></div>
+                <div class="circle"></div>
+                <div class="circle"></div>
+                <div class="circle"></div>
+                <div class="circle"></div>
+            </div>
+            <div class="intermediary-text">Shutting down</div>
+        </div>
+    </div>
+
+    <!-- FADE TO BLACK OVERLAY -->
+    <div id="fade-to-black"></div>
+
+    <!-- LOCK SCREEN -->
+    <div id="lock-screen">
+        <div class="lock-screen-content">
+            <div class="lock-time">10:30</div>
+            <div class="lock-date">Thursday, October 9</div>
+        </div>
+    </div>
+
+    <!-- LOGIN SCREEN (User Picker View) -->
+    <div id="login-screen">
+        <div class="login-overlay">
+            <div class="user-picker-container">
+                <div class="active-scale-effect user-picker-item" data-user="user">
+                    <div class="user-picker-avatar">
+                        <img src="resources/images/user.png" alt="User">
+                    </div>
+                    <div class="user-picker-name">User</div>
+                </div>
+            </div>
+            <!-- Power Button -->
+            <button class="login-power-button">
+                <svg class="login-power-icon" viewBox="0 0 24 24">
+                    <path
+                        d="M13 3h-2v10h2V3zm4.83 2.17l-1.42 1.42C17.99 7.86 19 9.81 19 12c0 3.87-3.13 7-7 7s-7-3.13-7-7c0-2.19 1.01-4.14 2.58-5.42L6.17 5.17C4.23 6.82 3 9.26 3 12c0 4.97 4.03 9 9 9s9-4.03 9-9c0-2.74-1.23-5.18-3.17-6.83z" />
+                </svg>
+            </button>
+            <!-- Power Options Menu for Login Screen -->
+            <div class="modern-dropdown login-power-menu">
+                <div class="modern-dropdown-item login-power-menu-item" data-action="sleep">Sleep</div>
+                <div class="modern-dropdown-item login-power-menu-item" data-action="shut-down">Shut down</div>
+                <div class="modern-dropdown-item login-power-menu-item" data-action="restart">Restart</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SIGNING IN SCREEN -->
+    <div id="signing-in-screen">
+        <div class="signing-in-content">
+            <div class="signing-in-user">
+                <div class="signing-in-avatar">
+                    <img src="resources/images/user.png" alt="User">
+                </div>
+                <div class="signing-in-info">
+                    <div class="signing-in-name">User</div>
+                    <div class="signing-in-status">
+                        <div class="signing-in-loader">
+                            <div class="circle"></div>
+                            <div class="circle"></div>
+                            <div class="circle"></div>
+                            <div class="circle"></div>
+                            <div class="circle"></div>
+                        </div>
+                        <div class="signing-in-text">Signing in</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- START SCREEN -->
+    <div id="start-screen">
+        <div class="start-screen-background"></div>
+        <div class="start-screen-content">
+            <div class="start-views-container">
+                <div class="start-view pinned-view">
+                    <div class="start-header">
+                        <span class="start-header-title">Start</span>
+                        <div class="start-header-buttons">
+                            <button class="start-header-button search-button active-scale-effect" title="Search">
+                                <span class="mif-search"></span>
+                            </button>
+                            <button class="start-header-button power-button active-scale-effect" title="Power">
+                                <span class="mif-switch"></span>
+                            </button>
+                            <div class="user-tile active-scale-effect">
+                                <img src="resources/images/user.png" alt="User" class="user-tile-icon">
+                                <span class="user-tile-name">User</span>
+                            </div>
+                        </div>
+                        <!-- Dropdowns moved outside to prevent scale effect -->
+                        <div class="modern-dropdown start-power-menu">
+                            <div class="modern-dropdown-item start-power-menu-item" data-action="sleep">Sleep</div>
+                            <div class="modern-dropdown-item start-power-menu-item" data-action="shut-down">Shut down
+                            </div>
+                            <div class="modern-dropdown-item start-power-menu-item" data-action="restart">Restart</div>
+                        </div>
+                        <div class="modern-dropdown user-tile-dropdown">
+                            <div class="modern-dropdown-item user-tile-dropdown-item" data-action="change-picture">
+                                Change
+                                account picture</div>
+                            <div class="modern-dropdown-item user-tile-dropdown-item" data-action="lock">Lock</div>
+                            <div class="modern-dropdown-item user-tile-dropdown-item" data-action="sign-out">Sign out
+                            </div>
+                        </div>
+                    </div>
+                    <div class="tiles" id="pinned-tiles">
+                        <!-- Pinned tiles will be generated here -->
+                    </div>
+                    <div class="start-footer">
+                        <button class="all-apps-toggle pinned-apps-toggle">
+                            <span class="all-apps-toggle-icon"><span class="mif-arrow-down"></span></span>
+                            <span class="all-apps-toggle-text">Apps</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="start-view all-apps-view">
+                    <div class="start-header">
+                        <span class="start-header-title">Apps</span>
+                    </div>
+                    <div class="all-apps-list" id="all-apps-list">
+                        <!-- App list will be generated here -->
+                    </div>
+                    <div class="start-footer">
+                        <button class="all-apps-toggle all-apps-up-toggle">
+                            <span class="all-apps-toggle-icon"><span class="mif-arrow-up"></span></span>
+                            <span class="all-apps-toggle-text">Pinned</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CONTEXT MENU -->
+    <div id="app-context-menu" class="context-menu">
+        <div class="context-menu-item" data-action="pin">
+            <span class="context-menu-item-text">Pin to Start</span>
+        </div>
+        <div class="context-menu-item context-menu-item-submenu" data-action="resize">
+            <span class="context-menu-item-text">Resize</span>
+            <span class="context-menu-item-arrow">▶</span>
+            <div class="context-submenu">
+                <div class="context-menu-item" data-action="resize-small" data-size="small">
+                    <span class="context-menu-item-check"></span>
+                    <span class="context-menu-item-text">Small</span>
+                </div>
+                <div class="context-menu-item" data-action="resize-normal" data-size="normal">
+                    <span class="context-menu-item-check"></span>
+                    <span class="context-menu-item-text">Medium</span>
+                </div>
+                <div class="context-menu-item" data-action="resize-wide" data-size="wide">
+                    <span class="context-menu-item-check"></span>
+                    <span class="context-menu-item-text">Wide</span>
+                </div>
+                <div class="context-menu-item" data-action="resize-large" data-size="large">
+                    <span class="context-menu-item-check"></span>
+                    <span class="context-menu-item-text">Large</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TILE TOOLTIP -->
+    <div id="tile-tooltip" class="tile-tooltip"></div>
+
+    <!-- DESKTOP -->
+    <div id="desktop">
+        <div id="desktop-wallpaper"></div>
+        <div class="desktop-content">
+            <!-- Desktop icons would go here -->
+        </div>
+    </div>
+
+    <!-- TASKBAR (global, outside desktop) -->
+    <div class="taskbar-trigger"></div>
+    <div class="taskbar">
+        <button class="start-button">
+            <span class="start-icon"></span>
+        </button>
+
+        <div class="taskbar-apps">
+            <!-- Pinned/Running apps would appear here -->
+        </div>
+
+        <div class="system-tray">
+            <div class="system-icon eject-icon" id="eject-icon" style="display: none;"
+                title="Safely Remove Hardware and Eject Media">
+                <img id="eject-icon-img" src="resources/images/tray/eject/taskbar.png" alt="Eject">
+            </div>
+            <div class="system-icon volume-icon" id="volume-icon">
+                <img id="volume-icon-img" src="resources/images/tray/volume/vol_3.png" alt="Volume">
+            </div>
+            <div class="system-icon network-icon" id="network-icon">
+                <img id="network-icon-img" src="resources/images/tray/network/wireless_5.png" alt="Network">
+            </div>
+            <div class="system-icon battery-icon" id="battery-icon">
+                <div id="battery-icon-img"></div>
+            </div>
+            <div class="clock">
+                <span>10:30 AM</span>
+                <span>10/9/2025</span>
+            </div>
+        </div>
+
+        <!-- VOLUME FLYOUT -->
+        <div class="classic-flyout volume-flyout" id="volume-flyout">
+            <div class="classic-flyout-content">
+                <div class="volume-icon-display">
+                    <span class="mif-volume-high" id="volume-flyout-icon"></span>
+                </div>
+                <div class="volume-slider-container">
+                    <input type="range" class="volume-slider" id="volume-slider" min="0" max="100" value="50"
+                        orient="vertical">
+                    <div class="volume-level-display" id="volume-level-display">50</div>
+                </div>
+                <div class="mixer"><a href="">Mixer</a></div>
+            </div>
+        </div>
+
+        <!-- CLOCK FLYOUT -->
+        <div class="classic-flyout clock-flyout" id="clock-flyout">
+            <div class="classic-flyout-content">
+                <div class="clock-flyout-date-header" id="clock-flyout-date-header">
+                    <!-- e.g., Monday, October 13, 2025 -->
+                </div>
+                <div class="clock-flyout-main">
+                    <div class="clock-flyout-calendar">
+                        <div class="calendar-header">
+                            <button class="calendar-nav-button calendar-prev" id="calendar-prev">‹</button>
+                            <div class="calendar-month-year" id="calendar-month-year">
+                                <!-- e.g., October 2025 -->
+                            </div>
+                            <button class="calendar-nav-button calendar-next" id="calendar-next">›</button>
+                        </div>
+                        <div class="calendar-weekdays">
+                            <div class="calendar-weekday">Su</div>
+                            <div class="calendar-weekday">Mo</div>
+                            <div class="calendar-weekday">Tu</div>
+                            <div class="calendar-weekday">We</div>
+                            <div class="calendar-weekday">Th</div>
+                            <div class="calendar-weekday">Fr</div>
+                            <div class="calendar-weekday">Sa</div>
+                        </div>
+                        <div class="calendar-days" id="calendar-days">
+                            <!-- Calendar days will be generated here -->
+                        </div>
+                    </div>
+                    <div class="clock-flyout-analog">
+                        <canvas class="analog-clock-canvas" id="analog-clock-canvas" width="130" height="130"></canvas>
+                        <div class="digital-time" id="digital-time">
+                            <!-- e.g., 9:36:28 PM -->
+                        </div>
+                    </div>
+                </div>
+                <div class="clock-flyout-footer">
+                    <a href="#" class="clock-settings-link">Change date and time settings...</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- BATTERY FLYOUT -->
+        <div class="classic-flyout battery-flyout" id="battery-flyout">
+            <div class="classic-flyout-content">
+            </div>
+        </div>
+
+        <!-- EJECT ICON CONTEXT MENU -->
+        <div id="eject-icon-context-menu" class="classic-context-menu"
+            style="display: none; position: fixed; z-index: 200010;">
+            <!-- Menu items will be dynamically populated -->
+        </div>
+    </div>
+
+    <!-- TASKBAR CONTEXT MENU -->
+    <div id="taskbar-context-menu" class="classic-context-menu taskbar-context-menu" style="display: none;">
+        <div class="classic-context-menu-item taskbar-context-menu-button" data-action="task-manager">
+            <span class="classic-context-menu-item-icon"></span>
+            <span class="classic-context-menu-item-text">Task Manager</span>
+        </div>
+        <div class="classic-context-menu-item taskbar-context-menu-button taskbar-lock-toggle"
+            data-action="lock-taskbar">
+            <span class="classic-context-menu-item-icon taskbar-lock-check">✓</span>
+            <span class="classic-context-menu-item-text">Lock the taskbar</span>
+        </div>
+        <div class="classic-context-menu-item taskbar-context-menu-button" data-action="properties">
+            <span class="classic-context-menu-item-icon"></span>
+            <span class="classic-context-menu-item-text">Properties</span>
+        </div>
+    </div>
+
+    <!-- TASKBAR ITEM CONTEXT MENU -->
+    <div id="taskbar-item-context-menu" class="taskbar-item-context-menu" style="display: none;">
+        <!-- Menu items will be dynamically populated -->
+    </div>
+
+    <!-- QUICK LINKS MENU (Win+X) -->
+    <div id="quick-links-menu" class="classic-context-menu quick-links-menu" style="display: none;">
+        <div class="classic-context-menu-item quick-links-menu-item" data-action="control-panel">
+            <span class="classic-context-menu-item-icon"></span>
+            <span class="classic-context-menu-item-text">Control Panel</span>
+        </div>
+        <div class="classic-context-menu-item quick-links-menu-item" data-action="file-explorer">
+            <span class="classic-context-menu-item-icon"></span>
+            <span class="classic-context-menu-item-text">File Explorer</span>
+        </div>
+        <div class="classic-context-menu-item quick-links-menu-item" data-action="search">
+            <span class="classic-context-menu-item-icon"></span>
+            <span class="classic-context-menu-item-text">Search</span>
+        </div>
+        <div class="classic-context-menu-item quick-links-menu-item" data-action="run">
+            <span class="classic-context-menu-item-icon"></span>
+            <span class="classic-context-menu-item-text">Run</span>
+        </div>
+        <div class="classic-context-menu-separator"></div>
+        <div class="classic-context-menu-item quick-links-menu-item" data-action="task-manager">
+            <span class="classic-context-menu-item-icon"></span>
+            <span class="classic-context-menu-item-text">Task Manager</span>
+        </div>
+        <div class="classic-context-menu-item quick-links-menu-item" data-action="device-manager">
+            <span class="classic-context-menu-item-icon"></span>
+            <span class="classic-context-menu-item-text">Device Manager</span>
+        </div>
+        <div class="classic-context-menu-item quick-links-menu-item" data-action="disk-management">
+            <span class="classic-context-menu-item-icon"></span>
+            <span class="classic-context-menu-item-text">Disk Management</span>
+        </div>
+        <div class="classic-context-menu-item quick-links-menu-item" data-action="computer-management">
+            <span class="classic-context-menu-item-icon"></span>
+            <span class="classic-context-menu-item-text">Computer Management</span>
+        </div>
+        <div class="classic-context-menu-separator"></div>
+        <div class="classic-context-menu-item quick-links-menu-item" data-action="command-prompt">
+            <span class="classic-context-menu-item-icon"></span>
+            <span class="classic-context-menu-item-text">Command Prompt</span>
+        </div>
+        <div class="classic-context-menu-item quick-links-menu-item" data-action="command-prompt-admin">
+            <span class="classic-context-menu-item-icon"></span>
+            <span class="classic-context-menu-item-text">Command Prompt (Admin)</span>
+        </div>
+        <div class="classic-context-menu-separator"></div>
+        <div class="classic-context-menu-item quick-links-menu-item" data-action="power-options">
+            <span class="classic-context-menu-item-icon"></span>
+            <span class="classic-context-menu-item-text">Power Options</span>
+        </div>
+        <div class="classic-context-menu-item quick-links-menu-item" data-action="event-viewer">
+            <span class="classic-context-menu-item-icon"></span>
+            <span class="classic-context-menu-item-text">Event Viewer</span>
+        </div>
+        <div class="classic-context-menu-item quick-links-menu-item" data-action="system">
+            <span class="classic-context-menu-item-icon"></span>
+            <span class="classic-context-menu-item-text">System</span>
+        </div>
+        <div class="classic-context-menu-separator"></div>
+        <div class="classic-context-menu-item has-submenu">
+            <span class="classic-context-menu-item-icon"></span>
+            <span class="classic-context-menu-item-text">Shut down or sign out</span>
+            <span class="classic-context-menu-submenu-arrow">▶</span>
+            <div class="classic-context-submenu classic-context-menu">
+                <div class="classic-context-menu-item quick-links-menu-item" data-action="sign-out">
+                    <span class="classic-context-menu-item-icon"></span>
+                    <span class="classic-context-menu-item-text">Sign out</span>
+                </div>
+                <div class="classic-context-menu-separator"></div>
+                <div class="classic-context-menu-item quick-links-menu-item" data-action="sleep">
+                    <span class="classic-context-menu-item-icon"></span>
+                    <span class="classic-context-menu-item-text">Sleep</span>
+                </div>
+                <div class="classic-context-menu-item quick-links-menu-item" data-action="shut-down">
+                    <span class="classic-context-menu-item-icon"></span>
+                    <span class="classic-context-menu-item-text">Shut down</span>
+                </div>
+                <div class="classic-context-menu-item quick-links-menu-item" data-action="restart">
+                    <span class="classic-context-menu-item-icon"></span>
+                    <span class="classic-context-menu-item-text">Restart</span>
+                </div>
+            </div>
+        </div>
+        <div class="classic-context-menu-item quick-links-menu-item" data-action="desktop">
+            <span class="classic-context-menu-item-icon"></span>
+            <span class="classic-context-menu-item-text">Desktop</span>
+        </div>
+    </div>
+
+    <!-- FLOATING START BUTTON -->
+    <div class="start-button-trigger bottom-left"></div>
+    <div class="floating-start-button-container">
+        <button class="start-button floating-start-button">
+            <span class="start-icon"></span>
+        </button>
+    </div>
+
+    <!-- CHARMS BAR -->
+    <div class="charms-trigger top"></div>
+    <div class="charms-trigger bottom"></div>
+    <div class="charms-bar">
+        <div class="charms-bar-background"></div>
+        <div class="charms-icons">
+            <div class="charms-icon" data-charm="search">
+                <span class="charms-icon-image charms-icon-image--search"></span>
+                <span class="charms-icon-label">Search</span>
+            </div>
+            <div class="charms-icon" data-charm="share">
+                <span class="charms-icon-image charms-icon-image--share"></span>
+                <span class="charms-icon-label">Share</span>
+            </div>
+            <div class="charms-icon" data-charm="start">
+                <span class="charms-icon-image charms-icon-image--start charms-start-icon"></span>
+                <span class="charms-icon-label">Start</span>
+            </div>
+            <div class="charms-icon" data-charm="devices">
+                <span class="charms-icon-image charms-icon-image--devices"></span>
+                <span class="charms-icon-label">Devices</span>
+            </div>
+            <div class="charms-icon" data-charm="settings">
+                <span class="charms-icon-image charms-icon-image--settings"></span>
+                <span class="charms-icon-label">Settings</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- CHARMS DATE/TIME PANEL -->
+    <div class="charms-datetime-panel">
+        <div class="charms-datetime-content">
+            <div class="charms-time">10:30</div>
+            <div class="charms-date">
+                <div class="charms-date-weekday">Thursday</div>
+                <div class="charms-date-monthday">October 9</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODERN FLYOUTS -->
+    <div class="modern-flyout" data-flyout="search">
+        <div class="modern-flyout-header">Search</div>
+        <div class="modern-flyout-content">
+            <!-- Search modern flyout content -->
+        </div>
+    </div>
+
+    <div class="modern-flyout" data-flyout="share">
+        <div class="modern-flyout-header">Share</div>
+        <div class="modern-flyout-content">
+            <!-- Share modern flyout content -->
+        </div>
+    </div>
+
+    <div class="modern-flyout" data-flyout="devices">
+        <div class="modern-flyout-header">Devices</div>
+        <div class="modern-flyout-content">
+            <!-- Devices modern flyout content -->
+        </div>
+    </div>
+
+    <div class="modern-flyout" data-flyout="network">
+        <div class="modern-flyout-header">Network</div>
+        <div class="modern-flyout-content">
+            <!-- Network modern flyout content -->
+        </div>
+    </div>
+
+    <div class="modern-flyout" data-flyout="settings">
+        <div class="settings-flyout-panel-container">
+            <!-- Main Settings Panel (includes header, content, footer) -->
+            <div class="settings-panel main-settings">
+                <div class="modern-flyout-header">
+                    <span class="modern-flyout-header-text">Settings</span>
+                </div>
+                <div class="modern-flyout-content">
+                    <div class="settings-app-name" id="settings-app-name">Desktop</div>
+                    <!-- Start Screen specific settings -->
+                    <div class="settings-menu-items" id="settings-menu-items">
+                        <!-- Menu items will be dynamically added here based on context -->
+                    </div>
+                </div>
+                <!-- Power Options Menu -->
+                <div class="modern-dropdown settings-power-menu">
+                    <div class="modern-dropdown-item settings-power-menu-item" data-action="sleep">Sleep</div>
+                    <div class="modern-dropdown-item settings-power-menu-item" data-action="shut-down">Shut down</div>
+                    <div class="modern-dropdown-item settings-power-menu-item" data-action="restart">Restart</div>
+                </div>
+                <div class="settings-controls">
+                    <div class="settings-controls-grid">
+                        <div class="settings-control-item" data-control="network">
+                            <span class="mif-network-cell"></span>
+                            <span class="settings-control-label">Network</span>
+                        </div>
+                        <div class="settings-control-item" data-control="volume">
+                            <span class="mif-volume-high"></span>
+                            <span class="settings-control-label">Volume</span>
+                            <div class="settings-slider-popup" data-popup="volume" aria-hidden="true">
+                                <div class="settings-slider-track-wrapper">
+                                    <input type="range" min="0" max="100" value="50" step="1"
+                                        class="settings-slider" id="settings-volume-slider" aria-label="Adjust volume">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="settings-control-item" data-control="brightness">
+                            <span class="mif-brightness"></span>
+                            <span class="settings-control-label">Brightness</span>
+                            <div class="settings-slider-popup" data-popup="brightness" aria-hidden="true">
+                                <div class="settings-slider-track-wrapper">
+                                    <input type="range" min="0" max="100" value="100" step="1"
+                                        class="settings-slider" id="settings-brightness-slider"
+                                        aria-label="Adjust screen brightness">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="settings-control-item" data-control="notifications">
+                            <span class="mif-notifications"></span>
+                            <span class="settings-control-label">Notifications</span>
+                        </div>
+                        <div class="settings-control-item" data-control="power">
+                            <span class="mif-settings-power"></span>
+                            <span class="settings-control-label">Power</span>
+                        </div>
+                        <div class="settings-control-item" data-control="keyboard">
+                            <span class="mif-keyboard"></span>
+                            <span class="settings-control-label">Keyboard</span>
+                        </div>
+                    </div>
+                    <div class="settings-pc-link">
+                        <a href="#" class="pc-settings-link">Change PC settings</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Personalize Panel (includes header, content, no footer) -->
+            <div class="settings-panel personalize-panel">
+                <div class="modern-flyout-header">
+                    <button class="personalize-back-button" title="Back to Settings">
+                        <span class="personalize-back-icon">‹</span>
+                    </button>
+                    <span class="modern-flyout-header-text">Personalize</span>
+                </div>
+                <div class="modern-flyout-content">
+                    <div class="personalize-section">
+                        <div class="personalize-section-title">Pattern</div>
+                        <div class="personalize-patterns-grid" id="personalize-patterns-grid">
+                            <!-- Pattern thumbnails will be loaded here -->
+                        </div>
+                    </div>
+                    <div class="personalize-section">
+                        <div class="personalize-section-title">Color</div>
+                        <div class="personalize-variants-grid" id="personalize-variants-grid">
+                            <!-- Variant thumbnails will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tiles Panel (includes header, content, no footer) -->
+            <div class="settings-panel tiles-panel">
+                <div class="modern-flyout-header">
+                    <button class="tiles-back-button" title="Back to Settings">
+                        <span class="tiles-back-icon">‹</span>
+                    </button>
+                    <span class="modern-flyout-header-text">Tiles</span>
+                </div>
+                <div class="modern-flyout-content">
+                    <div class="tiles-settings-section">
+                        <div class="tiles-setting-item">
+                            <div class="tiles-setting-label">Show more tiles on the Start screen</div>
+                            <div class="tiles-setting-control">
+                                <span class="tiles-toggle-label" id="tiles-toggle-label">No</span>
+                                <label class="tiles-toggle-switch">
+                                    <input type="checkbox" id="tiles-toggle-input">
+                                    <span class="tiles-toggle-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Fix for jQuery in Electron with nodeIntegration -->
+    <script>
+        if (typeof module === 'object') {
+            window.module = module;
+            module = undefined;
+        }
+        if (typeof exports === 'object') {
+            window.exports = exports;
+            exports = undefined;
+        }
+    </script>
+    <script src="vendor/jquery-3.7.1.min.js"></script>
+    <script>
+        if (window.module) module = window.module;
+        if (window.exports) exports = window.exports;
+    </script>
+    <!-- Sortable.js for drag-and-drop functionality -->
+    <script src="vendor/sortable.min.js"></script>
+    <script src="registry/tile-layout-registry.js"></script>
+    <script src="registry/store-registry.js"></script>
+    <script src="registry/ie-registry.js"></script>
+    <script src="registry/explorer-registry.js"></script>
+    <script src="registry/settings-registry.js"></script>
+    <script src="registry/run-registry.js"></script>
+    <script src="wallpaper-color.js"></script>
+    <script src="apps/classic/personalization/restore-colors.js"></script>
+    <script src="apps-manager.js"></script>
+    <script src="tile.js"></script>
+    <script src="tile-drag.js"></script>
+    <script src="components/system_sounds/system-sounds.js"></script>
+    <script src="components/notification/notification.js"></script>
+    <script src="components/system_dialog/system-dialog.js"></script>
+    <script src="components/device_connectivity/drive-notifications.js"></script>
+    <script src="components/device_connectivity/usb-eject-monitor.js"></script>
+    <script src="components/classic-flyout-manager.js"></script>
+    <script src="components/taskbar-flyouts-init.js"></script>
+    <script src="components/volume/volume-ui.js"></script>
+    <script src="components/clock/clock-flyout.js"></script>
+    <script src="components/network/network-monitor.js"></script>
+    <script src="components/battery/battery-monitor.js"></script>
+    <script src="components/explorer/file-associations.js"></script>
+    <script src="components/explorer/explorer-engine.js"></script>
+    <script src="taskbar-item-context-menu.js"></script>
+    <script src="taskbar-drag.js"></script>
+    <script src="app.js"></script>
+</body>
+
+</html>

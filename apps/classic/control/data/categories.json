@@ -1,0 +1,124 @@
+{
+  "categories": [
+    {
+      "id": "system-security",
+      "name": "System and Security",
+      "icon": "mif-security",
+      "quickLinks": [
+        {
+          "text": "Review your computer's status",
+          "appletId": "action-center"
+        },
+        {
+          "text": "Save backup copies of your files with File History",
+          "appletId": "file-history"
+        },
+        {
+          "text": "Find and fix problems",
+          "appletId": "troubleshooting"
+        }
+      ]
+    },
+    {
+      "id": "network-internet",
+      "name": "Network and Internet",
+      "icon": "mif-earth",
+      "quickLinks": [
+        {
+          "text": "View network status and tasks",
+          "appletId": "network-sharing"
+        }
+      ]
+    },
+    {
+      "id": "hardware-sound",
+      "name": "Hardware and Sound",
+      "icon": "mif-printer",
+      "quickLinks": [
+        {
+          "text": "View devices and printers",
+          "appletId": "devices-printers"
+        },
+        {
+          "text": "Adjust commonly used mobility settings",
+          "appletId": "windows-mobility-center"
+        }
+      ]
+    },
+    {
+      "id": "programs",
+      "name": "Programs",
+      "icon": "mif-apps",
+      "quickLinks": [
+        {
+          "text": "Uninstall a program",
+          "appletId": "programs-features"
+        }
+      ]
+    },
+    {
+      "id": "user-accounts",
+      "name": "User Accounts and Family Safety",
+      "icon": "mif-users",
+      "quickLinks": [
+        {
+          "text": "Change account type",
+          "appletId": "user-accounts"
+        },
+        {
+          "text": "Set up Family Safety for any user",
+          "appletId": "family-safety"
+        }
+      ]
+    },
+    {
+      "id": "appearance",
+      "name": "Appearance and Personalization",
+      "icon": "mif-paint",
+      "quickLinks": [
+        {
+          "text": "Change the theme",
+          "appletId": "personalization"
+        },
+        {
+          "text": "Change desktop background",
+          "appletId": "personalization"
+        },
+        {
+          "text": "Adjust screen resolution",
+          "appletId": "display"
+        }
+      ]
+    },
+    {
+      "id": "clock-region",
+      "name": "Clock, Language, and Region",
+      "icon": "mif-alarm",
+      "quickLinks": [
+        {
+          "text": "Change input methods",
+          "appletId": "region"
+        },
+        {
+          "text": "Change date, time, or number formats",
+          "appletId": "region"
+        }
+      ]
+    },
+    {
+      "id": "ease-of-access",
+      "name": "Ease of Access",
+      "icon": "mif-accessibility",
+      "quickLinks": [
+        {
+          "text": "Let Windows suggest settings",
+          "appletId": "ease-of-access-center"
+        },
+        {
+          "text": "Optimize visual display",
+          "appletId": "ease-of-access-center"
+        }
+      ]
+    }
+  ]
+}

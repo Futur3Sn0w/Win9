@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Windows Photo Viewer</title>
+    <link rel="stylesheet" href="photo-viewer.exe.css">
+    <link rel="stylesheet" href="../../../css/classic-windows.css">
+    <link rel="stylesheet" href="../../../css/classic-controls.css">
+    <link rel="stylesheet" href="../../../css/styles.css">
+    <link rel="stylesheet" href="../../../css/fonts.css">
+</head>
+
+<body>
+    <div class="photo-viewer-window">
+        <!-- Command Bar -->
+        <div class="classic-command-bar">
+            <div class="classic-command-bar-item" data-menu="file">
+                <span class="classic-command-bar-label"><u>F</u>ile</span>
+                <div class="classic-command-bar-dropdown classic-context-menu">
+                    <div class="classic-context-menu-item">
+                        <div class="classic-context-menu-item-icon"></div>
+                        <div class="classic-context-menu-item-text">Open</div>
+                        <span class="classic-command-bar-shortcut">Ctrl+O</span>
+                    </div>
+                    <div class="classic-context-menu-separator"></div>
+                    <div class="classic-context-menu-item">
+                        <div class="classic-context-menu-item-icon"></div>
+                        <div class="classic-context-menu-item-text">Make a copy</div>
+                    </div>
+                    <div class="classic-context-menu-item">
+                        <div class="classic-context-menu-item-icon"></div>
+                        <div class="classic-context-menu-item-text">Properties</div>
+                    </div>
+                    <div class="classic-context-menu-separator"></div>
+                    <div class="classic-context-menu-item" id="exit-item">
+                        <div class="classic-context-menu-item-icon"></div>
+                        <div class="classic-context-menu-item-text">Exit</div>
+                    </div>
+                </div>
+            </div>
+            <div class="classic-command-bar-item" data-menu="print">
+                <span class="classic-command-bar-label"><u>P</u>rint</span>
+                <div class="classic-command-bar-dropdown classic-context-menu">
+                    <div class="classic-context-menu-item">
+                        <div class="classic-context-menu-item-icon"></div>
+                        <div class="classic-context-menu-item-text">Print...</div>
+                        <span class="classic-command-bar-shortcut">Ctrl+P</span>
+                    </div>
+                    <div class="classic-context-menu-item">
+                        <div class="classic-context-menu-item-icon"></div>
+                        <div class="classic-context-menu-item-text">Order prints...</div>
+                    </div>
+                </div>
+            </div>
+            <div class="classic-command-bar-item" data-menu="email">
+                <span class="classic-command-bar-label"><u>E</u>-mail</span>
+            </div>
+            <div class="classic-command-bar-item" data-menu="burn">
+                <span class="classic-command-bar-label"><u>B</u>urn</span>
+            </div>
+            <div class="classic-command-bar-item" data-menu="open">
+                <span class="classic-command-bar-label"><u>O</u>pen</span>
+            </div>
+        </div>
+
+        <!-- Image Display Area -->
+        <div class="photo-viewer-content">
+            <div class="photo-viewer-image-container" id="image-container">
+                <img id="main-image" src="" alt="Photo" class="photo-viewer-image">
+            </div>
+        </div>
+
+        <!-- Control Bar -->
+        <div class="photo-viewer-controls">
+            <div class="controls-backplate" aria-hidden="true">
+                <div class="backplate-segment backplate-left-edge"></div>
+                <div class="backplate-segment backplate-stretch"></div>
+                <div class="backplate-segment backplate-center"></div>
+                <div class="backplate-segment backplate-stretch"></div>
+                <div class="backplate-segment backplate-right-edge"></div>
+            </div>
+
+            <button class="control-button sprite-button sprite-zoom" id="zoom-toggle-btn" title="Zoom"></button>
+
+            <button class="control-button sprite-button sprite-actualsize" id="actual-size-btn"
+                title="Actual size (Ctrl+0)"></button>
+
+
+            <button class="control-button sprite-button sprite-prev nav-button" id="prev-btn"
+                title="Previous picture (Left Arrow)" aria-label="Previous picture"></button>
+
+            <button class="control-button sprite-button sprite-slideshow slideshow-button" id="slideshow-btn"
+                title="Play slide show (F5)"></button>
+
+            <button class="control-button sprite-button sprite-next nav-button" id="next-btn"
+                title="Next picture (Right Arrow)" aria-label="Next picture"></button>
+
+
+            <button class="control-button sprite-button sprite-rotateL" id="rotate-left-btn"
+                title="Rotate counter-clockwise (Ctrl+,)" disabled></button>
+
+            <button class="control-button sprite-button sprite-rotateR" id="rotate-right-btn"
+                title="Rotate clockwise (Ctrl+.)" disabled></button>
+
+            <div class="control-separator"></div>
+
+            <button class="control-button sprite-button sprite-delete" id="delete-btn" title="Delete (Del)"></button>
+        </div>
+
+        <!-- Zoom Control Panel (initially hidden) -->
+        <div class="photo-viewer-zoom-panel" id="zoom-panel">
+            <div class="zoom-panel-content">
+                <button class="zoom-button" id="zoom-out-btn">-</button>
+                <input type="range" id="zoom-slider" min="10" max="300" value="100" step="10">
+                <button class="zoom-button" id="zoom-in-btn">+</button>
+                <span class="zoom-percentage" id="zoom-percentage">100%</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function () {
+            // IIFE to prevent global scope pollution when using loadDirect
+            const APP_ID = 'photo-viewer';
+            let currentImagePath = null;
+            let currentFolder = null;
+            let folderImages = [];
+            let currentIndex = 0;
+            let zoomLevel = 100;
+            let slideshowInterval = null;
+            let isPlaying = false;
+
+            // Listen for file opening - works for both iframe and loadDirect modes
+            // For iframe mode: postMessage
+            window.addEventListener('message', (event) => {
+                console.log('[Photo Viewer] Received postMessage:', event.data);
+                if (event.data.action === 'openFile' && event.data.filePath) {
+                    console.log('[Photo Viewer] Opening file from postMessage:', event.data.filePath);
+                    loadImage(event.data.filePath);
+                }
+            });
+
+            // For loadDirect mode: CustomEvent
+            document.addEventListener('openFile', (event) => {
+                console.log('[Photo Viewer] Received CustomEvent:', event.detail);
+                if (event.detail && event.detail.filePath) {
+                    console.log('[Photo Viewer] Opening file from CustomEvent:', event.detail.filePath);
+                    loadImage(event.detail.filePath);
+                }
+            });
+
+            // Command Bar Menu Handling
+            document.querySelectorAll('.classic-command-bar-item').forEach(item => {
+                item.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const wasActive = item.classList.contains('active');
+
+                    // Close all menus
+                    document.querySelectorAll('.classic-command-bar-item').forEach(i => {
+                        i.classList.remove('active');
+                    });
+
+                    // Toggle current menu
+                    if (!wasActive && item.querySelector('.classic-command-bar-dropdown')) {
+                        item.classList.add('active');
+                    }
+                });
+            });
+
+            // Close menus when clicking outside
+            document.addEventListener('click', () => {
+                document.querySelectorAll('.classic-command-bar-item').forEach(item => {
+                    item.classList.remove('active');
+                });
+            });
+
+            // Exit menu item - works for both iframe and loadDirect modes
+            document.getElementById('exit-item')?.addEventListener('click', () => {
+                if (window.closeClassicApp) {
+                    // loadDirect mode - call global function
+                    window.closeClassicApp(APP_ID);
+                } else {
+                    // iframe mode - use postMessage
+                    window.parent.postMessage({ action: 'closeClassicApp', appId: APP_ID }, '*');
+                }
+            });
+
+            // Zoom Controls
+            const zoomPanel = document.getElementById('zoom-panel');
+            const zoomToggleBtn = document.getElementById('zoom-toggle-btn');
+            const zoomSlider = document.getElementById('zoom-slider');
+            const zoomPercentage = document.getElementById('zoom-percentage');
+            const mainImage = document.getElementById('main-image');
+
+            zoomToggleBtn.addEventListener('click', () => {
+                zoomPanel.classList.toggle('visible');
+            });
+
+            function updateZoom(newZoom) {
+                zoomLevel = Math.max(10, Math.min(300, newZoom));
+                zoomSlider.value = zoomLevel;
+                zoomPercentage.textContent = zoomLevel + '%';
+
+                const imageContainer = document.getElementById('image-container');
+
+                if (zoomLevel === 100) {
+                    // At 100%, fit image to container
+                    mainImage.style.width = '';
+                    mainImage.style.height = '';
+                    mainImage.style.maxWidth = '100%';
+                    mainImage.style.maxHeight = '100%';
+                    imageContainer.style.overflow = 'hidden';
+                } else {
+                    // When zoomed, use natural dimensions scaled by zoom level
+                    const img = mainImage;
+                    if (img.naturalWidth && img.naturalHeight) {
+                        const scaledWidth = (img.naturalWidth * zoomLevel) / 100;
+                        const scaledHeight = (img.naturalHeight * zoomLevel) / 100;
+
+                        mainImage.style.width = scaledWidth + 'px';
+                        mainImage.style.height = scaledHeight + 'px';
+                        mainImage.style.maxWidth = 'none';
+                        mainImage.style.maxHeight = 'none';
+                        imageContainer.style.overflow = 'auto';
+                    }
+                }
+            }
+
+            zoomSlider.addEventListener('input', (e) => {
+                updateZoom(parseInt(e.target.value));
+            });
+
+            document.getElementById('zoom-in-btn').addEventListener('click', () => {
+                updateZoom(zoomLevel + 10);
+            });
+
+            document.getElementById('zoom-out-btn').addEventListener('click', () => {
+                updateZoom(zoomLevel - 10);
+            });
+
+            document.getElementById('actual-size-btn').addEventListener('click', () => {
+                updateZoom(100);
+            });
+
+            // Image Navigation
+            function loadImage(path) {
+                if (!path) return;
+
+                console.log('[Photo Viewer] Loading image, original path:', path);
+                currentImagePath = path;
+
+                // Convert absolute file path to file:// URL if needed
+                let imageUrl = path;
+                if (path.startsWith('/') || /^[A-Z]:/i.test(path)) {
+                    // Absolute path - convert to file:// URL
+                    imageUrl = 'file://' + path;
+                }
+
+                console.log('[Photo Viewer] Setting image src to:', imageUrl);
+                mainImage.src = imageUrl;
+
+                // Add error handler
+                mainImage.onerror = function () {
+                    console.error('[Photo Viewer] Failed to load image:', imageUrl);
+                };
+
+                // Wait for image to load before resetting zoom
+                mainImage.onload = function () {
+                    console.log('[Photo Viewer] Image loaded successfully');
+                    zoomLevel = 100;
+                    updateZoom(100);
+                };
+
+                // Detect folder and load other images
+                detectFolderImages(path);
+            }
+
+            function detectFolderImages(imagePath) {
+                // This would need to communicate with the parent to get folder contents
+                // For now, we'll set up the structure
+                window.parent.postMessage({
+                    action: 'getFolderImages',
+                    appId: APP_ID,
+                    imagePath: imagePath
+                }, '*');
+            }
+
+            // Navigation buttons
+            const prevButton = document.getElementById('prev-btn');
+            const nextButton = document.getElementById('next-btn');
+
+            prevButton.addEventListener('click', () => {
+                if (currentIndex > 0) {
+                    currentIndex--;
+                    updateNavigationButtons();
+                    loadImage(folderImages[currentIndex]);
+                }
+            });
+
+            nextButton.addEventListener('click', () => {
+                if (currentIndex < folderImages.length - 1) {
+                    currentIndex++;
+                    updateNavigationButtons();
+                    loadImage(folderImages[currentIndex]);
+                }
+            });
+
+            const spriteButtons = document.querySelectorAll('.control-button.sprite-button');
+            spriteButtons.forEach((button) => {
+                const disableHoverFade = () => button.classList.add('sprite-no-hover-fade');
+                const enableHoverFade = () => button.classList.remove('sprite-no-hover-fade');
+
+                button.addEventListener('pointerdown', (event) => {
+                    if (button.disabled) {
+                        return;
+                    }
+                    disableHoverFade();
+                });
+
+                const pointerUpHandler = () => {
+                    if (button.disabled) {
+                        enableHoverFade();
+                        return;
+                    }
+                    requestAnimationFrame(() => {
+                        enableHoverFade();
+                    });
+                };
+
+                button.addEventListener('pointerup', pointerUpHandler);
+                button.addEventListener('pointercancel', enableHoverFade);
+                button.addEventListener('pointerleave', enableHoverFade);
+                button.addEventListener('blur', enableHoverFade);
+
+                button.addEventListener('keydown', (event) => {
+                    if (event.key === ' ' || event.key === 'Enter') {
+                        disableHoverFade();
+                    }
+                });
+
+                button.addEventListener('keyup', (event) => {
+                    if (event.key === ' ' || event.key === 'Enter') {
+                        requestAnimationFrame(() => {
+                            enableHoverFade();
+                        });
+                    }
+                });
+            });
+
+            // Slideshow
+            document.getElementById('slideshow-btn').addEventListener('click', () => {
+                if (isPlaying) {
+                    stopSlideshow();
+                } else {
+                    startSlideshow();
+                }
+            });
+
+            function startSlideshow() {
+                isPlaying = true;
+                document.getElementById('slideshow-btn').querySelector('.control-icon').textContent = '⏸';
+                slideshowInterval = setInterval(() => {
+                    if (currentIndex < folderImages.length - 1) {
+                        currentIndex++;
+                    } else {
+                        currentIndex = 0;
+                    }
+                    updateNavigationButtons();
+                    loadImage(folderImages[currentIndex]);
+                }, 3000); // 3 seconds per image
+            }
+
+            function stopSlideshow() {
+                isPlaying = false;
+                document.getElementById('slideshow-btn').querySelector('.control-icon').textContent = '▶';
+                if (slideshowInterval) {
+                    clearInterval(slideshowInterval);
+                    slideshowInterval = null;
+                }
+            }
+
+            // Delete button
+            document.getElementById('delete-btn').addEventListener('click', async () => {
+                if (!currentImagePath) return;
+
+                // Call system dialog for confirmation
+                window.parent.postMessage({
+                    action: 'system_dialog',
+                    appId: APP_ID,
+                    dialogType: 'confirm',
+                    message: 'Are you sure you want to move this file to the Recycle Bin?',
+                    title: 'Delete File',
+                    callback: 'deleteImageConfirmed'
+                }, '*');
+            });
+
+            // Keyboard shortcuts
+            document.addEventListener('keydown', (e) => {
+                switch (e.key) {
+                    case 'ArrowLeft':
+                        prevButton.click();
+                        break;
+                    case 'ArrowRight':
+                        nextButton.click();
+                        break;
+                    case 'F5':
+                        document.getElementById('slideshow-btn').click();
+                        e.preventDefault();
+                        break;
+                    case 'Delete':
+                        document.getElementById('delete-btn').click();
+                        break;
+                }
+
+                // Ctrl shortcuts
+                if (e.ctrlKey) {
+                    switch (e.key) {
+                        case '0':
+                            document.getElementById('actual-size-btn').click();
+                            e.preventDefault();
+                            break;
+                    }
+                }
+            });
+
+            // Listen for messages from parent
+            window.addEventListener('message', (event) => {
+                const { action, data } = event.data;
+
+                switch (action) {
+                    case 'openImage':
+                        loadImage(data.imagePath);
+                        break;
+                    case 'folderImagesResult':
+                        folderImages = data.images || [];
+                        currentIndex = folderImages.indexOf(currentImagePath);
+                        if (currentIndex === -1) currentIndex = 0;
+                        updateNavigationButtons();
+                        break;
+                    case 'deleteImageConfirmed':
+                        if (data.confirmed) {
+                            deleteCurrentImage();
+                        }
+                        break;
+                }
+            });
+
+            function updateNavigationButtons() {
+                const hasPrev = currentIndex > 0 && folderImages.length > 0;
+                const hasNext = currentIndex < folderImages.length - 1 && folderImages.length > 0;
+
+                prevButton.disabled = !hasPrev;
+                nextButton.disabled = !hasNext;
+
+                if (hasPrev) {
+                    prevButton.classList.remove('sprite-no-hover-fade');
+                } else {
+                    prevButton.classList.add('sprite-no-hover-fade');
+                }
+
+                if (hasNext) {
+                    nextButton.classList.remove('sprite-no-hover-fade');
+                } else {
+                    nextButton.classList.add('sprite-no-hover-fade');
+                }
+            }
+
+            updateNavigationButtons();
+
+            function deleteCurrentImage() {
+                window.parent.postMessage({
+                    action: 'deleteFile',
+                    appId: APP_ID,
+                    filePath: currentImagePath
+                }, '*');
+
+                // Move to next image or close if no more images
+                if (folderImages.length > 1) {
+                    folderImages.splice(currentIndex, 1);
+                    if (currentIndex >= folderImages.length) {
+                        currentIndex = folderImages.length - 1;
+                    }
+                    updateNavigationButtons();
+                    loadImage(folderImages[currentIndex]);
+                } else {
+                    updateNavigationButtons();
+                    window.parent.postMessage({ action: 'closeClassicApp', appId: APP_ID }, '*');
+                }
+            }
+
+            // Initialize - notify parent that we're ready
+            window.parent.postMessage({
+                action: 'classicAppReady',
+                appId: APP_ID
+            }, '*');
+        })(); // End IIFE
+    </script>
+</body>
+
+</html>

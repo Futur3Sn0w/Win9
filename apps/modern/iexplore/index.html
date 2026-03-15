@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Internet Explorer</title>
+    <!-- <link rel="stylesheet" href="../../../css/modern-ui.css"> -->
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #000;
+            color: #fff;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Main container */
+        #browser-container {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        /* Webview */
+        webview {
+            flex: 1;
+            width: 100%;
+            border: none;
+            background: #fff;
+        }
+
+        /* Custom bar styling for IE */
+        .ie-app-bar {
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Tab bar section */
+        .ie-tab-bar-section {
+            overflow: hidden;
+            max-height: 0;
+            transition: max-height 0.3s ease, opacity 0.2s ease, transform 0.2s ease;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .ie-tab-bar-section.visible {
+            max-height: 40px;
+        }
+
+        .ie-tab-bar-section.expanded {
+            max-height: 200px;
+        }
+
+        /* Hide tab bar when addressbar focused */
+        .ie-tab-bar-section.hidden {
+            opacity: 0;
+            transform: translateY(-10px);
+            max-height: 0 !important;
+            pointer-events: none;
+        }
+
+        /* Frequent bar section */
+        .ie-frequent-bar-section {
+            overflow: hidden;
+            max-height: 0;
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: max-height 0.3s ease, opacity 0.2s ease, transform 0.2s ease;
+            pointer-events: none;
+        }
+
+        .ie-frequent-bar-section.visible {
+            max-height: 200px;
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: all;
+        }
+
+        .ie-frequent-bar-header {
+            padding: 15px 20px 10px;
+            font-size: 20px;
+            font-weight: 300;
+            color: #fff;
+        }
+
+        .ie-frequent-tiles {
+            display: flex;
+            gap: 10px;
+            padding: 0 20px 20px;
+            overflow-x: auto;
+            overflow-y: hidden;
+        }
+
+        /* Medium-size tile (like Start screen) */
+        .ie-frequent-tile {
+            width: 150px;
+            height: 150px;
+            flex-shrink: 0;
+            position: relative;
+            cursor: pointer;
+            overflow: hidden;
+            display: flex;
+            align-items: flex-end;
+            padding: 10px;
+            background: linear-gradient(135deg, #0078d7 0%, #004a8f 100%);
+            transition: transform 0.1s ease;
+        }
+
+        .ie-frequent-tile:active {
+            transform: scale(0.95);
+        }
+
+        .ie-frequent-tile-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(90deg, rgba(0, 0, 0, 0.15) 0%, rgba(255, 255, 255, 0.15) 100%);
+            pointer-events: none;
+        }
+
+        .ie-frequent-tile-title {
+            position: relative;
+            color: #fff;
+            font-size: 14px;
+            font-weight: 400;
+            z-index: 1;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+        }
+
+        .ie-frequent-tile-favicon {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            width: 24px;
+            height: 24px;
+            z-index: 1;
+        }
+
+        .ie-frequent-tile-favicon img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
+        }
+
+        /* Slimline tabs container */
+        .ie-tabs-container {
+            display: flex;
+            align-items: center;
+            padding: 0 10px;
+            height: 40px;
+            gap: 2px;
+        }
+
+        /* Individual slim tab */
+        .ie-tab {
+            background: rgba(60, 60, 60, 0.8);
+            height: 28px;
+            min-width: 150px;
+            max-width: 200px;
+            flex: 1;
+            display: flex;
+            align-items: center;
+            padding: 0 8px;
+            gap: 8px;
+            position: relative;
+            transition: background 0.2s ease;
+            cursor: pointer;
+        }
+
+        .ie-tab:hover {
+            background: rgba(80, 80, 80, 0.8);
+        }
+
+        .ie-tab.active {
+            background: rgba(100, 100, 100, 0.9);
+        }
+
+        .ie-tab-title {
+            flex: 1;
+            font-size: 12px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            color: #fff;
+        }
+
+        .ie-tab-close {
+            width: 16px;
+            height: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0.7;
+            transition: opacity 0.2s ease;
+            font-size: 10px;
+            background: transparent;
+            border: none;
+            color: #fff;
+            cursor: pointer;
+        }
+
+        .ie-tab-close:hover {
+            opacity: 1;
+        }
+
+        /* Tab actions (new tab and menu) */
+        .ie-tab-actions {
+            display: flex;
+            gap: 2px;
+            margin-left: 4px;
+        }
+
+        .ie-tab-action-btn {
+            width: 28px;
+            height: 28px;
+            background: rgba(60, 60, 60, 0.8);
+            border: none;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background 0.2s ease;
+            font-size: 16px;
+        }
+
+        .ie-tab-action-btn:hover {
+            background: rgba(80, 80, 80, 0.8);
+        }
+
+        /* Tab favicon */
+        .ie-tab-favicon {
+            width: 16px;
+            height: 16px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .ie-tab-favicon img {
+            width: 16px;
+            height: 16px;
+            object-fit: contain;
+        }
+
+        /* Expanded tab view header */
+        .ie-tabs-expanded-header {
+            display: none;
+            padding: 15px 20px 10px;
+            font-size: 20px;
+            font-weight: 300;
+            color: #fff;
+            position: relative;
+        }
+
+        .ie-tab-bar-section.expanded .ie-tabs-expanded-header {
+            display: block;
+        }
+
+        /* Expanded tab previews */
+        .ie-tabs-expanded {
+            display: none;
+            padding: 0 20px 20px;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            max-height: 120px;
+            overflow-y: auto;
+        }
+
+        .ie-tab-bar-section.expanded .ie-tabs-expanded {
+            display: grid;
+        }
+
+        .ie-tab-bar-section.expanded .ie-tabs-container {
+            display: none;
+        }
+
+        .ie-tab-preview-favicon {
+            width: 16px;
+            height: 16px;
+            margin-right: 6px;
+            flex-shrink: 0;
+        }
+
+        .ie-tab-preview-favicon img {
+            width: 16px;
+            height: 16px;
+            object-fit: contain;
+        }
+
+        .ie-tab-preview {
+            background: rgba(60, 60, 60, 0.8);
+            padding: 10px;
+            cursor: pointer;
+            transition: background 0.2s ease;
+            position: relative;
+            min-height: 120px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .ie-tab-preview:hover {
+            background: rgba(80, 80, 80, 0.8);
+        }
+
+        .ie-tab-preview.active {
+            background: rgba(100, 100, 100, 0.9);
+            border: 2px solid #0078d7;
+        }
+
+        .ie-tab-preview-thumbnail {
+            flex: 1;
+            background: rgba(40, 40, 40, 0.5);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: rgba(255, 255, 255, 0.3);
+            font-size: 12px;
+        }
+
+        .ie-tab-preview-title {
+            font-size: 12px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+        }
+
+        .ie-tab-preview-url {
+            font-size: 10px;
+            opacity: 0.6;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .ie-tab-preview-close {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            width: 20px;
+            height: 20px;
+            background: rgba(0, 0, 0, 0.5);
+            border: none;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .ie-tab-preview:hover .ie-tab-preview-close {
+            opacity: 1;
+        }
+
+        /* Expanded tab actions */
+        .ie-expanded-actions {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            display: none;
+            gap: 4px;
+        }
+
+        .ie-tab-bar-section.expanded .ie-expanded-actions {
+            display: flex;
+        }
+
+        .ie-expanded-actions .ie-tab-action-btn {
+            width: 30px;
+            height: 30px;
+            background: rgba(60, 60, 60, 0.8);
+        }
+
+        .ie-expanded-actions .ie-tab-action-btn:hover {
+            background: rgba(80, 80, 80, 0.8);
+        }
+
+        /* Address bar section - using modern-webview-bar as base */
+        .ie-address-bar-section {
+            display: flex;
+            align-items: center;
+            padding: 15px 20px;
+            gap: 10px;
+        }
+
+        /* Address bar container */
+        .ie-address-bar-container {
+            flex: 1;
+            display: flex;
+            gap: 5px;
+            align-items: center;
+            position: relative;
+        }
+
+        /* Loading indicator positioned above addressbar */
+        .ie-address-bar-container .ie-loading-indicator {
+            position: absolute;
+            top: -3px;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: #0078d7;
+            transform: scaleX(0);
+            transform-origin: left;
+            z-index: 1001;
+        }
+
+        .ie-address-bar-container .ie-loading-indicator.active {
+            animation: loading 1.5s ease-in-out infinite;
+        }
+
+        /* Favicon display */
+        .ie-favicon {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .ie-favicon img {
+            width: 16px;
+            height: 16px;
+            object-fit: contain;
+        }
+
+        /* Address bar with IE styling */
+        .ie-address-bar {
+            flex: 1;
+            background: #000;
+            color: #fff;
+            border: 2px solid #fff;
+            height: 36px;
+            padding: 0 12px;
+            font-size: 14px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            transition: background 0.15s ease, color 0.15s ease;
+        }
+
+        .ie-address-bar:focus {
+            outline: none;
+            background: #fff;
+            color: #000;
+        }
+
+        /* Go button - uses modern-webview-bar-btn but displays like forward */
+        .ie-go-btn {
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.15s ease, transform 0.15s ease;
+        }
+
+        .ie-go-btn.visible {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        /* Navigation buttons hide when addressbar focused */
+        .ie-address-bar-section.addressbar-focused #backBtn,
+        .ie-address-bar-section.addressbar-focused #forwardBtn,
+        .ie-address-bar-section.addressbar-focused #refreshBtn,
+        .ie-address-bar-section.addressbar-focused #menuBtn {
+            display: none;
+        }
+
+        /* Expand tabs button - uses modern-webview-bar-btn */
+        .ie-expand-tabs-btn.active {
+            transform: rotate(180deg);
+        }
+
+        /* Loading indicator animation */
+        @keyframes loading {
+            0% {
+                transform: scaleX(0);
+                transform-origin: left;
+            }
+
+            50% {
+                transform: scaleX(1);
+                transform-origin: left;
+            }
+
+            51% {
+                transform: scaleX(1);
+                transform-origin: right;
+            }
+
+            100% {
+                transform: scaleX(0);
+                transform-origin: right;
+            }
+        }
+
+        /* Icons using Unicode symbols - matching NYT games style */
+        .icon-back::before {
+            content: '←';
+            font-weight: 300;
+        }
+
+        .icon-forward::before {
+            content: '→';
+            font-weight: 300;
+        }
+
+        .icon-refresh::before {
+            content: '↻';
+            font-weight: 300;
+        }
+
+        .icon-go::before {
+            content: '→';
+            font-weight: 300;
+        }
+
+        .icon-star::before {
+            content: '☆';
+        }
+
+        .icon-star.active::before {
+            content: '★';
+        }
+
+        .icon-menu::before {
+            content: '⋯';
+        }
+
+        .icon-close::before {
+            content: '×';
+        }
+
+        .icon-add::before {
+            content: '+';
+        }
+
+        .icon-expand::before {
+            content: '⌃';
+        }
+    </style>
+</head>
+
+<body>
+    <div id="browser-container">
+        <webview id="browser-view" src="about:blank" partition="persist:iexplore" allowpopups nodeintegration="false"
+            disablewebsecurity webpreferences="allowRunningInsecureContent">
+        </webview>
+
+        <!-- App bar using modern-webview-bar -->
+        <div class="modern-webview-bar ie-app-bar" id="appBar">
+            <!-- Frequent bar section (shown when addressbar focused) -->
+            <div class="ie-frequent-bar-section" id="frequentBarSection">
+                <div class="ie-frequent-bar-header">Frequent</div>
+                <div class="ie-frequent-tiles" id="frequentTiles"></div>
+            </div>
+
+            <!-- Tab bar section -->
+            <div class="ie-tab-bar-section visible" id="tabBarSection">
+                <!-- Slimline tabs view -->
+                <div class="ie-tabs-container" id="tabsContainer"></div>
+
+                <!-- Expanded tabs header -->
+                <div class="ie-tabs-expanded-header">
+                    Tabs
+                    <!-- Actions for expanded view (positioned absolute in top-right) -->
+                    <div class="ie-expanded-actions">
+                        <button class="ie-tab-action-btn" id="newTabExpandedBtn" title="New tab">
+                            <span class="icon-add"></span>
+                        </button>
+                        <button class="ie-tab-action-btn" id="menuExpandedBtn" title="More">
+                            <span class="icon-menu"></span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Expanded tabs view -->
+                <div class="ie-tabs-expanded" id="tabsExpanded"></div>
+            </div>
+
+            <!-- Address bar section -->
+            <div class="ie-address-bar-section">
+                <button class="modern-webview-bar-btn" id="backBtn" title="Back" disabled>
+                    <span class="metro-symbol">🡰</span>
+                </button>
+                <button class="modern-webview-bar-btn" id="forwardBtn" title="Forward" disabled>
+                    <span class="metro-symbol">🡲</span>
+                </button>
+                <button class="modern-webview-bar-btn" id="refreshBtn" title="Refresh">
+                    <span class="metro-symbol">↻</span>
+                </button>
+                <div class="ie-address-bar-container">
+                    <div class="ie-loading-indicator" id="loadingIndicator"></div>
+                    <div class="ie-favicon" id="siteFavicon">
+                        <img src="" alt="" style="display: none;">
+                    </div>
+                    <input type="text" class="ie-address-bar" id="addressBar" placeholder="Search or enter address">
+                    <button class="modern-webview-bar-btn ie-go-btn" id="goBtn" title="Go">
+                        <span class="metro-symbol">🡲</span>
+                    </button>
+                </div>
+                <button class="modern-webview-bar-btn ie-expand-tabs-btn" id="expandTabsBtn" title="Show tabs">
+                    <span class="metro-symbol">❐</span>
+                </button>
+                <button class="modern-webview-bar-btn" id="favoriteBtn" title="Favorite">
+                    <span class="metro-symbol">★</span>
+                </button>
+                <button class="modern-webview-bar-btn" id="menuBtn" title="More">
+                    <span class="metro-symbol"></span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Main toolbar context menu -->
+        <div class="modern-dropdown" id="contextMenu">
+            <div class="modern-dropdown-item" data-action="favorites">Favorites</div>
+            <div class="modern-dropdown-item" data-action="history">History</div>
+            <div class="modern-dropdown-item" data-action="downloads">Downloads</div>
+            <div class="modern-dropdown-item" data-action="settings">Settings</div>
+        </div>
+
+        <!-- Tab bar context menu -->
+        <div class="modern-dropdown" id="tabContextMenu">
+            <div class="modern-dropdown-item" data-action="new-tab">New tab</div>
+            <div class="modern-dropdown-item" data-action="new-window">New InPrivate window</div>
+        </div>
+    </div>
+
+    <script src="../../../registry/ie-registry.js"></script>
+    <script src="ie-browser.js"></script>
+</body>
+
+</html>

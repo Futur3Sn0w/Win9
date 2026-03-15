@@ -1,0 +1,327 @@
+{
+  "apps": [
+    {
+      "id": "desktop",
+      "name": "Desktop",
+      "color": "purple",
+      "size": "normal",
+      "pinned": true,
+      "category": "system",
+      "showInStart": true,
+      "type": "meta",
+      "tileOptions": {
+        "allowWide": true,
+        "allowLarge": true
+      }
+    },
+    {
+      "id": "settings",
+      "name": "PC settings",
+      "color": "purple",
+      "size": "normal",
+      "pinned": true,
+      "category": "system",
+      "type": "modern",
+      "path": "apps/modern/settings/index.html"
+    },
+    {
+      "id": "taskbar-properties",
+      "name": "Taskbar and Navigation properties",
+      "icon": "mif-wrench",
+      "color": "blue",
+      "size": "normal",
+      "pinned": false,
+      "category": "system",
+      "type": "meta-classic",
+      "path": "apps/meta-classic/taskbar/taskbar.cpl.html",
+      "iconImages": {
+        "16": "resources/images/icons/control panel applets/Taskbar Properties/16.png",
+        "20": "resources/images/icons/control panel applets/Taskbar Properties/20.png",
+        "24": "resources/images/icons/control panel applets/Taskbar Properties/24.png",
+        "32": "resources/images/icons/control panel applets/Taskbar Properties/32.png",
+        "40": "resources/images/icons/control panel applets/Taskbar Properties/40.png",
+        "48": "resources/images/icons/control panel applets/Taskbar Properties/48.png",
+        "64": "resources/images/icons/control panel applets/Taskbar Properties/64.png",
+        "96": "resources/images/icons/control panel applets/Taskbar Properties/96.png",
+        "128": "resources/images/icons/control panel applets/Taskbar Properties/128.png"
+      },
+      "showInStart": false,
+      "windowOptions": {
+        "width": 460,
+        "height": 540,
+        "resizable": false,
+        "minimizable": false,
+        "maximizable": false,
+        "alwaysOnTop": false,
+        "showInTaskbar": true
+      }
+    },
+    {
+      "id": "run",
+      "name": "Run",
+      "icon": "mif-play",
+      "color": "blue",
+      "size": "small",
+      "pinned": false,
+      "category": "system",
+      "type": "meta-classic",
+      "path": "apps/meta-classic/run/run.exe.html",
+      "iconImages": {
+        "16": "apps/meta-classic/run/icons/16.png",
+        "48": "apps/meta-classic/run/icons/48.png",
+        "64": "apps/meta-classic/run/icons/64.png"
+      },
+      "showInStart": true,
+      "windowOptions": {
+        "width": 413,
+        "height": 213,
+        "resizable": false,
+        "minimizable": false,
+        "maximizable": false,
+        "alwaysOnTop": false,
+        "showInTaskbar": true
+      },
+      "runCommands": [
+        "run",
+        "run.exe"
+      ]
+    },
+    {
+      "id": "winver",
+      "name": "About Windows",
+      "icon": "mif-windows",
+      "color": "blue",
+      "size": "small",
+      "pinned": false,
+      "category": "system",
+      "type": "meta-classic",
+      "path": "apps/meta-classic/winver/winver.exe.html",
+      "showInStart": false,
+      "windowOptions": {
+        "width": 474,
+        "height": 413,
+        "resizable": false,
+        "minimizable": false,
+        "maximizable": false,
+        "alwaysOnTop": false,
+        "showInTaskbar": true,
+        "showIcon": false
+      },
+      "runCommands": [
+        "winver",
+        "winver.exe"
+      ]
+    },
+    {
+      "id": "control-panel",
+      "name": "Control Panel",
+      "icon": "mif-cogs",
+      "color": "blue",
+      "size": "normal",
+      "pinned": true,
+      "category": "system",
+      "type": "classic",
+      "path": "apps/classic/control/control-panel.html",
+      "iconImages": {
+        "16": "apps/classic/control/icons/16.png",
+        "40": "apps/classic/control/icons/32.png",
+        "64": "apps/classic/control/icons/256.png"
+      },
+      "showInStart": true,
+      "windowOptions": {
+        "width": 900,
+        "height": 650,
+        "resizable": true,
+        "minimizable": true,
+        "maximizable": true,
+        "alwaysOnTop": false,
+        "showInTaskbar": true
+      },
+      "runCommands": [
+        "control",
+        "control.exe",
+        "control panel"
+      ]
+    },
+    {
+      "id": "personalization",
+      "name": "Personalization",
+      "icon": "mif-paint",
+      "color": "teal",
+      "size": "normal",
+      "pinned": false,
+      "category": "system",
+      "type": "classic",
+      "path": "apps/classic/personalization/personalization.html",
+      "showInStart": false,
+      "windowOptions": {
+        "width": 900,
+        "height": 650,
+        "resizable": true,
+        "minimizable": true,
+        "maximizable": true,
+        "alwaysOnTop": false,
+        "showInTaskbar": true
+      },
+      "runCommands": [
+        "personalization",
+        "desk.cpl"
+      ]
+    },
+    {
+      "id": "test-window",
+      "name": "Debug App",
+      "icon": "mif-bug",
+      "color": "green",
+      "size": "normal",
+      "pinned": false,
+      "category": "system",
+      "type": "classic",
+      "path": "apps/classic/test-window/index.html",
+      "showInStart": true,
+      "windowOptions": {
+        "width": 600,
+        "height": 400,
+        "resizable": true,
+        "minimizable": true,
+        "maximizable": true,
+        "alwaysOnTop": false,
+        "showInTaskbar": true
+      }
+    },
+    {
+      "id": "msstore",
+      "name": "Store",
+      "color": "green",
+      "size": "wide",
+      "pinned": true,
+      "category": "system",
+      "type": "modern",
+      "path": "apps/modern/msstore/index.html",
+      "tileOptions": {
+        "allowWide": true,
+        "allowLarge": true
+      }
+    },
+    {
+      "id": "iexplore",
+      "name": "Internet Explorer",
+      "color": "sky",
+      "size": "normal",
+      "pinned": true,
+      "pinnedToTaskbar": true,
+      "category": "internet",
+      "type": "modern",
+      "path": "apps/modern/iexplore/index.html",
+      "loadDirect": true
+    },
+    {
+      "id": "notepad",
+      "name": "Notepad",
+      "icon": "mif-file-text",
+      "color": "teal",
+      "size": "normal",
+      "pinned": true,
+      "category": "accessories",
+      "type": "classic",
+      "path": "apps/classic/notepad/notepad.html",
+      "allowMultipleWindows": true,
+      "iconImages": {
+        "16": "apps/classic/notepad/icons/16.png",
+        "32": "apps/classic/notepad/icons/32.png",
+        "48": "apps/classic/notepad/icons/48.png",
+        "256": "apps/classic/notepad/icons/256.png"
+      },
+      "showInStart": true,
+      "windowOptions": {
+        "width": 800,
+        "height": 600,
+        "resizable": true,
+        "minimizable": true,
+        "maximizable": true,
+        "alwaysOnTop": false,
+        "showInTaskbar": true
+      },
+      "runCommands": [
+        "notepad",
+        "notepad.exe"
+      ]
+    },
+    {
+      "id": "photo-viewer",
+      "name": "Windows Photo Viewer",
+      "icon": "mif-image",
+      "color": "blue",
+      "size": "normal",
+      "pinned": false,
+      "category": "accessories",
+      "type": "classic",
+      "path": "apps/classic/photo-viewer/photo-viewer.exe.html",
+      "allowMultipleWindows": true,
+      "iconImages": {
+        "16": "apps/classic/photo-viewer/resources/icons/16.png",
+        "24": "apps/classic/photo-viewer/resources/icons/24.png",
+        "32": "apps/classic/photo-viewer/resources/icons/32.png",
+        "48": "apps/classic/photo-viewer/resources/icons/48.png",
+        "64": "apps/classic/photo-viewer/resources/icons/64.png",
+        "256": "apps/classic/photo-viewer/resources/icons/256.png"
+      },
+      "loadDirect": true,
+      "showInStart": false,
+      "windowOptions": {
+        "width": 900,
+        "height": 700,
+        "resizable": true,
+        "minimizable": true,
+        "maximizable": true,
+        "alwaysOnTop": false,
+        "showInTaskbar": true
+      },
+      "fileAssociations": [
+        ".jpg",
+        ".jpeg",
+        ".png",
+        ".gif",
+        ".bmp",
+        ".webp",
+        ".svg"
+      ]
+    },
+    {
+      "id": "explorer",
+      "name": "File Explorer",
+      "icon": "mif-folder-open",
+      "color": "teal",
+      "size": "normal",
+      "pinned": true,
+      "pinnedToTaskbar": true,
+      "category": "system",
+      "type": "classic",
+      "path": "apps/classic/explorer/explorer.html",
+      "allowMultipleWindows": true,
+      "useWebview": true,
+      "iconImages": {
+        "16": "resources/images/icons/explorer/explorer/16.png",
+        "24": "resources/images/icons/explorer/explorer/24.png",
+        "32": "resources/images/icons/explorer/explorer/32.png",
+        "48": "resources/images/icons/explorer/explorer/48.png",
+        "64": "resources/images/icons/explorer/explorer/64.png",
+        "128": "resources/images/icons/explorer/explorer/128.png"
+      },
+      "showInStart": true,
+      "windowOptions": {
+        "width": 1000,
+        "height": 650,
+        "resizable": true,
+        "minimizable": true,
+        "maximizable": true,
+        "alwaysOnTop": false,
+        "showInTaskbar": true
+      },
+      "runCommands": [
+        "explorer",
+        "explorer.exe"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,430 @@
+{
+  "patterns": [
+    {
+      "id": 1,
+      "alignment": "split",
+      "splitY": 258,
+      "variants": [
+        {
+          "id": 1,
+          "backgroundColor": "#16499A"
+        },
+        {
+          "id": 2,
+          "backgroundColor": "#180052"
+        },
+        {
+          "id": 3,
+          "backgroundColor": "#BF5A15"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "alignment": "split",
+      "splitY": 519,
+      "variants": [
+        {
+          "id": 1,
+          "backgroundColor": "#004050"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "alignment": "bottom",
+      "variants": [
+        {
+          "id": 1,
+          "backgroundColor": "#180052"
+        },
+        {
+          "id": 2,
+          "backgroundColor": "#DC4FAD"
+        },
+        {
+          "id": 3,
+          "backgroundColor": "#C29008"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "alignment": "top",
+      "variants": [
+        {
+          "id": 1,
+          "backgroundColor": "#180052"
+        },
+        {
+          "id": 2,
+          "backgroundColor": "#4390DF"
+        },
+        {
+          "id": 3,
+          "backgroundColor": "#40002E"
+        },
+        {
+          "id": 4,
+          "backgroundColor": "#C29008"
+        },
+        {
+          "id": 5,
+          "backgroundColor": "#585858"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "alignment": "split",
+      "splitY": 530,
+      "variants": [
+        {
+          "id": 1,
+          "backgroundColor": "#180052"
+        },
+        {
+          "id": 2,
+          "backgroundColor": "#128023"
+        },
+        {
+          "id": 3,
+          "backgroundColor": "#DC4FAD"
+        },
+        {
+          "id": 4,
+          "backgroundColor": "#78AA1C"
+        },
+        {
+          "id": 5,
+          "backgroundColor": "#4390DF"
+        },
+        {
+          "id": 6,
+          "backgroundColor": "#C29008"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "alignment": "split",
+      "splitY": 500,
+      "variants": [
+        {
+          "id": 1,
+          "backgroundColor": "#16499A"
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "alignment": "top",
+      "variants": [
+        {
+          "id": 1,
+          "backgroundColor": "#180052"
+        },
+        {
+          "id": 2,
+          "backgroundColor": "#DC4FAD"
+        },
+        {
+          "id": 3,
+          "backgroundColor": "#128023"
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "alignment": "split",
+      "splitY": 550,
+      "variants": [
+        {
+          "id": 1,
+          "backgroundColor": "#180052"
+        },
+        {
+          "id": 2,
+          "backgroundColor": "#9A1616"
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "alignment": "split",
+      "splitY": 600,
+      "variants": [
+        {
+          "id": 1,
+          "backgroundColor": "#180052"
+        },
+        {
+          "id": 2,
+          "backgroundColor": "#4390DF"
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "alignment": "bottom",
+      "variants": [
+        {
+          "id": 1,
+          "backgroundColor": "#180052"
+        },
+        {
+          "id": 2,
+          "backgroundColor": "#78AA1C"
+        },
+        {
+          "id": 3,
+          "backgroundColor": "#4390DF"
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "alignment": "split",
+      "splitY": 570,
+      "variants": [
+        {
+          "id": 1,
+          "backgroundColor": "#180052"
+        },
+        {
+          "id": 2,
+          "backgroundColor": "#261300"
+        },
+        {
+          "id": 3,
+          "backgroundColor": "#003E00"
+        },
+        {
+          "id": 4,
+          "backgroundColor": "#250040"
+        },
+        {
+          "id": 5,
+          "backgroundColor": "#380000"
+        },
+        {
+          "id": 6,
+          "backgroundColor": "#DC4FAD"
+        },
+        {
+          "id": 7,
+          "backgroundColor": "#57169A"
+        },
+        {
+          "id": 8,
+          "backgroundColor": "#C29008"
+        }
+      ]
+    },
+    {
+      "id": 12,
+      "alignment": "split",
+      "splitY": 283,
+      "variants": [
+        {
+          "id": 1,
+          "backgroundColor": "#180052"
+        },
+        {
+          "id": 2,
+          "backgroundColor": "#4390DF"
+        }
+      ]
+    },
+    {
+      "id": 13,
+      "alignment": "split",
+      "splitY": 521,
+      "variants": [
+        {
+          "id": 1,
+          "backgroundColor": "#180052"
+        },
+        {
+          "id": 2,
+          "backgroundColor": "#380000"
+        },
+        {
+          "id": 3,
+          "backgroundColor": "#C29008"
+        },
+        {
+          "id": 4,
+          "backgroundColor": "#78AA1C"
+        }
+      ]
+    },
+    {
+      "id": 14,
+      "alignment": "split",
+      "splitY": 528,
+      "variants": [
+        {
+          "id": 1,
+          "backgroundColor": "#004050"
+        }
+      ]
+    },
+    {
+      "id": 15,
+      "alignment": "split",
+      "splitY": 531,
+      "variants": [
+        {
+          "id": 1,
+          "backgroundColor": "#180052"
+        },
+        {
+          "id": 2,
+          "backgroundColor": "#001940"
+        },
+        {
+          "id": 3,
+          "backgroundColor": "#128023"
+        },
+        {
+          "id": 4,
+          "backgroundColor": "#C29008"
+        }
+      ]
+    },
+    {
+      "id": 16,
+      "alignment": "bottom",
+      "variants": [
+        {
+          "id": 1,
+          "backgroundColor": "#180052"
+        },
+        {
+          "id": 2,
+          "backgroundColor": "#4390DF"
+        },
+        {
+          "id": 3,
+          "backgroundColor": "#78AA1C"
+        },
+        {
+          "id": 4,
+          "backgroundColor": "#C29008"
+        },
+        {
+          "id": 5,
+          "backgroundColor": "#DC4FAD"
+        }
+      ]
+    },
+    {
+      "id": 17,
+      "alignment": "split",
+      "splitY": 400,
+      "variants": [
+        {
+          "id": 1,
+          "backgroundColor": "#180052"
+        },
+        {
+          "id": 2,
+          "backgroundColor": "#008E8E"
+        },
+        {
+          "id": 3,
+          "backgroundColor": "#128023"
+        },
+        {
+          "id": 4,
+          "backgroundColor": "#9A1616"
+        },
+        {
+          "id": 5,
+          "backgroundColor": "#DC4FAD"
+        },
+        {
+          "id": 6,
+          "backgroundColor": "#78AA1C"
+        }
+      ]
+    },
+    {
+      "id": 18,
+      "alignment": "split",
+      "splitY": 361,
+      "variants": [
+        {
+          "id": 1,
+          "backgroundColor": "#180052"
+        },
+        {
+          "id": 2,
+          "backgroundColor": "#004050"
+        },
+        {
+          "id": 3,
+          "backgroundColor": "#008E8E"
+        },
+        {
+          "id": 4,
+          "backgroundColor": "#16499A"
+        },
+        {
+          "id": 5,
+          "backgroundColor": "#4390DF"
+        },
+        {
+          "id": 6,
+          "backgroundColor": "#DC4FAD"
+        }
+      ]
+    },
+    {
+      "id": 19,
+      "alignment": "split",
+      "splitY": 594,
+      "variants": [
+        {
+          "id": 1,
+          "backgroundColor": "#180052"
+        },
+        {
+          "id": 2,
+          "backgroundColor": "#78AA1C"
+        },
+        {
+          "id": 3,
+          "backgroundColor": "#4390DF"
+        },
+        {
+          "id": 4,
+          "backgroundColor": "#57169A"
+        },
+        {
+          "id": 5,
+          "backgroundColor": "#DC4FAD"
+        },
+        {
+          "id": 6,
+          "backgroundColor": "#008E8E"
+        }
+      ]
+    },
+    {
+      "id": 20,
+      "alignment": "top",
+      "variants": [
+        {
+          "id": 1,
+          "backgroundColor": "#180052"
+        }
+      ]
+    }
+  ],
+  "default": {
+    "pattern": 1,
+    "variant": 1
+  }
+}

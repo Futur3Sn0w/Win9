@@ -1,0 +1,1073 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PC Settings</title>
+    <link rel="stylesheet" href="../../../css/modern-ui.css">
+    <link rel="stylesheet" href="https://cdn.metroui.org.ua/v4/css/metro-icons.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #fff;
+            color: #000;
+        }
+
+        .settings-container {
+            display: flex;
+            height: 100vh;
+        }
+
+        .settings-sidebar {
+            display: flex;
+            flex-direction: column;
+            width: 400px;
+            height: 100%;
+            background: var(--ui-accent);
+            padding: 40px 0;
+            border-right: none;
+        }
+
+        .settings-sidebar-title {
+            font-size: 28px;
+            font-weight: 300;
+            margin-bottom: 30px;
+            box-sizing: border-box;
+            padding-left: 60px;
+            padding-right: 20px;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+
+            /* Initial state - entire header off-screen to the right */
+            transform: translateX(100%);
+            opacity: 0;
+
+            /* Slide-in animation - header comes first */
+            transition: transform 1s cubic-bezier(0.05, 0.7, 0.1, 1) 0s,
+                opacity 1s cubic-bezier(0.05, 0.7, 0.1, 1) 0s;
+        }
+
+        .settings-sidebar-title.visible {
+            transform: translateX(0);
+            opacity: 1;
+        }
+
+        .settings-sidebar-title-content {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex: 1;
+        }
+
+        .settings-back-btn {
+            background: transparent;
+            border: 2px solid #fff;
+            color: #fff;
+            font-size: 20px;
+            width: 32px;
+            height: 32px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.15s ease, color 0.15s ease;
+            border-radius: 50%;
+            cursor: pointer;
+            flex-shrink: 0;
+            margin-left: -40px;
+            margin-right: -10px;
+            margin-bottom: -3px;
+        }
+
+        .settings-back-btn.visible {
+            display: flex;
+        }
+
+        .settings-back-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .settings-back-btn:active {
+            background: #fff;
+            color: #000;
+        }
+
+        .settings-search-icon {
+            font-size: 18px;
+            opacity: 0.8;
+            cursor: pointer;
+        }
+
+        .settings-search-icon:hover {
+            opacity: 1;
+        }
+
+        .settings-menu-list {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .settings-category {
+            display: flex;
+            align-items: center;
+            padding: 15px 20px;
+            padding-left: 60px;
+            margin-bottom: 2px;
+            cursor: pointer;
+            border-radius: 0;
+            color: #fff;
+            text-decoration: none;
+            font-size: 15px;
+            font-weight: 400;
+
+            /* Initial state - off-screen to the right */
+            transform: translateX(50%);
+            opacity: 0;
+
+            /* Slide-in animation - all items together after title */
+            transition: transform 1s cubic-bezier(0.05, 0.7, 0.1, 1) 0.15s,
+                opacity 1s cubic-bezier(0.05, 0.7, 0.1, 1) 0.15s,
+                background 0.1s ease;
+        }
+
+        .settings-menu-list.hidden {
+            display: none;
+        }
+
+        /* When menu is visible, slide all items in together */
+        .settings-menu-list.visible .settings-category {
+            transform: translateX(0);
+            opacity: 1;
+        }
+
+        .settings-category:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .settings-category.active {
+            background: rgba(0, 0, 0, 0.15);
+        }
+
+        .settings-category-icon {
+            display: none;
+        }
+
+        .settings-category-name {
+            font-size: 15px;
+        }
+
+        .settings-content {
+            flex: 1;
+            padding: 40px 60px;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .settings-content-wrapper {
+            /* Initial state - off-screen to the right (reduced distance) */
+            transform: translateX(10%);
+            opacity: 0;
+
+            /* Slide-in animation */
+            transition: transform 1s cubic-bezier(0.05, 0.7, 0.1, 1) 0s,
+                opacity 1s cubic-bezier(0.05, 0.7, 0.1, 1) 0s;
+        }
+
+        .settings-content-wrapper.visible {
+            transform: translateX(0);
+            opacity: 1;
+        }
+
+        .settings-content-title {
+            font-size: 32px;
+            font-weight: 300;
+            margin-bottom: 30px;
+            color: var(--ui-accent);
+            padding-bottom: 10px;
+        }
+
+        .settings-section {
+            margin-bottom: 40px;
+        }
+
+        .settings-section-title {
+            font-size: 20px;
+            font-weight: 400;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .settings-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px 0;
+            border-bottom: 1px solid #f2f2f2;
+        }
+
+        .settings-item-info {
+            flex: 1;
+        }
+
+        .settings-item-title {
+            font-size: 15px;
+            margin-bottom: 5px;
+        }
+
+        .settings-item-description {
+            font-size: 13px;
+            color: #666;
+        }
+
+        .settings-toggle {
+            width: 44px;
+            height: 24px;
+            background: #ccc;
+            border-radius: 12px;
+            position: relative;
+
+            transition: background 0.2s ease;
+        }
+
+        .settings-toggle.on {
+            background: #0078d7;
+        }
+
+        .settings-toggle-slider {
+            width: 18px;
+            height: 18px;
+            background: white;
+            border-radius: 15%;
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            transition: transform 0.2s ease;
+        }
+
+        .settings-toggle.on .settings-toggle-slider {
+            transform: translateX(20px);
+        }
+
+        .personalize-tiles {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 20px;
+            width: 600px;
+        }
+
+        .personalize-tile {
+            position: relative;
+            height: 200px;
+            overflow: hidden;
+            transition: 0.1s ease;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            &::after {
+                content: '';
+
+                position: absolute;
+                z-index: 50;
+                width: 100%;
+                height: 100%;
+
+                background-color: black;
+                opacity: .25;
+            }
+        }
+
+        .personalize-tile:hover {
+            opacity: 0.9;
+        }
+
+        .personalize-tile.large {
+            width: 600px;
+            height: 337px;
+        }
+
+        .personalize-tile.user {
+            width: 215px;
+            height: 215px;
+        }
+
+        .personalize-tile.picpass {
+            width: 375px;
+            height: 215px;
+        }
+
+        .personalize-tile img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .personalize-tile-label {
+            position: absolute;
+            z-index: 100;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 15px;
+            color: white;
+            font-size: 16px;
+            font-weight: 300;
+        }
+
+        .recently-used-link {
+            display: inline-block;
+            margin-top: 30px;
+            color: var(--ui-accent);
+            font-size: 15px;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .recently-used-link:hover {
+            text-decoration: underline;
+        }
+
+        /* Lock screen preview styles */
+        .lock-screen-preview {
+            position: relative;
+            width: 600px;
+            height: 337px;
+            margin: 20px 0;
+            overflow: hidden;
+            background: #000;
+        }
+
+        .lock-screen-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .lock-screen-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 40px;
+            color: white;
+            background: linear-gradient(to top, rgba(0, 0, 0, 0.6), transparent);
+        }
+
+        .lock-screen-time {
+            font-size: 72px;
+            font-weight: 300;
+            line-height: 1;
+            margin-bottom: 5px;
+        }
+
+        .lock-screen-date {
+            font-size: 20px;
+            font-weight: 300;
+        }
+
+        .lock-screen-wallpapers {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .lock-screen-wallpaper-tile {
+            width: 112px;
+            height: 112px;
+            cursor: pointer;
+            overflow: hidden;
+            border: 2px solid transparent;
+            transition: transform 0.15s ease;
+        }
+
+        .lock-screen-wallpaper-tile:hover {
+            opacity: .75;
+        }
+
+        .lock-screen-wallpaper-tile img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .browse-button {
+            display: inline-block;
+            padding: 10px 20px;
+            margin-top: 20px;
+            background: #f0f0f0;
+            border: 1px solid #ccc;
+            color: #333;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background 0.15s ease;
+        }
+
+        .browse-button:hover {
+            background: #e0e0e0;
+        }
+
+        .settings-toggle-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .settings-toggle-label {
+            font-size: 15px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="settings-container">
+        <div class="settings-sidebar">
+            <div class="settings-sidebar-title" id="sidebar-title">
+                <div class="settings-sidebar-title-content">
+                    <button class="settings-back-btn" id="back-btn">
+                        <span class="mif-arrow-left"></span>
+                    </button>
+                    <span id="sidebar-title-text">PC settings</span>
+                </div>
+                <span class="settings-search-icon">
+                    <span class="mif-search"></span>
+                </span>
+            </div>
+            <div class="settings-menu-list" id="main-menu">
+                <a href="#" class="active-scale-effect settings-category" data-category="pc-and-devices">
+                    <span class="settings-category-name">PC and devices</span>
+                </a>
+                <a href="#" class="active-scale-effect settings-category" data-category="accounts">
+                    <span class="settings-category-name">Accounts</span>
+                </a>
+                <a href="#" class="active-scale-effect settings-category" data-category="search-and-apps">
+                    <span class="settings-category-name">Search and apps</span>
+                </a>
+                <a href="#" class="active-scale-effect settings-category" data-category="privacy">
+                    <span class="settings-category-name">Privacy</span>
+                </a>
+                <a href="#" class="active-scale-effect settings-category" data-category="network">
+                    <span class="settings-category-name">Network</span>
+                </a>
+                <a href="#" class="active-scale-effect settings-category" data-category="time-and-language">
+                    <span class="settings-category-name">Time and language</span>
+                </a>
+                <a href="#" class="active-scale-effect settings-category" data-category="ease-of-access">
+                    <span class="settings-category-name">Ease of Access</span>
+                </a>
+                <a href="#" class="active-scale-effect settings-category" data-category="update-and-recovery">
+                    <span class="settings-category-name">Update and recovery</span>
+                </a>
+                <a href="#" class="active-scale-effect settings-category" data-category="control-panel"
+                    id="control-panel-link" style="margin-top: auto;">
+                    <span class="settings-category-name">Control Panel</span>
+                </a>
+            </div>
+        </div>
+
+        <div class="settings-content" id="settings-content">
+            <div class="settings-content-wrapper">
+                <div class="settings-content-title">Personalize</div>
+
+                <div class="personalize-tiles">
+                    <div class="active-scale-effect personalize-tile large" id="tile-lock-screen">
+                        <img src="../../../resources/images/wallpapers/img100.jpg" alt="Lock screen">
+                        <div class="personalize-tile-label">Lock screen</div>
+                    </div>
+                    <div class="active-scale-effect personalize-tile user" id="tile-account-picture">
+                        <img src="../../../resources/images/user.png" alt="Account picture"
+                            style="object-fit: contain; background: #3a3a3a;">
+                        <div class="personalize-tile-label">Account picture</div>
+                    </div>
+                    <div class="active-scale-effect personalize-tile picpass">
+                        <img src="../../../resources/images/wallpapers/img101.png" alt="Picture password">
+                        <div class="personalize-tile-label">Picture password</div>
+                    </div>
+                </div>
+
+                <a href="#" class="recently-used-link">View recently used settings</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Listen for theme variables from parent window
+        window.addEventListener('message', function (event) {
+            if (event.data.action === 'setThemeVariables') {
+                const variables = event.data.variables;
+                console.log('[Settings] Received theme variables:', variables);
+
+                // Apply CSS variables to the document root
+                for (const [key, value] of Object.entries(variables)) {
+                    if (value) {
+                        document.documentElement.style.setProperty(`--${key}`, value);
+                        console.log('[Settings] Set CSS variable --' + key + ':', value);
+                    }
+                }
+            }
+        });
+
+        // Navigation state
+        let currentMenu = 'main'; // 'main' or 'submenu'
+        let currentCategory = null;
+
+        // Settings data will be loaded from JSON file
+        let settingsData = {};
+
+        const registryAPI = (function () {
+            const contexts = [window, window.parent, window.top];
+            for (const ctx of contexts) {
+                if (ctx && ctx.RegistryAPI) {
+                    return ctx.RegistryAPI;
+                }
+            }
+            return null;
+        })();
+
+        const DEFAULT_LOCK_SCREEN_STATE = registryAPI && typeof registryAPI.getDefaultLockScreenWallpaperState === 'function'
+            ? registryAPI.getDefaultLockScreenWallpaperState()
+            : {
+                currentWallpaper: 'img101.png',
+                currentWallpaperType: 'builtin',
+                recentWallpapers: ['img101.png', 'img100.jpg', 'img102.jpg', 'img103.png', 'img104.jpg']
+            };
+        const MAX_RECENT_LOCK_WALLPAPERS = 8;
+
+        function dedupeList(values) {
+            const seen = new Set();
+            const result = [];
+            values.forEach(value => {
+                if (value && !seen.has(value)) {
+                    seen.add(value);
+                    result.push(value);
+                }
+            });
+            return result;
+        }
+
+        let lockScreenState = DEFAULT_LOCK_SCREEN_STATE;
+
+        if (registryAPI && typeof registryAPI.loadLockScreenWallpaperState === 'function') {
+            try {
+                lockScreenState = registryAPI.loadLockScreenWallpaperState();
+            } catch (error) {
+                console.warn('[Settings] Failed to load lock screen wallpaper state from registry:', error);
+                lockScreenState = DEFAULT_LOCK_SCREEN_STATE;
+            }
+        }
+
+        let currentLockScreenWallpaper = lockScreenState.currentWallpaper || DEFAULT_LOCK_SCREEN_STATE.currentWallpaper;
+        let currentLockScreenWallpaperType = lockScreenState.currentWallpaperType || DEFAULT_LOCK_SCREEN_STATE.currentWallpaperType || 'builtin';
+        let lockScreenWallpapers = Array.isArray(lockScreenState.recentWallpapers) && lockScreenState.recentWallpapers.length > 0
+            ? dedupeList(lockScreenState.recentWallpapers.slice())
+            : dedupeList(DEFAULT_LOCK_SCREEN_STATE.recentWallpapers.slice());
+
+        if (!lockScreenWallpapers.includes(currentLockScreenWallpaper)) {
+            lockScreenWallpapers.unshift(currentLockScreenWallpaper);
+        }
+        lockScreenWallpapers = dedupeList(lockScreenWallpapers).slice(0, MAX_RECENT_LOCK_WALLPAPERS);
+
+        function resolveLockScreenImageSrc(wallpaper, type = 'builtin') {
+            const identifier = wallpaper || DEFAULT_LOCK_SCREEN_STATE.currentWallpaper;
+            if (registryAPI && typeof registryAPI.resolveLockScreenWallpaperPath === 'function') {
+                try {
+                    const resolved = registryAPI.resolveLockScreenWallpaperPath(identifier, type);
+                    if (typeof resolved === 'string' && resolved.length > 0) {
+                        const normalized = resolved.replace(/\\/g, '/');
+                        if (normalized.startsWith('resources/')) {
+                            return '../../../' + normalized;
+                        }
+                        return normalized;
+                    }
+                } catch (error) {
+                    console.warn('[Settings] Failed to resolve lock screen wallpaper path:', error);
+                }
+            }
+
+            if (identifier.startsWith('resources/')) {
+                return '../../../' + identifier.replace(/\\/g, '/');
+            }
+
+            if (/^https?:\/\//i.test(identifier) || identifier.startsWith('file://') || /^[A-Za-z]:/.test(identifier)) {
+                return identifier;
+            }
+
+            return '../../../resources/images/wallpapers/Lock/' + identifier;
+        }
+
+        // Function to update the lock screen tile image on the Personalize page
+        function updatePersonalizeLockScreenTile() {
+            const lockScreenTile = document.querySelector('#tile-lock-screen img');
+            if (lockScreenTile) {
+                lockScreenTile.src = resolveLockScreenImageSrc(currentLockScreenWallpaper, currentLockScreenWallpaperType);
+            }
+        }
+
+        // Update the lock screen tile on page load
+        updatePersonalizeLockScreenTile();
+
+        // Function to get current Personalize content
+        function getPersonalizeContent() {
+            const lockTileSrc = resolveLockScreenImageSrc(currentLockScreenWallpaper, currentLockScreenWallpaperType);
+            // Create a temporary container to build the content
+            const temp = document.createElement('div');
+            temp.innerHTML = `
+                <div class="settings-content-title">Personalize</div>
+
+                <div class="personalize-tiles">
+                    <div class="active-scale-effect personalize-tile large" id="tile-lock-screen">
+                        <img src="${lockTileSrc}" alt="Lock screen">
+                        <div class="personalize-tile-label">Lock screen</div>
+                    </div>
+                    <div class="active-scale-effect personalize-tile user" id="tile-account-picture">
+                        <img src="../../../resources/images/user.png" alt="Account picture"
+                            style="object-fit: contain; background: #3a3a3a;">
+                        <div class="personalize-tile-label">Account picture</div>
+                    </div>
+                    <div class="active-scale-effect personalize-tile picpass">
+                        <img src="../../../resources/images/wallpapers/img101.png" alt="Picture password">
+                        <div class="personalize-tile-label">Picture password</div>
+                    </div>
+                </div>
+
+                <a href="#" class="recently-used-link">View recently used settings</a>
+            `;
+            return temp.innerHTML;
+        }
+
+        // Load settings data from JSON file
+        fetch('./settings-data.json')
+            .then(response => response.json())
+            .then(data => {
+                settingsData = data;
+                console.log('[Settings] Loaded settings data:', settingsData);
+            })
+            .catch(error => {
+                console.error('[Settings] Error loading settings data:', error);
+            });
+
+        // Get elements
+        const backBtn = document.getElementById('back-btn');
+        const sidebarTitle = document.getElementById('sidebar-title');
+        const sidebarTitleText = document.getElementById('sidebar-title-text');
+        const mainMenu = document.getElementById('main-menu');
+        const settingsContent = document.getElementById('settings-content');
+
+        // Function to render lock screen preview
+        function renderLockScreenPreview() {
+            const now = new Date();
+            let timeStr = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+            // Remove AM/PM suffix
+            timeStr = timeStr.replace(/\s?(AM|PM)/i, '');
+            const dateStr = now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+            const previewSrc = resolveLockScreenImageSrc(currentLockScreenWallpaper, currentLockScreenWallpaperType);
+
+            let html = '<div class="lock-screen-preview">';
+            html += '<img src="' + previewSrc + '" alt="Lock screen preview">';
+            html += '<div class="lock-screen-overlay">';
+            html += '<div class="lock-screen-time">' + timeStr + '</div>';
+            html += '<div class="lock-screen-date">' + dateStr + '</div>';
+            html += '</div></div>';
+
+            // Add wallpaper tiles
+            html += '<div class="lock-screen-wallpapers">';
+            lockScreenWallpapers.forEach((wallpaper, index) => {
+                const isActive = wallpaper === currentLockScreenWallpaper ? 'active' : '';
+                const tileType = wallpaper === currentLockScreenWallpaper ? currentLockScreenWallpaperType : 'builtin';
+                const tileSrc = resolveLockScreenImageSrc(wallpaper, tileType);
+                html += '<div class="active-scale-effect lock-screen-wallpaper-tile ' + isActive + '" data-wallpaper="' + wallpaper + '" data-type="' + tileType + '">';
+                html += '<img src="' + tileSrc + '" alt="Wallpaper">';
+                html += '</div>';
+            });
+            html += '</div>';
+
+            // Add browse button
+            html += '<div class="browse-button">Browse</div>';
+
+            return html;
+        }
+
+        // Function to setup lock screen wallpaper tile handlers
+        function setupLockScreenHandlers() {
+            const tiles = document.querySelectorAll('.lock-screen-wallpaper-tile');
+            tiles.forEach(tile => {
+                tile.addEventListener('click', function () {
+                    const wallpaper = this.getAttribute('data-wallpaper');
+                    const wallpaperType = this.getAttribute('data-type') || 'builtin';
+
+                    // If clicking the current wallpaper, do nothing
+                    if (wallpaper === currentLockScreenWallpaper && wallpaperType === currentLockScreenWallpaperType) {
+                        return;
+                    }
+
+                    currentLockScreenWallpaper = wallpaper;
+                    currentLockScreenWallpaperType = wallpaperType;
+
+                    lockScreenWallpapers = dedupeList([currentLockScreenWallpaper, ...lockScreenWallpapers.filter(w => w !== wallpaper)])
+                        .slice(0, MAX_RECENT_LOCK_WALLPAPERS);
+
+                    lockScreenState = {
+                        currentWallpaper: currentLockScreenWallpaper,
+                        currentWallpaperType: currentLockScreenWallpaperType,
+                        recentWallpapers: lockScreenWallpapers.slice()
+                    };
+
+                    // Notify parent window to update the actual lock screen
+                    if (window.parent && typeof window.parent.updateLockScreenWallpaper === 'function') {
+                        window.parent.updateLockScreenWallpaper(currentLockScreenWallpaper, {
+                            wallpaperType: currentLockScreenWallpaperType,
+                            recentWallpapers: lockScreenWallpapers.slice()
+                        });
+                    } else if (registryAPI && typeof registryAPI.saveLockScreenWallpaperState === 'function') {
+                        try {
+                            registryAPI.saveLockScreenWallpaperState(lockScreenState);
+                        } catch (error) {
+                            console.warn('[Settings] Failed to persist lock screen wallpaper via RegistryAPI:', error);
+                        }
+                    }
+
+                    updatePersonalizeLockScreenTile();
+
+                    // Re-render the lock screen preview without animation
+                    renderSubmenuContent('pc-and-devices', 'lock-screen', false);
+                });
+            });
+        }
+
+        // Function to render content for a submenu item
+        // animate parameter: true to slide in (default for navigation), false to update in place
+        function renderSubmenuContent(categoryId, itemId, animate = true) {
+            const categoryData = settingsData[categoryId];
+            if (!categoryData || !categoryData.items[itemId]) {
+                console.error('Invalid category or item:', categoryId, itemId);
+                return;
+            }
+
+            const itemData = categoryData.items[itemId];
+            let html = '';
+
+            // Render each section
+            itemData.sections.forEach(section => {
+                html += '<div class="settings-content-title">' + section.title + '</div>';
+
+                // Special handling for lock screen preview section
+                if (categoryId === 'pc-and-devices' && itemId === 'lock-screen' && section.title === 'Lock screen preview') {
+                    html += renderLockScreenPreview();
+                }
+
+                // Render settings in this section
+                if (section.settings && section.settings.length > 0) {
+                    section.settings.forEach(setting => {
+                        // TODO: Render individual settings
+                        // Will add this when we populate the settings array
+                    });
+                }
+            });
+
+            // Get or create content wrapper
+            let wrapper = settingsContent.querySelector('.settings-content-wrapper');
+
+            if (animate) {
+                // Remove existing content wrapper (no exit animation)
+                if (wrapper) {
+                    wrapper.remove();
+                }
+
+                // Create new wrapper and set content
+                wrapper = document.createElement('div');
+                wrapper.className = 'settings-content-wrapper';
+                wrapper.innerHTML = html;
+                settingsContent.appendChild(wrapper);
+
+                // Trigger animation after DOM update
+                requestAnimationFrame(() => {
+                    requestAnimationFrame(() => {
+                        wrapper.classList.add('visible');
+                    });
+                });
+            } else {
+                // Update in place without animation
+                if (wrapper) {
+                    wrapper.innerHTML = html;
+                } else {
+                    // Shouldn't happen, but handle it
+                    wrapper = document.createElement('div');
+                    wrapper.className = 'settings-content-wrapper visible';
+                    wrapper.innerHTML = html;
+                    settingsContent.appendChild(wrapper);
+                }
+            }
+
+            // Setup handlers if this is the lock screen page
+            if (categoryId === 'pc-and-devices' && itemId === 'lock-screen') {
+                setupLockScreenHandlers();
+            }
+        }
+
+        // Helper function to navigate to a specific submenu item
+        function navigateToSubmenuItem(categoryId, itemId) {
+            // Find the category link in the main menu
+            const categoryLink = document.querySelector(`.settings-category[data-category="${categoryId}"]`);
+            if (categoryLink) {
+                // Simulate clicking the category to open submenu
+                categoryLink.click();
+
+                // Wait for submenu to be created, then select the specific item
+                setTimeout(() => {
+                    const submenu = document.getElementById('submenu');
+                    if (submenu) {
+                        const itemLink = submenu.querySelector(`.settings-category[data-submenu-item="${itemId}"]`);
+                        if (itemLink) {
+                            // Remove active from all items
+                            submenu.querySelectorAll('.settings-category').forEach(cat => {
+                                cat.classList.remove('active');
+                            });
+                            // Add active to target item
+                            itemLink.classList.add('active');
+                            // Render content
+                            renderSubmenuContent(categoryId, itemId);
+                        }
+                    }
+                }, 100);
+            }
+        }
+
+        // Setup click handlers for personalize tiles
+        function setupPersonalizeTileHandlers() {
+            const lockScreenTile = document.getElementById('tile-lock-screen');
+            const accountPictureTile = document.getElementById('tile-account-picture');
+
+            if (lockScreenTile) {
+                lockScreenTile.addEventListener('click', function () {
+                    navigateToSubmenuItem('pc-and-devices', 'lock-screen');
+                });
+            }
+
+            if (accountPictureTile) {
+                accountPictureTile.addEventListener('click', function () {
+                    navigateToSubmenuItem('accounts', 'your-account');
+                });
+            }
+        }
+
+        // Trigger initial animation on page load
+        // Use requestAnimationFrame to ensure DOM is ready
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                sidebarTitle.classList.add('visible');
+                mainMenu.classList.add('visible');
+
+                // Animate initial content
+                const initialWrapper = settingsContent.querySelector('.settings-content-wrapper');
+                if (initialWrapper) {
+                    initialWrapper.classList.add('visible');
+                }
+
+                // Setup tile handlers after DOM is ready
+                setupPersonalizeTileHandlers();
+            });
+        });
+
+        // Handle back button
+        backBtn.addEventListener('click', function () {
+            // Return to main menu
+            currentMenu = 'main';
+            currentCategory = null;
+
+            // Hide back button
+            backBtn.classList.remove('visible');
+
+            // Instantly hide header (no exit animation)
+            sidebarTitle.classList.remove('visible');
+
+            // Remove submenu if it exists
+            const submenu = document.getElementById('submenu');
+            if (submenu) {
+                submenu.remove();
+            }
+
+            // Wait for browser to render hidden state, then change text and animate in
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    // Change text
+                    sidebarTitleText.textContent = 'PC settings';
+
+                    // Force reflow to ensure animation triggers
+                    void sidebarTitle.offsetWidth;
+
+                    // Animate header in
+                    sidebarTitle.classList.add('visible');
+
+                    // Show main menu with animation
+                    mainMenu.classList.remove('hidden');
+                    mainMenu.classList.remove('visible');
+                    void mainMenu.offsetWidth;
+                    mainMenu.classList.add('visible');
+                });
+            });
+
+            // Remove existing content wrapper (no exit animation)
+            const existingWrapper = settingsContent.querySelector('.settings-content-wrapper');
+            if (existingWrapper) {
+                existingWrapper.remove();
+            }
+
+            // Restore Personalize content with current wallpaper
+            const wrapper = document.createElement('div');
+            wrapper.className = 'settings-content-wrapper';
+            wrapper.innerHTML = getPersonalizeContent();
+            settingsContent.appendChild(wrapper);
+
+            // Animate content in
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    wrapper.classList.add('visible');
+
+                    // Re-attach tile handlers after restoring content
+                    setupPersonalizeTileHandlers();
+                });
+            });
+        });
+
+        // Handle sidebar navigation
+        document.querySelectorAll('.settings-category').forEach(category => {
+            category.addEventListener('click', function (e) {
+                e.preventDefault();
+
+                // Special handling for Control Panel
+                if (this.id === 'control-panel-link') {
+                    // First switch to desktop, then launch Control Panel
+                    if (window.parent) {
+                        // Close start screen to go to desktop
+                        if (window.parent.closeStartScreen) {
+                            window.parent.closeStartScreen();
+                        }
+                        // Wait a bit for transition, then launch Control Panel
+                        setTimeout(() => {
+                            if (window.parent.launchApp) {
+                                window.parent.launchApp('control-panel');
+                            }
+                        }, 450); // Wait for closeStartScreen animation (400ms) + small buffer
+                    }
+                    return;
+                }
+
+                // Get category name and data
+                const categoryName = this.querySelector('.settings-category-name').textContent;
+                const categoryId = this.getAttribute('data-category');
+
+                // Enter submenu mode
+                currentMenu = 'submenu';
+                currentCategory = categoryId;
+
+                // Instantly hide main menu (no exit animation)
+                mainMenu.classList.add('hidden');
+                mainMenu.classList.remove('visible');
+
+                // Instantly hide header (no exit animation)
+                sidebarTitle.classList.remove('visible');
+
+                // Get category data from settingsData
+                const categoryData = settingsData[categoryId];
+                if (categoryData && categoryData.items) {
+                    // Create submenu container
+                    const submenuContainer = document.createElement('div');
+                    submenuContainer.className = 'settings-menu-list';
+                    submenuContainer.id = 'submenu';
+
+                    // Get array of item IDs and data
+                    const itemEntries = Object.entries(categoryData.items);
+
+                    // Add each submenu item
+                    itemEntries.forEach(([itemId, itemData], index) => {
+                        const item = document.createElement('a');
+                        item.href = '#';
+                        item.className = 'active-scale-effect settings-category';
+                        item.setAttribute('data-submenu-item', itemId);
+                        item.innerHTML = '<span class="settings-category-name">' + itemData.name + '</span>';
+
+                        // Mark first item as active
+                        if (index === 0) {
+                            item.classList.add('active');
+                        }
+
+                        // Add click handler for submenu items
+                        item.addEventListener('click', function (e) {
+                            e.preventDefault();
+
+                            // Remove active class from all submenu items
+                            submenuContainer.querySelectorAll('.settings-category').forEach(cat => {
+                                cat.classList.remove('active');
+                            });
+
+                            // Add active class to clicked item
+                            item.classList.add('active');
+
+                            // Render content for this item
+                            renderSubmenuContent(categoryId, itemId);
+                        });
+
+                        submenuContainer.appendChild(item);
+                    });
+
+                    // Insert submenu after main menu
+                    mainMenu.parentNode.insertBefore(submenuContainer, mainMenu.nextSibling);
+
+                    // Wait for browser to render hidden state, then change text and animate in
+                    requestAnimationFrame(() => {
+                        requestAnimationFrame(() => {
+                            // Show back button and update title text
+                            backBtn.classList.add('visible');
+                            sidebarTitleText.textContent = categoryName;
+
+                            // Force reflow to ensure animation triggers
+                            void sidebarTitle.offsetWidth;
+
+                            // Animate header back in
+                            sidebarTitle.classList.add('visible');
+
+                            // Animate submenu in
+                            submenuContainer.classList.add('visible');
+                        });
+                    });
+
+                    // Set content area to show first submenu item
+                    const firstItemId = itemEntries[0][0];
+                    renderSubmenuContent(categoryId, firstItemId);
+                } else {
+                    // No submenu items, just animate header
+                    requestAnimationFrame(() => {
+                        requestAnimationFrame(() => {
+                            // Show back button and update title text
+                            backBtn.classList.add('visible');
+                            sidebarTitleText.textContent = categoryName;
+
+                            // Force reflow to ensure animation triggers
+                            void sidebarTitle.offsetWidth;
+
+                            // Animate header back in
+                            sidebarTitle.classList.add('visible');
+                        });
+                    });
+
+                    // Clear content area for categories without submenu items
+                    settingsContent.innerHTML = '<div class="settings-content-title">' + categoryName + '</div>';
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personalization</title>
+    <link rel="stylesheet" href="personalization.css">
+    <script src="personalization.js"></script>
+</head>
+
+<body>
+    <div class="personalization-container">
+        <!-- Fixed Header -->
+        <div class="page-header">
+            <h1 class="page-title">Change the visuals and sounds on your computer</h1>
+            <p class="page-description">Click a theme to change the desktop background, color, sounds, and screen saver
+                all at once.</p>
+        </div>
+
+        <!-- Scrollable Themes Area -->
+        <div class="themes-container">
+            <div class="themes-scroll-area">
+                <!-- My Themes (hidden by default, shown when there are custom/unsaved themes) -->
+                <div class="theme-section my-themes" style="display: none;">
+                    <h2 class="section-title">My themes (0)</h2>
+                    <div class="theme-grid">
+                        <!-- Custom/Unsaved themes will be dynamically loaded here -->
+                    </div>
+                </div>
+
+                <!-- Windows Default Themes -->
+                <div class="theme-section windows-themes">
+                    <h2 class="section-title">Windows Default Themes (3)</h2>
+                    <div class="theme-grid">
+                        <!-- Themes will be dynamically loaded here -->
+                    </div>
+                </div>
+
+                <!-- High Contrast Themes -->
+                <div class="theme-section">
+                    <h2 class="section-title">High Contrast Themes (4)</h2>
+                    <div class="theme-grid">
+                        <div class="theme-item">
+                            <div class="theme-thumbnail high-contrast-1">
+                                <div class="hc-preview">
+                                    <div class="hc-window" style="border-color: #37a9e1;">
+                                        <div class="hc-bar" style="background: #37a9e1;"></div>
+                                        <div class="hc-text yellow-text"></div>
+                                        <div class="hc-text yellow-text"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="theme-name">High Contrast #1</div>
+                        </div>
+                        <div class="theme-item">
+                            <div class="theme-thumbnail high-contrast-2">
+                                <div class="hc-preview">
+                                    <div class="hc-window" style="border-color: #1aebff;">
+                                        <div class="hc-bar" style="background: #1aebff;"></div>
+                                        <div class="hc-text green-text"></div>
+                                        <div class="hc-text green-text"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="theme-name">High Contrast #2</div>
+                        </div>
+                        <div class="theme-item">
+                            <div class="theme-thumbnail high-contrast-black">
+                                <div class="hc-preview">
+                                    <div class="hc-window" style="border-color: #808080;">
+                                        <div class="hc-bar" style="background: #808080;"></div>
+                                        <div class="hc-text white-text"></div>
+                                        <div class="hc-text white-text"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="theme-name">High Contrast Black</div>
+                        </div>
+                        <div class="theme-item">
+                            <div class="theme-thumbnail high-contrast-white">
+                                <div class="hc-preview white-bg">
+                                    <div class="hc-window white-window" style="border-color: #808080;">
+                                        <div class="hc-bar" style="background: #808080;"></div>
+                                        <div class="hc-text black-text"></div>
+                                        <div class="hc-text black-text"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="theme-name">High Contrast White</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Get more themes online link -->
+                <div class="get-more-link">
+                    <a href="#">Get more themes online</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Fixed Footer -->
+        <div class="page-footer">
+            <div class="see-also-section">
+                <div class="action-icons">
+                    <div class="action-icon-item">
+                        <div class="action-icon desktop-bg">
+                            <div class="icon-preview"></div>
+                        </div>
+                        <a href="#" class="action-link" id="desktop-background-link">Desktop Background</a>
+                        <div class="action-subtitle">Harmony</div>
+                    </div>
+                    <div class="action-icon-item">
+                        <div class="action-icon color">
+                            <div class="color-preview"></div>
+                        </div>
+                        <a href="#" class="action-link">Color</a>
+                        <div class="action-subtitle">Automatic</div>
+                    </div>
+                    <div class="action-icon-item">
+                        <div class="action-icon sounds">
+                            <div class="sound-icon"></div>
+                        </div>
+                        <a href="#" class="action-link">Sounds</a>
+                        <div class="action-subtitle">Windows Default</div>
+                    </div>
+                    <div class="action-icon-item">
+                        <div class="action-icon screensaver">
+                            <div class="screensaver-icon"></div>
+                        </div>
+                        <a href="#" class="action-link">Screen Saver</a>
+                        <div class="action-subtitle">None</div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // Helper function to navigate to a page
+        function navigateToPage(page, path, title) {
+            // Notify parent Control Panel to navigate
+            if (window.parent && window.parent !== window) {
+                window.parent.postMessage({
+                    action: 'navigateToSubPage',
+                    page: page,
+                    path: path,
+                    title: title
+                }, '*');
+            } else {
+                // Standalone mode, just navigate
+                window.location.href = path.replace('../personalization/', '');
+            }
+        }
+
+        // Get all action icon items
+        const actionItems = document.querySelectorAll('.action-icon-item');
+
+        // Desktop Background (1st item)
+        actionItems[0].addEventListener('click', function (e) {
+            e.preventDefault();
+            navigateToPage('desktop-background', '../personalization/desktop-background.html', 'Desktop Background');
+        });
+
+        // Color (2nd item)
+        actionItems[1].addEventListener('click', function (e) {
+            e.preventDefault();
+            navigateToPage('colors', '../personalization/colors.html', 'Color');
+        });
+
+        // Sounds (3rd item)
+        actionItems[2].addEventListener('click', function (e) {
+            e.preventDefault();
+            // TODO: Navigate to sounds page when implemented
+            console.log('Sounds page not yet implemented');
+        });
+
+        // Screen Saver (4th item)
+        actionItems[3].addEventListener('click', function (e) {
+            e.preventDefault();
+            // TODO: Navigate to screen saver page when implemented
+            console.log('Screen Saver page not yet implemented');
+        });
+    </script>
+</body>
+
+</html>

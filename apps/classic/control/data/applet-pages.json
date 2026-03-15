@@ -1,0 +1,39 @@
+{
+  "personalization": {
+    "title": "Personalization",
+    "externalPath": "../personalization/personalization.html",
+    "sidebarLinks": [
+      {
+        "text": "Change desktop icons",
+        "action": "page",
+        "target": "desktop-icons"
+      },
+      {
+        "text": "Change mouse pointers",
+        "action": "page",
+        "target": "mouse-pointers"
+      }
+    ],
+    "sidebarFooter": {
+      "title": "See also",
+      "links": [
+        {
+          "text": "Display",
+          "action": "open",
+          "target": "display"
+        },
+        {
+          "text": "Taskbar and Navigation",
+          "action": "open",
+          "target": "taskbar"
+        },
+        {
+          "text": "Ease of Access Center",
+          "action": "open",
+          "target": "ease-of-access-center"
+        }
+      ]
+    },
+    "sections": []
+  }
+}

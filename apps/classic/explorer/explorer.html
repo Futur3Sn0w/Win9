@@ -1,0 +1,1232 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>File Explorer</title>
+    <link rel="stylesheet" href="explorer.css">
+    <link rel="stylesheet" href="../../../css/classic-windows.css">
+    <link rel="stylesheet" href="../../../css/classic-controls.css">
+    <link rel="stylesheet" href="../../../css/styles.css">
+    <link rel="stylesheet" href="../../../css/fonts.css">
+
+    <link href="https://cdn.metroui.org.ua/4.5.12/icons.css" rel="stylesheet">
+
+</head>
+
+<body>
+    <div class="explorer">
+        <!-- Command Bar -->
+        <div class="explorer-command-bar">
+            <div class="explorer-command-tabs">
+                <button class="explorer-command-tab active" data-tab="file">File</button>
+                <button class="explorer-command-tab" data-tab="computer">Computer</button>
+                <button class="explorer-command-tab" data-tab="view">View</button>
+            </div>
+        </div>
+
+        <!-- Navigation Bar (matching Control Panel exactly) -->
+        <div class="explorer-nav-bar">
+            <div class="explorer-nav-buttons">
+                <button class="explorer-nav-btn" id="backBtn" disabled title="Back">
+                    <span class="mif-arrow-left"></span>
+                </button>
+                <button class="explorer-nav-btn" id="forwardBtn" disabled title="Forward">
+                    <span class="mif-arrow-right"></span>
+                </button>
+                <button class="explorer-nav-btn" id="upBtn" disabled title="Up one level">
+                    <span class="mif-arrow-up"></span>
+                </button>
+            </div>
+            <div class="explorer-address-bar">
+                <img src="../../../resources/images/icons/explorer/this_pc/16.png" class="explorer-address-icon"
+                    id="addressIcon" alt="This PC">
+                <div class="explorer-breadcrumbs" id="breadcrumbs">
+                    <span class="explorer-breadcrumb active">This PC</span>
+                </div>
+            </div>
+            <div class="explorer-search-box">
+                <input type="text" id="searchInput" placeholder="Search This PC" />
+                <span class="mif-search"></span>
+            </div>
+        </div>
+
+        <!-- Main Container -->
+        <div class="explorer-main">
+            <!-- Sidebar -->
+            <div class="explorer-sidebar" id="explorerSidebar">
+                <div class="explorer-sidebar-section">
+                    <div class="explorer-sidebar-item explorer-sidebar-item--expandable explorer-sidebar-item--non-navigable"
+                        data-location="favorites">
+                        <span class="explorer-sidebar-disclosure" data-expanded="true">▼</span>
+                        <img src="../../../resources/images/icons/explorer/folder_favorites/16.png"
+                            class="explorer-sidebar-icon" />
+                        <span>Favorites</span>
+                    </div>
+                    <div class="explorer-sidebar-children" data-parent="favorites">
+                        <div class="explorer-sidebar-item explorer-sidebar-item--nested" data-location="desktop">
+                            <img src="../../../resources/images/icons/explorer/desktop/16.png"
+                                class="explorer-sidebar-icon" />
+                            <span>Desktop</span>
+                        </div>
+                        <div class="explorer-sidebar-item explorer-sidebar-item--nested" data-location="downloads">
+                            <img src="../../../resources/images/icons/explorer/folder_downloads/16.png"
+                                class="explorer-sidebar-icon" />
+                            <span>Downloads</span>
+                        </div>
+                        <div class="explorer-sidebar-item explorer-sidebar-item--nested" data-location="recent">
+                            <img src="../../../resources/images/icons/explorer/folder_recent-places/16.png"
+                                class="explorer-sidebar-icon" />
+                            <span>Recent places</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="explorer-sidebar-section">
+                    <div class="explorer-sidebar-item explorer-sidebar-item--expandable active" data-location="this-pc">
+                        <span class="explorer-sidebar-disclosure" data-expanded="true">▼</span>
+                        <img src="../../../resources/images/icons/explorer/this_pc/16.png"
+                            class="explorer-sidebar-icon" />
+                        <span>This PC</span>
+                    </div>
+                    <div class="explorer-sidebar-children" data-parent="this-pc">
+                        <div class="explorer-sidebar-item explorer-sidebar-item--nested" data-location="desktop-folder">
+                            <img src="../../../resources/images/icons/explorer/desktop/16.png"
+                                class="explorer-sidebar-icon" />
+                            <span>Desktop</span>
+                        </div>
+                        <div class="explorer-sidebar-item explorer-sidebar-item--nested" data-location="documents">
+                            <img src="../../../resources/images/icons/explorer/folder_documents/16.png"
+                                class="explorer-sidebar-icon" />
+                            <span>Documents</span>
+                        </div>
+                        <div class="explorer-sidebar-item explorer-sidebar-item--nested"
+                            data-location="downloads-folder">
+                            <img src="../../../resources/images/icons/explorer/folder_downloads/16.png"
+                                class="explorer-sidebar-icon" />
+                            <span>Downloads</span>
+                        </div>
+                        <div class="explorer-sidebar-item explorer-sidebar-item--nested" data-location="music">
+                            <img src="../../../resources/images/icons/explorer/folder_music/16.png"
+                                class="explorer-sidebar-icon" />
+                            <span>Music</span>
+                        </div>
+                        <div class="explorer-sidebar-item explorer-sidebar-item--nested" data-location="pictures">
+                            <img src="../../../resources/images/icons/explorer/folder_pictures/16.png"
+                                class="explorer-sidebar-icon" />
+                            <span>Pictures</span>
+                        </div>
+                        <div class="explorer-sidebar-item explorer-sidebar-item--nested" data-location="videos">
+                            <img src="../../../resources/images/icons/explorer/folder_videos/16.png"
+                                class="explorer-sidebar-icon" />
+                            <span>Videos</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="explorer-sidebar-section">
+                    <div class="explorer-sidebar-item explorer-sidebar-item--non-navigable" data-location="network">
+                        <span class="mif-share explorer-sidebar-icon-text"></span>
+                        <span>Network</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Resize Handle -->
+            <div class="explorer-sidebar-resize" id="sidebarResize"></div>
+
+            <!-- Content Area -->
+            <div class="explorer-content" id="content">
+                <!-- Content will be dynamically populated -->
+            </div>
+        </div>
+
+        <!-- Status Bar -->
+        <div class="explorer-status-bar">
+            <div class="explorer-status-info" id="statusInfo">8 items</div>
+            <div class="explorer-status-selected" id="statusSelected" style="display: none;">0 items selected</div>
+            <div class="explorer-status-view-controls">
+                <button class="explorer-view-btn" title="Extra large icons" data-view="extra-large">
+                    <span class="mif-apps"></span>
+                </button>
+                <button class="explorer-view-btn active" title="Large icons" data-view="large">
+                    <span class="mif-apps"></span>
+                </button>
+                <button class="explorer-view-btn" title="Medium icons" data-view="medium">
+                    <span class="mif-apps"></span>
+                </button>
+                <button class="explorer-view-btn" title="List" data-view="list">
+                    <span class="mif-list"></span>
+                </button>
+                <button class="explorer-view-btn" title="Details" data-view="details">
+                    <span class="mif-list2"></span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const APP_ID = 'explorer';
+        const os = require('os');
+        const path = require('path');
+        const fs = require('fs').promises;
+
+        // Window ID for multi-window support
+        let windowId = null;
+
+        // Check if running in Electron webview (has ipcRenderer)
+        const isWebview = typeof require !== 'undefined';
+        let ipcRenderer = null;
+
+        if (isWebview) {
+            try {
+                const { ipcRenderer: ipc } = require('electron');
+                ipcRenderer = ipc;
+
+                // Listen for windowId from parent
+                ipcRenderer.on('setWindowId', (event, data) => {
+                    windowId = data.windowId;
+                    console.log('Explorer window ID set:', windowId);
+                });
+
+                // Helper function to send messages to parent
+                window.sendToParent = function(action, data) {
+                    const messageData = {
+                        action,
+                        windowId,
+                        appId: APP_ID,
+                        ...data
+                    };
+                    ipcRenderer.sendToHost('window-message', messageData);
+                };
+            } catch (e) {
+                console.warn('Failed to set up IPC:', e);
+            }
+        } else {
+            // Fallback for iframe context
+            window.sendToParent = function(action, data) {
+                window.parent.postMessage({
+                    action,
+                    windowId,
+                    appId: APP_ID,
+                    ...data
+                }, '*');
+            };
+
+            // Listen for postMessage
+            window.addEventListener('message', function(e) {
+                if (e.data.action === 'setWindowId') {
+                    windowId = e.data.windowId;
+                    console.log('Explorer window ID set:', windowId);
+                }
+            });
+        }
+
+        let currentLocation = 'this-pc';
+        let currentPath = null;
+        let navigationHistory = [];
+        let historyIndex = -1;
+        let currentView = 'large';
+        let selectedItems = new Set();
+        let dragSelectState = {
+            active: false,
+            originX: 0,
+            originY: 0,
+            overlay: null
+        };
+
+        // Initialize on load (use 'load' instead of 'DOMContentLoaded' to ensure launchOptions are set)
+        window.addEventListener('load', initialize);
+
+        async function initialize() {
+            // Check if we should open a specific folder
+            const launchOptions = window.launchOptions || {};
+            console.log('[File Explorer] Initialize with launchOptions:', launchOptions);
+
+            if (launchOptions.openFolderPath) {
+                console.log('[File Explorer] Opening folder:', launchOptions.openFolderPath);
+                currentLocation = 'path';
+                currentPath = launchOptions.openFolderPath;
+                navigationHistory.push({ type: 'path', path: launchOptions.openFolderPath });
+                historyIndex++;
+            }
+
+            await updateView();
+            bindEventListeners();
+            initializeSidebarResize();
+        }
+
+        function bindEventListeners() {
+            // Navigation buttons
+            document.getElementById('backBtn').addEventListener('click', navigateBack);
+            document.getElementById('forwardBtn').addEventListener('click', navigateForward);
+            document.getElementById('upBtn').addEventListener('click', navigateUp);
+
+            // Search
+            document.getElementById('searchInput').addEventListener('input', handleSearch);
+
+            // Sidebar items
+            document.querySelectorAll('.explorer-sidebar-item').forEach(item => {
+                item.addEventListener('click', handleSidebarClick);
+            });
+
+            // Disclosure triangles
+            document.querySelectorAll('.explorer-sidebar-disclosure').forEach(disclosure => {
+                disclosure.addEventListener('click', handleDisclosureClick);
+            });
+
+            // View controls
+            document.querySelectorAll('.explorer-view-btn').forEach(btn => {
+                btn.addEventListener('click', handleViewChange);
+            });
+
+            // Command tabs
+            document.querySelectorAll('.explorer-command-tab').forEach(tab => {
+                tab.addEventListener('click', handleCommandTabClick);
+            });
+
+            // Content area for drag selection
+            document.getElementById('content').addEventListener('mousedown', handleContentMouseDown);
+
+            // Initialize children container heights
+            initializeChildrenHeights();
+        }
+
+        function initializeSidebarResize() {
+            const resizeHandle = document.getElementById('sidebarResize');
+            const sidebar = document.getElementById('explorerSidebar');
+            let isResizing = false;
+            let startX = 0;
+            let startWidth = 0;
+
+            resizeHandle.addEventListener('mousedown', (e) => {
+                isResizing = true;
+                startX = e.clientX;
+                startWidth = sidebar.offsetWidth;
+                document.body.style.cursor = 'ew-resize';
+                document.body.style.userSelect = 'none';
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                if (!isResizing) return;
+                const delta = e.clientX - startX;
+                const newWidth = Math.max(150, Math.min(400, startWidth + delta));
+                sidebar.style.width = `${newWidth}px`;
+            });
+
+            document.addEventListener('mouseup', () => {
+                if (isResizing) {
+                    isResizing = false;
+                    document.body.style.cursor = '';
+                    document.body.style.userSelect = '';
+                }
+            });
+        }
+
+        function handleSidebarClick(event) {
+            const item = event.currentTarget;
+            const location = item.dataset.location;
+
+            // Don't navigate if clicking on disclosure triangle
+            if (event.target.classList.contains('explorer-sidebar-disclosure')) {
+                return;
+            }
+
+            // Don't navigate if item is non-navigable
+            if (item.classList.contains('explorer-sidebar-item--non-navigable')) {
+                return;
+            }
+
+            // Update active state
+            document.querySelectorAll('.explorer-sidebar-item').forEach(i => i.classList.remove('active'));
+            item.classList.add('active');
+
+            // Navigate based on location
+            switch (location) {
+                case 'desktop':
+                case 'desktop-folder':
+                    navigateToPath(path.join(os.homedir(), 'Desktop'));
+                    break;
+                case 'downloads':
+                case 'downloads-folder':
+                    navigateToPath(path.join(os.homedir(), 'Downloads'));
+                    break;
+                case 'documents':
+                    navigateToPath(path.join(os.homedir(), 'Documents'));
+                    break;
+                case 'music':
+                    navigateToPath(path.join(os.homedir(), 'Music'));
+                    break;
+                case 'pictures':
+                    navigateToPath(path.join(os.homedir(), 'Pictures'));
+                    break;
+                case 'videos':
+                    navigateToPath(path.join(os.homedir(), 'Videos'));
+                    break;
+                case 'this-pc':
+                    navigateToThisPC();
+                    break;
+                case 'recent':
+                    // TODO: Implement recent places
+                    console.log('Recent places not yet implemented');
+                    break;
+                case 'network':
+                    // TODO: Implement network
+                    console.log('Network not yet implemented');
+                    break;
+            }
+        }
+
+        function handleDisclosureClick(event) {
+            event.stopPropagation();
+
+            const disclosure = event.currentTarget;
+            const isExpanded = disclosure.dataset.expanded === 'true';
+            const newExpandedState = !isExpanded;
+
+            // Update disclosure triangle
+            disclosure.dataset.expanded = newExpandedState.toString();
+
+            // Find the parent item's location
+            const parentItem = disclosure.closest('.explorer-sidebar-item');
+            const parentLocation = parentItem.dataset.location;
+
+            // Find and toggle the children container
+            const childrenContainer = document.querySelector(`.explorer-sidebar-children[data-parent="${parentLocation}"]`);
+            if (childrenContainer) {
+                childrenContainer.dataset.expanded = newExpandedState.toString();
+
+                // Update max-height for smooth animation
+                if (newExpandedState) {
+                    childrenContainer.style.maxHeight = childrenContainer.scrollHeight + 'px';
+                } else {
+                    childrenContainer.style.maxHeight = '0px';
+                }
+            }
+        }
+
+        function initializeChildrenHeights() {
+            // Set initial max-height for expanded children containers
+            document.querySelectorAll('.explorer-sidebar-children').forEach(container => {
+                const disclosure = document.querySelector(`.explorer-sidebar-disclosure[data-expanded="true"]`);
+                if (disclosure) {
+                    const parentItem = disclosure.closest('.explorer-sidebar-item');
+                    if (parentItem) {
+                        const parentLocation = parentItem.dataset.location;
+                        const childContainer = document.querySelector(`.explorer-sidebar-children[data-parent="${parentLocation}"]`);
+                        if (childContainer === container) {
+                            container.style.maxHeight = container.scrollHeight + 'px';
+                            container.dataset.expanded = 'true';
+                        }
+                    }
+                }
+            });
+        }
+
+        function handleSectionHeaderClick(event) {
+            const header = event.currentTarget;
+            const sectionName = header.dataset.section;
+            const disclosure = header.querySelector('.explorer-section-disclosure');
+
+            // Check if the click was on the disclosure triangle
+            const clickedDisclosure = event.target === disclosure || disclosure.contains(event.target);
+
+            if (clickedDisclosure) {
+                // Toggle expand/collapse
+                if (!disclosure) return;
+
+                const isExpanded = disclosure.dataset.expanded === 'true';
+                const newExpandedState = !isExpanded;
+
+                // Update disclosure triangle
+                disclosure.dataset.expanded = newExpandedState.toString();
+
+                // Find and toggle the content container
+                const contentContainer = document.querySelector(`.explorer-section-content[data-section="${sectionName}"]`);
+                if (contentContainer) {
+                    contentContainer.dataset.expanded = newExpandedState.toString();
+
+                    // Update max-height for smooth animation
+                    if (newExpandedState) {
+                        contentContainer.style.maxHeight = contentContainer.scrollHeight + 'px';
+                    } else {
+                        contentContainer.style.maxHeight = '0px';
+                    }
+                }
+            } else {
+                // Select all items in this section
+                selectAllInSection(sectionName, header);
+            }
+        }
+
+        function selectAllInSection(sectionName, header) {
+            // Clear all selections first
+            clearSelection();
+
+            // Remove selected state from all section headers
+            document.querySelectorAll('.explorer-section-header--collapsible').forEach(h => {
+                h.classList.remove('is-selected');
+            });
+
+            // Add selected state to clicked header
+            header.classList.add('is-selected');
+
+            // Find the content container for this section
+            const contentContainer = document.querySelector(`.explorer-section-content[data-section="${sectionName}"]`);
+            if (!contentContainer) return;
+
+            // Select all items in this section
+            const items = contentContainer.querySelectorAll('.explorer-icon-item');
+            items.forEach(item => {
+                addToSelection(item);
+            });
+        }
+
+        function initializeSectionHeights() {
+            // Set initial max-height for expanded section containers
+            document.querySelectorAll('.explorer-section-content').forEach(container => {
+                container.style.maxHeight = container.scrollHeight + 'px';
+                container.dataset.expanded = 'true';
+            });
+        }
+
+        function handleViewChange(event) {
+            const btn = event.currentTarget;
+            const view = btn.dataset.view;
+
+            document.querySelectorAll('.explorer-view-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            currentView = view;
+            updateView();
+        }
+
+        function handleCommandTabClick(event) {
+            const tab = event.currentTarget;
+
+            document.querySelectorAll('.explorer-command-tab').forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+
+            // TODO: Implement command tab panels
+            console.log('Command tab:', tab.dataset.tab);
+        }
+
+        async function updateView() {
+            const content = document.getElementById('content');
+            content.innerHTML = '';
+
+            if (currentLocation === 'this-pc') {
+                await renderThisPC();
+            } else if (currentPath) {
+                await renderFolderView(currentPath);
+            }
+
+            updateNavigationButtons();
+            updateBreadcrumbs();
+            updateSearchPlaceholder();
+            updateTitlebar();
+        }
+
+        async function getAvailableDrives() {
+            const drives = [];
+
+            // Add main system drive
+            const mainDrive = {
+                id: 'main-drive',
+                name: process.platform === 'win32' ? 'Local Disk (C:)' : 'Macintosh HD',
+                icon: 'main_drive',
+                path: process.platform === 'win32' ? 'C:\\' : '/',
+                isDrive: true
+            };
+            drives.push(mainDrive);
+
+            // Detect external drives
+            if (process.platform === 'darwin') {
+                // macOS - check /Volumes for mounted drives
+                try {
+                    const volumesPath = '/Volumes';
+                    const volumes = await fs.readdir(volumesPath, { withFileTypes: true });
+
+                    for (const volume of volumes) {
+                        if (volume.isDirectory()) {
+                            const volumePath = path.join(volumesPath, volume.name);
+
+                            // Skip Macintosh HD (it's the main drive)
+                            if (volume.name === 'Macintosh HD') continue;
+
+                            // Verify the volume is accessible
+                            try {
+                                await fs.access(volumePath);
+                                drives.push({
+                                    id: `volume-${volume.name}`,
+                                    name: volume.name,
+                                    icon: 'external_drive',
+                                    path: volumePath,
+                                    isDrive: true
+                                });
+                            } catch (error) {
+                                // Volume not accessible, skip it
+                                console.log(`Skipping inaccessible volume: ${volume.name}`);
+                            }
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error reading volumes:', error);
+                }
+            } else if (process.platform === 'win32') {
+                // Windows - check common drive letters
+                const driveLetters = ['D', 'E', 'F', 'G', 'H'];
+                for (const letter of driveLetters) {
+                    const drivePath = `${letter}:\\`;
+                    try {
+                        await fs.access(drivePath);
+                        drives.push({
+                            id: `drive-${letter}`,
+                            name: `Local Disk (${letter}:)`,
+                            icon: 'external_drive',
+                            path: drivePath,
+                            isDrive: true
+                        });
+                    } catch (error) {
+                        // Drive doesn't exist or not accessible
+                    }
+                }
+            }
+
+            return drives;
+        }
+
+        async function renderThisPC() {
+            const content = document.getElementById('content');
+
+            const container = document.createElement('div');
+            container.className = 'explorer-this-pc';
+
+            // Folders section
+            const foldersHeader = document.createElement('div');
+            foldersHeader.className = 'explorer-section-header explorer-section-header--collapsible';
+            foldersHeader.dataset.section = 'folders';
+            foldersHeader.innerHTML = `
+                <span class="explorer-section-disclosure" data-expanded="true">▼</span>
+                <h2>Folders (6)</h2>
+            `;
+            foldersHeader.addEventListener('click', handleSectionHeaderClick);
+            container.appendChild(foldersHeader);
+
+            const foldersGridContainer = document.createElement('div');
+            foldersGridContainer.className = 'explorer-section-content';
+            foldersGridContainer.dataset.section = 'folders';
+
+            const foldersGrid = document.createElement('div');
+            foldersGrid.className = `explorer-icon-grid explorer-icon-grid--${currentView}`;
+
+            const userFolders = [
+                { id: 'desktop', name: 'Desktop', icon: 'desktop', path: path.join(os.homedir(), 'Desktop') },
+                { id: 'documents', name: 'Documents', icon: 'folder_documents', path: path.join(os.homedir(), 'Documents') },
+                { id: 'downloads', name: 'Downloads', icon: 'folder_downloads', path: path.join(os.homedir(), 'Downloads') },
+                { id: 'music', name: 'Music', icon: 'folder_music', path: path.join(os.homedir(), 'Music') },
+                { id: 'pictures', name: 'Pictures', icon: 'folder_pictures', path: path.join(os.homedir(), 'Pictures') },
+                { id: 'videos', name: 'Videos', icon: 'folder_videos', path: path.join(os.homedir(), 'Videos') }
+            ];
+
+            for (const folder of userFolders) {
+                const item = await createIconItem(folder, 'folder');
+                foldersGrid.appendChild(item);
+            }
+
+            foldersGridContainer.appendChild(foldersGrid);
+            container.appendChild(foldersGridContainer);
+
+            // Drives section - dynamically detect available drives
+            const drives = await getAvailableDrives();
+
+            const drivesHeader = document.createElement('div');
+            drivesHeader.className = 'explorer-section-header explorer-section-header--collapsible';
+            drivesHeader.dataset.section = 'drives';
+            drivesHeader.innerHTML = `
+                <span class="explorer-section-disclosure" data-expanded="true">▼</span>
+                <h2>Devices and drives (${drives.length})</h2>
+            `;
+            drivesHeader.addEventListener('click', handleSectionHeaderClick);
+            container.appendChild(drivesHeader);
+
+            const drivesGridContainer = document.createElement('div');
+            drivesGridContainer.className = 'explorer-section-content';
+            drivesGridContainer.dataset.section = 'drives';
+
+            const drivesGrid = document.createElement('div');
+            drivesGrid.className = `explorer-icon-grid explorer-icon-grid--${currentView}`;
+
+            for (const drive of drives) {
+                const driveItem = await createIconItem(drive, 'drive');
+                drivesGrid.appendChild(driveItem);
+            }
+
+            drivesGridContainer.appendChild(drivesGrid);
+            container.appendChild(drivesGridContainer);
+
+            // Initialize section heights for smooth animation
+            initializeSectionHeights();
+
+            content.appendChild(container);
+
+            // Update status bar
+            updateStatusBar(userFolders.length + drives.length);
+        }
+
+        async function createIconItem(entry, type = 'file') {
+            const item = document.createElement('div');
+            item.className = 'explorer-icon-item';
+            item.dataset.path = entry.path;
+            item.dataset.type = type;
+
+            const iconSize = getIconSizeForView(currentView);
+
+            const icon = document.createElement('div');
+            icon.className = 'explorer-icon-item__icon';
+
+            // Check if we should show a thumbnail
+            if (type === 'file' && isDisplayableMedia(entry.path)) {
+                const img = document.createElement('img');
+                img.src = `file://${entry.path}`;
+                img.className = 'explorer-icon-item__icon-image explorer-icon-item__icon-image--thumbnail';
+                img.draggable = false;
+                icon.classList.add('explorer-icon-item__icon--thumbnail');
+                icon.appendChild(img);
+            } else {
+                const iconPath = `../../../resources/images/icons/explorer/${entry.icon}/${iconSize}.png`;
+                icon.innerHTML = `<img src="${iconPath}" alt="${entry.name}" />`;
+            }
+
+            const labelContainer = document.createElement('div');
+            labelContainer.className = 'explorer-icon-item__label-container';
+
+            const labelTruncated = document.createElement('div');
+            labelTruncated.className = 'explorer-icon-item__label explorer-icon-item__label--truncated';
+            labelTruncated.textContent = entry.name;
+
+            const labelFull = document.createElement('div');
+            labelFull.className = 'explorer-icon-item__label explorer-icon-item__label--full';
+            labelFull.textContent = entry.name;
+
+            labelContainer.appendChild(labelTruncated);
+            labelContainer.appendChild(labelFull);
+
+            item.appendChild(icon);
+            item.appendChild(labelContainer);
+
+            // Add usage bar for drives
+            if (entry.isDrive) {
+                try {
+                    // For demo purposes, using hardcoded values
+                    // In real implementation, would use disk usage APIs
+                    const usedPercent = Math.random() * 60 + 20; // 20-80%
+
+                    const usageBar = document.createElement('div');
+                    usageBar.className = 'explorer-drive-usage';
+                    usageBar.innerHTML = `
+                        <div class="explorer-drive-usage-bar">
+                            <div class="explorer-drive-usage-fill" style="width: ${usedPercent}%"></div>
+                        </div>
+                    `;
+                    item.appendChild(usageBar);
+
+                    const usageText = document.createElement('div');
+                    usageText.className = 'explorer-drive-usage-text';
+                    usageText.textContent = `${Math.round(100 - usedPercent)} GB free of 256 GB`;
+                    item.appendChild(usageText);
+                } catch (error) {
+                    console.error('Error getting drive usage:', error);
+                }
+            }
+
+            // Selection handling
+            item.addEventListener('click', (e) => handleItemClick(e, item));
+            item.addEventListener('dblclick', (e) => {
+                e.stopPropagation();
+                if (type === 'folder' || type === 'drive') {
+                    navigateToPath(entry.path);
+                } else {
+                    openFile(entry.path);
+                }
+            });
+
+            return item;
+        }
+
+        function isDisplayableMedia(filePath) {
+            const ext = path.extname(filePath).slice(1).toLowerCase();
+            const displayableExtensions = ['png', 'jpg', 'jpeg', 'gif', 'bmp', 'webp', 'svg'];
+            return displayableExtensions.includes(ext);
+        }
+
+        function handleItemClick(event, item) {
+            event.stopPropagation();
+
+            const additive = event.ctrlKey || event.metaKey;
+
+            if (additive) {
+                if (selectedItems.has(item)) {
+                    removeFromSelection(item);
+                } else {
+                    addToSelection(item);
+                }
+            } else {
+                selectExclusive(item);
+            }
+        }
+
+        function addToSelection(item) {
+            selectedItems.add(item);
+            item.classList.add('is-selected');
+            updateSelectedItemsDisplay();
+        }
+
+        function removeFromSelection(item) {
+            selectedItems.delete(item);
+            item.classList.remove('is-selected');
+            updateSelectedItemsDisplay();
+        }
+
+        function selectExclusive(item) {
+            clearSelection();
+            addToSelection(item);
+        }
+
+        function clearSelection() {
+            selectedItems.forEach(item => {
+                item.classList.remove('is-selected');
+            });
+            selectedItems.clear();
+
+            // Also clear section header selection
+            document.querySelectorAll('.explorer-section-header--collapsible').forEach(header => {
+                header.classList.remove('is-selected');
+            });
+
+            updateSelectedItemsDisplay();
+        }
+
+        function updateSelectedItemsDisplay() {
+            const statusSelected = document.getElementById('statusSelected');
+            if (!statusSelected) return;
+
+            const count = selectedItems.size;
+
+            if (count === 0) {
+                statusSelected.style.display = 'none';
+            } else {
+                statusSelected.style.display = 'block';
+                statusSelected.textContent = `${count} item${count !== 1 ? 's' : ''} selected`;
+            }
+        }
+
+        function handleContentMouseDown(event) {
+            // Only handle clicks on the content area itself, not on items
+            if (event.target.closest('.explorer-icon-item')) {
+                return;
+            }
+
+            event.preventDefault();
+            clearSelection();
+            beginDragSelection(event);
+        }
+
+        function beginDragSelection(event) {
+            const content = document.getElementById('content');
+            if (!content) return;
+
+            dragSelectState.active = true;
+            dragSelectState.originX = event.clientX;
+            dragSelectState.originY = event.clientY;
+            dragSelectState.overlay = createSelectionOverlay();
+
+            content.appendChild(dragSelectState.overlay);
+            document.addEventListener('mousemove', handleDragMouseMove);
+            document.addEventListener('mouseup', handleDragMouseUp, { once: true });
+            document.body.style.userSelect = 'none';
+        }
+
+        function createSelectionOverlay() {
+            const overlay = document.createElement('div');
+            overlay.className = 'explorer-selection-rect';
+            overlay.style.left = '0px';
+            overlay.style.top = '0px';
+            overlay.style.width = '0px';
+            overlay.style.height = '0px';
+            return overlay;
+        }
+
+        function handleDragMouseMove(event) {
+            if (!dragSelectState.active) return;
+
+            const content = document.getElementById('content');
+            const bounds = content.getBoundingClientRect();
+
+            const current = {
+                x: Math.min(Math.max(event.clientX, bounds.left), bounds.right),
+                y: Math.min(Math.max(event.clientY, bounds.top), bounds.bottom)
+            };
+
+            const origin = {
+                x: Math.min(Math.max(dragSelectState.originX, bounds.left), bounds.right),
+                y: Math.min(Math.max(dragSelectState.originY, bounds.top), bounds.bottom)
+            };
+
+            updateSelectionOverlay(origin, current, bounds);
+            selectItemsInRect(origin, current, bounds);
+        }
+
+        function updateSelectionOverlay(origin, current, bounds) {
+            if (!dragSelectState.overlay) return;
+
+            const left = Math.min(origin.x, current.x) - bounds.left;
+            const top = Math.min(origin.y, current.y) - bounds.top;
+            const width = Math.abs(current.x - origin.x);
+            const height = Math.abs(current.y - origin.y);
+
+            dragSelectState.overlay.style.left = `${left}px`;
+            dragSelectState.overlay.style.top = `${top}px`;
+            dragSelectState.overlay.style.width = `${width}px`;
+            dragSelectState.overlay.style.height = `${height}px`;
+        }
+
+        function selectItemsInRect(origin, current, bounds) {
+            const rect = {
+                left: Math.min(origin.x, current.x) - bounds.left,
+                top: Math.min(origin.y, current.y) - bounds.top,
+                right: Math.max(origin.x, current.x) - bounds.left,
+                bottom: Math.max(origin.y, current.y) - bounds.top
+            };
+
+            clearSelection();
+
+            const items = document.querySelectorAll('.explorer-icon-item');
+            items.forEach(item => {
+                const itemRect = item.getBoundingClientRect();
+                const relativeRect = {
+                    left: itemRect.left - bounds.left,
+                    top: itemRect.top - bounds.top,
+                    right: itemRect.right - bounds.left,
+                    bottom: itemRect.bottom - bounds.top
+                };
+
+                if (rectanglesIntersect(rect, relativeRect)) {
+                    addToSelection(item);
+                }
+            });
+        }
+
+        function rectanglesIntersect(a, b) {
+            return a.left < b.right &&
+                a.right > b.left &&
+                a.top < b.bottom &&
+                a.bottom > b.top;
+        }
+
+        function handleDragMouseUp() {
+            if (!dragSelectState.active) return;
+
+            dragSelectState.active = false;
+
+            if (dragSelectState.overlay && dragSelectState.overlay.parentNode) {
+                dragSelectState.overlay.parentNode.removeChild(dragSelectState.overlay);
+            }
+
+            dragSelectState.overlay = null;
+            document.removeEventListener('mousemove', handleDragMouseMove);
+            document.body.style.userSelect = '';
+        }
+
+        function getIconSizeForView(view) {
+            const sizeMap = {
+                'extra-large': 96,
+                'large': 48,
+                'medium': 32,
+                'list': 16,
+                'details': 16
+            };
+            return sizeMap[view] || 48;
+        }
+
+        async function renderFolderView(folderPath) {
+            const content = document.getElementById('content');
+
+            const container = document.createElement('div');
+            container.className = 'explorer-folder-view';
+
+            try {
+                const entries = await fs.readdir(folderPath, { withFileTypes: true });
+
+                const grid = document.createElement('div');
+                grid.className = `explorer-icon-grid explorer-icon-grid--${currentView}`;
+
+                // Filter and sort entries
+                const visibleEntries = entries
+                    .filter(entry => !entry.name.startsWith('.'))
+                    .sort((a, b) => {
+                        if (a.isDirectory() && !b.isDirectory()) return -1;
+                        if (!a.isDirectory() && b.isDirectory()) return 1;
+                        return a.name.toLowerCase().localeCompare(b.name.toLowerCase());
+                    });
+
+                for (const entry of visibleEntries) {
+                    const itemPath = path.join(folderPath, entry.name);
+                    const isDirectory = entry.isDirectory();
+                    const extension = !isDirectory ? path.extname(entry.name).slice(1).toLowerCase() : '';
+
+                    const itemData = {
+                        name: entry.name,
+                        path: itemPath,
+                        icon: isDirectory ? 'generic_folder' : getIconTypeForExtension(extension),
+                        isDrive: false
+                    };
+
+                    const item = await createIconItem(itemData, isDirectory ? 'folder' : 'file');
+                    grid.appendChild(item);
+                }
+
+                if (visibleEntries.length === 0) {
+                    const emptyMessage = document.createElement('div');
+                    emptyMessage.className = 'explorer-empty-message';
+                    emptyMessage.textContent = 'This folder is empty.';
+                    container.appendChild(emptyMessage);
+                } else {
+                    container.appendChild(grid);
+                }
+
+                // Update status bar
+                updateStatusBar(visibleEntries.length);
+
+            } catch (error) {
+                console.error('Error reading folder:', error);
+                const errorMessage = document.createElement('div');
+                errorMessage.className = 'explorer-error-message';
+
+                // Provide more specific error messages
+                let message = 'Unable to access this folder.';
+                if (error.code === 'ENOENT') {
+                    message = 'This folder does not exist or is no longer available.';
+                } else if (error.code === 'EACCES' || error.code === 'EPERM') {
+                    message = 'You do not have permission to access this folder.';
+                } else if (error.code === 'ENOTDIR') {
+                    message = 'The path is not a valid folder.';
+                }
+
+                errorMessage.innerHTML = `
+                    <div style="text-align: center; padding: 40px 20px;">
+                        <div style="font-size: 48px; color: #999; margin-bottom: 16px;">⚠</div>
+                        <div style="font-size: 14px; color: #333; margin-bottom: 8px; font-weight: 600;">${message}</div>
+                        <div style="font-size: 12px; color: #666;">Error code: ${error.code || 'UNKNOWN'}</div>
+                    </div>
+                `;
+                container.appendChild(errorMessage);
+                updateStatusBar(0);
+            }
+
+            content.appendChild(container);
+        }
+
+        function getIconTypeForExtension(extension) {
+            const iconMap = {
+                'png': 'image/png',
+                'jpg': 'image/jpg',
+                'jpeg': 'image/jpg',
+                'gif': 'image/jpg',
+                'bmp': 'image/jpg',
+                'txt': 'text_document',
+                'rtf': 'rich_text_document',
+                'mp4': 'video',
+                'mov': 'video',
+                'avi': 'video',
+                'mp3': 'music',
+                'wav': 'music',
+                'zip': 'zip',
+                'rar': 'zip',
+                '7z': 'zip',
+                'exe': 'generic_program',
+                'app': 'generic_program'
+            };
+
+            return iconMap[extension] || 'generic_file';
+        }
+
+        function navigateToPath(newPath) {
+            if (historyIndex < navigationHistory.length - 1) {
+                navigationHistory = navigationHistory.slice(0, historyIndex + 1);
+            }
+            navigationHistory.push({ type: 'path', path: newPath });
+            historyIndex++;
+
+            currentLocation = 'path';
+            currentPath = newPath;
+            updateView();
+        }
+
+        function navigateToThisPC() {
+            if (historyIndex < navigationHistory.length - 1) {
+                navigationHistory = navigationHistory.slice(0, historyIndex + 1);
+            }
+            navigationHistory.push({ type: 'this-pc' });
+            historyIndex++;
+
+            currentLocation = 'this-pc';
+            currentPath = null;
+            updateView();
+        }
+
+        function navigateBack() {
+            if (historyIndex > 0) {
+                historyIndex--;
+                const historyItem = navigationHistory[historyIndex];
+
+                if (historyItem.type === 'this-pc') {
+                    currentLocation = 'this-pc';
+                    currentPath = null;
+                } else if (historyItem.type === 'path') {
+                    currentLocation = 'path';
+                    currentPath = historyItem.path;
+                }
+
+                updateView();
+            } else if (historyIndex === 0 && currentLocation !== 'this-pc') {
+                currentLocation = 'this-pc';
+                currentPath = null;
+                historyIndex = -1;
+                navigationHistory = [];
+                updateView();
+            }
+        }
+
+        function navigateForward() {
+            if (historyIndex < navigationHistory.length - 1) {
+                historyIndex++;
+                const historyItem = navigationHistory[historyIndex];
+
+                if (historyItem.type === 'this-pc') {
+                    currentLocation = 'this-pc';
+                    currentPath = null;
+                } else if (historyItem.type === 'path') {
+                    currentLocation = 'path';
+                    currentPath = historyItem.path;
+                }
+
+                updateView();
+            }
+        }
+
+        function navigateUp() {
+            if (currentPath) {
+                const parentPath = path.dirname(currentPath);
+
+                if (parentPath === currentPath || parentPath === os.homedir()) {
+                    navigateToThisPC();
+                } else {
+                    navigateToPath(parentPath);
+                }
+            } else if (currentLocation !== 'this-pc') {
+                navigateToThisPC();
+            }
+        }
+
+        function updateNavigationButtons() {
+            const backBtn = document.getElementById('backBtn');
+            const forwardBtn = document.getElementById('forwardBtn');
+            const upBtn = document.getElementById('upBtn');
+
+            backBtn.disabled = historyIndex <= 0 && currentLocation === 'this-pc';
+            forwardBtn.disabled = historyIndex >= navigationHistory.length - 1;
+            upBtn.disabled = currentLocation === 'this-pc';
+        }
+
+        function updateBreadcrumbs() {
+            const breadcrumbs = document.getElementById('breadcrumbs');
+            const addressIcon = document.getElementById('addressIcon');
+            breadcrumbs.innerHTML = '';
+
+            if (currentLocation === 'this-pc') {
+                const thisPCCrumb = document.createElement('span');
+                thisPCCrumb.className = 'explorer-breadcrumb active';
+                thisPCCrumb.textContent = 'This PC';
+                breadcrumbs.appendChild(thisPCCrumb);
+
+                addressIcon.src = '../../../resources/images/icons/explorer/this_pc/16.png';
+            } else if (currentPath) {
+                const rootCrumb = document.createElement('span');
+                rootCrumb.className = 'explorer-breadcrumb';
+                rootCrumb.textContent = 'This PC';
+                rootCrumb.addEventListener('click', navigateToThisPC);
+                breadcrumbs.appendChild(rootCrumb);
+
+                const separator = document.createElement('span');
+                separator.className = 'explorer-breadcrumb-separator';
+                separator.textContent = ' > ';
+                breadcrumbs.appendChild(separator);
+
+                const pathCrumb = document.createElement('span');
+                pathCrumb.className = 'explorer-breadcrumb active';
+                pathCrumb.textContent = path.basename(currentPath);
+                breadcrumbs.appendChild(pathCrumb);
+
+                addressIcon.src = '../../../resources/images/icons/explorer/generic_folder/16.png';
+            }
+        }
+
+        function updateSearchPlaceholder() {
+            const searchInput = document.getElementById('searchInput');
+            if (!searchInput) return;
+
+            if (currentLocation === 'this-pc') {
+                searchInput.placeholder = 'Search This PC';
+            } else if (currentPath) {
+                const folderName = path.basename(currentPath);
+                searchInput.placeholder = `Search ${folderName}`;
+            } else {
+                searchInput.placeholder = 'Search';
+            }
+        }
+
+        function updateTitlebar() {
+            const newTitle = currentLocation === 'this-pc' ? 'This PC' : (currentPath ? path.basename(currentPath) : 'File Explorer');
+            console.log('[File Explorer] Updating title to:', newTitle);
+
+            // Send title update to parent with windowId
+            if (window.sendToParent) {
+                window.sendToParent('updateWindowTitle', { title: newTitle });
+            } else {
+                console.warn('[File Explorer] sendToParent not available');
+            }
+        }
+
+        function updateStatusBar(itemCount) {
+            const statusInfo = document.getElementById('statusInfo');
+            statusInfo.textContent = `${itemCount} item${itemCount !== 1 ? 's' : ''}`;
+        }
+
+        function handleSearch(event) {
+            const searchTerm = event.target.value.toLowerCase();
+            // TODO: Implement search functionality
+            console.log('Searching for:', searchTerm);
+        }
+
+        async function openFile(filePath) {
+            // Use the file associations system if available
+            if (window.FileAssociations && typeof window.FileAssociations.openPath === 'function') {
+                await window.FileAssociations.openPath(filePath, 'file');
+            } else if (window.parent && window.parent.FileAssociations && typeof window.parent.FileAssociations.openPath === 'function') {
+                await window.parent.FileAssociations.openPath(filePath, 'file');
+            } else {
+                // Fallback to external opening
+                const { shell } = require('electron');
+                if (typeof shell.openPath === 'function') {
+                    const result = await shell.openPath(filePath);
+                    if (result) {
+                        console.error('Failed to open file:', result);
+                    }
+                }
+            }
+        }
+    </script>
+</body>
+
+</html>

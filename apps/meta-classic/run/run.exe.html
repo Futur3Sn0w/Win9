@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Run</title>
+    <link rel="stylesheet" href="run.exe.css">
+    <link rel="stylesheet" href="../../../css/classic-windows.css">
+    <link rel="stylesheet" href="../../../css/classic-controls.css">
+    <link rel="stylesheet" href="../../../css/styles.css">
+    <link rel="stylesheet" href="../../../css/fonts.css">
+</head>
+
+<body>
+    <div class="run-dialog" role="dialog" aria-labelledby="run-heading" aria-describedby="run-description">
+        <div class="run-dialog-header">
+            <div class="run-dialog-icon" aria-hidden="true">
+                <img src="icons/48_2.png" alt="">
+            </div>
+            <div class="run-dialog-text">
+                <p class="run-dialog-description" id="run-description">
+                    Type the name of a program, folder, document, or Internet resource, and Windows will open it for
+                    you.
+                </p>
+            </div>
+        </div>
+
+        <form class="run-dialog-form" id="run-form" autocomplete="off">
+            <div class="run-textbox">
+                <label for="run-command" class="run-dialog-label"><u>O</u>pen:</label>
+                <div class="run-dialog-input-group">
+                    <input type="text" id="run-command" name="command" list="run-history" spellcheck="false"
+                        autocomplete="off" autofocus>
+                    <datalist id="run-history"></datalist>
+                </div>
+            </div>
+
+            <div class="button-bar run-dialog-footer">
+                <button class="classic-button default-button" type="submit" id="run-ok-button">OK</button>
+                <button class="classic-button" type="button" id="run-cancel-button">Cancel</button>
+                <button class="classic-button" type="button" id="run-browse-button">Browse...</button>
+            </div>
+        </form>
+    </div>
+
+    <script src="../../../registry/run-registry.js"></script>
+    <script>
+        const APP_ID = 'run';
+        const MAX_HISTORY_ITEMS = 10;
+
+        const form = document.getElementById('run-form');
+        const commandInput = document.getElementById('run-command');
+        const historyList = document.getElementById('run-history');
+        const cancelButton = document.getElementById('run-cancel-button');
+        const browseButton = document.getElementById('run-browse-button');
+
+        const runRegistry = window.RunRegistry || null;
+
+        function loadHistory() {
+            if (runRegistry && typeof runRegistry.loadRunHistory === 'function') {
+                try {
+                    return runRegistry.loadRunHistory().slice(0, MAX_HISTORY_ITEMS);
+                } catch (error) {
+                    console.error('Failed to load Run dialog history from registry:', error);
+                }
+            }
+            return [];
+        }
+
+        function saveHistory(historyItems) {
+            if (runRegistry && typeof runRegistry.saveRunHistory === 'function') {
+                try {
+                    runRegistry.saveRunHistory(historyItems.slice(0, MAX_HISTORY_ITEMS));
+                } catch (error) {
+                    console.error('Failed to persist Run dialog history to registry:', error);
+                }
+            }
+        }
+
+        function renderHistory(historyItems) {
+            historyList.innerHTML = '';
+            historyItems.forEach(item => {
+                const option = document.createElement('option');
+                option.value = item;
+                historyList.appendChild(option);
+            });
+        }
+
+        function addHistoryEntry(command, historyItems) {
+            const normalized = command.trim();
+            if (!normalized) {
+                return historyItems;
+            }
+
+            const existingIndex = historyItems.findIndex(entry => entry.toLowerCase() === normalized.toLowerCase());
+            if (existingIndex !== -1) {
+                historyItems.splice(existingIndex, 1);
+            }
+
+            historyItems.unshift(normalized);
+            saveHistory(historyItems);
+            renderHistory(historyItems);
+            return historyItems;
+        }
+
+        function showError(message, title) {
+            // Store reference to parent window before closing
+            const parentWindow = window.parent;
+
+            // Close the run dialog
+            sendCloseMessage();
+
+            // Show system error dialog
+            if (parentWindow && parentWindow.systemDialog) {
+                parentWindow.systemDialog.show({
+                    title: title,
+                    body: message,
+                    status: 'error',
+                    buttons: 'ok',
+                    onClose: () => {
+                        // Re-open the run dialog when user clicks OK
+                        // Use the stored parent window reference
+                        if (parentWindow.launchApp) {
+                            parentWindow.launchApp(APP_ID);
+                        }
+                    }
+                });
+            }
+        }
+
+        function sendCloseMessage() {
+            window.parent.postMessage({ action: 'closeClassicApp', appId: APP_ID }, '*');
+        }
+
+        function submitCommand(command) {
+            window.parent.postMessage({
+                action: 'launchRunCommand',
+                appId: APP_ID,
+                command
+            }, '*');
+        }
+
+        let historyItems = loadHistory();
+        renderHistory(historyItems);
+
+        window.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                commandInput.focus();
+                commandInput.select();
+            }, 0);
+        });
+
+        form.addEventListener('submit', event => {
+            event.preventDefault();
+            const command = commandInput.value.trim();
+            if (!command) {
+                // Don't show error for empty command, just do nothing
+                commandInput.focus();
+                return;
+            }
+
+            historyItems = addHistoryEntry(command, historyItems);
+            submitCommand(command);
+        });
+
+        cancelButton.addEventListener('click', () => {
+            sendCloseMessage();
+        });
+
+        browseButton.disabled = true;
+        browseButton.classList.add('disabled');
+        browseButton.title = 'Browse is not available in this simulation.';
+
+        window.addEventListener('message', event => {
+            if (event.data && event.data.action === 'runCommandResult') {
+                if (!event.data.success) {
+                    const commandName = event.data.command || '';
+                    const message = `Windows cannot find '${commandName}'. Make sure you typed the name correctly, and then try again.`;
+                    const title = commandName;
+                    showError(message, title);
+                }
+            }
+        });
+
+        document.addEventListener('keydown', event => {
+            if (event.key === 'Escape') {
+                sendCloseMessage();
+            }
+        });
+    </script>
+</body>
+
+</html>

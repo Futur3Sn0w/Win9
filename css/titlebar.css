@@ -1,0 +1,117 @@
+/* Custom Titlebar for macOS */
+.custom-titlebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 32px;
+    background: #1e1e1e;
+    border-bottom: 1px solid #333;
+    z-index: 999999;
+    display: none; /* Hidden by default, shown only on macOS */
+    user-select: none;
+}
+
+/* Show on macOS only */
+body.platform-darwin .custom-titlebar {
+    display: flex;
+}
+
+/* Adjust body padding when titlebar is visible */
+body.platform-darwin {
+    padding-top: 33px; /* 32px titlebar + 1px border */
+}
+
+/* Draggable region */
+.titlebar-drag-region {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 100%;
+    -webkit-app-region: drag;
+}
+
+/* Content container */
+.titlebar-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    height: 100%;
+    padding: 0 10px;
+    position: relative;
+    z-index: 1;
+}
+
+/* Title text */
+.titlebar-title {
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 400;
+    opacity: 0.8;
+    margin-left: 70px; /* Space for macOS traffic lights */
+    -webkit-app-region: no-drag;
+}
+
+/* Controls container */
+.titlebar-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    -webkit-app-region: no-drag;
+}
+
+/* Titlebar buttons */
+.titlebar-button {
+    width: 32px;
+    height: 24px;
+    background: transparent;
+    border: none;
+    color: #ffffff;
+    opacity: 0.7;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease;
+    border-radius: 2px;
+}
+
+.titlebar-button:hover {
+    background: rgba(255, 255, 255, 0.1);
+    opacity: 1;
+}
+
+.titlebar-button:active {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+/* Fullscreen icon */
+.titlebar-button svg {
+    pointer-events: none;
+}
+
+/* Hide titlebar in fullscreen mode */
+body.fullscreen .custom-titlebar {
+    display: none !important;
+}
+
+/* Ensure desktop and other content doesn't overlap */
+body.platform-darwin #desktop,
+body.platform-darwin #start-screen,
+body.platform-darwin #lock-screen,
+body.platform-darwin #boot-screen,
+body.platform-darwin #intermediary-screen {
+    top: 33px;
+    height: calc(100% - 33px);
+}
+
+body.platform-darwin.fullscreen #desktop,
+body.platform-darwin.fullscreen #start-screen,
+body.platform-darwin.fullscreen #lock-screen,
+body.platform-darwin.fullscreen #boot-screen,
+body.platform-darwin.fullscreen #intermediary-screen {
+    top: 0;
+    height: 100%;
+}

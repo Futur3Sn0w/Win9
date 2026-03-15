@@ -1,0 +1,97 @@
+body {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: white;
+}
+
+.notepad-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    width: 100%;
+}
+
+/* Notepad-specific command bar customizations */
+/* (Command bar styles are now in classic-controls.css) */
+
+/* Checkbox styling for menu items */
+.menu-checkbox.checked .checkbox::before {
+    content: '✓';
+}
+
+/* Editor Container */
+.editor-container {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+    position: relative;
+}
+
+.notepad-textarea {
+    width: 100%;
+    height: 100%;
+    border: none;
+    outline: none;
+    resize: none;
+    padding: 4px;
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 11pt;
+    line-height: 1.4;
+    overflow: auto;
+    background: white;
+    color: black;
+}
+
+.notepad-textarea.word-wrap {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+/* Status Bar Styles */
+.status-bar {
+    display: flex;
+    justify-content: space-between;
+    background: #f0f0f0;
+    border-top: 1px solid #d4d4d4;
+    padding: 4px 8px;
+    font-size: 11px;
+    color: #333;
+    flex-shrink: 0;
+}
+
+.status-item {
+    padding: 0 8px;
+}
+
+.status-item:not(:last-child) {
+    border-right: 1px solid #d4d4d4;
+}
+
+.status-right {
+    margin-left: auto;
+}
+
+/* Scrollbar Styling (Optional - Windows-like) */
+.notepad-textarea::-webkit-scrollbar {
+    width: 17px;
+    height: 17px;
+}
+
+.notepad-textarea::-webkit-scrollbar-track {
+    background: #f0f0f0;
+}
+
+.notepad-textarea::-webkit-scrollbar-thumb {
+    background: #c0c0c0;
+    border: 1px solid #808080;
+}
+
+.notepad-textarea::-webkit-scrollbar-thumb:hover {
+    background: #a0a0a0;
+}
+
+.notepad-textarea::-webkit-scrollbar-corner {
+    background: #f0f0f0;
+}

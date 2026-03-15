@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notepad</title>
+
+    <link rel="stylesheet" href="../../../css/classic-windows.css">
+    <link rel="stylesheet" href="../../../css/classic-controls.css">
+    <link rel="stylesheet" href="../../../css/styles.css">
+    <link rel="stylesheet" href="../../../css/fonts.css">
+    <link rel="stylesheet" href="../../../components/system_dialog/system-dialog.css">
+    <link rel="stylesheet" href="notepad.css">
+</head>
+
+<body>
+    <div class="notepad-container">
+        <!-- Menu Bar -->
+        <div class="classic-command-bar">
+            <div class="classic-command-bar-item" data-menu="file">
+                <span class="classic-command-bar-label"><u>F</u>ile</span>
+                <div class="classic-context-menu classic-command-bar-dropdown" id="file-menu">
+                    <div class="classic-context-menu-item" data-action="new">
+                        <div class="classic-context-menu-item-icon"></div>
+                        <span>New</span>
+                        <span class="classic-command-bar-shortcut">Ctrl+N</span>
+                    </div>
+                    <div class="classic-context-menu-item" data-action="open">
+                        <div class="classic-context-menu-item-icon"></div>
+                        <span>Open...</span>
+                        <span class="classic-command-bar-shortcut">Ctrl+O</span>
+                    </div>
+                    <div class="classic-context-menu-item" data-action="save">
+                        <div class="classic-context-menu-item-icon"></div>
+                        <span>Save</span>
+                        <span class="classic-command-bar-shortcut">Ctrl+S</span>
+                    </div>
+                    <div class="classic-context-menu-item" data-action="save-as">
+                        <div class="classic-context-menu-item-icon"></div>
+                        <span>Save As...</span>
+                    </div>
+                    <div class="classic-context-menu-separator"></div>
+                    <div class="classic-context-menu-item" data-action="page-setup">
+                        <div class="classic-context-menu-item-icon"></div>
+                        <span>Page Setup...</span>
+                    </div>
+                    <div class="classic-context-menu-item" data-action="print">
+                        <div class="classic-context-menu-item-icon"></div>
+                        <span>Print...</span>
+                        <span class="classic-command-bar-shortcut">Ctrl+P</span>
+                    </div>
+                    <div class="classic-context-menu-separator"></div>
+                    <div class="classic-context-menu-item" data-action="exit">
+                        <div class="classic-context-menu-item-icon"></div>
+                        <span>Exit</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="classic-command-bar-item" data-menu="edit">
+                <span class="classic-command-bar-label"><u>E</u>dit</span>
+                <div class="classic-context-menu classic-command-bar-dropdown" id="edit-menu">
+                    <div class="classic-context-menu-item" data-action="undo">
+                        <div class="classic-context-menu-item-icon"></div>
+                        <span>Undo</span>
+                        <span class="classic-command-bar-shortcut">Ctrl+Z</span>
+                    </div>
+                    <div class="classic-context-menu-separator"></div>
+                    <div class="classic-context-menu-item" data-action="cut">
+                        <div class="classic-context-menu-item-icon"></div>
+                        <span>Cut</span>
+                        <span class="classic-command-bar-shortcut">Ctrl+X</span>
+                    </div>
+                    <div class="classic-context-menu-item" data-action="copy">
+                        <div class="classic-context-menu-item-icon"></div>
+                        <span>Copy</span>
+                        <span class="classic-command-bar-shortcut">Ctrl+C</span>
+                    </div>
+                    <div class="classic-context-menu-item" data-action="paste">
+                        <div class="classic-context-menu-item-icon"></div>
+                        <span>Paste</span>
+                        <span class="classic-command-bar-shortcut">Ctrl+V</span>
+                    </div>
+                    <div class="classic-context-menu-item" data-action="delete">
+                        <div class="classic-context-menu-item-icon"></div>
+                        <span>Delete</span>
+                        <span class="classic-command-bar-shortcut">Del</span>
+                    </div>
+                    <div class="classic-context-menu-separator"></div>
+                    <div class="classic-context-menu-item" data-action="find">
+                        <div class="classic-context-menu-item-icon"></div>
+                        <span>Find...</span>
+                        <span class="classic-command-bar-shortcut">Ctrl+F</span>
+                    </div>
+                    <div class="classic-context-menu-item" data-action="find-next">
+                        <div class="classic-context-menu-item-icon"></div>
+                        <span>Find Next</span>
+                        <span class="classic-command-bar-shortcut">F3</span>
+                    </div>
+                    <div class="classic-context-menu-item" data-action="replace">
+                        <div class="classic-context-menu-item-icon"></div>
+                        <span>Replace...</span>
+                        <span class="classic-command-bar-shortcut">Ctrl+H</span>
+                    </div>
+                    <div class="classic-context-menu-item" data-action="goto">
+                        <div class="classic-context-menu-item-icon"></div>
+                        <span>Go To...</span>
+                        <span class="classic-command-bar-shortcut">Ctrl+G</span>
+                    </div>
+                    <div class="classic-context-menu-separator"></div>
+                    <div class="classic-context-menu-item" data-action="select-all">
+                        <div class="classic-context-menu-item-icon"></div>
+                        <span>Select All</span>
+                        <span class="classic-command-bar-shortcut">Ctrl+A</span>
+                    </div>
+                    <div class="classic-context-menu-item" data-action="time-date">
+                        <div class="classic-context-menu-item-icon"></div>
+                        <span>Time/Date</span>
+                        <span class="classic-command-bar-shortcut">F5</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="classic-command-bar-item" data-menu="format">
+                <span class="classic-command-bar-label">F<u>o</u>rmat</span>
+                <div class="classic-context-menu classic-command-bar-dropdown" id="format-menu">
+                    <div class="classic-context-menu-item menu-checkbox" data-action="word-wrap">
+                        <div class="classic-context-menu-item-icon">
+                            <span class="checkbox"></span>
+                        </div>
+                        <span>Word Wrap</span>
+                    </div>
+                    <div class="classic-context-menu-item" data-action="font">
+                        <div class="classic-context-menu-item-icon"></div>
+                        <span>Font...</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="classic-command-bar-item" data-menu="view">
+                <span class="classic-command-bar-label"><u>V</u>iew</span>
+                <div class="classic-context-menu classic-command-bar-dropdown" id="view-menu">
+                    <div class="classic-context-menu-item menu-checkbox" data-action="status-bar">
+                        <div class="classic-context-menu-item-icon">
+                            <span class="checkbox"></span>
+                        </div>
+                        <span>Status Bar</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="classic-command-bar-item" data-menu="help">
+                <span class="classic-command-bar-label"><u>H</u>elp</span>
+                <div class="classic-context-menu classic-command-bar-dropdown" id="help-menu">
+                    <div class="classic-context-menu-item" data-action="view-help">
+                        <div class="classic-context-menu-item-icon"></div>
+                        <span>View Help</span>
+                    </div>
+                    <div class="classic-context-menu-separator"></div>
+                    <div class="classic-context-menu-item" data-action="about">
+                        <div class="classic-context-menu-item-icon"></div>
+                        <span>About Notepad</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Text Editor Area -->
+        <div class="editor-container">
+            <textarea id="notepad-text" class="notepad-textarea" spellcheck="false"></textarea>
+        </div>
+
+        <!-- Status Bar -->
+        <div class="status-bar" id="status-bar" style="display: none;">
+            <div class="status-item">
+                <span>Ln <span id="line-number">1</span>, Col <span id="col-number">1</span></span>
+            </div>
+            <div class="status-item status-right">
+                <span id="zoom-level">100%</span>
+            </div>
+            <div class="status-item status-right">
+                <span id="encoding">Windows (CRLF)</span>
+            </div>
+        </div>
+    </div>
+
+    <script src="../../../components/system_dialog/system-dialog.js"></script>
+    <script src="notepad.js"></script>
+</body>
+
+</html>

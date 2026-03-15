@@ -1,0 +1,22 @@
+{
+  "asterisk": "Windows Background.wav",
+  "calendar_reminder": "Windows Notify Calendar.wav",
+  "critical_battery_alarm": "Windows Foreground.wav",
+  "critical_stop": "Windows Foreground.wav",
+  "default_beep": "Windows Background.wav",
+  "desktop_mail_notification": "Windows Notify Email.wav",
+  "device_connect": "Windows Hardware Insert.wav",
+  "device_disconnect": "Windows Hardware Remove.wav",
+  "device_failed_to_connect": "Windows Hardware Fail.wav",
+  "exclamation": "Windows Background.wav",
+  "instant_message_notification": "Windows Notify Messaging.wav",
+  "logoff": "Windows Logoff Sound.wav",
+  "logon": "Windows Logon.wav",
+  "low_battery_alarm": "Windows Background.wav",
+  "message_nudge": "Windows Message Nudge.wav",
+  "new_mail_notification": "Windows Notify Email.wav",
+  "new_text_message_notification": "Windows Notify Messaging.wav",
+  "notification": "Windows Notify System Generic.wav",
+  "system_notification": "Windows Background.wav",
+  "windows_user_account_control": "Windows User Account Control.wav"
+}

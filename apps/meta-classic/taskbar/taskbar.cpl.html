@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Taskbar Properties</title>
+    <link rel="stylesheet" href="taskbar.cpl.css">
+    <link rel="stylesheet" href="../../../css/classic-windows.css">
+    <link rel="stylesheet" href="../../../css/classic-controls.css">
+    <link rel="stylesheet" href="../../../css/styles.css">
+    <link rel="stylesheet" href="../../../css/fonts.css">
+</head>
+
+<body>
+    <div class="properties-window">
+        <div class="tab-header">
+            <div class="tab-item active" data-tab="taskbar">Taskbar</div>
+            <div class="tab-item" data-tab="navigation">Navigation</div>
+        </div>
+
+        <div class="tab-content">
+            <!-- Taskbar Tab -->
+            <div class="tab-pane active" id="taskbar-tab">
+                <div class="property-section">
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="lock-taskbar" checked>
+                        <label for="lock-taskbar">Lock the taskbar</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="auto-hide-taskbar">
+                        <label for="auto-hide-taskbar">Auto-hide the taskbar</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="use-small-icons">
+                        <label for="use-small-icons">Use small taskbar buttons</label>
+                    </div>
+                </div>
+
+                <div class="property-section">
+                    <div class="select-item">
+                        <label for="taskbar-location">Taskbar location on screen:</label>
+                        <select id="taskbar-location">
+                            <option value="bottom" selected>Bottom</option>
+                            <option value="top">Top</option>
+                            <option value="left">Left</option>
+                            <option value="right">Right</option>
+                        </select>
+                    </div>
+
+                    <div class="select-item">
+                        <label for="taskbar-buttons">Taskbar buttons:</label>
+                        <select id="taskbar-buttons">
+                            <option value="always" selected>Always combine, hide labels</option>
+                            <option value="sometimes">Combine when taskbar is full</option>
+                            <option value="never">Never combine</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Navigation Tab -->
+            <div class="tab-pane" id="navigation-tab">
+                <div class="property-section bordered">
+                    <h3>Corner navigation</h3>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="top-left-corner" checked>
+                        <label for="top-left-corner">When I point to the upper-right corner, show the charms</label>
+                    </div>
+                </div>
+
+                <div class="property-section bordered">
+                    <h3>Start screen</h3>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="go-to-desktop">
+                        <label for="go-to-desktop">When I sign in or close all apps on a screen, go to the desktop
+                            instead of Start</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="show-desktop-background">
+                        <label for="show-desktop-background">Show my desktop background on Start</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="show-start-on-active-display">
+                        <label for="show-start-on-active-display">Show Start on the display I'm using when I press the
+                            Windows logo key</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="show-apps-view">
+                        <label for="show-apps-view">Show the Apps view automatically when I go to Start</label>
+                    </div>
+                    <div class="checkbox-item sub-option">
+                        <input type="checkbox" id="search-everywhere" disabled>
+                        <label for="search-everywhere">Search everywhere instead of just my apps when I search from the
+                            Apps view</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="list-desktop-apps-first" disabled>
+                        <label for="list-desktop-apps-first">List desktop apps first in the Apps view when it's sorted
+                            by category</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="button-bar">
+            <button class="classic-button default-button" id="ok-button">OK</button>
+            <button class="classic-button" id="cancel-button">Cancel</button>
+            <button class="classic-button" id="apply-button" disabled>Apply</button>
+        </div>
+    </div>
+
+    <script>
+        function resolveRegistryModule() {
+            const contexts = [window, window.parent, window.top];
+            for (const ctx of contexts) {
+                if (!ctx) {
+                    continue;
+                }
+                if (ctx.RegistryAPI) {
+                    return ctx.RegistryAPI;
+                }
+                if (ctx.getRegistry && ctx.RegistryType) {
+                    return {
+                        getRegistry: ctx.getRegistry,
+                        encodeStuckRects2: ctx.encodeStuckRects2,
+                        decodeStuckRects2: ctx.decodeStuckRects2,
+                        RegistryType: ctx.RegistryType
+                    };
+                }
+            }
+
+                if (typeof window !== 'undefined' && typeof window.require === 'function') {
+                    try {
+                        return window.require('../../../registry/registry.js');
+                    } catch (error) {
+                        console.warn('[Taskbar Properties] Unable to load registry module via window.require:', error);
+                    }
+                }
+
+                if (typeof require === 'function') {
+                    try {
+                        return require('../../../registry/registry.js');
+                    } catch (error) {
+                        console.warn('[Taskbar Properties] Unable to load registry module via require:', error);
+                    }
+                }
+
+            return null;
+        }
+
+        function createUnavailableRegistryModule() {
+            const fallbackRegistryType = {
+                REG_NONE: 0,
+                REG_SZ: 1,
+                REG_EXPAND_SZ: 2,
+                REG_BINARY: 3,
+                REG_DWORD: 4,
+                REG_MULTI_SZ: 7
+            };
+
+            return {
+                getRegistry: () => {
+                    throw new Error('Registry API unavailable');
+                },
+                encodeStuckRects2: () => new Uint8Array(52),
+                decodeStuckRects2: () => ({
+                    autoHide: false,
+                    alwaysOnTop: false,
+                    locked: true,
+                    height: 40,
+                    position: 3
+                }),
+                RegistryType: fallbackRegistryType
+            };
+        }
+
+        const resolvedRegistryModule = resolveRegistryModule();
+        const registryModule = resolvedRegistryModule || createUnavailableRegistryModule();
+        const { getRegistry, encodeStuckRects2, decodeStuckRects2, RegistryType } = registryModule;
+        const registryAvailable = !!resolvedRegistryModule;
+        if (!registryAvailable) {
+            console.warn('[Taskbar Properties] Registry API unavailable; changes will not persist.');
+        }
+        const STUCKRECTS2_PATH = 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\StuckRects2';
+        const ADVANCED_PATH = 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced';
+        // Navigation settings registry paths
+        const REGISTRY_PATHS = {
+            edgeUI: 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\ImmersiveShell\\EdgeUI',
+            startPage: 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\StartPage',
+            launcher: 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\ImmersiveShell\\Launcher'
+        };
+
+        const POSITION_TO_LOCATION = {
+            0: 'left',
+            1: 'top',
+            2: 'right',
+            3: 'bottom'
+        };
+
+        const LOCATION_TO_POSITION = {
+            left: 0,
+            top: 1,
+            right: 2,
+            bottom: 3
+        };
+
+        const BUTTONS_TO_GLOM = {
+            always: 0,
+            sometimes: 1,
+            never: 2
+        };
+
+        const GLOM_TO_BUTTONS = {
+            0: 'always',
+            1: 'sometimes',
+            2: 'never'
+        };
+
+        const CONTROL_SELECTOR = 'input[type="checkbox"], select';
+        let initialSettingsSnapshot = null;
+
+        function getCurrentSettingsSnapshot() {
+            return {
+                lockTaskbar: document.getElementById('lock-taskbar').checked,
+                autoHideTaskbar: document.getElementById('auto-hide-taskbar').checked,
+                useSmallIcons: document.getElementById('use-small-icons').checked,
+                taskbarLocation: document.getElementById('taskbar-location').value,
+                taskbarButtons: document.getElementById('taskbar-buttons').value,
+                charmsHotCornersEnabled: document.getElementById('top-left-corner').checked,
+                goToDesktopOnSignIn: document.getElementById('go-to-desktop').checked,
+                showDesktopBackgroundOnStart: document.getElementById('show-desktop-background').checked,
+                showStartOnCurrentDisplay: document.getElementById('show-start-on-active-display').checked,
+                showAppsViewOnStart: document.getElementById('show-apps-view').checked,
+                searchEverywhereFromApps: document.getElementById('search-everywhere').checked,
+                listDesktopAppsFirst: document.getElementById('list-desktop-apps-first').checked
+            };
+        }
+
+        function setApplyButtonDisabled(disabled) {
+            const applyButton = document.getElementById('apply-button');
+            if (!applyButton) {
+                return;
+            }
+            applyButton.disabled = disabled;
+            applyButton.classList.toggle('disabled', disabled);
+        }
+
+        function refreshApplyButtonState() {
+            if (!initialSettingsSnapshot) {
+                setApplyButtonDisabled(true);
+                return;
+            }
+
+            const currentSnapshot = getCurrentSettingsSnapshot();
+            const hasChanges = Object.keys(initialSettingsSnapshot).some(key => currentSnapshot[key] !== initialSettingsSnapshot[key]);
+
+            setApplyButtonDisabled(!hasChanges);
+        }
+
+        // Tab switching
+        document.querySelectorAll('.tab-item').forEach(tab => {
+            tab.addEventListener('click', function () {
+                const tabName = this.dataset.tab;
+
+                // Update tab headers
+                document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+
+                // Update tab content
+                document.querySelectorAll('.tab-pane').forEach(pane => pane.classList.remove('active'));
+                document.getElementById(`${tabName}-tab`).classList.add('active');
+            });
+        });
+
+        // Load saved settings
+        window.addEventListener('DOMContentLoaded', function () {
+            const navigationDefaults = {
+                charmsHotCornersEnabled: true,
+                goToDesktopOnSignIn: false,
+                showDesktopBackgroundOnStart: false,
+                showStartOnCurrentDisplay: false,
+                showAppsViewOnStart: false,
+                searchEverywhereFromApps: false,
+                listDesktopAppsFirst: false
+            };
+
+            function loadNavigationSettings() {
+                try {
+                    const registry = getRegistry();
+
+                    // Load from registry (with defaults from navigationDefaults)
+                    const disableCharms = registry.getValue(REGISTRY_PATHS.edgeUI, 'DisableCharmsHint', 0);
+                    const openAtLogon = registry.getValue(REGISTRY_PATHS.startPage, 'OpenAtLogon', 0);
+                    const showDesktopBg = registry.getValue(REGISTRY_PATHS.launcher, 'ShowDesktopBackgroundOnStart', 0);
+                    const makeAllAppsDefault = registry.getValue(REGISTRY_PATHS.startPage, 'MakeAllAppsDefault', 0);
+                    const showAppsViewOnSearch = registry.getValue(REGISTRY_PATHS.startPage, 'ShowAppsViewOnSearchClick', 0);
+                    const showStartOnDisplay = registry.getValue(REGISTRY_PATHS.edgeUI, 'ShowStartOnCurrentDisplay', 0);
+                    const listDesktopFirst = registry.getValue(REGISTRY_PATHS.startPage, 'ListDesktopAppsFirst', 0);
+
+                    return {
+                        charmsHotCornersEnabled: disableCharms === 0,
+                        goToDesktopOnSignIn: openAtLogon === 1,
+                        showDesktopBackgroundOnStart: showDesktopBg === 1,
+                        showStartOnCurrentDisplay: showStartOnDisplay === 1,
+                        showAppsViewOnStart: makeAllAppsDefault === 1,
+                        searchEverywhereFromApps: showAppsViewOnSearch === 1,
+                        listDesktopAppsFirst: listDesktopFirst === 1
+                    };
+                } catch (error) {
+                    console.error('Failed to load navigation settings from registry:', error);
+                    return { ...navigationDefaults };
+                }
+            }
+
+            const navigationSettings = loadNavigationSettings();
+
+            try {
+                const registry = getRegistry();
+                const stuckRects2Binary = registry.getValue(STUCKRECTS2_PATH, 'Settings');
+                if (stuckRects2Binary) {
+                    const taskbarSettings = decodeStuckRects2(stuckRects2Binary);
+                    document.getElementById('lock-taskbar').checked = taskbarSettings.locked !== undefined ? taskbarSettings.locked : true;
+                    document.getElementById('auto-hide-taskbar').checked = taskbarSettings.autoHide || false;
+
+                    if (taskbarSettings.position !== undefined && POSITION_TO_LOCATION[taskbarSettings.position] !== undefined) {
+                        document.getElementById('taskbar-location').value = POSITION_TO_LOCATION[taskbarSettings.position];
+                    }
+                } else {
+                    document.getElementById('lock-taskbar').checked = true;
+                    document.getElementById('auto-hide-taskbar').checked = false;
+                    document.getElementById('taskbar-location').value = 'bottom';
+                }
+            } catch (error) {
+                console.error('Failed to load taskbar settings from registry:', error);
+                document.getElementById('lock-taskbar').checked = true;
+                document.getElementById('auto-hide-taskbar').checked = false;
+                document.getElementById('taskbar-location').value = 'bottom';
+            }
+
+            const legacyLocation = localStorage ? localStorage.getItem('taskbarLocation') : null;
+            if (legacyLocation && LOCATION_TO_POSITION[legacyLocation] !== undefined) {
+                document.getElementById('taskbar-location').value = legacyLocation;
+                try {
+                    const registry = getRegistry();
+                    const settingsBinary = registry.getValue(STUCKRECTS2_PATH, 'Settings');
+                    let taskbarSettings = settingsBinary ? decodeStuckRects2(settingsBinary) : {
+                        autoHide: false,
+                        alwaysOnTop: false,
+                        locked: true,
+                        height: 40,
+                        position: 3
+                    };
+                    taskbarSettings.position = LOCATION_TO_POSITION[legacyLocation];
+                    registry.setValue(STUCKRECTS2_PATH, 'Settings', Array.from(encodeStuckRects2(taskbarSettings)), RegistryType.REG_BINARY);
+                } catch (error) {
+                    console.warn('Failed to migrate legacy taskbar location to registry:', error);
+                }
+            }
+
+            try {
+                const registry = getRegistry();
+                const smallIconsValue = registry.getValue(ADVANCED_PATH, 'TaskbarSmallIcons', null);
+                if (smallIconsValue !== null && smallIconsValue !== undefined) {
+                    document.getElementById('use-small-icons').checked = Number(smallIconsValue) === 1;
+                } else {
+                    const legacySmallIcons = localStorage ? localStorage.getItem('taskbarSmallIcons') : null;
+                    if (legacySmallIcons !== null) {
+                        const parsed = legacySmallIcons === 'true';
+                        document.getElementById('use-small-icons').checked = parsed;
+                        registry.setValue(ADVANCED_PATH, 'TaskbarSmallIcons', parsed ? 1 : 0, RegistryType.REG_DWORD);
+                    }
+                }
+
+                const glomLevel = registry.getValue(ADVANCED_PATH, 'TaskbarGlomLevel', null);
+                if (glomLevel !== null && glomLevel !== undefined && GLOM_TO_BUTTONS[glomLevel] !== undefined) {
+                    document.getElementById('taskbar-buttons').value = GLOM_TO_BUTTONS[glomLevel];
+                } else {
+                    const legacyButtons = localStorage ? localStorage.getItem('taskbarButtons') : null;
+                    if (legacyButtons) {
+                        document.getElementById('taskbar-buttons').value = legacyButtons;
+                        const mapped = BUTTONS_TO_GLOM[legacyButtons] ?? 0;
+                        registry.setValue(ADVANCED_PATH, 'TaskbarGlomLevel', mapped, RegistryType.REG_DWORD);
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to load advanced taskbar settings from registry:', error);
+            }
+
+            document.getElementById('top-left-corner').checked = navigationSettings.charmsHotCornersEnabled;
+            document.getElementById('go-to-desktop').checked = navigationSettings.goToDesktopOnSignIn;
+            document.getElementById('show-desktop-background').checked = navigationSettings.showDesktopBackgroundOnStart;
+            document.getElementById('show-start-on-active-display').checked = navigationSettings.showStartOnCurrentDisplay;
+            document.getElementById('show-apps-view').checked = navigationSettings.showAppsViewOnStart;
+            document.getElementById('search-everywhere').checked = navigationSettings.searchEverywhereFromApps;
+            document.getElementById('list-desktop-apps-first').checked = navigationSettings.listDesktopAppsFirst;
+
+            initialSettingsSnapshot = getCurrentSettingsSnapshot();
+            setApplyButtonDisabled(true);
+
+            document.querySelectorAll(CONTROL_SELECTOR).forEach(control => {
+                control.addEventListener('change', refreshApplyButtonState);
+            });
+        });
+
+        // Apply button handler
+        document.getElementById('apply-button').addEventListener('click', function () {
+            applySettings();
+        });
+
+        // OK button handler
+        document.getElementById('ok-button').addEventListener('click', function () {
+            applySettings();
+            window.parent.postMessage({ action: 'closeClassicApp', appId: 'taskbar-properties' }, '*');
+        });
+
+        // Cancel button handler
+        document.getElementById('cancel-button').addEventListener('click', function () {
+            window.parent.postMessage({ action: 'closeClassicApp', appId: 'taskbar-properties' }, '*');
+        });
+
+        function applySettings() {
+            const lockTaskbar = document.getElementById('lock-taskbar').checked;
+            const autoHide = document.getElementById('auto-hide-taskbar').checked;
+            const smallIcons = document.getElementById('use-small-icons').checked;
+            const location = document.getElementById('taskbar-location').value;
+            const taskbarButtons = document.getElementById('taskbar-buttons').value;
+            const charmsHotCornersEnabled = document.getElementById('top-left-corner').checked;
+            const goToDesktop = document.getElementById('go-to-desktop').checked;
+            const showDesktopBackground = document.getElementById('show-desktop-background').checked;
+            const showStartOnActiveDisplay = document.getElementById('show-start-on-active-display').checked;
+            const showAppsView = document.getElementById('show-apps-view').checked;
+            const searchEverywhere = document.getElementById('search-everywhere').checked;
+            const listDesktopAppsFirst = document.getElementById('list-desktop-apps-first').checked;
+
+            // Save taskbar settings to registry (StuckRects2)
+            try {
+                const registry = getRegistry();
+                // Load existing settings to preserve other values
+                let stuckRects2Binary = registry.getValue(STUCKRECTS2_PATH, 'Settings');
+                let taskbarSettings;
+                if (stuckRects2Binary) {
+                    taskbarSettings = decodeStuckRects2(stuckRects2Binary);
+                } else {
+                    // Create default settings if none exist
+                    taskbarSettings = {
+                        autoHide: false,
+                        alwaysOnTop: false,
+                        locked: true,
+                        height: 40,
+                        position: 3
+                    };
+                }
+
+                // Update the settings
+                taskbarSettings.locked = lockTaskbar;
+                taskbarSettings.autoHide = autoHide;
+
+                const locationPosition = LOCATION_TO_POSITION[location];
+                if (locationPosition !== undefined) {
+                    taskbarSettings.position = locationPosition;
+                }
+
+                // Encode and save
+                const encoded = encodeStuckRects2(taskbarSettings);
+                const encodedArray = Array.from(encoded);
+                registry.setValue(STUCKRECTS2_PATH, 'Settings', encodedArray, RegistryType.REG_BINARY);
+            } catch (error) {
+                console.error('Failed to save taskbar settings to registry:', error);
+            }
+
+        // Save navigation settings to registry
+            try {
+                const registry = getRegistry();
+
+                // charmsHotCornersEnabled is inverted in registry (DisableCharmsHint)
+                registry.setValue(REGISTRY_PATHS.edgeUI, 'DisableCharmsHint', charmsHotCornersEnabled ? 0 : 1, RegistryType.REG_DWORD);
+                // goToDesktopOnSignIn
+                registry.setValue(REGISTRY_PATHS.startPage, 'OpenAtLogon', goToDesktop ? 1 : 0, RegistryType.REG_DWORD);
+                // showDesktopBackgroundOnStart
+                registry.setValue(REGISTRY_PATHS.launcher, 'ShowDesktopBackgroundOnStart', showDesktopBackground ? 1 : 0, RegistryType.REG_DWORD);
+                // showAppsViewOnStart
+                registry.setValue(REGISTRY_PATHS.startPage, 'MakeAllAppsDefault', showAppsView ? 1 : 0, RegistryType.REG_DWORD);
+                // searchEverywhereFromApps
+                registry.setValue(REGISTRY_PATHS.startPage, 'ShowAppsViewOnSearchClick', searchEverywhere ? 1 : 0, RegistryType.REG_DWORD);
+                // showStartOnCurrentDisplay
+                registry.setValue(REGISTRY_PATHS.edgeUI, 'ShowStartOnCurrentDisplay', showStartOnActiveDisplay ? 1 : 0, RegistryType.REG_DWORD);
+                // listDesktopAppsFirst
+                registry.setValue(REGISTRY_PATHS.startPage, 'ListDesktopAppsFirst', listDesktopAppsFirst ? 1 : 0, RegistryType.REG_DWORD);
+            } catch (error) {
+                console.error('Failed to save navigation settings to registry:', error);
+            }
+
+            initialSettingsSnapshot = getCurrentSettingsSnapshot();
+            setApplyButtonDisabled(true);
+
+            // Send message to parent to apply settings
+            window.parent.postMessage({
+                action: 'applyTaskbarSettings',
+                settings: {
+                    locked: lockTaskbar,
+                    autoHide: autoHide,
+                    smallIcons: smallIcons,
+                    location: location,
+                    taskbarButtons: taskbarButtons,
+                    navigation: {
+                        charmsHotCornersEnabled: charmsHotCornersEnabled,
+                        goToDesktopOnSignIn: goToDesktop,
+                        showDesktopBackgroundOnStart: showDesktopBackground,
+                        showStartOnCurrentDisplay: showStartOnActiveDisplay,
+                        showAppsViewOnStart: showAppsView,
+                        searchEverywhereFromApps: searchEverywhere,
+                        listDesktopAppsFirst: listDesktopAppsFirst
+                    }
+                }
+            }, '*');
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,269 @@
+/* Installation flow styles inspired by Windows 8 setup */
+
+:root {
+    --setup-background-color: #1F0F67;
+    --setup-text-primary: #ffffff;
+    --setup-text-muted: rgba(255, 255, 255, 0.75);
+    --setup-accent-color: #00a4ef;
+    --setup-button-bg: rgba(0, 164, 239, 0.15);
+    --setup-button-bg-hover: rgba(0, 164, 239, 0.25);
+    --setup-border-color: rgba(255, 255, 255, 0.15);
+}
+
+body {
+    margin: 0;
+    font-family: "Segoe UI", "Segoe UI Light", sans-serif;
+    background: var(--setup-background-color);
+    color: var(--setup-text-primary);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+body .setup-panel {
+    opacity: 0;
+    transform: translateY(24px);
+    pointer-events: none;
+}
+
+body.boot-finished .setup-panel {
+    opacity: 1;
+    transform: translateY(0);
+    transition: opacity 0.4s ease, transform 0.4s ease;
+    pointer-events: auto;
+}
+
+#setup-root {
+    width: 100%;
+    height: 100%;
+}
+
+.setup-shell {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.setup-panel {
+    width: 680px;
+    max-width: 90vw;
+    background: var(--setup-background-color);
+    border: 1px solid var(--setup-border-color);
+    border-top: 24px solid var(--setup-border-color);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
+    border-radius: 6px 6px 0 0;
+    padding: 48px 56px;
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+}
+
+.setup-header h1 {
+    margin: 0;
+    font-weight: 300;
+    font-size: 34px;
+    letter-spacing: 0.4px;
+}
+
+.setup-header p {
+    margin: 12px 0 0;
+    color: var(--setup-text-muted);
+    font-size: 16px;
+    line-height: 1.4;
+}
+
+.setup-form {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.setup-field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.setup-field label {
+    font-size: 14px;
+    color: var(--setup-text-muted);
+}
+
+.setup-field select,
+.setup-field input {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: var(--setup-text-primary);
+    font-size: 16px;
+    padding: 12px 14px;
+    border-radius: 3px;
+    outline: none;
+    transition: border 0.2s ease, background 0.2s ease;
+}
+
+.setup-field select:focus,
+.setup-field input:focus {
+    border-color: var(--setup-accent-color);
+    background: rgba(0, 164, 239, 0.15);
+}
+
+.setup-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 16px;
+    margin-top: 16px;
+}
+
+.setup-button {
+    font-size: 16px;
+    padding: 10px 24px;
+    border-radius: 3px;
+    border: 1px solid var(--setup-border-color);
+    color: var(--setup-text-primary);
+    background: var(--setup-button-bg);
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+}
+
+.setup-button.primary {
+    border-color: transparent;
+    background: var(--setup-accent-color);
+}
+
+.setup-button.primary:hover {
+    background: #2198dc;
+}
+
+.setup-button:hover {
+    background: var(--setup-button-bg-hover);
+}
+
+.setup-button:active {
+    transform: translateY(1px);
+}
+
+.setup-footer {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.55);
+    text-align: right;
+}
+
+.setup-progress-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.setup-progress-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 16px;
+}
+
+.setup-progress-item .status-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.5);
+    position: relative;
+    flex-shrink: 0;
+}
+
+.setup-progress-item.completed .status-dot {
+    border-color: transparent;
+    background: var(--setup-accent-color);
+}
+
+.setup-progress-item.active .status-dot {
+    border-color: var(--setup-accent-color);
+    animation: setup-pulse 1.2s ease-in-out infinite alternate;
+}
+
+.setup-progress-item span {
+    color: var(--setup-text-muted);
+}
+
+@keyframes setup-pulse {
+    from {
+        transform: scale(1);
+        opacity: 0.7;
+    }
+
+    to {
+        transform: scale(1.2);
+        opacity: 1;
+    }
+}
+
+.setup-spinner {
+    display: inline-block;
+    width: 28px;
+    height: 28px;
+    border: 3px solid rgba(255, 255, 255, 0.25);
+    border-top-color: var(--setup-accent-color);
+    border-radius: 50%;
+    animation: setup-spin 0.9s linear infinite;
+}
+
+@keyframes setup-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.setup-centered {
+    text-align: center;
+}
+
+.setup-centered h2 {
+    font-weight: 300;
+    font-size: 26px;
+    margin-bottom: 12px;
+}
+
+.setup-centered p {
+    margin: 8px 0 0;
+    color: var(--setup-text-muted);
+}
+
+.setup-product-key-input {
+    display: flex;
+    gap: 8px;
+}
+
+.setup-product-key-input input {
+    flex: 1;
+    text-transform: uppercase;
+    text-align: center;
+    letter-spacing: 2px;
+}
+
+.setup-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.setup-checkbox input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+}
+
+.setup-license-text {
+    max-height: 180px;
+    overflow-y: auto;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 16px;
+    border-radius: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    font-size: 14px;
+    line-height: 1.5;
+}

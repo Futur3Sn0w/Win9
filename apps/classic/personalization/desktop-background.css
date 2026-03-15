@@ -1,0 +1,344 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html,
+body {
+    height: 100%;
+    width: 100%;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #fff;
+    color: #000;
+    overflow: hidden;
+}
+
+.desktop-background-container {
+    width: 100%;
+    height: 100%;
+    background: #fff;
+    display: flex;
+    flex-direction: column;
+    padding: 20px 10%;
+}
+
+/* Fixed Header */
+.page-header {
+    flex-shrink: 0;
+    margin-bottom: 16px;
+}
+
+.page-title {
+    font-size: 18px;
+    font-weight: 400;
+    color: #0066cc;
+    margin-bottom: 12px;
+}
+
+.page-description {
+    font-size: 13px;
+    color: #000;
+    margin-bottom: 0;
+    line-height: 1.5;
+}
+
+/* Controls Section */
+.controls-section {
+    flex-shrink: 0;
+    margin-bottom: 12px;
+}
+
+.control-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.control-group label {
+    font-size: 13px;
+    color: #000;
+    white-space: nowrap;
+}
+
+/* .control-select {
+    padding: 4px 8px;
+    font-size: 13px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    border: 1px solid #ababab;
+    background: #fff;
+    min-width: 200px;
+    height: 24px;
+} */
+
+/* .control-button {
+    padding: 4px 12px;
+    font-size: 13px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    border: 1px solid #adadad;
+    background: linear-gradient(to bottom, #ffffff 0%, #f0f0f0 100%);
+    
+    height: 24px;
+    line-height: 14px;
+}
+
+.control-button:hover {
+    background: linear-gradient(to bottom, #f0f8ff 0%, #e0e8f0 100%);
+    border-color: #0078d7;
+}
+
+.control-button:active {
+    background: linear-gradient(to bottom, #e0e8f0 0%, #d0d8e0 100%);
+} */
+
+/* Wallpapers Container */
+.wallpapers-container {
+    flex: 1;
+    border: 1px solid #646464;
+    overflow: hidden;
+    background: #fff;
+    margin-bottom: 16px;
+    min-height: 200px;
+}
+
+.wallpapers-scroll-area {
+    width: 100%;
+    height: 100%;
+    overflow-y: auto;
+    padding: 20px;
+}
+
+/* Wallpaper Sections */
+.wallpaper-section {
+    margin-bottom: 24px;
+}
+
+.section-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #000;
+    margin-bottom: 12px;
+    padding-left: 24px;
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.section-title::before {
+    content: '▼';
+    position: absolute;
+    left: 4px;
+    font-size: 10px;
+    color: #666;
+}
+
+.wallpaper-section.collapsed .section-title::before {
+    content: '▶';
+}
+
+.wallpaper-section.collapsed .wallpaper-grid {
+    display: none;
+}
+
+.wallpaper-grid {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    padding-left: 8px;
+}
+
+.wallpaper-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    position: relative;
+}
+
+.wallpaper-thumbnail {
+    width: 140px;
+    height: 105px;
+    border: 3px solid #d0d0d0;
+    background: #f0f0f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.wallpaper-item.selected .wallpaper-thumbnail {
+    border-color: #0078d7;
+    border-width: 4px;
+}
+
+.wallpaper-item:hover .wallpaper-thumbnail {
+    border-color: #0078d7;
+}
+
+.wallpaper-thumbnail img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Selection Checkbox */
+.wallpaper-checkbox {
+    position: absolute;
+    top: 6px;
+    left: 6px;
+    width: 16px;
+    height: 16px;
+    z-index: 1;
+
+}
+
+/* Bottom Controls */
+.bottom-controls {
+    flex-shrink: 0;
+    display: flex;
+    gap: 40px;
+    margin-bottom: 46px;
+}
+
+.position-control {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+}
+
+.position-control label {
+    font-size: 13px;
+    color: #000;
+    white-space: nowrap;
+    line-height: 24px;
+}
+
+.position-preview-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+
+    width: 170px !important;
+    height: 50px !important;
+}
+
+.position-preview {
+    position: relative;
+    overflow: hidden;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 2px;
+}
+
+.position-preview::after {
+    content: '';
+    width: 64px;
+    height: 41px;
+    background: linear-gradient(135deg, #f5a623 0%, #e89412 50%, #5ba4e5 50%, #3d87d1 100%);
+    opacity: 0.7;
+}
+
+.position-select {
+    width: 100px;
+    height: 100%;
+    border: none !important;
+    background: none !important;
+    outline: none !important;
+}
+
+.slideshow-controls {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.slideshow-controls>label {
+    font-size: 13px;
+    color: #000;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.slideshow-select {
+    width: 150px;
+}
+
+.checkbox-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: #000;
+}
+
+.checkbox-group input[type="checkbox"] {
+    width: 14px;
+    height: 14px;
+
+}
+
+.checkbox-group label {
+
+    user-select: none;
+}
+
+/* Action Buttons */
+.action-buttons {
+    display: flex;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 12px 10% !important;
+}
+
+/* 
+.action-button {
+    padding: 6px 16px;
+    font-size: 13px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    border: 1px solid #adadad;
+    background: linear-gradient(to bottom, #ffffff 0%, #f0f0f0 100%);
+    
+    min-width: 90px;
+}
+
+.action-button:hover {
+    background: linear-gradient(to bottom, #f0f8ff 0%, #e0e8f0 100%);
+    border-color: #0078d7;
+}
+
+.action-button:active {
+    background: linear-gradient(to bottom, #e0e8f0 0%, #d0d8e0 100%);
+}
+
+.action-button.primary {
+    background: linear-gradient(to bottom, #f0f8ff 0%, #e0f0ff 100%);
+    border-color: #0078d7;
+}
+
+.action-button.primary:hover {
+    background: linear-gradient(to bottom, #e0f0ff 0%, #d0e8ff 100%);
+} */
+
+/* Disabled State
+.control-select:disabled,
+.control-button:disabled,
+.action-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+} */

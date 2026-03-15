@@ -1,0 +1,508 @@
+/* Tab Header */
+.tab-header {
+    display: flex;
+    align-items: flex-end;
+    padding: 8px 8px 0 8px;
+    background: #f0f0f0;
+}
+
+.tab-item {
+    padding: 0 6px;
+    padding-top: 1px;
+    height: 21px;
+    background: linear-gradient(to bottom, #F0F0F0, #E5E5E5);
+    border: 1px solid #acacac;
+    border-bottom: none;
+
+    user-select: none;
+    color: #000;
+    font-size: 12px;
+}
+
+.tab-item:hover {
+    background: linear-gradient(to bottom, #ECF4FC, #DCECFC);
+    border-color: #7EB4EA;
+}
+
+.tab-item:first-of-type {
+    margin-left: 0 !important;
+}
+
+.tab-item:last-of-type {
+    margin-right: 0 !important;
+}
+
+.tab-item.active {
+    background: #fff;
+    border-bottom: 1px solid #fff;
+    position: relative;
+    z-index: 2;
+    height: 24px;
+    margin-bottom: -1px;
+
+    margin-left: -1px;
+    margin-right: -1px;
+
+    padding: 0 7px;
+    padding-top: 1px;
+}
+
+/* Tab Content */
+.tab-content {
+    flex: 1;
+    border: 1px solid #acacac;
+    border-top: 1px solid #acacac;
+    background: #fff;
+    margin: 0 8px;
+    padding: 16px;
+    overflow-y: auto;
+}
+
+.tab-pane {
+    display: none;
+}
+
+.tab-pane.active {
+    display: block;
+}
+
+/* Checkbox Items */
+.checkbox-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+    padding: 4px 0;
+}
+
+.checkbox-item input[type="checkbox"] {
+    margin-right: 4px;
+    width: 13px;
+    height: 13px;
+}
+
+.checkbox-item label {
+    user-select: none;
+    font-size: 12px;
+    color: #000;
+    padding: 0;
+}
+
+/* Select Items */
+.select-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.select-item label {
+    margin-right: auto;
+    font-size: 12px;
+    color: #000;
+}
+
+.select-item select {
+    height: 21px;
+    width: 165px;
+    padding: 0 3px;
+    border: 1px solid #ACACAC;
+    background: linear-gradient(to bottom, #f0f0f0, #e5e5e5);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 11px;
+    color: #000;
+
+}
+
+.select-item select:hover,
+.select-item select:focus {
+    background: linear-gradient(to bottom, #ECF4FC, #DCECFC);
+    border-color: #7EB4EA;
+}
+
+/* Classic Buttons */
+.classic-button {
+    min-width: 73px;
+    height: 23px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(to bottom, #f0f0f0, #e5e5e5);
+    border: 1px solid #acacac;
+    border-radius: 0;
+    transition: 1s;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 12px;
+    padding: 0 14px;
+    padding-bottom: 1px;
+    color: #000;
+
+    user-select: none;
+}
+
+.classic-button:hover {
+    background: linear-gradient(to bottom, #ECF4FC, #DCECFC);
+    border-color: #7EB4EA;
+}
+
+.classic-button:active {
+    background: #cce8ff;
+}
+
+.classic-button.default-button {
+    border: 1px solid #0078d7;
+}
+
+/* Classic 'select' elements */
+
+.classic-select {
+    min-width: 73px;
+    height: 23px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(to bottom, #f0f0f0, #e5e5e5);
+    border: 1px solid #acacac;
+    border-radius: 0;
+    transition: 1s;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 12px;
+    padding-bottom: 1px;
+    color: #000;
+
+    user-select: none;
+}
+
+.classic-select:not(:disabled):hover {
+    background: linear-gradient(to bottom, #ECF4FC, #DCECFC);
+    border-color: #7EB4EA;
+}
+
+.classic-select:not(:disabled):active {
+    background: #cce8ff;
+}
+
+/* Button Bar */
+.button-bar {
+    width: 100%;
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 12px 8px;
+    background: #f0f0f0;
+    border-top: 1px solid #CCCCCC;
+}
+
+/* ===== CLASSIC DESKTOP TASKBAR FLYOUTS ===== */
+.classic-flyout {
+    position: fixed;
+    bottom: 50px;
+    right: 10px;
+
+    min-width: 50px;
+    min-height: 50px;
+
+    background: var(--ui-wall-color);
+    box-shadow:
+        0 0 3px rgba(0, 0, 0, 0.2),
+        inset 0 0 0 1px rgba(0, 0, 0, 0.2);
+
+    display: none;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+
+    padding: 8px;
+    box-sizing: border-box;
+
+    z-index: 200010;
+
+    &::after {
+        content: '';
+        position: absolute;
+        z-index: 50;
+
+        width: 100%;
+        height: 100%;
+
+        background-color: rgba(255, 255, 255, 0.3);
+    }
+}
+
+.classic-flyout.visible {
+    display: flex;
+}
+
+/* Lower z-index on system screens so they appear below those screens */
+body.view-boot .classic-flyout,
+body.view-boot #eject-icon-context-menu,
+body.view-lock .classic-flyout,
+body.view-lock #eject-icon-context-menu,
+body.view-login .classic-flyout,
+body.view-login #eject-icon-context-menu {
+    z-index: 1 !important;
+    pointer-events: none;
+}
+
+.classic-flyout-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 100%;
+    width: 100%;
+    gap: 0;
+
+    position: relative;
+    z-index: 100;
+    background-color: white;
+
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.2);
+}
+
+/* ===== UNIFIED CLASSIC CONTEXT MENU STYLES ===== */
+.classic-context-menu {
+    width: 200px;
+    box-sizing: border-box;
+    padding: 2px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+
+    background-color: #f0f0f0;
+    border: 1px solid #979797;
+
+    box-shadow: 3px 3px 4px #00000040;
+
+    /* Start hidden for fade-in animation */
+    opacity: 0;
+    color: black;
+    animation: fadeIn 150ms ease-out forwards;
+
+    &::after {
+        content: '';
+
+        width: 1px;
+        height: calc(100% - 4px);
+
+        pointer-events: none;
+        background-color: #d7d7d7;
+
+        position: absolute;
+        left: 27px;
+        top: 2px;
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+.classic-context-menu-item {
+    height: 22px;
+    width: 100%;
+
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 8px;
+
+    font-size: 12px;
+
+    position: relative;
+    z-index: 2;
+
+    box-sizing: border-box;
+    padding: 2px;
+    border: 1px solid transparent;
+
+    &:hover::after {
+        content: '';
+
+        width: 1px;
+        height: calc(100% + 2px);
+
+        position: absolute;
+        left: 24px;
+        background-color: rgb(187, 204, 220);
+    }
+
+    &:disabled {
+        opacity: .5;
+        pointer-events: none;
+    }
+}
+
+.classic-context-menu-item:hover {
+    background-color: rgb(209, 226, 242);
+    border: 1px solid rgb(120, 174, 229);
+}
+
+.classic-context-menu-item:hover>.classic-context-menu-item-icon:has(.mif-checkmark) {
+    box-shadow: inset 0 0 0 1px rgb(38, 160, 218);
+    background-color: rgb(168, 210, 236);
+}
+
+.classic-context-menu-item.has-submenu {
+    padding-right: 20px;
+    position: relative;
+}
+
+.classic-context-menu-item.is-disabled {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.classic-context-menu-item-icon {
+    width: 22px;
+    height: 22px;
+    font-size: 16px;
+    line-height: .9;
+    margin-left: -3px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    &:has(.mif-checkmark) {
+        box-shadow: inset 0 0 0 1px rgb(120, 174, 229);
+        background-color: rgb(209, 226, 242);
+        font-size: 11px;
+    }
+}
+
+.classic-context-menu-item-text {
+    flex: 1;
+    box-sizing: border-box;
+    padding-bottom: 1px;
+    text-align: left;
+}
+
+.classic-context-menu-submenu-arrow {
+    width: 8px;
+    font-size: 9px;
+    line-height: 1;
+    text-align: right;
+}
+
+.classic-context-submenu {
+    position: absolute;
+    top: -2px;
+    left: calc(100% - 6px);
+    z-index: 1100;
+    display: none;
+}
+
+.classic-context-menu-item.has-submenu:hover>.classic-context-submenu,
+.classic-context-menu-item.has-submenu.submenu-open>.classic-context-submenu {
+    display: flex;
+}
+
+/* Keep Win+X power submenu bottom-aligned with its parent item */
+.quick-links-menu .classic-context-submenu {
+    top: auto;
+    bottom: -2px;
+}
+
+.classic-context-menu-separator {
+    width: calc(100% - 26px);
+    height: 1px;
+    background-color: #d7d7d7;
+    margin: 2px 0;
+    margin-left: auto;
+    position: relative;
+    z-index: 1;
+}
+
+/* ===== CLASSIC COMMAND BAR (MENU BAR) STYLES ===== */
+.classic-command-bar {
+    display: flex;
+    background: #f0f0f0;
+    border-bottom: 1px solid #d4d4d4;
+    padding: 2px 4px;
+    user-select: none;
+    flex-shrink: 0;
+}
+
+.classic-command-bar-item {
+    position: relative;
+    padding: 4px 8px;
+    cursor: pointer;
+    font-size: 11px;
+}
+
+.classic-command-bar-item:hover {
+    background: #e5f3ff;
+    border: 1px solid #0078d4;
+    padding: 3px 7px;
+}
+
+.classic-command-bar-item.active {
+    background: #cce8ff;
+    border: 1px solid #0078d4;
+    padding: 3px 7px;
+}
+
+.classic-command-bar-label u {
+    text-decoration: underline;
+}
+
+/* Command bar dropdown positioning (uses classic-context-menu styles) */
+.classic-command-bar-dropdown {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    z-index: 1000;
+}
+
+.classic-command-bar-item.active .classic-command-bar-dropdown {
+    display: flex;
+}
+
+/* Shortcut text styling for command bar menu items */
+.classic-command-bar-shortcut {
+    margin-left: auto;
+    padding-left: 32px;
+    color: #666;
+    font-size: 11px;
+}
+
+.classic-context-menu-item:hover .classic-command-bar-shortcut {
+    color: inherit;
+}
+
+/* Scrollbar styling for classic look */
+::-webkit-scrollbar {
+    width: 16px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f0f0f0;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #cdcdcd;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #b0b0b0;
+}
+
+::-webkit-scrollbar-button {
+    display: block;
+    background: #e1e1e1;
+    border: 1px solid #acacac;
+    height: 16px;
+}
+
+::-webkit-scrollbar-button:hover {
+    background: #d4d4d4;
+}

@@ -1,0 +1,443 @@
+/* Snap Preview Zone */
+#snap-preview {
+    position: fixed;
+    display: none;
+    border: 1px solid rgb(0, 0, 0, .24);
+    box-shadow: 0 0 3px #00000037;
+    pointer-events: none;
+    z-index: 9997;
+    box-sizing: border-box;
+    transition: left 0.15s ease-out, top 0.15s ease-out, width 0.15s ease-out, height 0.15s ease-out;
+}
+
+/* Snap Pulse Effect */
+.snap-pulse {
+    position: fixed;
+    width: 65px;
+    height: 65px;
+    pointer-events: none;
+    z-index: 9998;
+    opacity: 0;
+    transform: translate(-50%, -50%);
+    box-sizing: border-box;
+    background-image: url('../resources/images/snap_edge_hint.png');
+    background-size: 65px 780px;
+    background-repeat: no-repeat;
+    background-position: 0 0;
+}
+
+.snap-pulse.pulse-1 {
+    animation: snapPulseSpritesheet 0.3s steps(12) forwards;
+}
+
+.snap-pulse.pulse-2 {
+    animation: snapPulseSpritesheet 0.3s steps(12) 0.15s forwards;
+}
+
+@keyframes snapPulseSpritesheet {
+    0% {
+        background-position: 0 0;
+        opacity: 0;
+    }
+
+    8.33% {
+        opacity: 1;
+    }
+
+    100% {
+        background-position: 0 -780px;
+        opacity: 0;
+    }
+}
+
+/* Classic App Window Container */
+.classic-app-container {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+
+    border: 1px solid #00000044;
+
+    box-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
+
+    box-sizing: border-box;
+    padding: 6px;
+    padding-top: 0;
+    min-width: 200px;
+    min-height: 100px;
+    z-index: 1000;
+
+    &::after {
+        content: '';
+
+        position: absolute;
+        z-index: -1;
+        top: 0;
+        left: 0;
+        pointer-events: none;
+
+        width: 100%;
+        height: 100%;
+
+        background: var(--ui-wall-color);
+        box-shadow:
+            inset 0 0 0 1000000px rgba(128, 128, 128, 0.2),
+            inset 0 0 0 1000000px rgba(255, 255, 255, 0.2);
+    }
+
+    &.maximized {
+        top: 0 !important;
+        left: 0 !important;
+        width: 100% !important;
+        height: calc(100% - var(--taskbar-reserved-height, 40px)) !important;
+        /* Account for taskbar - dynamic based on visibility and height */
+
+        padding: 0;
+        border: none;
+        box-shadow: none;
+
+        & .classic-window-resize-handle {
+            display: none;
+        }
+    }
+
+    &.snapped {
+        height: calc(100% - var(--taskbar-reserved-height, 40px)) !important;
+
+        & .classic-window-resize-handle {
+            display: none;
+        }
+    }
+
+    &.snapped-left {
+        top: 0 !important;
+        left: 0 !important;
+        width: 50% !important;
+    }
+
+    &.snapped-right {
+        top: 0 !important;
+        left: 50% !important;
+        width: 50% !important;
+    }
+
+    &.maximized {
+        & .classic-window-titlebar {
+            height: 23px;
+            padding-right: 3px;
+        }
+
+        & .classic-window-content {
+            border: none;
+            border-top: 1px solid #00000044;
+        }
+    }
+
+    &.inactive {
+        border-color: #D3D3D3;
+        box-shadow: none;
+
+        &::after {
+            background: #EBEBEB;
+        }
+
+        & .classic-window-content,
+        & iframe {
+            pointer-events: none !important;
+        }
+
+        & .classic-window-title {
+            /* Dim the title text for inactive windows */
+            color: #666;
+        }
+    }
+}
+
+/* Classic Window Titlebar */
+.classic-window-titlebar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 28px;
+    user-select: none;
+    position: relative;
+    box-sizing: border-box;
+    padding-left: 2px;
+    /* Active titlebar styles will be the default */
+}
+
+.classic-window-title {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 6px;
+    color: #000;
+    font-size: 16px;
+    font-weight: 300;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    position: absolute;
+    margin-bottom: 1px;
+    width: 100%;
+    pointer-events: none;
+}
+
+.classic-window-title.no-icon {
+    gap: 0;
+}
+
+.classic-window-name {
+    margin: 0 auto;
+    padding-right: 16px;
+    box-sizing: border-box;
+}
+
+.classic-window-icon {
+    font-size: 16px;
+    line-height: 1;
+}
+
+.classic-window-icon img {
+    width: 16px;
+    height: 16px;
+    display: block;
+}
+
+.classic-window-controls {
+    display: flex;
+    height: 20px;
+    margin-bottom: auto;
+    margin-left: auto;
+    gap: 1px;
+}
+
+.classic-window-control-btn {
+    width: 25px;
+    height: 20px;
+    color: #000;
+    border: none;
+    border-radius: 0;
+    background-color: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    padding: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Fade-out transition for minimize and maximize buttons only */
+.classic-window-control-btn:not(.close) {
+    transition: background-color 0.33s linear;
+}
+
+.classic-window-control-btn:hover {
+    background: #3665B3;
+    color: white;
+    /* Remove transition on hover so it appears instantly */
+    transition: none;
+}
+
+.classic-window-control-btn:active {
+    background: #3D6099;
+    color: white;
+    transition: none;
+}
+
+.classic-window-control-btn.close {
+    width: 45px;
+    background: #C75050;
+    color: white;
+    /* Close button has no transition */
+    transition: none;
+
+    &:hover {
+        background: #E04343;
+    }
+}
+
+.classic-window-controls:has(.classic-window-control-btn:disabled,
+    .classic-window-control-btn.disabled) .classic-window-control-btn.close {
+    width: 31px;
+}
+
+.classic-window-control-btn:disabled,
+.classic-window-control-btn.disabled {
+    display: none;
+}
+
+.classic-window-control-btn svg,
+.classic-window-control-btn img {
+    width: 16px;
+    height: 16px;
+    object-fit: none;
+    image-rendering: pixelated;
+    pointer-events: none;
+}
+
+.classic-window-control-btn.minimize img {
+    padding-top: 6px;
+}
+
+/* Classic Window Content (iframe) */
+.classic-window-content {
+    flex: 1;
+    width: 100%;
+    border: 1px solid #00000044;
+    overflow: hidden;
+    position: relative;
+}
+
+iframe.classic-window-iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    display: block;
+}
+
+webview.classic-window-iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+
+/* Resize handles */
+.classic-window-resize-handle {
+    position: absolute;
+    z-index: 10;
+}
+
+.classic-window-resize-handle.n {
+    top: -4px;
+    left: 4px;
+    right: 4px;
+    height: 8px;
+    cursor: n-resize;
+}
+
+.classic-window-resize-handle.s {
+    bottom: -4px;
+    left: 4px;
+    right: 4px;
+    height: 8px;
+    cursor: s-resize;
+}
+
+.classic-window-resize-handle.e {
+    right: -4px;
+    top: 4px;
+    bottom: 4px;
+    width: 8px;
+    cursor: e-resize;
+}
+
+.classic-window-resize-handle.w {
+    left: -4px;
+    top: 4px;
+    bottom: 4px;
+    width: 8px;
+    cursor: w-resize;
+}
+
+.classic-window-resize-handle.ne {
+    top: -4px;
+    right: -4px;
+    width: 12px;
+    height: 12px;
+    cursor: ne-resize;
+}
+
+.classic-window-resize-handle.nw {
+    top: -4px;
+    left: -4px;
+    width: 12px;
+    height: 12px;
+    cursor: nw-resize;
+}
+
+.classic-window-resize-handle.se {
+    bottom: -4px;
+    right: -4px;
+    width: 12px;
+    height: 12px;
+    cursor: se-resize;
+}
+
+.classic-window-resize-handle.sw {
+    bottom: -4px;
+    left: -4px;
+    width: 12px;
+    height: 12px;
+    cursor: sw-resize;
+}
+
+/* Animation for opening classic apps */
+.classic-app-container.opening {
+    animation: classicWindowOpen 0.15s ease forwards;
+}
+
+@keyframes classicWindowOpen {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* Animation for closing classic apps */
+.classic-app-container.closing {
+    animation: classicWindowClose 0.15s ease forwards;
+}
+
+@keyframes classicWindowClose {
+    from {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    to {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+}
+
+/* Animation for minimizing classic windows */
+.classic-app-container.minimizing {
+    animation: classicWindowMinimize 0.2s ease forwards;
+}
+
+@keyframes classicWindowMinimize {
+    from {
+        transform: translate(0, 0) scale(1);
+        opacity: 1;
+    }
+
+    to {
+        transform: translate(var(--minimize-x, 0), var(--minimize-y, 0)) scale(0.1);
+        opacity: 0;
+    }
+}
+
+/* Animation for restoring classic windows */
+.classic-app-container.restoring {
+    animation: classicWindowRestore 0.2s ease forwards;
+}
+
+@keyframes classicWindowRestore {
+    from {
+        transform: translate(var(--restore-x, 0), var(--restore-y, 0)) scale(0.1);
+        opacity: 0;
+    }
+
+    to {
+        transform: translate(0, 0) scale(1);
+        opacity: 1;
+    }
+}

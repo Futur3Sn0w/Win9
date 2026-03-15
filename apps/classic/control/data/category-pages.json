@@ -1,0 +1,311 @@
+{
+  "system-security": {
+    "sections": [
+      {
+        "appletId": "action-center",
+        "links": [
+          { "text": "Review your computer's status and resolve issues", "action": "open" },
+          { "text": "Troubleshoot common computer problems", "action": "open" },
+          { "text": "Change User Account Control settings", "action": "open" }
+        ]
+      },
+      {
+        "appletId": "windows-firewall",
+        "links": [
+          { "text": "Check firewall status", "action": "open" },
+          { "text": "Allow an app through Windows Firewall", "action": "open" }
+        ]
+      },
+      {
+        "appletId": "system",
+        "links": [
+          { "text": "View amount of RAM and processor speed", "action": "open" },
+          { "text": "Allow remote access", "action": "open" },
+          { "text": "Launch remote assistance", "action": "open" },
+          { "text": "See the name of this computer", "action": "open" }
+        ]
+      },
+      {
+        "appletId": "windows-update",
+        "links": [
+          { "text": "Turn automatic updating on or off", "action": "open" },
+          { "text": "Check for updates", "action": "open" },
+          { "text": "Install optional updates", "action": "open" },
+          { "text": "View update history", "action": "open" }
+        ]
+      },
+      {
+        "appletId": "power-options",
+        "links": [
+          { "text": "Change battery settings", "action": "open" },
+          { "text": "Require a password when the computer wakes", "action": "open" },
+          { "text": "Change what the power buttons do", "action": "open" },
+          { "text": "Change when the computer sleeps", "action": "open" }
+        ]
+      },
+      {
+        "appletId": "file-history",
+        "links": [
+          { "text": "Save backup copies of your files with File History", "action": "open" },
+          { "text": "Restore your files with File History", "action": "open" }
+        ]
+      },
+      {
+        "appletId": "bitlocker",
+        "links": [
+          { "text": "Manage BitLocker", "action": "open" }
+        ]
+      },
+      {
+        "appletId": "storage-spaces",
+        "links": [
+          { "text": "Manage Storage Spaces", "action": "open" }
+        ]
+      },
+      {
+        "appletId": "add-features-to-windows",
+        "links": [
+          { "text": "Get more features with a new edition of Windows", "action": "window" }
+        ]
+      },
+      {
+        "appletId": "admin-tools",
+        "links": [
+          { "text": "Free up disk space", "action": "window" },
+          { "text": "Defragment and optimize your drives", "action": "window" },
+          { "text": "Create and format hard disk partitions", "action": "window" },
+          { "text": "View event logs", "action": "window" },
+          { "text": "Schedule tasks", "action": "window" }
+        ]
+      }
+    ]
+  },
+  "network-internet": {
+    "sections": [
+      {
+        "appletId": "network-sharing",
+        "links": [
+          { "text": "View network status and tasks", "action": "open" },
+          { "text": "Connect to a network", "action": "open" },
+          { "text": "View network computers and devices", "action": "open" }
+        ]
+      },
+      {
+        "appletId": "homegroup",
+        "links": [
+          { "text": "Choose homegroup and sharing options", "action": "open" }
+        ]
+      },
+      {
+        "appletId": "internet-options",
+        "links": [
+          { "text": "Connect to the Internet", "action": "window" }
+        ]
+      }
+    ]
+  },
+  "hardware-sound": {
+    "sections": [
+      {
+        "appletId": "devices-printers",
+        "links": [
+          { "text": "Add a device", "action": "open" },
+          { "text": "Advanced printer setup", "action": "open" },
+          { "text": "Mouse", "action": "window" },
+          { "text": "Device Manager", "action": "window" },
+          { "text": "Change Windows To Go startup options", "action": "open" }
+        ]
+      },
+      {
+        "appletId": "autoplay",
+        "links": [
+          { "text": "Change default settings for media or devices", "action": "open" },
+          { "text": "Play CDs or other media automatically", "action": "open" }
+        ]
+      },
+      {
+        "appletId": "sound",
+        "links": [
+          { "text": "Adjust system volume", "action": "window" },
+          { "text": "Change system sounds", "action": "window" },
+          { "text": "Manage audio devices", "action": "window" }
+        ]
+      },
+      {
+        "appletId": "power-options",
+        "links": [
+          { "text": "Change battery settings", "action": "open" },
+          { "text": "Change what the power buttons do", "action": "open" },
+          { "text": "Require a password when the computer wakes", "action": "open" },
+          { "text": "Change when the computer sleeps", "action": "open" },
+          { "text": "Adjust screen brightness", "action": "open" }
+        ]
+      },
+      {
+        "appletId": "display",
+        "links": [
+          { "text": "Make text and other items larger or smaller", "action": "open" },
+          { "text": "Adjust screen resolution", "action": "open" },
+          { "text": "How to correct monitor flicker (refresh rate)", "action": "open" }
+        ]
+      },
+      {
+        "appletId": "windows-mobility-center",
+        "links": [
+          { "text": "Adjust commonly used mobility settings", "action": "window" },
+          { "text": "Adjust settings before giving a presentation", "action": "window" }
+        ]
+      },
+      {
+        "appletId": "location-settings",
+        "links": [
+          { "text": "Change location settings", "action": "open" }
+        ]
+      }
+    ]
+  },
+  "programs": {
+    "sections": [
+      {
+        "appletId": "programs-features",
+        "links": [
+          { "text": "Uninstall a program", "action": "open" },
+          { "text": "Turn Windows features on or off", "action": "window" },
+          { "text": "View installed updates", "action": "open" },
+          { "text": "Run programs made for previous versions of Windows", "action": "open" },
+          { "text": "How to install a program", "action": "open" }
+        ]
+      },
+      {
+        "appletId": "default-programs",
+        "links": [
+          { "text": "Change default settings for media or devices", "action": "open" },
+          { "text": "Make a file type always open in a specific program", "action": "open" },
+          { "text": "Set your default programs", "action": "open" }
+        ]
+      }
+    ]
+  },
+  "user-accounts": {
+    "sections": [
+      {
+        "appletId": "user-accounts",
+        "links": [
+          { "text": "Change account type", "action": "open" },
+          { "text": "Remove user accounts", "action": "open" }
+        ]
+      },
+      {
+        "appletId": "family-safety",
+        "links": [
+          { "text": "Set up Family Safety for any user", "action": "open" }
+        ]
+      },
+      {
+        "appletId": "credential-manager",
+        "links": [
+          { "text": "Manage Web Credentials", "action": "open" },
+          { "text": "Manage Windows Credentials", "action": "open" }
+        ]
+      }
+    ]
+  },
+  "appearance": {
+    "sections": [
+      {
+        "appletId": "personalization",
+        "links": [
+          { "text": "Change the theme", "action": "open" },
+          { "text": "Change desktop background", "action": "open" },
+          { "text": "Change the color of your taskbar and window borders", "action": "open" },
+          { "text": "Change sound effects", "action": "open" },
+          { "text": "Change screen saver", "action": "open" }
+        ]
+      },
+      {
+        "appletId": "display",
+        "links": [
+          { "text": "Make text and other items larger or smaller", "action": "open" },
+          { "text": "Adjust screen resolution", "action": "open" }
+        ]
+      },
+      {
+        "appletId": "taskbar",
+        "links": [
+          { "text": "Navigation properties", "action": "window" },
+          { "text": "Customize icons on the taskbar", "action": "window" }
+        ]
+      },
+      {
+        "appletId": "ease-of-access-center",
+        "links": [
+          { "text": "Accommodate low vision", "action": "open" },
+          { "text": "Use screen reader", "action": "open" },
+          { "text": "Turn on easy access keys", "action": "open" },
+          { "text": "Turn High Contrast on or off", "action": "open" }
+        ]
+      },
+      {
+        "appletId": "folder-options",
+        "links": [
+          { "text": "Specify single- or double-click to open", "action": "window" },
+          { "text": "Show hidden files and folders", "action": "window" }
+        ]
+      },
+      {
+        "appletId": "fonts",
+        "links": [
+          { "text": "Preview, delete, or show and hide fonts", "action": "open" },
+          { "text": "Change Font Settings", "action": "open" },
+          { "text": "Adjust ClearType text", "action": "open" }
+        ]
+      }
+    ]
+  },
+  "clock-region": {
+    "sections": [
+      {
+        "appletId": "date-time",
+        "links": [
+          { "text": "Set the time and date", "action": "window" },
+          { "text": "Change the time zone", "action": "window" },
+          { "text": "Add clocks for different time zones", "action": "window" }
+        ]
+      },
+      {
+        "appletId": "language",
+        "links": [
+          { "text": "Add a language", "action": "open" },
+          { "text": "Change input methods", "action": "open" }
+        ]
+      },
+      {
+        "appletId": "region",
+        "links": [
+          { "text": "Change location", "action": "window" },
+          { "text": "Change date, time, or number formats", "action": "window" }
+        ]
+      }
+    ]
+  },
+  "ease-of-access": {
+    "sections": [
+      {
+        "appletId": "ease-of-access-center",
+        "links": [
+          { "text": "Let Windows suggest settings", "action": "open" },
+          { "text": "Optimize visual display", "action": "open" },
+          { "text": "Change how your mouse works", "action": "open" },
+          { "text": "Change how your keyboard works", "action": "open" }
+        ]
+      },
+      {
+        "appletId": "speech-recognition",
+        "links": [
+          { "text": "Start speech recognition", "action": "open" },
+          { "text": "Set up a microphone", "action": "open" }
+        ]
+      }
+    ]
+  }
+}

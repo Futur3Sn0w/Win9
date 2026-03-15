@@ -1,0 +1,199 @@
+/* ===== NOTIFICATION COMPONENT ===== */
+
+.notification-container {
+    position: fixed;
+    top: 20px;
+    /* Above taskbar - will be adjusted dynamically */
+    right: 0;
+    /* Align to right edge of screen */
+    width: 385px;
+    z-index: 200000;
+    pointer-events: none;
+    display: flex;
+    flex-direction: column;
+    /* Stack from bottom to top */
+    gap: 10px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Lower z-index on system screens so they appear below those screens */
+body.view-boot .notification-container,
+body.view-lock .notification-container,
+body.view-login .notification-container {
+    z-index: 1;
+    pointer-events: none;
+}
+
+.notification {
+    background: var(--ui-accent);
+    color: white;
+    padding: 0;
+    min-height: 90px;
+    width: 385px;
+    box-shadow: inset 0 0 0 2px #ffffff28;
+    opacity: 0;
+    transform: translateX(385px);
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    pointer-events: all;
+    overflow: visible;
+    position: relative;
+    user-select: none;
+    perspective: 1000px;
+    transform-style: preserve-3d;
+}
+
+/* Perspective effect when pressing on left half */
+.notification.pressing-left {
+    transform: translateX(0) rotateY(-2deg);
+    transform-origin: left center;
+    transition: transform 0.1s ease-out;
+}
+
+.notification-visible {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.notification-hiding {
+    opacity: 0;
+    transform: translateX(385px);
+}
+
+.notification.dragging {
+    transition: none;
+}
+
+/* Close button - hidden by default, shows on hover */
+.notification-close {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 30px;
+    height: 30px;
+    border: none;
+    color: white;
+    font-size: 15px;
+    background: transparent;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1;
+}
+
+.notification-close:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.notification-close:active {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+/* App icon in bottom-left */
+.notification-app-icon {
+    position: absolute;
+    bottom: 12px;
+    left: 12px;
+    width: 32px;
+    height: 32px;
+    object-fit: contain;
+}
+
+.notification-content {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+}
+
+.notification-icon-container {
+    flex-shrink: 0;
+    width: 90px;
+    height: 90px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.notification-icon {
+    font-size: 32px;
+    color: white;
+}
+
+.notification-icon-image {
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+}
+
+.notification-text {
+    flex: 1;
+    min-width: 0;
+}
+
+.notification-title {
+    font-size: 16px;
+    font-weight: 400;
+    color: white;
+    margin-bottom: 4px;
+    padding-top: 16px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.notification-description {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.8);
+    line-height: 1.4;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    line-clamp: 2;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+
+/* Notification icon color */
+.notification-icon {
+    color: white;
+}
+
+/* Animation for subtle pulse effect */
+@keyframes notification-pulse {
+
+    0%,
+    100% {
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+    }
+
+    50% {
+        box-shadow: 0 4px 20px rgba(0, 173, 239, 0.3);
+    }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .notification-container {
+        right: 10px;
+        left: 10px;
+        width: auto;
+    }
+
+    .notification {
+        transform: translateY(-100px);
+    }
+
+    .notification-visible {
+        transform: translateY(0);
+    }
+
+    .notification-hiding {
+        transform: translateY(-100px);
+    }
+}
+
+/* Animation for stacking multiple notifications */
+.notification:not(:first-child) {
+    margin-top: 0;
+}

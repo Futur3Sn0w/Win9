@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Desktop Background</title>
+    <link rel="stylesheet" href="desktop-background.css">
+    <link rel="stylesheet" href="../../../css/classic-controls.css">
+    <link rel="stylesheet" href="../../../components/system_dialog/system-dialog.css">
+</head>
+
+<body>
+    <div class="desktop-background-container">
+        <!-- Fixed Header -->
+        <div class="page-header">
+            <h1 class="page-title">Choose your desktop background</h1>
+            <p class="page-description">Click a picture to make it your desktop background, or select more than one
+                picture to create a slide show.</p>
+        </div>
+
+        <!-- Picture Location Controls -->
+        <div class="controls-section">
+            <div class="control-group">
+                <label for="picture-location">Picture location:</label>
+                <select id="picture-location" class="classic-select control-select">
+                    <option value="windows">Windows Desktop Backgrounds</option>
+                    <option value="pictures">Pictures Library</option>
+                    <option value="top-rated">Top Rated</option>
+                </select>
+                <button class="classic-button control-button" id="browse-button">Browse...</button>
+                <button class="classic-button control-button" id="select-all-button">Select all</button>
+                <button class="classic-button control-button" id="clear-all-button">Clear all</button>
+            </div>
+        </div>
+
+        <!-- Scrollable Wallpapers Area -->
+        <div class="wallpapers-container">
+            <div class="wallpapers-scroll-area" id="wallpapers-scroll-area">
+                <!-- Wallpapers will be dynamically loaded here -->
+            </div>
+        </div>
+
+        <!-- Picture Position and Slideshow Controls -->
+        <div class="bottom-controls">
+            <div class="position-control">
+                <label for="picture-position">Picture position:</label>
+                <div class="classic-select position-preview-wrapper">
+                    <div class="position-preview" id="position-preview"></div>
+                    <select id="picture-position" class="classic-select control-select position-select">
+                        <option value="fill">Fill</option>
+                        <option value="fit">Fit</option>
+                        <option value="stretch">Stretch</option>
+                        <option value="tile">Tile</option>
+                        <option value="center">Center</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="slideshow-controls">
+                <label for="change-picture">Change picture every:</label>
+                <select id="change-picture" class="classic-select control-select slideshow-select">
+                    <option value="10s">10 seconds</option>
+                    <option value="30s">30 seconds</option>
+                    <option value="1m">1 minute</option>
+                    <option value="3m">3 minutes</option>
+                    <option value="5m">5 minutes</option>
+                    <option value="10m">10 minutes</option>
+                    <option value="15m">15 minutes</option>
+                    <option value="20m">20 minutes</option>
+                    <option value="30m" selected>30 minutes</option>
+                    <option value="1h">1 hour</option>
+                    <option value="2h">2 hours</option>
+                    <option value="3h">3 hours</option>
+                    <option value="4h">4 hours</option>
+                    <option value="6h">6 hours</option>
+                    <option value="12h">12 hours</option>
+                    <option value="24h">1 day</option>
+                </select>
+
+                <div class="checkbox-group">
+                    <input type="checkbox" id="shuffle-checkbox">
+                    <label for="shuffle-checkbox">Shuffle</label>
+                </div>
+
+                <div class="checkbox-group">
+                    <input type="checkbox" id="battery-pause-checkbox">
+                    <label for="battery-pause-checkbox">When using battery power, pause the slide show to save
+                        power</label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="button-bar action-buttons">
+            <button class="classic-button action-button primary" id="save-button">Save changes</button>
+            <button class="classic-button action-button" id="cancel-button">Cancel</button>
+        </div>
+    </div>
+
+    <script src="../../../components/system_dialog/system-dialog.js"></script>
+    <script src="desktop-background.js"></script>
+</body>
+
+</html>

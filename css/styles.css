@@ -1,0 +1,44 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    user-select: none;
+}
+
+:root {
+    --system-brightness-factor: 1;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    overflow: hidden;
+    width: 100vw;
+    height: 100vh;
+    background: var(--ui-accent);
+}
+
+body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: #000;
+    opacity: calc(1 - var(--system-brightness-factor));
+    pointer-events: none;
+    z-index: 900000;
+    transition: opacity 0.2s ease;
+}
+
+/* ===== UTILITIES ===== */
+.hidden {
+    display: none !important;
+}
+
+.fade-out {
+    animation: fadeOut 0.5s forwards;
+}
+
+@keyframes fadeOut {
+    to {
+        opacity: 0;
+    }
+}

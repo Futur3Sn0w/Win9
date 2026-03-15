@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Color</title>
+    <link rel="stylesheet" href="colors.css">
+    <link rel="stylesheet" href="../../../css/classic-controls.css">
+    <link rel="stylesheet" href="../../../components/system_dialog/system-dialog.css">
+</head>
+
+<body>
+    <div class="colors-container">
+        <!-- Fixed Header -->
+        <div class="page-header">
+            <h1 class="page-title">Change the color of your window borders and taskbar</h1>
+        </div>
+
+        <!-- Colors Grid -->
+        <div class="colors-grid-container">
+            <div class="colors-grid" id="colors-grid">
+                <!-- Colors will be dynamically loaded here -->
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="button-bar action-buttons">
+            <button class="classic-button action-button primary" id="save-button">Save changes</button>
+            <button class="classic-button action-button" id="cancel-button">Cancel</button>
+        </div>
+    </div>
+
+    <script src="../../../components/system_dialog/system-dialog.js"></script>
+    <script src="colors.js"></script>
+</body>
+
+</html>

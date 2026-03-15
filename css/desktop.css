@@ -1,0 +1,323 @@
+/* ===== APPS LOADED ON THE DESKTOP ===== */
+.direct-loaded-content {
+    width: 100%;
+    height: 100%;
+}
+
+/* ===== DESKTOP WALLPAPER LAYER ===== */
+#desktop-wallpaper {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: url('../resources/images/wallpapers/Windows/img0.jpg') no-repeat center center;
+    background-size: cover;
+    display: block;
+    z-index: 599;
+    pointer-events: none;
+}
+
+/* ===== DESKTOP ===== */
+#desktop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: transparent;
+    display: block;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 600;
+    transition: opacity 0.3s ease-out;
+}
+
+#desktop.visible {
+    opacity: 1;
+    pointer-events: all;
+}
+
+.desktop-content {
+    width: 100%;
+    height: calc(100% - 48px);
+    padding: 5px 0;
+    position: relative;
+    z-index: 601;
+}
+
+.desktop-grid {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    margin: 0;
+    --desktop-item-width: 96px;
+    --desktop-icon-size: 56px;
+    --desktop-label-font-size: 12px;
+    --desktop-grid-column-gap: 28px;
+    --desktop-grid-row-gap: 28px;
+}
+
+.desktop-grid--hidden {
+    display: none;
+}
+
+.desktop-grid--size-small {
+    --desktop-item-width: 96px;
+    --desktop-icon-size: 56px;
+    --desktop-label-font-size: 12px;
+    --desktop-grid-column-gap: 28px;
+    --desktop-grid-row-gap: 28px;
+}
+
+.desktop-grid--size-medium {
+    --desktop-item-width: 116px;
+    --desktop-icon-size: 68px;
+    --desktop-label-font-size: 13px;
+    --desktop-grid-column-gap: 32px;
+    --desktop-grid-row-gap: 32px;
+}
+
+.desktop-grid--size-large {
+    --desktop-item-width: 134px;
+    --desktop-icon-size: 84px;
+    --desktop-label-font-size: 14px;
+    --desktop-grid-column-gap: 38px;
+    --desktop-grid-row-gap: 36px;
+}
+
+.desktop-item {
+    width: var(--desktop-item-width);
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 8px 6px;
+    color: #fdfdfd;
+    text-shadow: 0 1px 3px 1px rgba(0, 0, 0, 0.7);
+    user-select: none;
+    z-index: 1;
+    overflow: visible;
+    --label-extra-height: 0px;
+}
+
+.desktop-item:not(.is-selected):hover {
+    background: rgba(255, 255, 255, 0.35);
+    box-shadow:
+        inset 0 0 0 1px #a4c2e7b3,
+        inset 0 0 0 2px #ffffff7b;
+}
+
+.desktop-item--disabled {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.desktop-item--dragging {
+    z-index: 20 !important;
+}
+
+.desktop-item.is-selected {
+    z-index: 5;
+}
+
+.desktop-item.is-selected.is-hovered {
+    z-index: 10;
+}
+
+.desktop-item.is-selected::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: calc(100% + var(--label-extra-height, 0px));
+    background: linear-gradient(to bottom, #9bc5ff71, #7ab1ff71);
+    box-shadow:
+        inset 0 0 0 1px rgba(57, 123, 202, 0.738),
+        inset 0 0 0 2px rgba(255, 255, 255, 0.5);
+    z-index: 0;
+    pointer-events: none;
+}
+
+.desktop-item__icon {
+    width: var(--desktop-icon-size);
+    height: var(--desktop-icon-size);
+    margin-bottom: 6px;
+    border-radius: 8px;
+    background-color: rgba(0, 0, 0, 0.35);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: calc(var(--desktop-icon-size) * 0.27);
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    color: rgba(255, 255, 255, 0.9);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
+    position: relative;
+    z-index: 1;
+}
+
+.desktop-item__icon-image {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    pointer-events: none;
+    user-select: none;
+}
+
+.desktop-item__icon:has(.desktop-item__icon-image) {
+    background-color: transparent;
+    box-shadow: none;
+}
+
+/* Thumbnail styling for photo files */
+.desktop-item__icon--thumbnail {
+    background-color: transparent;
+    box-shadow: none;
+}
+
+.desktop-item__icon-image--thumbnail {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    object-position: center;
+}
+
+.desktop-item__icon--folder {
+    background-color: rgba(19, 87, 148, 0.7);
+}
+
+.desktop-item__icon--file {
+    background-color: rgba(54, 54, 54, 0.6);
+}
+
+.desktop-item__icon--recycle {
+    background-color: rgba(58, 133, 62, 0.7);
+}
+
+.desktop-item__label-container {
+    width: 100%;
+    position: relative;
+    margin-top: 6px;
+    min-height: 16px;
+    overflow: visible;
+    z-index: 1;
+}
+
+.desktop-item__label {
+    width: 100%;
+    text-align: center;
+    font-size: 12px;
+    line-height: 1.2;
+    word-break: break-word;
+    text-shadow: 0 1px 3px #000000;
+}
+
+.desktop-item__label--truncated {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.desktop-item__label--full {
+    display: none;
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    min-width: 100%;
+    max-width: 220px;
+    padding: 0;
+    line-height: 1.2;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+    word-break: break-word;
+    pointer-events: none;
+    z-index: 3;
+}
+
+.desktop-item__rename-input {
+    width: 100%;
+    max-width: 220px;
+    box-sizing: border-box;
+    background-color: #ffffff;
+    border: 1px solid #000000;
+    border-radius: 0;
+    color: #000000;
+    font-size: 12px;
+    line-height: 1.2;
+    padding: 2px 4px;
+    text-align: left;
+    display: block;
+    margin: 0 auto;
+    outline: none;
+    z-index: 5;
+    text-shadow: none;
+}
+
+.desktop-item.is-selected .desktop-item__label--truncated {
+    visibility: hidden;
+}
+
+.desktop-item.is-selected .desktop-item__label--full {
+    display: block;
+}
+
+.desktop-selection-rect {
+    position: absolute;
+    border: 1px solid rgba(0, 120, 215, 0.9);
+    background-color: rgba(0, 120, 215, 0.25);
+    pointer-events: none;
+    z-index: 5;
+}
+
+body.desktop-drag-selecting,
+body.desktop-drag-selecting * {
+    user-select: none !important;
+    -webkit-user-select: none !important;
+}
+
+/* Taskbar context menu - specific positioning */
+.taskbar-context-menu {
+    z-index: 200010;
+}
+
+/* Lower z-index on system screens so they appear below those screens */
+body.view-boot .taskbar-context-menu,
+body.view-lock .taskbar-context-menu,
+body.view-login .taskbar-context-menu {
+    z-index: 1;
+    pointer-events: none;
+}
+
+/* Taskbar lock check mark styling */
+.taskbar-lock-check {
+    font-weight: bold;
+    font-size: 14px;
+    text-align: center;
+}
+
+/* Desktop fade-out animation for Start Screen transition */
+#desktop.fade-out-to-start {
+    opacity: 0;
+    transition: opacity 0.2s ease-out;
+}
+
+/* Desktop fade-in animation when transitioning from Start Screen */
+#desktop.fade-in-from-start {
+    opacity: 0;
+    animation: fadeInFromStart 0.6s ease-out forwards;
+}
+
+@keyframes fadeInFromStart {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}

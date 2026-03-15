@@ -1,0 +1,540 @@
+/* Modern App Container */
+.modern-app-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: #000;
+    z-index: 50000;
+    display: none;
+}
+
+.modern-app-container.active {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Modern App Titlebar */
+.modern-app-titlebar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 30px;
+    background: #000;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    z-index: 50010;
+    padding-left: 3px;
+    transform: translateY(-100%);
+    transition: transform 0.2s ease;
+}
+
+/* Show titlebar when hovering over trigger area or titlebar itself */
+.modern-app-titlebar-trigger:hover~.modern-app-titlebar,
+.modern-app-titlebar:hover {
+    transform: translateY(0);
+}
+
+/* Titlebar hover trigger - invisible area at top of screen */
+.modern-app-titlebar-trigger {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 5px;
+    z-index: 50011;
+}
+
+.modern-app-name {
+    color: #fff;
+    font-size: 14px;
+    font-weight: 400;
+}
+
+.modern-app-titlebar.no-icon {
+    display: flex;
+    /* this may be needed later; 
+    i just applied a flex here for future reference */
+}
+
+.modern-app-icon {
+    width: 24px;
+    height: 24px;
+    padding: 3px;
+}
+
+.modern-app-icon img {
+    width: 18px;
+    height: 18px;
+    display: block;
+}
+
+.modern-app-controls {
+    display: flex;
+    gap: 0;
+    height: 100%;
+}
+
+.modern-app-control-btn {
+    height: 100%;
+    aspect-ratio: 1/1;
+    background: transparent;
+    border: none;
+    color: #fff;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    transition: background 0.1s ease;
+    border-radius: 0;
+}
+
+.modern-app-control-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.modern-app-control-btn.close:hover {
+    background: #e81123;
+}
+
+.modern-app-control-btn.minimize:hover {
+    background: #3665b3;
+}
+
+/* Modern App Content (iframe) */
+.modern-app-content {
+    flex: 1;
+    width: 100%;
+    min-height: 0;
+    /* Allow flex child to shrink below content size */
+    background: #fff;
+    position: relative;
+    /* Needed for webview positioning */
+    overflow: hidden;
+    /* Prevent content overflow */
+}
+
+.modern-app-iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+
+/* Modern buttons (1/2) - Icon button */
+.modern-icon-btn {
+    background: transparent;
+    border: 2px solid #fff;
+    color: #fff;
+    font-size: 24px;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+    border-radius: 50%;
+    position: relative;
+    flex-shrink: 0;
+}
+
+.modern-icon-btn:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.modern-icon-btn:active:not(:disabled) {
+    background: #fff;
+    color: #000;
+}
+
+.modern-icon-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+/* Modern buttons (2/2) - Text button */
+.modern-text-btn {
+    background: transparent;
+    color: #fff;
+    font-size: 15px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    transition: 0.15s ease;
+    position: relative;
+    flex-shrink: 0;
+}
+
+.modern-text-btn:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.modern-text-btn:active:not(:disabled) {
+    background: #000;
+    color: #fff;
+}
+
+.modern-text-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+/* Webview specific styling - needs absolute positioning */
+webview.modern-app-iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: calc(100% - 70px);
+    /* Account for navigation bar */
+}
+
+/* Webview loading overlay */
+.webview-loading {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #121212;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    color: #fff;
+    z-index: 100;
+}
+
+.webview-loading .spinner {
+    width: 50px;
+    height: 50px;
+    border: 4px solid rgba(255, 255, 255, 0.1);
+    border-top-color: #5a59b0;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 20px;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.webview-loading .loading-text {
+    font-size: 16px;
+    opacity: 0.8;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Modern Webview Navigation Bar */
+.modern-webview-bar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background: #000;
+    border: 1px solid transparent;
+    border-top-color: #545454;
+    z-index: 1000;
+    transition: height 0.2s ease;
+    min-height: 70px;
+}
+
+.modern-webview-bar.expanded {
+    height: 90px;
+}
+
+.modern-webview-bar-controls {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 25px;
+    height: 90px;
+    padding-top: 15px;
+    position: relative;
+    overflow: hidden;
+}
+
+.modern-webview-bar-btn {
+    background: transparent;
+    border: 2px solid #fff;
+    color: #fff;
+    font-size: 24px;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+    border-radius: 50%;
+    position: relative;
+    flex-shrink: 0;
+}
+
+.modern-webview-bar-btn:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.modern-webview-bar-btn:active:not(:disabled) {
+    background: #fff;
+    color: #000;
+}
+
+.modern-webview-bar-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+/* Label attached to each button */
+.modern-webview-bar-btn-label {
+    position: absolute;
+    top: 42px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    text-align: center;
+    color: #fff !important;
+    font-size: 11px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    pointer-events: none;
+}
+
+.modern-webview-bar.expanded .modern-webview-bar-btn-label {
+    opacity: 0.8;
+}
+
+/* Ensure label stays white even when button is active */
+.modern-webview-bar-btn:active .modern-webview-bar-btn-label {
+    color: #fff !important;
+}
+
+.modern-webview-bar-expand {
+    position: absolute;
+    right: 15px;
+    top: 15px;
+    background: transparent;
+    border: none;
+    color: #fff;
+    font-size: 20px;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    transition: background 0.15s ease, transform 0.2s ease;
+    border-radius: 2px;
+}
+
+.modern-webview-bar-expand:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.modern-webview-bar.expanded .modern-webview-bar-expand {
+    transform: rotate(180deg);
+}
+
+/* Modern context menus (e.g., usertile and power menus) */
+
+.modern-dropdown {
+    position: absolute;
+    min-width: 250px;
+    background: #fff;
+    border: 2px solid #000;
+    display: flex;
+    flex-direction: column;
+    z-index: 1000;
+    padding: 5px 0;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s ease-out, transform 0.15s ease-out;
+
+    &.active {
+        opacity: 1;
+        pointer-events: all;
+    }
+
+    &:not(.active) {
+        opacity: 0;
+        pointer-events: none;
+    }
+}
+
+.modern-dropdown-item {
+    height: 40px;
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    color: #000;
+    font-size: 12pt;
+    font-weight: 500;
+
+    transition: background 0.05s;
+
+    &:hover {
+        background: rgba(0, 0, 0, 0.1);
+    }
+}
+
+/* Animation for opening modern apps */
+.modern-app-container.opening {
+    animation: modernAppScaleIn 0.3s ease forwards;
+}
+
+@keyframes modernAppScaleIn {
+    from {
+        transform: scale(0.75);
+        opacity: 0;
+    }
+
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* Animation for closing modern apps */
+.modern-app-container.closing {
+    animation: modernAppScaleOut 0.3s ease forwards;
+}
+
+@keyframes modernAppScaleOut {
+    from {
+        transform: scale(1);
+        opacity: 1;
+    }
+
+    to {
+        transform: scale(0.75);
+        opacity: 0;
+    }
+}
+
+/* Animation for minimizing modern apps */
+.modern-app-container.minimizing {
+    animation: modernAppMinimize 0.3s ease forwards;
+}
+
+@keyframes modernAppMinimize {
+    from {
+        transform: translate(0, 0) scale(1);
+        opacity: 1;
+    }
+
+    to {
+        transform: translate(var(--minimize-x, 0), var(--minimize-y, 0)) scale(0.1);
+        opacity: 0;
+    }
+}
+
+.modern-app-container.taskbar-launch {
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.modern-app-container.taskbar-launch.taskbar-launch-visible {
+    opacity: 1;
+}
+
+.modern-app-container.taskbar-launch .modern-app-titlebar,
+.modern-app-container.taskbar-launch .modern-app-titlebar-trigger,
+.modern-app-container.taskbar-launch .modern-app-content {
+    opacity: 0;
+    transition: opacity 0.4s ease;
+}
+
+.modern-app-container.taskbar-launch .modern-app-content {
+    pointer-events: none;
+}
+
+.modern-app-container.taskbar-launch .modern-app-titlebar,
+.modern-app-container.taskbar-launch .modern-app-titlebar-trigger {
+    pointer-events: none;
+}
+
+.modern-app-container.taskbar-launch.taskbar-content-visible .modern-app-titlebar,
+.modern-app-container.taskbar-launch.taskbar-content-visible .modern-app-titlebar-trigger,
+.modern-app-container.taskbar-launch.taskbar-content-visible .modern-app-content {
+    opacity: 1;
+}
+
+.modern-app-container.taskbar-launch.taskbar-content-visible .modern-app-content {
+    pointer-events: auto;
+}
+
+.modern-app-container.taskbar-launch.taskbar-content-visible .modern-app-titlebar,
+.modern-app-container.taskbar-launch.taskbar-content-visible .modern-app-titlebar-trigger {
+    pointer-events: auto;
+}
+
+.modern-app-splash {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 96px;
+    z-index: 10002;
+    opacity: 1;
+    transition: opacity 0.4s ease;
+}
+
+.modern-app-splash-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modern-app-splash-icon>span {
+    display: block;
+}
+
+.modern-app-splash-icon img {
+    width: 96px;
+    height: 96px;
+    display: block;
+    object-fit: contain;
+}
+
+.modern-app-splash.fade-out {
+    opacity: 0;
+}
+
+/* Animation for restoring modern apps */
+.modern-app-container.restoring {
+    animation: modernAppRestore 0.3s ease forwards;
+}
+
+@keyframes modernAppRestore {
+    from {
+        transform: translate(var(--restore-x, 0), var(--restore-y, 0)) scale(0.1);
+        opacity: 0;
+    }
+
+    to {
+        transform: translate(0, 0) scale(1);
+        opacity: 1;
+    }
+}
+
+/* Active Click Effect - Apply to elements for a subtle scale-down on click */
+.active-scale-effect {
+    transition: transform 0.2s ease;
+}
+
+.active-scale-effect:active {
+    transform: scale(0.966);
+}

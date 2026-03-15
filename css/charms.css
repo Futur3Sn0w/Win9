@@ -1,0 +1,1165 @@
+/* ===== CHARMS BAR ===== */
+.charms-trigger {
+    position: fixed;
+    right: -5px;
+    width: 20px;
+    height: 20px;
+    z-index: 200001;
+    pointer-events: all;
+}
+
+.charms-trigger.top {
+    top: -5px;
+}
+
+.charms-trigger.bottom {
+    bottom: -5px;
+}
+
+.charms-bar {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 86px;
+    height: 100%;
+    z-index: 200000;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transform: translateX(100%);
+    pointer-events: none;
+    transition: opacity 0.25s ease, transform 0.25s ease;
+    overflow: hidden;
+
+    &:not(.show-background) .charms-icon-label {
+        color: transparent;
+    }
+}
+
+.charms-bar.visible {
+    opacity: 1;
+    transform: translateX(0);
+    pointer-events: all;
+}
+
+/* When triggered by keyboard (Win+C), slide in from the edge */
+.charms-bar.keyboard-triggered {
+    animation: charms-slide-in 0.25s ease;
+}
+
+@keyframes charms-slide-in {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.charms-bar.hiding {
+    opacity: 0;
+    transform: translateX(0);
+    transition: opacity 0.25s ease;
+}
+
+.charms-bar-background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(21, 21, 21, 1);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: -1;
+}
+
+.charms-bar.show-background .charms-bar-background {
+    opacity: 1;
+}
+
+.charms-icons {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    position: relative;
+    z-index: 1;
+}
+
+.charms-icon {
+    width: 100%;
+    height: 100px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    color: #fff;
+    transition: background-color 0.2s ease;
+    text-decoration: none;
+}
+
+.charms-icon:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.charms-icon:active {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+.charms-icon-image {
+    width: 45px;
+    height: 45px;
+    display: block;
+    background-color: currentColor;
+    transition: background-color 0.3s ease, filter 0.3s ease;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    mask-position: center;
+    -webkit-mask-size: contain;
+    mask-size: contain;
+}
+
+.charms-icon-image--search {
+    -webkit-mask-image: url('../resources/images/icons/charms_search_ghost.png');
+    mask-image: url('../resources/images/icons/charms_search_ghost.png');
+}
+
+.charms-icon-image--share {
+    -webkit-mask-image: url('../resources/images/icons/charms_share_ghost.png');
+    mask-image: url('../resources/images/icons/charms_share_ghost.png');
+}
+
+.charms-icon-image--start {
+    -webkit-mask-image: url('../resources/images/icons/charms_start_ghost.png');
+    mask-image: url('../resources/images/icons/charms_start_ghost.png');
+}
+
+.charms-icon-image--devices {
+    -webkit-mask-image: url('../resources/images/icons/charms_devices_ghost.png');
+    mask-image: url('../resources/images/icons/charms_devices_ghost.png');
+}
+
+.charms-icon-image--settings {
+    -webkit-mask-image: url('../resources/images/icons/charms_settings_ghost.png');
+    mask-image: url('../resources/images/icons/charms_settings_ghost.png');
+}
+
+/* Start icon inherits color */
+.charms-start-icon {
+    color: inherit;
+    transition: color 0.3s ease, filter 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Windows 8 signature glint animation for Start Charm */
+.charms-start-icon::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 50px;
+    height: 200%;
+    background: linear-gradient(
+        to right,
+        transparent 0%,
+        rgba(255, 255, 255, 0.25) 50%,
+        transparent 100%
+    );
+    transform: translateX(-100%) rotate(15deg);
+    animation: none;
+    pointer-events: none;
+}
+
+/* Only animate when full charms bar is shown */
+.charms-bar.show-background .charms-start-icon::after {
+    animation: charms-start-glint 3s linear 0.125s infinite;
+}
+
+@keyframes charms-start-glint {
+    0% {
+        transform: translateX(-100%) rotate(15deg);
+    }
+    20%, 100% {
+        transform: translateX(200%) rotate(15deg);
+    }
+}
+
+/* Start icon color when full bar is shown (background + datetime panel visible) */
+.charms-bar.show-background .charms-icon[data-charm="start"] .charms-start-icon {
+    color: var(--ui-accent-plus);
+}
+
+.charms-bar.show-background .charms-icon-image--search {
+    -webkit-mask-image: url('../resources/images/icons/charms_search.png');
+    mask-image: url('../resources/images/icons/charms_search.png');
+}
+
+.charms-bar.show-background .charms-icon-image--share {
+    -webkit-mask-image: url('../resources/images/icons/charms_share.png');
+    mask-image: url('../resources/images/icons/charms_share.png');
+}
+
+.charms-bar.show-background .charms-icon-image--start {
+    -webkit-mask-image: url('../resources/images/icons/charms_start.png');
+    mask-image: url('../resources/images/icons/charms_start.png');
+}
+
+.charms-bar.show-background .charms-icon-image--devices {
+    -webkit-mask-image: url('../resources/images/icons/charms_devices.png');
+    mask-image: url('../resources/images/icons/charms_devices.png');
+}
+
+.charms-bar.show-background .charms-icon-image--settings {
+    -webkit-mask-image: url('../resources/images/icons/charms_settings.png');
+    mask-image: url('../resources/images/icons/charms_settings.png');
+}
+
+.charms-icon-label {
+    font-family: 'Segoe UI', sans-serif;
+    font-size: 15px;
+    color: #fff;
+    opacity: .5;
+    text-align: center;
+}
+
+/* Hide charms bar and triggers by default */
+.charms-bar,
+.charms-trigger {
+    display: none;
+}
+
+/* Show charms bar and triggers when allowed */
+body.charms-allowed .charms-bar {
+    display: flex;
+}
+
+body.charms-allowed .charms-trigger {
+    display: block;
+}
+
+body.charms-hotcorners-disabled .charms-trigger {
+    pointer-events: none;
+}
+
+/* Lower z-index on system screens so they appear below those screens */
+body.view-boot .charms-bar,
+body.view-boot .charms-trigger,
+body.view-boot .modern-flyout,
+body.view-lock .charms-bar,
+body.view-lock .charms-trigger,
+body.view-lock .modern-flyout,
+body.view-login .charms-bar,
+body.view-login .charms-trigger,
+body.view-login .modern-flyout {
+    z-index: 1;
+    pointer-events: none;
+}
+
+/* ===== CHARMS DATE/TIME PANEL ===== */
+.charms-datetime-panel {
+    position: fixed;
+    left: 50px;
+    bottom: 48px;
+    width: 449px;
+    height: 140px;
+    background-color: rgba(21, 21, 21, 1);
+    z-index: 14000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+    display: none;
+}
+
+body.charms-allowed .charms-datetime-panel {
+    display: flex;
+}
+
+.charms-datetime-panel.visible {
+    opacity: 1;
+}
+
+.charms-datetime-content {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    width: 100%;
+    height: 100%;
+    gap: 20px;
+    padding: 20px;
+    padding-right: 35px;
+}
+
+.charms-time {
+    font-family: 'Segoe UI Light', 'Segoe UI', sans-serif;
+    font-size: 85px;
+    font-weight: 200;
+    color: #fff;
+    padding-bottom: 7px;
+}
+
+.charms-date {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 4px;
+}
+
+.charms-date-weekday {
+    font-family: 'Segoe UI', sans-serif;
+    font-size: 28px;
+    font-weight: 300;
+    color: #fff;
+
+}
+
+.charms-date-monthday {
+    font-family: 'Segoe UI', sans-serif;
+    font-size: 28px;
+    font-weight: 300;
+    color: #fff;
+    margin-top: -5px;
+}
+
+/* ===== MODERN FLYOUTS ===== */
+.modern-flyout {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 346px;
+    height: 100%;
+    background-color: var(--ui-accent);
+    z-index: 200002;
+    display: flex;
+    flex-direction: column;
+    transform: translateX(100%);
+    /* Stage 1: Container/background slides in over 500ms with extended ease-out tail */
+    transition: transform 0.5s cubic-bezier(0.05, 0.7, 0.1, 1), opacity 0.5s cubic-bezier(0.05, 0.7, 0.1, 1);
+
+    opacity: 0;
+    pointer-events: none;
+
+    &::before {
+        content: '';
+        position: absolute;
+        z-index: 5;
+
+        width: 100%;
+        height: 100%;
+
+        background-color: #fff;
+        opacity: .05;
+        pointer-events: none;
+
+        box-shadow: inset 1px 0 0 1px #000;
+    }
+
+}
+
+.modern-flyout.visible {
+    transform: translateX(0);
+    pointer-events: all;
+    opacity: 1;
+}
+
+/* When flyout is visible, slide in header and content with stagger */
+.modern-flyout.visible .modern-flyout-header,
+.modern-flyout.visible .modern-flyout-content {
+    transform: translateX(0);
+    opacity: 1;
+}
+
+.modern-flyout.closing {
+    transform: translateX(100%);
+    opacity: 0;
+    /* Closing - quicker than opening but still smooth */
+    transition: transform 0.35s cubic-bezier(0.05, 0.7, 0.1, 1), opacity 0.35s cubic-bezier(0.05, 0.7, 0.1, 1);
+}
+
+/* When flyout is closing, slide out header and content together (no delays) */
+.modern-flyout.closing .modern-flyout-header,
+.modern-flyout.closing .modern-flyout-content {
+    transform: translateX(100%);
+    opacity: 0;
+    transition: transform 0.35s cubic-bezier(0.05, 0.7, 0.1, 1), opacity 0.35s cubic-bezier(0.05, 0.7, 0.1, 1);
+}
+
+.modern-flyout-header {
+    padding: 30px 40px 20px 40px;
+    background-color: var(--ui-accent);
+    color: #fff;
+    font-family: 'Segoe UI Light', 'Segoe UI', sans-serif;
+    font-size: 26px;
+    font-weight: 200;
+
+    height: 80px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+
+    /* Stage 2: Header slides in after 80ms delay, over 1000ms with extended ease-out tail */
+    transform: translateX(100%);
+    opacity: 0;
+    transition: transform 1s cubic-bezier(0.05, 0.7, 0.1, 1) 0.08s, opacity 1s cubic-bezier(0.05, 0.7, 0.1, 1) 0.08s;
+}
+
+.modern-flyout-header-text {
+    flex: 1;
+}
+
+/* Personalize Back Button */
+.personalize-back-button {
+    width: 36px;
+    height: 36px;
+    background: transparent;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    color: #fff;
+    font-size: 28px;
+
+    display: none;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    padding: 0;
+    margin-left: -8px;
+}
+
+.personalize-back-button:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.personalize-back-button:active {
+    background: rgba(255, 255, 255, 1);
+    color: var(--ui-accent);
+}
+
+.personalize-back-icon {
+    display: block;
+    line-height: 1;
+    margin-top: -2px;
+}
+
+/* Back button is always shown in its panel's header (no need for conditional display) */
+.personalize-back-button {
+    display: flex;
+}
+
+.modern-flyout-content {
+    flex: 1;
+    /* padding: 0 40px 40px 40px; */
+    color: #fff;
+    overflow-y: auto;
+    overflow-x: hidden;
+    position: relative;
+    z-index: 10;
+
+    /* Stage 3: Content slides in after 220ms delay, over 1000ms with extended ease-out tail (total = 1220ms) */
+    transform: translateX(100%);
+    opacity: 0;
+    transition: transform 1s cubic-bezier(0.05, 0.7, 0.1, 1) 0.22s, opacity 1s cubic-bezier(0.05, 0.7, 0.1, 1) 0.22s;
+}
+
+/* Hide flyouts by default */
+body:not(.charms-allowed) .modern-flyout {
+    display: none;
+}
+
+/* Settings Modern Flyout - Apply staggered animation to panels */
+.modern-flyout[data-flyout="settings"] .settings-panel .modern-flyout-header {
+    /* Stage 2: Header slides in after 80ms delay, over 1000ms with extended ease-out tail */
+    transform: translateX(100%);
+    opacity: 0;
+    transition: transform 1s cubic-bezier(0.05, 0.7, 0.1, 1) 0.08s, opacity 1s cubic-bezier(0.05, 0.7, 0.1, 1) 0.08s;
+}
+
+.modern-flyout[data-flyout="settings"] .settings-panel .modern-flyout-content {
+    /* Stage 3: Content slides in after 220ms delay, over 1000ms with extended ease-out tail (total = 1220ms) */
+    transform: translateX(100%);
+    opacity: 0;
+    transition: transform 1s cubic-bezier(0.05, 0.7, 0.1, 1) 0.22s, opacity 1s cubic-bezier(0.05, 0.7, 0.1, 1) 0.22s;
+}
+
+.modern-flyout[data-flyout="settings"] .settings-controls {
+    /* Stage 4: Controls slide in after content */
+    transform: translateX(100%);
+    opacity: 0;
+    transition: transform 1s cubic-bezier(0.05, 0.7, 0.1, 1) 0.4s, opacity 1s cubic-bezier(0.05, 0.7, 0.1, 1) 0.4s;
+}
+
+/* When settings modern flyout is visible, slide in all elements */
+.modern-flyout[data-flyout="settings"].visible .settings-panel .modern-flyout-header,
+.modern-flyout[data-flyout="settings"].visible .settings-panel .modern-flyout-content,
+.modern-flyout[data-flyout="settings"].visible .settings-controls {
+    transform: translateX(0);
+    opacity: 1;
+}
+
+/* When settings modern flyout is closing, slide out all elements together */
+.modern-flyout[data-flyout="settings"].closing .settings-panel .modern-flyout-header,
+.modern-flyout[data-flyout="settings"].closing .settings-panel .modern-flyout-content,
+.modern-flyout[data-flyout="settings"].closing .settings-controls {
+    transform: translateX(100%);
+    opacity: 0;
+    transition: transform 0.35s cubic-bezier(0.05, 0.7, 0.1, 1), opacity 0.35s cubic-bezier(0.05, 0.7, 0.1, 1);
+}
+
+/* Settings Modern Flyout Specific Styles */
+.settings-app-name {
+    font-family: 'Segoe UI', sans-serif;
+    font-size: 20px;
+    font-weight: 300;
+    color: rgba(255, 255, 255, 0.5);
+    padding: 0 40px;
+    display: flex;
+    align-items: center;
+    height: 50px;
+    cursor: default;
+    user-select: none;
+    pointer-events: none;
+}
+
+/* Settings Controls - Pinned to bottom */
+.settings-controls {
+    position: relative;
+    z-index: 11;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: var(--ui-accent);
+    flex-shrink: 0;
+}
+
+.settings-controls-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+    gap: 0;
+    width: 80%;
+    margin: 0 auto;
+    box-sizing: border-box;
+    border-top: 1px solid #ffffffaa;
+    padding-top: 14px;
+}
+
+.settings-control-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 88px;
+    height: 90px;
+
+    color: #fff;
+    transition: background-color 0.2s ease;
+    min-height: 100px;
+    position: relative;
+}
+
+.settings-control-item:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.settings-control-item:active {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+.settings-control-item.active-slider {
+    background-color: rgba(255, 255, 255, 0.15);
+}
+
+.settings-control-item {
+    & span:first-of-type {
+        width: 40px;
+        height: 40px;
+        fill: #fff;
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        font-size: 36px;
+    }
+}
+
+.settings-control-label {
+    font-family: 'Segoe UI', sans-serif;
+    font-size: 12px;
+    color: #fff;
+    text-align: center;
+}
+
+.settings-slider-popup {
+    position: absolute;
+    bottom: calc(100% + 16px);
+    left: 50%;
+    transform: translate(-50%, 10px);
+    width: 100px;
+    padding: 0;
+    background-color: #fff;
+    border: 2px solid #000;
+    color: #000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.18s ease, transform 0.35s cubic-bezier(0.05, 0.7, 0.1, 1);
+    z-index: 15;
+}
+
+.settings-slider-popup.visible {
+    opacity: 1;
+    pointer-events: all;
+    transform: translate(-50%, 0);
+}
+
+.settings-slider-popup.closing {
+    opacity: 0;
+    pointer-events: none;
+    transform: translate(-50%, 0);
+}
+
+.settings-slider-popup::after {
+    display: none;
+}
+
+.settings-slider-track-wrapper {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 6px 0;
+    height: 180px;
+}
+
+.settings-slider {
+    --settings-slider-track-color: #d0d0d0;
+    -webkit-appearance: none;
+    appearance: none;
+    width: 180px;
+    height: 32px;
+    background: transparent;
+    cursor: pointer;
+    outline: none;
+    transform: rotate(-90deg);
+    transform-origin: 50% 50%;
+}
+
+.settings-slider.is-active {
+    --settings-slider-track-color: var(--ui-accent);
+}
+
+.settings-slider::-webkit-slider-runnable-track {
+    width: 100%;
+    height: 15px;
+    background: var(--settings-slider-track-color);
+    border-radius: 0;
+    transition: background-color 0.1s ease;
+}
+
+.settings-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 15px;
+    height: 15px;
+    background: #000;
+    border: none;
+    margin-top: 0;
+    border-radius: 0;
+}
+
+.settings-slider::-moz-range-track {
+    width: 100%;
+    height: 15px;
+    background: var(--settings-slider-track-color);
+    border-radius: 0;
+}
+
+.settings-slider::-moz-range-progress {
+    height: 15px;
+    background: var(--settings-slider-track-color);
+    border-radius: 0;
+}
+
+.settings-slider::-moz-range-thumb {
+    width: 15px;
+    height: 15px;
+    background: #000;
+    border: none;
+    border-radius: 0;
+}
+
+.settings-slider::-ms-track {
+    width: 100%;
+    height: 15px;
+    background: transparent;
+    color: transparent;
+    border-color: transparent;
+}
+
+.settings-slider::-ms-fill-lower,
+.settings-slider::-ms-fill-upper {
+    background: var(--settings-slider-track-color);
+    border-radius: 0;
+}
+
+.settings-slider::-ms-thumb {
+    width: 15px;
+    height: 15px;
+    background: #000;
+    border: none;
+    border-radius: 0;
+}
+
+/* PC Settings Link */
+.settings-pc-link {
+    padding: 20px 40px;
+    text-align: right;
+}
+
+.pc-settings-link {
+    font-family: 'Segoe UI', sans-serif;
+    font-size: 14px;
+    color: #ffffffaa;
+    text-decoration: none;
+    display: inline-block;
+    transition: opacity 0.2s ease;
+}
+
+.pc-settings-link:hover {
+    opacity: 0.7;
+}
+
+.pc-settings-link:active {
+    opacity: 0.5;
+}
+
+/* Settings Menu Items */
+.settings-menu-items {
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+}
+
+.settings-menu-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 15px 40px;
+
+    color: #fff;
+    font-family: 'Segoe UI', sans-serif;
+    font-size: 16px;
+    transition: background-color 0.2s ease;
+}
+
+.settings-menu-item:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.settings-menu-item:active {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+.settings-menu-item-icon {
+    width: 24px;
+    height: 24px;
+    margin-right: 15px;
+}
+
+.settings-menu-item-text {
+    flex: 1;
+}
+
+.settings-menu-item-arrow {
+    font-size: 20px;
+    opacity: 0.6;
+}
+
+/* Settings Modern Flyout Panel System */
+.modern-flyout[data-flyout="settings"] {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.settings-flyout-panel-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    flex: 1;
+    overflow: hidden;
+}
+
+.settings-panel {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    opacity: 1;
+    transform: translateX(0);
+    pointer-events: all;
+}
+
+/* Panel content for fade animations - only apply when switching between panels, not on initial open */
+.settings-panel.fade-out .modern-flyout-header,
+.settings-panel.fade-out .modern-flyout-content,
+.settings-panel.fade-out .settings-controls,
+.settings-panel.fade-out .modern-dropdown {
+    opacity: 0 !important;
+    transition: opacity 0.15s ease-out !important;
+}
+
+/* Main settings panel - hidden by default when not active */
+.settings-panel.main-settings.hidden {
+    pointer-events: none;
+}
+
+/* Personalize panel - starts off-screen to the right */
+.settings-panel.personalize-panel {
+    transform: translateX(100%);
+    opacity: 0;
+    pointer-events: none;
+    background-color: white;
+    transition: transform 0.5s cubic-bezier(0.05, 0.7, 0.1, 1), opacity 0.5s cubic-bezier(0.05, 0.7, 0.1, 1);
+}
+
+/* Personalize panel - slides in from right */
+.settings-panel.personalize-panel.slide-in {
+    transform: translateX(0);
+    opacity: 1;
+    pointer-events: all;
+}
+
+/* Personalize panel header - staggered animation */
+.settings-panel.personalize-panel .modern-flyout-header {
+    transform: translateX(100%);
+    opacity: 0;
+    transition: transform 1s cubic-bezier(0.05, 0.7, 0.1, 1) 0.15s, opacity 1s cubic-bezier(0.05, 0.7, 0.1, 1) 0.15s;
+}
+
+.settings-panel.personalize-panel.slide-in .modern-flyout-header {
+    transform: translateX(0);
+    opacity: 1;
+}
+
+/* Personalize panel content - staggered animation */
+.settings-panel.personalize-panel .modern-flyout-content {
+    transform: translateX(100%);
+    opacity: 0;
+    transition: transform 1s cubic-bezier(0.05, 0.7, 0.1, 1) 0.45s, opacity 1s cubic-bezier(0.05, 0.7, 0.1, 1) 0.45s;
+}
+
+.settings-panel.personalize-panel.slide-in .modern-flyout-content {
+    transform: translateX(0);
+    opacity: 1;
+}
+
+/* Each panel has its own header */
+.settings-panel .modern-flyout-header {
+    flex-shrink: 0;
+}
+
+/* Each panel content area */
+.settings-panel .modern-flyout-content {
+    flex: 1;
+}
+
+/* Personalize panel has white background for content */
+.settings-panel.personalize-panel .modern-flyout-header {
+    background-color: var(--ui-accent);
+}
+
+.settings-panel.personalize-panel .modern-flyout-content {
+    background-color: white;
+}
+
+/* Personalize Modern Flyout */
+.personalize-section {
+    padding: 20px 40px 30px 40px;
+}
+
+.personalize-section:first-child {
+    padding-top: 20px;
+}
+
+.personalize-section:last-child {
+    padding-bottom: 40px;
+}
+
+.personalize-section-title {
+    font-family: 'Segoe UI', sans-serif;
+    font-size: 16px;
+    font-weight: 400;
+    color: #222;
+    margin-bottom: 15px;
+}
+
+.personalize-patterns-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.personalize-variants-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+}
+
+.pattern-thumbnail,
+.variant-thumbnail {
+    position: relative;
+    aspect-ratio: 1;
+
+    border: 2px solid transparent;
+    transition: all 0.2s ease;
+    overflow: hidden;
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.pattern-thumbnail:hover,
+.variant-thumbnail:hover {
+    border-color: rgba(255, 255, 255, 0.5);
+    transform: scale(1.05);
+}
+
+.pattern-thumbnail.selected,
+.variant-thumbnail.selected {
+    border-color: var(--ui-accent-plus);
+    border-width: 3px;
+}
+
+.variant-thumbnail.selected::after {
+    content: '✓';
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 20px;
+    height: 20px;
+    background-color: var(--ui-accent-plus);
+    color: var(--ui-accent-text-contrast);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: bold;
+    border-radius: 50%;
+}
+
+.pattern-thumbnail img,
+.variant-thumbnail img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+/* Desktop wallpaper option - appears dimmed */
+.pattern-thumbnail.desktop-wallpaper {
+    opacity: 0.7;
+}
+
+.pattern-thumbnail.desktop-wallpaper:hover {
+    opacity: 1;
+}
+
+.pattern-thumbnail.desktop-wallpaper.selected {
+    opacity: 1;
+}
+
+/* Power Options Menu - Styled like User Tile Dropdown */
+.settings-power-menu {
+    position: absolute;
+    bottom: 170px;
+    display: flex;
+    /* Position above the power button */
+    left: 50%;
+    transform: translateX(-50%) translateY(15px);
+    transition: opacity 0.15s ease-out, transform 0.15s ease-out !important;
+
+    &.active {
+        opacity: 1 !important;
+        pointer-events: all !important;
+        transform: translateX(-50%) translateY(0px) !important;
+    }
+}
+
+/* ===================================
+   Tiles Panel Styles
+   =================================== */
+
+/* Tiles panel - starts off-screen to the right, same as personalize */
+.settings-panel.tiles-panel {
+    transform: translateX(25%);
+    opacity: 0;
+    pointer-events: none;
+    background-color: white;
+    transition: transform 0.5s cubic-bezier(0.05, 0.7, 0.1, 1), opacity 0.5s cubic-bezier(0.05, 0.7, 0.1, 1);
+}
+
+/* Tiles panel - slides in from right */
+.settings-panel.tiles-panel.slide-in {
+    transform: translateX(0);
+    opacity: 1;
+    pointer-events: all;
+}
+
+/* Tiles panel header - staggered animation */
+.settings-panel.tiles-panel .modern-flyout-header {
+    transform: translateX(25%);
+    opacity: 0;
+    background-color: var(--ui-accent);
+    transition: transform 1s cubic-bezier(0.05, 0.7, 0.1, 1) 0.15s, opacity 1s cubic-bezier(0.05, 0.7, 0.1, 1) 0.15s;
+}
+
+.settings-panel.tiles-panel.slide-in .modern-flyout-header {
+    transform: translateX(0);
+    opacity: 1;
+}
+
+/* Tiles panel content - staggered animation */
+.settings-panel.tiles-panel .modern-flyout-content {
+    transform: translateX(25%);
+    opacity: 0;
+    background-color: white;
+    transition: transform 1s cubic-bezier(0.05, 0.7, 0.1, 1) 0.45s, opacity 1s cubic-bezier(0.05, 0.7, 0.1, 1) 0.45s;
+}
+
+.settings-panel.tiles-panel.slide-in .modern-flyout-content {
+    transform: translateX(0);
+    opacity: 1;
+}
+
+/* Tiles back button */
+.tiles-back-button {
+    width: 36px;
+    height: 36px;
+    background: transparent;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    color: #fff;
+    font-size: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    padding: 0;
+    margin-left: -8px;
+}
+
+.tiles-back-button:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.tiles-back-button:active {
+    background: rgba(255, 255, 255, 1);
+    color: var(--ui-accent);
+}
+
+.tiles-back-icon {
+    display: block;
+    line-height: 1;
+    margin-top: -2px;
+}
+
+/* Tiles settings section */
+.tiles-settings-section {
+    padding: 30px 40px;
+}
+
+.tiles-setting-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 15px 0;
+}
+
+.tiles-setting-label {
+    font-family: 'Segoe UI', sans-serif;
+    font-size: 15px;
+    font-weight: 400;
+    color: #222;
+    flex: 1;
+}
+
+.tiles-setting-control {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.tiles-toggle-label {
+    font-family: 'Segoe UI', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    color: #222;
+    min-width: 30px;
+    text-align: right;
+}
+
+/* Toggle switch styling */
+.tiles-toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 44px;
+    height: 20px;
+
+}
+
+.tiles-toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.tiles-toggle-slider {
+    position: absolute;
+
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #999;
+    transition: 0.3s;
+    border-radius: 20px;
+}
+
+.tiles-toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 14px;
+    width: 14px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: 0.3s;
+    border-radius: 50%;
+}
+
+.tiles-toggle-switch input:checked+.tiles-toggle-slider {
+    background-color: var(--ui-accent);
+}
+
+.tiles-toggle-switch input:checked+.tiles-toggle-slider:before {
+    transform: translateX(24px);
+}
+
+.tiles-toggle-switch:hover .tiles-toggle-slider {
+    opacity: 0.9;
+}

@@ -1,0 +1,61 @@
+{
+  "apps": [
+    {
+      "id": "connections",
+      "name": "Connections",
+      "icon": "mif-table",
+      "color": "purple",
+      "size": "normal",
+      "pinned": false,
+      "category": "games",
+      "type": "modern",
+      "webview": {
+        "enabled": true,
+        "url": "https://www.nytimes.com/games/connections",
+        "partition": "persist:nytgames"
+      },
+      "windowOptions": {
+        "minimizable": true,
+        "showIcon": true
+      }
+    },
+    {
+      "id": "strands",
+      "name": "Strands",
+      "icon": "mif-link",
+      "color": "blue",
+      "size": "normal",
+      "pinned": false,
+      "category": "games",
+      "type": "modern",
+      "webview": {
+        "enabled": true,
+        "url": "https://www.nytimes.com/games/strands",
+        "partition": "persist:nytgames"
+      },
+      "windowOptions": {
+        "minimizable": true,
+        "showIcon": true
+      }
+    },
+    {
+      "id": "mini-crossword",
+      "name": "The Mini",
+      "icon": "mif-apps",
+      "color": "green",
+      "size": "normal",
+      "pinned": false,
+      "category": "games",
+      "type": "modern",
+      "webview": {
+        "enabled": true,
+        "url": "https://www.nytimes.com/crosswords/game/mini",
+        "partition": "persist:nytgames"
+      },
+      "windowOptions": {
+        "minimizable": true,
+        "showIcon": true
+      }
+    }
+  ]
+}

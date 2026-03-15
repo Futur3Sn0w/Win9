@@ -1,0 +1,226 @@
+{
+  "pc-and-devices": {
+    "name": "PC and devices",
+    "items": {
+      "lock-screen": {
+        "name": "Lock screen",
+        "sections": [
+          {
+            "title": "Lock screen preview",
+            "settings": []
+          },
+          {
+            "title": "Lock screen apps",
+            "settings": []
+          },
+          {
+            "title": "Camera",
+            "settings": []
+          }
+        ]
+      },
+      "display": {
+        "name": "Display",
+        "sections": [
+          {
+            "title": "Customize your display",
+            "settings": []
+          },
+          {
+            "title": "More options",
+            "settings": []
+          }
+        ]
+      },
+      "bluetooth": {
+        "name": "Bluetooth",
+        "sections": [
+          {
+            "title": "Manage Bluetooth devices",
+            "settings": []
+          }
+        ]
+      },
+      "devices": {
+        "name": "Devices",
+        "sections": [
+          {
+            "title": "Add devices",
+            "settings": []
+          },
+          {
+            "title": "Download over metered connections",
+            "settings": []
+          },
+          {
+            "title": "Default save locations",
+            "settings": []
+          }
+        ]
+      },
+      "mouse-and-touchpad": {
+        "name": "Mouse and touchpad",
+        "sections": [
+          {
+            "title": "Mouse",
+            "settings": []
+          },
+          {
+            "title": "Touchpad",
+            "settings": []
+          }
+        ]
+      },
+      "typing": {
+        "name": "Typing",
+        "sections": [
+          {
+            "title": "Spelling",
+            "settings": []
+          }
+        ]
+      },
+      "corners-and-edges": {
+        "name": "Corners and edges",
+        "sections": [
+          {
+            "title": "App switching",
+            "settings": []
+          },
+          {
+            "title": "Corner navigation",
+            "settings": []
+          }
+        ]
+      },
+      "power-and-sleep": {
+        "name": "Power and sleep",
+        "sections": [
+          {
+            "title": "Brightness",
+            "settings": []
+          },
+          {
+            "title": "Screen",
+            "settings": []
+          },
+          {
+            "title": "Sleep",
+            "settings": []
+          }
+        ]
+      },
+      "autoplay": {
+        "name": "AutoPlay",
+        "sections": [
+          {
+            "title": "AutoPlay",
+            "settings": []
+          },
+          {
+            "title": "Choose AutoPlay defaults",
+            "settings": []
+          }
+        ]
+      },
+      "disk-space": {
+        "name": "Disk space",
+        "sections": [
+          {
+            "title": "Free up space on this PC",
+            "settings": []
+          },
+          {
+            "title": "Apps",
+            "settings": []
+          },
+          {
+            "title": "Media and files",
+            "settings": []
+          },
+          {
+            "title": "Recycle Bin",
+            "settings": []
+          }
+        ]
+      },
+      "pc-info": {
+        "name": "PC info",
+        "sections": [
+          {
+            "title": "PC",
+            "settings": []
+          },
+          {
+            "title": "Windows",
+            "settings": []
+          }
+        ]
+      }
+    }
+  },
+  "accounts": {
+    "name": "Accounts",
+    "items": {
+      "your-account": {
+        "name": "Your account",
+        "sections": [
+          {
+            "title": "MS_ACCTNAME",
+            "settings": []
+          },
+          {
+            "title": "Account picture",
+            "settings": []
+          },
+          {
+            "title": "Create an account picture",
+            "settings": []
+          }
+        ]
+      },
+      "sign-in-options": {
+        "name": "Sign-in options",
+        "sections": [
+          {
+            "title": "Sign-in options",
+            "settings": []
+          }
+        ]
+      },
+      "other-accounts": {
+        "name": "Other accounts",
+        "sections": [
+          {
+            "title": "Other accounts",
+            "settings": []
+          }
+        ]
+      }
+    }
+  },
+  "search-and-apps": {
+    "name": "Search and apps",
+    "items": {}
+  },
+  "privacy": {
+    "name": "Privacy",
+    "items": {}
+  },
+  "network": {
+    "name": "Network",
+    "items": {}
+  },
+  "time-and-language": {
+    "name": "Time and language",
+    "items": {}
+  },
+  "ease-of-access": {
+    "name": "Ease of Access",
+    "items": {}
+  },
+  "update-and-recovery": {
+    "name": "Update and recovery",
+    "items": {}
+  }
+}

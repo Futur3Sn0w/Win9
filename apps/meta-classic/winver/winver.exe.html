@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About Windows</title>
+    <link rel="stylesheet" href="winver.exe.css">
+    <link rel="stylesheet" href="../../../css/classic-windows.css">
+    <link rel="stylesheet" href="../../../css/classic-controls.css">
+    <link rel="stylesheet" href="../../../css/styles.css">
+    <link rel="stylesheet" href="../../../css/fonts.css">
+</head>
+
+<body>
+    <div class="winver-window">
+        <div class="winver-header">
+            <img class="winver-logo" src="../../../resources/images/logo_wm.svg" alt="">
+        </div>
+
+        <div class="winver-separator"></div>
+
+        <div class="winver-body winver-copy-source">
+            <p class="winver-line">Microsoft Windows</p>
+            <p class="winver-line">Version 6.3 (Build 9600)</p>
+            <p class="winver-line">© 2013 Microsoft Corporation. All rights reserved.</p>
+            <p class="winver-line">The Windows 8.1 Pro operating system and its user interface are protected by
+                trademark and other pending or existing intellectual property rights in the United States and other
+                countries/regions.</p>
+            <p class="winver-line ep">This product is licensed under the <a href="#" class="winver-link">Microsoft
+                    Software
+                    License Terms</a> to:</p>
+
+            <div class="winver-licensee">
+                User
+            </div>
+        </div>
+
+        <div class="winver-footer">
+            <button class="classic-button" id="ok-button" type="button">OK</button>
+        </div>
+    </div>
+
+    <script>
+        const OK_BUTTON_ID = 'ok-button';
+        const APP_ID = 'winver';
+
+        document.getElementById(OK_BUTTON_ID)?.addEventListener('click', () => {
+            window.parent.postMessage({ action: 'closeClassicApp', appId: APP_ID }, '*');
+        });
+    </script>
+</body>
+
+</html>

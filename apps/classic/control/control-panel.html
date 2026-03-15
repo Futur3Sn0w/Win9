@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Control Panel</title>
+    <link rel="stylesheet" href="control-panel.css">
+    <link rel="stylesheet" href="../../../css/classic-windows.css">
+    <link rel="stylesheet" href="../../../css/classic-controls.css">
+    <link rel="stylesheet" href="../../../css/styles.css">
+    <link rel="stylesheet" href="../../../css/fonts.css">
+
+    <link href="https://cdn.metroui.org.ua/4.5.12/icons.css" rel="stylesheet">
+
+</head>
+
+<body>
+    <div class="control-panel">
+        <!-- Navigation Bar -->
+        <div class="cp-nav-bar">
+            <div class="cp-nav-buttons">
+                <button class="cp-nav-btn" id="backBtn" disabled title="Back">
+                    <span class="mif-arrow-left"></span>
+                </button>
+                <button class="cp-nav-btn" id="forwardBtn" disabled title="Forward">
+                    <span class="mif-arrow-right"></span>
+                </button>
+                <button class="cp-nav-btn" id="upBtn" disabled title="Up one level">
+                    <span class="mif-arrow-up"></span>
+                </button>
+            </div>
+            <div class="cp-address-bar">
+                <img src="icons/16.png" class="cp-address-icon" id="addressIcon" alt="Control Panel">
+                <div class="cp-breadcrumbs" id="breadcrumbs">
+                    <span class="cp-breadcrumb active">Control Panel</span>
+                </div>
+            </div>
+            <div class="cp-search-box">
+                <input type="text" id="searchInput" placeholder="Search Control Panel" />
+                <span class="mif-search"></span>
+            </div>
+        </div>
+
+        <!-- Header -->
+        <div class="cp-header">
+            <div class="cp-header-left">
+                <h1 id="headerTitle">Adjust your computer's settings</h1>
+            </div>
+            <div class="cp-header-right">
+                <label for="viewBySelect">View by:</label>
+                <select id="viewBySelect" class="cp-view-select">
+                    <option value="category">Category</option>
+                    <option value="small-icons">Small icons</option>
+                    <option value="large-icons">Large icons</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Content Area -->
+        <div class="cp-content" id="content">
+            <!-- Content will be dynamically populated -->
+        </div>
+    </div>
+
+    <script>
+        const APP_ID = 'control-panel';
+
+        let categories = [];
+        let applets = [];
+        let categoryPages = {};
+        let appletPages = {};
+        let currentView = 'category';
+        let currentCategory = null;
+        let currentApplet = null;
+        let currentSubPage = null; // Track sub-pages like desktop-background
+        let navigationHistory = [];
+        let historyIndex = -1;
+
+        // Load data
+        async function loadData() {
+            try {
+                const [categoriesRes, appletsRes, categoryPagesRes, appletPagesRes] = await Promise.all([
+                    fetch('data/categories.json'),
+                    fetch('data/applets.json'),
+                    fetch('data/category-pages.json'),
+                    fetch('data/applet-pages.json')
+                ]);
+
+                const categoriesData = await categoriesRes.json();
+                const appletsData = await appletsRes.json();
+                const categoryPagesData = await categoryPagesRes.json();
+                const appletPagesData = await appletPagesRes.json();
+
+                categories = categoriesData.categories;
+                applets = appletsData.applets;
+                categoryPages = categoryPagesData;
+                appletPages = appletPagesData;
+
+                // Initialize view
+                updateView();
+            } catch (error) {
+                console.error('Error loading Control Panel data:', error);
+            }
+        }
+
+        // Update view based on current settings
+        function updateView() {
+            const content = document.getElementById('content');
+            const header = document.querySelector('.cp-header');
+            content.innerHTML = '';
+
+            // Show/hide the header bar based on whether we're in a category/applet page
+            // Also adjust content padding for applet pages
+            if ((currentView === 'category' && currentCategory) || currentApplet || currentSubPage) {
+                header.style.display = 'none';
+                content.style.padding = '0';
+            } else {
+                header.style.display = 'flex';
+                content.style.padding = '30px 20px 20px';
+            }
+
+            if (currentSubPage) {
+                renderSubPage(currentSubPage);
+            } else if (currentApplet) {
+                renderAppletPage(currentApplet);
+            } else if (currentView === 'category') {
+                if (currentCategory) {
+                    renderCategoryApplets(currentCategory);
+                } else {
+                    renderCategories();
+                }
+            } else if (currentView === 'small-icons') {
+                renderIconView('small');
+            } else if (currentView === 'large-icons') {
+                renderIconView('large');
+            }
+
+            updateNavigationButtons();
+            updateBreadcrumbs();
+        }
+
+        // Render category view (main view)
+        function renderCategories() {
+            const content = document.getElementById('content');
+            const headerTitle = document.getElementById('headerTitle');
+            headerTitle.textContent = "Adjust your computer's settings";
+
+            // Create grid container
+            const gridContainer = document.createElement('div');
+            gridContainer.className = 'cp-categories-grid';
+
+            categories.forEach(category => {
+                const categoryEl = document.createElement('div');
+                categoryEl.className = 'cp-category';
+                categoryEl.innerHTML = `
+                    <div class="cp-category-header">
+                        <span class="cp-category-icon ${category.icon}"></span>
+                        <h2 class="cp-category-title">${category.name}</h2>
+                    </div>
+                    <div class="cp-category-items">
+                        ${category.quickLinks.map(link => `
+                            <a href="#" class="cp-category-link" data-applet="${link.appletId}">
+                                ${link.text}
+                            </a>
+                        `).join('')}
+                    </div>
+                `;
+
+                // Add click handler to category header
+                categoryEl.querySelector('.cp-category-header').addEventListener('click', () => {
+                    navigateTo(category.id);
+                });
+
+                // Add click handlers to quick links
+                categoryEl.querySelectorAll('.cp-category-link').forEach(link => {
+                    link.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        const appletId = e.target.dataset.applet;
+                        openApplet(appletId);
+                    });
+                });
+
+                gridContainer.appendChild(categoryEl);
+            });
+
+            content.appendChild(gridContainer);
+        }
+
+        // Render applets within a category
+        function renderCategoryApplets(categoryId) {
+            const content = document.getElementById('content');
+            const headerTitle = document.getElementById('headerTitle');
+            const category = categories.find(c => c.id === categoryId);
+
+            if (!category) return;
+
+            headerTitle.textContent = category.name;
+
+            const categoryPageData = categoryPages[categoryId];
+            if (!categoryPageData) return;
+
+            // Create layout with sidebar
+            const layout = document.createElement('div');
+            layout.className = 'cp-category-page-layout';
+
+            // Create sidebar
+            const sidebar = document.createElement('div');
+            sidebar.className = 'cp-sidebar';
+            sidebar.innerHTML = `
+                <a href="#" class="cp-sidebar-link" data-nav="home">Control Panel Home</a>
+                ${categories.map(cat => `
+                    <a href="#" class="cp-sidebar-link ${cat.id === categoryId ? 'active' : ''}" data-category="${cat.id}">
+                        ${cat.name}
+                    </a>
+                `).join('')}
+            `;
+
+            // Add click handlers to sidebar links
+            sidebar.querySelectorAll('.cp-sidebar-link').forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const navTarget = e.target.dataset.nav;
+                    const catId = e.target.dataset.category;
+
+                    if (navTarget === 'home') {
+                        navigateUp();
+                    } else if (catId) {
+                        navigateTo(catId);
+                    }
+                });
+            });
+
+            // Create main content area
+            const mainContent = document.createElement('div');
+            mainContent.className = 'cp-category-page-content';
+
+            // Render sections
+            categoryPageData.sections.forEach(section => {
+                const applet = applets.find(a => a.id === section.appletId);
+                if (!applet) return;
+
+                const sectionEl = document.createElement('div');
+                sectionEl.className = 'cp-category-section';
+                sectionEl.innerHTML = `
+                    <div class="cp-category-section-header">
+                        <span class="cp-category-section-icon ${applet.icon}"></span>
+                        <a href="#" class="cp-category-section-title" data-applet="${section.appletId}">${applet.name}</a>
+                    </div>
+                    <div class="cp-category-section-links">
+                        ${section.links.map(link => `
+                            <a href="#" class="cp-category-section-link" data-applet="${section.appletId}" data-action="${link.action}">
+                                ${link.text}
+                            </a>
+                        `).join('')}
+                    </div>
+                `;
+
+                // Add click handler to section title
+                sectionEl.querySelector('.cp-category-section-title').addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const appletId = e.target.dataset.applet;
+                    openApplet(appletId);
+                });
+
+                // Add click handlers to section links
+                sectionEl.querySelectorAll('.cp-category-section-link').forEach(linkEl => {
+                    linkEl.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        const appletId = e.target.dataset.applet;
+                        openApplet(appletId);
+                    });
+                });
+
+                mainContent.appendChild(sectionEl);
+            });
+
+            layout.appendChild(sidebar);
+            layout.appendChild(mainContent);
+            content.appendChild(layout);
+        }
+
+        // Render sub-page (like desktop-background)
+        function renderSubPage(subPageData) {
+            const content = document.getElementById('content');
+            const headerTitle = document.getElementById('headerTitle');
+
+            headerTitle.textContent = subPageData.title || 'Settings';
+
+            // Create layout WITHOUT sidebar for sub-pages
+            const layout = document.createElement('div');
+            layout.className = 'cp-category-page-layout cp-no-sidebar';
+
+            // Create main content area with iframe
+            const mainContent = document.createElement('div');
+            mainContent.className = 'cp-category-page-content cp-full-width';
+            mainContent.style.padding = '0';
+            mainContent.style.marginLeft = '0';
+
+            const iframe = document.createElement('iframe');
+            iframe.src = subPageData.path;
+            iframe.style.width = '100%';
+            iframe.style.height = '100%';
+            iframe.style.border = 'none';
+            iframe.style.display = 'block';
+            mainContent.appendChild(iframe);
+
+            layout.appendChild(mainContent);
+            content.appendChild(layout);
+        }
+
+        // Render applet page
+        function renderAppletPage(appletId) {
+            const content = document.getElementById('content');
+            const headerTitle = document.getElementById('headerTitle');
+            const applet = applets.find(a => a.id === appletId);
+            const appletPageData = appletPages[appletId];
+
+            if (!applet || !appletPageData) {
+                console.error('Applet page not found:', appletId);
+                return;
+            }
+
+            headerTitle.textContent = appletPageData.title || applet.name;
+
+            // Check if this applet has an external HTML file
+            if (appletPageData.externalPath) {
+                // Create layout with sidebar
+                const layout = document.createElement('div');
+                layout.className = 'cp-category-page-layout';
+
+                // Create sidebar
+                const sidebar = document.createElement('div');
+                sidebar.className = 'cp-sidebar';
+                sidebar.innerHTML = `
+                    <a href="#" class="cp-sidebar-link" data-nav="home">Control Panel Home</a>
+                `;
+
+                // Add custom sidebar links if defined
+                if (appletPageData.sidebarLinks && appletPageData.sidebarLinks.length > 0) {
+                    appletPageData.sidebarLinks.forEach(link => {
+                        const linkEl = document.createElement('a');
+                        linkEl.href = '#';
+                        linkEl.className = 'cp-sidebar-link';
+                        linkEl.textContent = link.text;
+                        linkEl.dataset.action = link.action || 'none';
+                        linkEl.dataset.target = link.target || '';
+                        sidebar.appendChild(linkEl);
+                    });
+                }
+
+                // Add sidebar footer if defined
+                if (appletPageData.sidebarFooter) {
+                    const footerSpacer = document.createElement('div');
+                    footerSpacer.style.flex = '1';
+                    sidebar.appendChild(footerSpacer);
+
+                    if (appletPageData.sidebarFooter.title) {
+                        const footerTitle = document.createElement('div');
+                        footerTitle.textContent = appletPageData.sidebarFooter.title;
+                        footerTitle.style.fontSize = '12px';
+                        footerTitle.style.color = '#666';
+                        footerTitle.style.opacity = '0.5';
+                        footerTitle.style.marginBottom = '8px';
+                        footerTitle.style.paddingLeft = '12px';
+                        sidebar.appendChild(footerTitle);
+                    }
+
+                    if (appletPageData.sidebarFooter.links) {
+                        appletPageData.sidebarFooter.links.forEach(link => {
+                            const linkEl = document.createElement('a');
+                            linkEl.href = '#';
+                            linkEl.className = 'cp-sidebar-link';
+                            linkEl.textContent = link.text;
+                            linkEl.dataset.action = link.action || 'none';
+                            linkEl.dataset.target = link.target || '';
+                            sidebar.appendChild(linkEl);
+                        });
+                    }
+                }
+
+                // Add click handlers to sidebar links
+                sidebar.querySelectorAll('.cp-sidebar-link').forEach(link => {
+                    link.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        const navTarget = e.target.dataset.nav;
+                        const action = e.target.dataset.action;
+                        const target = e.target.dataset.target;
+
+                        if (navTarget === 'home') {
+                            currentApplet = null;
+                            currentCategory = null;
+                            historyIndex = -1;
+                            navigationHistory = [];
+                            updateView();
+                        } else if (action === 'open' && target) {
+                            // Open another applet
+                            currentApplet = null;
+                            openApplet(target);
+                        } else if (action === 'page' && target) {
+                            console.log('Navigate to page:', target);
+                        }
+                    });
+                });
+
+                // Create iframe for external content
+                const mainContent = document.createElement('div');
+                mainContent.className = 'cp-category-page-content';
+                mainContent.style.padding = '0';
+
+                const iframe = document.createElement('iframe');
+                iframe.src = appletPageData.externalPath;
+                iframe.style.width = '100%';
+                iframe.style.height = '100%';
+                iframe.style.border = 'none';
+                iframe.style.display = 'block';
+                mainContent.appendChild(iframe);
+
+                layout.appendChild(sidebar);
+                layout.appendChild(mainContent);
+                content.appendChild(layout);
+                return;
+            }
+
+            // Create layout with sidebar
+            const layout = document.createElement('div');
+            layout.className = 'cp-category-page-layout';
+
+            // Create sidebar (same as category pages)
+            const sidebar = document.createElement('div');
+            sidebar.className = 'cp-sidebar';
+            sidebar.innerHTML = `
+                <a href="#" class="cp-sidebar-link" data-nav="home">Control Panel Home</a>
+                ${categories.map(cat => `
+                    <a href="#" class="cp-sidebar-link" data-category="${cat.id}">
+                        ${cat.name}
+                    </a>
+                `).join('')}
+            `;
+
+            // Add click handlers to sidebar links
+            sidebar.querySelectorAll('.cp-sidebar-link').forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const navTarget = e.target.dataset.nav;
+                    const catId = e.target.dataset.category;
+
+                    if (navTarget === 'home') {
+                        currentApplet = null;
+                        currentCategory = null;
+                        historyIndex = -1;
+                        navigationHistory = [];
+                        updateView();
+                    } else if (catId) {
+                        currentApplet = null;
+                        navigateTo(catId);
+                    }
+                });
+            });
+
+            // Create main content area
+            const mainContent = document.createElement('div');
+            mainContent.className = 'cp-category-page-content';
+
+            // Render sections
+            appletPageData.sections.forEach(section => {
+                const sectionEl = document.createElement('div');
+                sectionEl.className = section.isFooter ? 'cp-applet-section cp-applet-section-footer' : 'cp-applet-section';
+
+                let sectionHTML = '';
+
+                if (section.title) {
+                    sectionHTML += `<h2 class="cp-applet-section-title">${section.title}</h2>`;
+                }
+
+                if (section.icon) {
+                    sectionHTML += `<div class="cp-applet-section-icon-row">
+                        <span class="cp-applet-section-icon ${section.icon}"></span>
+                    </div>`;
+                }
+
+                sectionHTML += '<div class="cp-applet-section-links">';
+                section.links.forEach(link => {
+                    sectionHTML += `<a href="#" class="cp-applet-section-link" data-action="${link.action || 'none'}" data-target="${link.target || ''}">
+                        ${link.text}
+                    </a>`;
+                    if (link.description) {
+                        sectionHTML += `<p class="cp-applet-link-description">${link.description}</p>`;
+                    }
+                });
+                sectionHTML += '</div>';
+
+                sectionEl.innerHTML = sectionHTML;
+
+                // Add click handlers to links
+                sectionEl.querySelectorAll('.cp-applet-section-link').forEach(linkEl => {
+                    linkEl.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        const action = e.target.dataset.action;
+                        const target = e.target.dataset.target;
+
+                        if (action === 'open' && target) {
+                            openApplet(target);
+                        } else if (action === 'page' && target) {
+                            // Navigate to sub-page (not implemented yet)
+                            console.log('Navigate to page:', target);
+                        } else if (action === 'window' && target) {
+                            // Open dialog window (not implemented yet)
+                            console.log('Open window:', target);
+                        }
+                    });
+                });
+
+                mainContent.appendChild(sectionEl);
+            });
+
+            layout.appendChild(sidebar);
+            layout.appendChild(mainContent);
+            content.appendChild(layout);
+        }
+
+        // Render icon view (small or large)
+        function renderIconView(size) {
+            const content = document.getElementById('content');
+            const headerTitle = document.getElementById('headerTitle');
+            headerTitle.textContent = "All Control Panel Items";
+
+            const iconGrid = document.createElement('div');
+            iconGrid.className = `cp-icon-grid cp-icon-grid-${size}`;
+
+            applets.forEach(applet => {
+                const iconItem = document.createElement('div');
+                iconItem.className = 'cp-icon-item';
+                iconItem.innerHTML = `
+                    <span class="cp-icon ${applet.icon}"></span>
+                    <span class="cp-icon-label">${applet.name}</span>
+                `;
+
+                iconItem.addEventListener('click', () => {
+                    openApplet(applet.id);
+                });
+
+                iconGrid.appendChild(iconItem);
+            });
+
+            content.appendChild(iconGrid);
+        }
+
+        // Get applets for a specific category
+        function getCategoryApplets(categoryId) {
+            return applets.filter(applet => applet.category === categoryId);
+        }
+
+        // Navigate to a category
+        function navigateTo(categoryId) {
+            // Add to history
+            if (historyIndex < navigationHistory.length - 1) {
+                navigationHistory = navigationHistory.slice(0, historyIndex + 1);
+            }
+            navigationHistory.push({ type: 'category', id: categoryId });
+            historyIndex++;
+
+            currentCategory = categoryId;
+            currentApplet = null;
+            updateView();
+        }
+
+        // Navigate back
+        function navigateBack() {
+            if (historyIndex > 0) {
+                historyIndex--;
+                const historyItem = navigationHistory[historyIndex];
+                if (historyItem.type === 'category') {
+                    currentCategory = historyItem.id;
+                    currentApplet = null;
+                    currentSubPage = null;
+                } else if (historyItem.type === 'applet') {
+                    currentApplet = historyItem.id;
+                    currentCategory = null;
+                    currentSubPage = null;
+                } else if (historyItem.type === 'subpage') {
+                    currentSubPage = historyItem.data;
+                    currentApplet = null;
+                    currentCategory = null;
+                }
+                updateView();
+            } else if (historyIndex === 0 && (currentCategory || currentApplet || currentSubPage)) {
+                currentCategory = null;
+                currentApplet = null;
+                currentSubPage = null;
+                historyIndex = -1;
+                navigationHistory = [];
+                updateView();
+            }
+        }
+
+        // Navigate forward
+        function navigateForward() {
+            if (historyIndex < navigationHistory.length - 1) {
+                historyIndex++;
+                const historyItem = navigationHistory[historyIndex];
+                if (historyItem.type === 'category') {
+                    currentCategory = historyItem.id;
+                    currentApplet = null;
+                    currentSubPage = null;
+                } else if (historyItem.type === 'applet') {
+                    currentApplet = historyItem.id;
+                    currentCategory = null;
+                    currentSubPage = null;
+                } else if (historyItem.type === 'subpage') {
+                    currentSubPage = historyItem.data;
+                    currentApplet = null;
+                    currentCategory = null;
+                }
+                updateView();
+            }
+        }
+
+        // Navigate up
+        function navigateUp() {
+            if (currentSubPage) {
+                // If on a sub-page, go back to the parent applet
+                currentSubPage = null;
+                // Go back in history to find the parent applet
+                navigateBack();
+            } else if (currentCategory || currentApplet) {
+                currentCategory = null;
+                currentApplet = null;
+                currentSubPage = null;
+                historyIndex = -1;
+                navigationHistory = [];
+                updateView();
+            }
+        }
+
+        // Update navigation button states
+        function updateNavigationButtons() {
+            const backBtn = document.getElementById('backBtn');
+            const forwardBtn = document.getElementById('forwardBtn');
+            const upBtn = document.getElementById('upBtn');
+
+            backBtn.disabled = historyIndex <= 0 && !currentCategory && !currentApplet && !currentSubPage;
+            forwardBtn.disabled = historyIndex >= navigationHistory.length - 1;
+            upBtn.disabled = !currentCategory && !currentApplet && !currentSubPage;
+        }
+
+        // Update breadcrumbs
+        function updateBreadcrumbs() {
+            const breadcrumbs = document.getElementById('breadcrumbs');
+            breadcrumbs.innerHTML = '';
+
+            // Control Panel root
+            const rootCrumb = document.createElement('span');
+            rootCrumb.className = 'cp-breadcrumb';
+            rootCrumb.textContent = 'Control Panel';
+            if (currentCategory || currentApplet) {
+                rootCrumb.classList.add('clickable');
+                rootCrumb.addEventListener('click', navigateUp);
+            } else {
+                rootCrumb.classList.add('active');
+            }
+            breadcrumbs.appendChild(rootCrumb);
+
+            // Current category
+            if (currentCategory) {
+                const separator = document.createElement('span');
+                separator.className = 'cp-breadcrumb-separator';
+                separator.textContent = ' > ';
+                breadcrumbs.appendChild(separator);
+
+                const category = categories.find(c => c.id === currentCategory);
+                const categoryCrumb = document.createElement('span');
+                categoryCrumb.className = 'cp-breadcrumb active';
+                categoryCrumb.textContent = category ? category.name : 'Unknown';
+                breadcrumbs.appendChild(categoryCrumb);
+            }
+
+            // Current applet
+            if (currentApplet) {
+                const separator = document.createElement('span');
+                separator.className = 'cp-breadcrumb-separator';
+                separator.textContent = ' > ';
+                breadcrumbs.appendChild(separator);
+
+                const separator2 = document.createElement('span');
+                separator2.className = 'cp-breadcrumb-separator';
+                separator2.textContent = ' ';
+                breadcrumbs.appendChild(separator2);
+
+                const allItemsCrumb = document.createElement('span');
+                allItemsCrumb.className = 'cp-breadcrumb clickable';
+                allItemsCrumb.textContent = 'All Control Panel Items';
+                allItemsCrumb.addEventListener('click', navigateUp);
+                breadcrumbs.appendChild(allItemsCrumb);
+
+                const separator3 = document.createElement('span');
+                separator3.className = 'cp-breadcrumb-separator';
+                separator3.textContent = ' > ';
+                breadcrumbs.appendChild(separator3);
+
+                const applet = applets.find(a => a.id === currentApplet);
+                const appletCrumb = document.createElement('span');
+                appletCrumb.className = 'cp-breadcrumb active';
+                appletCrumb.textContent = applet ? applet.name : 'Unknown';
+                breadcrumbs.appendChild(appletCrumb);
+            }
+
+            // Current sub-page
+            if (currentSubPage) {
+                const separator = document.createElement('span');
+                separator.className = 'cp-breadcrumb-separator';
+                separator.textContent = ' > ';
+                breadcrumbs.appendChild(separator);
+
+                const separator2 = document.createElement('span');
+                separator2.className = 'cp-breadcrumb-separator';
+                separator2.textContent = ' ';
+                breadcrumbs.appendChild(separator2);
+
+                const allItemsCrumb = document.createElement('span');
+                allItemsCrumb.className = 'cp-breadcrumb clickable';
+                allItemsCrumb.textContent = 'All Control Panel Items';
+                allItemsCrumb.addEventListener('click', navigateUp);
+                breadcrumbs.appendChild(allItemsCrumb);
+
+                const separator3 = document.createElement('span');
+                separator3.className = 'cp-breadcrumb-separator';
+                separator3.textContent = ' > ';
+                breadcrumbs.appendChild(separator3);
+
+                // Show parent applet if available
+                const parentApplet = currentSubPage.parentApplet;
+                if (parentApplet) {
+                    const applet = applets.find(a => a.id === parentApplet);
+                    const appletCrumb = document.createElement('span');
+                    appletCrumb.className = 'cp-breadcrumb clickable';
+                    appletCrumb.textContent = applet ? applet.name : 'Unknown';
+                    appletCrumb.addEventListener('click', () => {
+                        currentSubPage = null;
+                        openApplet(parentApplet);
+                    });
+                    breadcrumbs.appendChild(appletCrumb);
+
+                    const separator4 = document.createElement('span');
+                    separator4.className = 'cp-breadcrumb-separator';
+                    separator4.textContent = ' > ';
+                    breadcrumbs.appendChild(separator4);
+                }
+
+                const subPageCrumb = document.createElement('span');
+                subPageCrumb.className = 'cp-breadcrumb active';
+                subPageCrumb.textContent = currentSubPage.title || 'Settings';
+                breadcrumbs.appendChild(subPageCrumb);
+            }
+        }
+
+        // Open an applet
+        function openApplet(appletId) {
+            console.log('Opening applet:', appletId);
+
+            // Special case: Taskbar and Navigation opens the existing taskbar-properties app
+            if (appletId === 'taskbar') {
+                // Call the parent window's launchApp function directly
+                if (window.parent && window.parent.launchApp) {
+                    window.parent.launchApp('taskbar-properties');
+                } else {
+                    console.error('Parent window launchApp function not available');
+                }
+                return;
+            }
+
+            // Check if this applet has a page definition
+            if (appletPages[appletId]) {
+                // Add to history
+                if (historyIndex < navigationHistory.length - 1) {
+                    navigationHistory = navigationHistory.slice(0, historyIndex + 1);
+                }
+                navigationHistory.push({ type: 'applet', id: appletId });
+                historyIndex++;
+
+                currentApplet = appletId;
+                currentCategory = null;
+                updateView();
+                return;
+            }
+
+            // Get the applet info
+            const applet = applets.find(a => a.id === appletId);
+            if (!applet) {
+                console.error('Applet not found:', appletId);
+                return;
+            }
+
+            // Check navigation type
+            if (applet.navigationType === 'window') {
+                // Open as a separate window (not implemented yet)
+                console.log(`Window applet "${applet.name}" not yet implemented`);
+            } else {
+                // Page navigation type but no page defined
+                console.log(`Page applet "${applet.name}" not yet implemented`);
+            }
+        }
+
+        // Handle view change
+        document.getElementById('viewBySelect').addEventListener('change', (e) => {
+            currentView = e.target.value;
+
+            // Reset navigation when changing to icon views
+            if (currentView !== 'category') {
+                currentCategory = null;
+                navigationHistory = [];
+                historyIndex = -1;
+            }
+
+            updateView();
+        });
+
+        // Navigation button handlers
+        document.getElementById('backBtn').addEventListener('click', navigateBack);
+        document.getElementById('forwardBtn').addEventListener('click', navigateForward);
+        document.getElementById('upBtn').addEventListener('click', navigateUp);
+
+        // Search functionality
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            const searchTerm = e.target.value.toLowerCase();
+
+            if (searchTerm === '') {
+                updateView();
+                return;
+            }
+
+            const content = document.getElementById('content');
+            content.innerHTML = '';
+
+            const headerTitle = document.getElementById('headerTitle');
+            headerTitle.textContent = `Search results for "${e.target.value}"`;
+
+            const results = applets.filter(applet =>
+                applet.name.toLowerCase().includes(searchTerm) ||
+                applet.description.toLowerCase().includes(searchTerm)
+            );
+
+            if (results.length === 0) {
+                const noResults = document.createElement('p');
+                noResults.className = 'cp-no-results';
+                noResults.textContent = 'No results found.';
+                content.appendChild(noResults);
+            } else {
+                results.forEach(applet => {
+                    const appletEl = document.createElement('div');
+                    appletEl.className = 'cp-applet-item';
+                    appletEl.innerHTML = `
+                        <span class="cp-applet-icon ${applet.icon}"></span>
+                        <div class="cp-applet-info">
+                            <h3 class="cp-applet-name">${applet.name}</h3>
+                            <p class="cp-applet-description">${applet.description}</p>
+                        </div>
+                    `;
+
+                    appletEl.addEventListener('click', () => {
+                        openApplet(applet.id);
+                    });
+
+                    content.appendChild(appletEl);
+                });
+            }
+        });
+
+        // Listen for messages from parent window and iframe children
+        window.addEventListener('message', function (e) {
+            if (e.data.action === 'openApplet' && e.data.appletId) {
+                openApplet(e.data.appletId);
+            } else if (e.data.action === 'navigateToSubPage') {
+                // Navigate to a sub-page (from personalization to desktop-background)
+                const subPageData = {
+                    page: e.data.page,
+                    path: e.data.path,
+                    title: e.data.title,
+                    parentApplet: currentApplet || 'personalization'
+                };
+
+                // Add to history
+                if (historyIndex < navigationHistory.length - 1) {
+                    navigationHistory = navigationHistory.slice(0, historyIndex + 1);
+                }
+                navigationHistory.push({ type: 'subpage', data: subPageData });
+                historyIndex++;
+
+                currentSubPage = subPageData;
+                currentApplet = null;
+                currentCategory = null;
+                updateView();
+            } else if (e.data.action === 'navigateBack') {
+                // Navigate back from sub-page
+                navigateBack();
+            } else if (e.data.action === 'subPageLoaded') {
+                // Sub-page has loaded, update title if needed
+                console.log('Sub-page loaded:', e.data.page);
+            }
+        });
+
+        // Initialize on load
+        window.addEventListener('DOMContentLoaded', loadData);
+    </script>
+</body>
+
+</html>

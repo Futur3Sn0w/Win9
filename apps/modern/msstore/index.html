@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Store</title>
+    <link rel="stylesheet" href="../../../css/classic-windows.css">
+    <link rel="stylesheet" href="../../../css/classic-controls.css">
+    <link rel="stylesheet" href="../../../css/styles.css">
+    <link rel="stylesheet" href="../../../css/fonts.css">
+    <link rel="stylesheet" href="https://cdn.metroui.org.ua/v4/css/metro-icons.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #fff;
+            color: #000;
+            overflow-x: hidden;
+        }
+
+        .store-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        .store-header {
+            background: #1ba1e2;
+            color: #fff;
+            padding: 20px 40px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .store-back-button {
+            background: transparent;
+            border: none;
+            color: #fff;
+            font-size: 24px;
+
+            padding: 5px 10px;
+            display: none;
+            transition: background 0.2s ease;
+        }
+
+        .store-back-button:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .store-back-button.visible {
+            display: block;
+        }
+
+        .store-title {
+            font-size: 28px;
+            font-weight: 300;
+        }
+
+        .store-content {
+            flex: 1;
+            padding: 40px 60px;
+            overflow-y: auto;
+        }
+
+        .store-section-title {
+            font-size: 24px;
+            font-weight: 300;
+            margin-bottom: 30px;
+        }
+
+        .app-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .app-card {
+            background: #f2f2f2;
+            border: 1px solid #e0e0e0;
+            padding: 20px;
+
+            transition: background 0.2s ease, transform 0.1s ease;
+        }
+
+        .app-card:hover {
+            background: #e8e8e8;
+            transform: translateY(-2px);
+        }
+
+        .app-card:active {
+            transform: translateY(0);
+        }
+
+        .app-card-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .app-card-icon {
+            font-size: 40px;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+        }
+
+        .app-card-icon.purple {
+            background: #a020f0;
+            color: #fff;
+        }
+
+        .app-card-icon.blue {
+            background: #0078d7;
+            color: #fff;
+        }
+
+        .app-card-icon.green {
+            background: #60a917;
+            color: #fff;
+        }
+
+        .app-card-info {
+            flex: 1;
+        }
+
+        .app-card-name {
+            font-size: 18px;
+            font-weight: 400;
+            margin-bottom: 5px;
+        }
+
+        .app-card-category {
+            font-size: 13px;
+            color: #666;
+            text-transform: capitalize;
+        }
+
+        .app-card-description {
+            font-size: 14px;
+            color: #333;
+            line-height: 1.4;
+        }
+
+        /* App Detail View */
+        .app-detail {
+            display: none;
+        }
+
+        .app-detail.visible {
+            display: block;
+        }
+
+        .app-detail-header {
+            display: flex;
+            gap: 30px;
+            margin-bottom: 40px;
+            padding-bottom: 30px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .app-detail-icon {
+            font-size: 80px;
+            width: 120px;
+            height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            flex-shrink: 0;
+        }
+
+        .app-detail-info {
+            flex: 1;
+        }
+
+        .app-detail-name {
+            font-size: 32px;
+            font-weight: 300;
+            margin-bottom: 10px;
+        }
+
+        .app-detail-category {
+            font-size: 16px;
+            color: #666;
+            margin-bottom: 20px;
+            text-transform: capitalize;
+        }
+
+        .app-detail-actions {
+            display: flex;
+            gap: 15px;
+        }
+
+        .app-detail-button {
+            padding: 12px 30px;
+            font-size: 15px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            border: none;
+
+            transition: background 0.2s ease;
+        }
+
+        .app-detail-button.primary {
+            background: #0078d7;
+            color: #fff;
+        }
+
+        .app-detail-button.primary:hover {
+            background: #005a9e;
+        }
+
+        .app-detail-button.secondary {
+            background: #e81123;
+            color: #fff;
+        }
+
+        .app-detail-button.secondary:hover {
+            background: #c50f1f;
+        }
+
+        .app-detail-description {
+            font-size: 15px;
+            line-height: 1.6;
+            color: #333;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="store-container">
+        <div class="store-header">
+            <button class="store-back-button" id="backButton">
+                <span class="mif-arrow-left"></span>
+            </button>
+            <div class="store-title" id="storeTitle">Store</div>
+        </div>
+
+        <div class="store-content">
+            <!-- App List View -->
+            <div id="appListView">
+                <div class="store-section-title">Available Apps</div>
+                <div class="app-grid" id="appGrid">
+                    <!-- App cards will be inserted here -->
+                </div>
+            </div>
+
+            <!-- App Detail View -->
+            <div id="appDetailView" class="app-detail">
+                <div class="app-detail-header">
+                    <div class="app-detail-icon" id="detailIcon"></div>
+                    <div class="app-detail-info">
+                        <div class="app-detail-name" id="detailName"></div>
+                        <div class="app-detail-category" id="detailCategory"></div>
+                        <div class="app-detail-actions">
+                            <button class="app-detail-button primary" id="installButton">Install</button>
+                            <button class="app-detail-button secondary hidden" id="uninstallButton">Uninstall</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="app-detail-description" id="detailDescription"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Include Store Manager Component -->
+    <script src="../../../registry/store-registry.js"></script>
+    <script src="components/store-manager.js"></script>
+
+    <script>
+        let currentApp = null;
+
+        // Render app grid
+        function renderAppGrid() {
+            const appGrid = document.getElementById('appGrid');
+            appGrid.innerHTML = '';
+
+            const storeApps = window.storeManager.getStoreApps();
+
+            storeApps.forEach(app => {
+                const card = document.createElement('div');
+                card.className = 'app-card';
+                card.onclick = () => showAppDetail(app);
+
+                const isInstalled = window.storeManager.isInstalled(app.id);
+                const statusText = isInstalled ? ' (Installed)' : '';
+
+                card.innerHTML = `
+                    <div class="app-card-header">
+                        <div class="app-card-icon ${app.color}">
+                            <span class="mif-${app.icon.replace('mif-', '')}"></span>
+                        </div>
+                        <div class="app-card-info">
+                            <div class="app-card-name">${app.name}${statusText}</div>
+                            <div class="app-card-category">${app.category}</div>
+                        </div>
+                    </div>
+                    <div class="app-card-description">
+                        ${window.storeManager.getAppDescription(app)}
+                    </div>
+                `;
+
+                appGrid.appendChild(card);
+            });
+        }
+
+        // Show app detail view
+        function showAppDetail(app) {
+            currentApp = app;
+            const isInstalled = window.storeManager.isInstalled(app.id);
+
+            document.getElementById('appListView').classList.add('hidden');
+            document.getElementById('appDetailView').classList.add('visible');
+            document.getElementById('backButton').classList.add('visible');
+            document.getElementById('storeTitle').textContent = app.name;
+
+            const detailIcon = document.getElementById('detailIcon');
+            detailIcon.className = `app-detail-icon ${app.color}`;
+            detailIcon.innerHTML = `<span class="mif-${app.icon.replace('mif-', '')}"></span>`;
+
+            document.getElementById('detailName').textContent = app.name;
+            document.getElementById('detailCategory').textContent = app.category;
+            document.getElementById('detailDescription').textContent = window.storeManager.getAppDescription(app);
+
+            // Show/hide install/uninstall buttons
+            if (isInstalled) {
+                document.getElementById('installButton').classList.add('hidden');
+                document.getElementById('uninstallButton').classList.remove('hidden');
+            } else {
+                document.getElementById('installButton').classList.remove('hidden');
+                document.getElementById('uninstallButton').classList.add('hidden');
+            }
+        }
+
+        // Go back to app list
+        function goBack() {
+            document.getElementById('appListView').classList.remove('hidden');
+            document.getElementById('appDetailView').classList.remove('visible');
+            document.getElementById('backButton').classList.remove('visible');
+            document.getElementById('storeTitle').textContent = 'Store';
+            currentApp = null;
+        }
+
+        // Install app
+        async function installApp() {
+            if (!currentApp) return;
+
+            try {
+                const result = await window.storeManager.installApp(currentApp.id);
+
+                if (result.success) {
+                    // Update UI
+                    document.getElementById('installButton').classList.add('hidden');
+                    document.getElementById('uninstallButton').classList.remove('hidden');
+                    renderAppGrid();
+                } else {
+                    alert(result.message || 'Failed to install app. Please try again.');
+                }
+            } catch (error) {
+                console.error('Failed to install app:', error);
+                alert('Failed to install app. Please try again.');
+            }
+        }
+
+        // Uninstall app
+        async function uninstallApp() {
+            if (!currentApp) return;
+
+            const confirmed = confirm(
+                `Are you sure you want to uninstall ${currentApp.name}?\n\n` +
+                `This will remove the app and clear all of its data.`
+            );
+
+            if (!confirmed) return;
+
+            try {
+                const result = await window.storeManager.uninstallApp(currentApp.id);
+
+                if (result.success) {
+                    // Update UI
+                    document.getElementById('installButton').classList.remove('hidden');
+                    document.getElementById('uninstallButton').classList.add('hidden');
+                    renderAppGrid();
+                } else {
+                    alert(result.message || 'Failed to uninstall app. Please try again.');
+                }
+            } catch (error) {
+                console.error('Failed to uninstall app:', error);
+                alert('Failed to uninstall app. Please try again.');
+            }
+        }
+
+        // Event listeners
+        document.getElementById('backButton').addEventListener('click', goBack);
+        document.getElementById('installButton').addEventListener('click', installApp);
+        document.getElementById('uninstallButton').addEventListener('click', uninstallApp);
+
+        // Initialize store manager and load apps
+        (async function init() {
+            await window.storeManager.init();
+            renderAppGrid();
+        })();
+    </script>
+</body>
+
+</html>

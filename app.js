@@ -1391,6 +1391,7 @@ $(document).ready(async function () {
 
     // Update taskbar to show pinned apps
     AppsManager.updateTaskbar();
+    scheduleExplorerPreload();
 
     // Initialize tile drag-and-drop
     if (window.TileDrag) {
@@ -2598,6 +2599,235 @@ function restoreModernApp(appId) {
 let activeClassicWindow = null;
 let classicWindowZIndex = 1000;
 let launchingApps = new Map(); // Track apps currently being launched to prevent duplicates
+const CLASSIC_WINDOW_READY_FALLBACK_MS = 3000;
+const EXPLORER_PRELOAD_DELAY_MS = 1500;
+let explorerPreloadScheduled = false;
+
+function getClassicWindowOptions(app) {
+    const windowOptions = app?.windowOptions || {};
+    const defaultOptions = {
+        width: 600,
+        height: 500,
+        resizable: true,
+        minimizable: true,
+        maximizable: true,
+        alwaysOnTop: false,
+        showInTaskbar: true,
+        showIcon: true
+    };
+
+    return { ...defaultOptions, ...windowOptions };
+}
+
+function getClassicWindowDefaultBounds(app) {
+    const options = getClassicWindowOptions(app);
+    const width = options.width;
+    const height = options.height;
+
+    return {
+        width,
+        height,
+        left: ($(window).width() - width) / 2,
+        top: ($(window).height() - height) / 2 - 20
+    };
+}
+
+function animateClassicWindowOpen($container) {
+    setTimeout(function () {
+        $container.addClass('opening');
+        setTimeout(function () {
+            $container.removeClass('opening');
+        }, 150);
+    }, 10);
+}
+
+function resetClassicWindowForFreshLaunch(windowData) {
+    if (!windowData?.$container?.length || !windowData.app) {
+        return;
+    }
+
+    const $container = windowData.$container;
+    const app = windowData.app;
+    const options = getClassicWindowOptions(app);
+    const bounds = getClassicWindowDefaultBounds(app);
+    const nextZIndex = options.alwaysOnTop ? 9998 : ++classicWindowZIndex;
+    const $maximizeIcon = $container.find('.classic-window-control-btn.maximize img');
+
+    windowData.restoreAnimationOffsets = null;
+
+    $container
+        .removeClass('maximized snapped snapped-left snapped-right minimizing restoring closing opening launch-deferred inactive')
+        .removeData('isSnapped')
+        .removeData('snapZone')
+        .removeData('preSnapState')
+        .removeData('prevState')
+        .removeData('pendingRestore')
+        .removeData('pendingFreshLaunch')
+        .css({
+            width: bounds.width + 'px',
+            height: bounds.height + 'px',
+            left: bounds.left + 'px',
+            top: bounds.top + 'px',
+            zIndex: nextZIndex,
+            '--minimize-x': '',
+            '--minimize-y': '',
+            '--restore-x': '',
+            '--restore-y': ''
+        });
+
+    if ($maximizeIcon.length) {
+        $maximizeIcon.attr('src', 'resources/images/window_btn_glyphs/max_black.png');
+    }
+
+    if (options.alwaysOnTop) {
+        $container.addClass('always-on-top');
+    } else {
+        $container.removeClass('always-on-top');
+    }
+}
+
+function showPreloadedClassicWindow(windowData) {
+    if (!windowData?.$container?.length) {
+        return;
+    }
+
+    const $container = windowData.$container;
+    const wasBackgroundPreload = !!$container.data('backgroundPreload');
+
+    if (wasBackgroundPreload) {
+        $container.data('backgroundPreload', false);
+        scheduleExplorerPreload();
+    }
+
+    if ($container.hasClass('launch-deferred') && !$container.data('classicWindowReady')) {
+        console.log('Preloaded classic window launch deferred until ready:', windowData.windowId);
+        $container.data('pendingFreshLaunch', true);
+        return;
+    }
+
+    resetClassicWindowForFreshLaunch(windowData);
+    $container.show();
+    focusClassicWindow(windowData.windowId);
+    AppsManager.setWindowState(windowData.windowId, 'active');
+    animateClassicWindowOpen($container);
+
+    console.log('Preloaded classic window shown with fresh launch animation:', windowData.windowId);
+}
+
+function isExplorerPreloadEnabled() {
+    return process.platform === 'win32';
+}
+
+function isDefaultExplorerLaunch(app, launchOptions = {}) {
+    return !!(app &&
+        app.id === 'explorer' &&
+        !launchOptions.openFolderPath &&
+        !launchOptions.openFilePath &&
+        !launchOptions.forceNewWindow);
+}
+
+function getPreloadedExplorerWindow() {
+    const windows = AppsManager.getAppWindows('explorer');
+    return windows.find(windowData => windowData?.$container?.data('backgroundPreload'));
+}
+
+function scheduleExplorerPreload(delay = EXPLORER_PRELOAD_DELAY_MS) {
+    if (!isExplorerPreloadEnabled() || explorerPreloadScheduled || getPreloadedExplorerWindow()) {
+        return;
+    }
+
+    const explorerApp = AppsManager.getAppById('explorer');
+    if (!explorerApp) {
+        return;
+    }
+
+    explorerPreloadScheduled = true;
+    setTimeout(function () {
+        explorerPreloadScheduled = false;
+
+        if (getPreloadedExplorerWindow()) {
+            return;
+        }
+
+        console.log('Preloading File Explorer in the background');
+        openClassicApp(explorerApp, {
+            preloadInBackground: true,
+            deferWindowUntilReady: true
+        });
+    }, delay);
+}
+
+function restorePreloadedExplorerWindow(app, launchOptions = {}) {
+    if (!isExplorerPreloadEnabled() || !isDefaultExplorerLaunch(app, launchOptions)) {
+        return false;
+    }
+
+    const preloadedWindow = getPreloadedExplorerWindow();
+    if (!preloadedWindow) {
+        return false;
+    }
+
+    console.log('Using preloaded File Explorer window:', preloadedWindow.windowId);
+    showPreloadedClassicWindow(preloadedWindow);
+    return true;
+}
+
+function shouldRecycleExplorerWindow(windowData) {
+    if (!isExplorerPreloadEnabled() || !windowData || windowData.appId !== 'explorer') {
+        return false;
+    }
+
+    if (windowData.$container?.data('backgroundPreload')) {
+        return false;
+    }
+
+    const otherWindows = AppsManager.getAppWindows('explorer')
+        .filter(candidate => candidate.windowId !== windowData.windowId);
+
+    return otherWindows.length === 0;
+}
+
+function sendClassicWindowCommand($container, payload) {
+    if (!$container || !$container.length || !payload || typeof payload.action !== 'string') {
+        return;
+    }
+
+    const webview = $container.find('webview.classic-window-iframe')[0];
+    if (webview && typeof webview.send === 'function') {
+        webview.send('host-command', payload);
+        return;
+    }
+
+    const iframe = $container.find('iframe.classic-window-iframe')[0];
+    if (iframe?.contentWindow) {
+        iframe.contentWindow.postMessage(payload, '*');
+    }
+}
+
+function recycleExplorerWindow(windowData) {
+    if (!windowData?.$container?.length) {
+        return;
+    }
+
+    const $container = windowData.$container;
+    $container.data('backgroundPreload', true);
+    $container.data('pendingRestore', false);
+
+    sendClassicWindowCommand($container, { action: 'resetForPreload' });
+
+    if (activeClassicWindow === windowData.windowId) {
+        activeClassicWindow = null;
+    }
+
+    if (windowData.state === 'minimized') {
+        $container.hide();
+        AppsManager.setWindowState(windowData.windowId, 'minimized');
+    } else {
+        minimizeClassicWindow(windowData.windowId);
+    }
+
+    console.log('Recycled File Explorer window into the background preload pool:', windowData.windowId);
+}
 
 // Open a classic app window
 function openClassicApp(app, launchOptions = {}) {
@@ -2606,8 +2836,14 @@ function openClassicApp(app, launchOptions = {}) {
         return;
     }
 
+    if (restorePreloadedExplorerWindow(app, launchOptions)) {
+        launchingApps.delete(app.id);
+        return;
+    }
+
     // Check if app supports multiple windows
     const allowMultipleWindows = app.allowMultipleWindows === true;
+    const isBackgroundPreload = !!launchOptions.preloadInBackground;
 
     // If app doesn't support multiple windows and is already running, just focus it
     if (!allowMultipleWindows && AppsManager.isAppRunning(app.id)) {
@@ -2629,25 +2865,31 @@ function openClassicApp(app, launchOptions = {}) {
     console.log('Loading classic app from:', app.path, allowMultipleWindows ? '(multiple windows allowed)' : '');
 
     // Get window options with defaults
-    const windowOptions = app.windowOptions || {};
-    const defaultOptions = {
-        width: 600,
-        height: 500,
-        resizable: true,
-        minimizable: true,
-        maximizable: true,
-        alwaysOnTop: false,
-        showInTaskbar: true,
-        showIcon: true
-    };
-    const options = { ...defaultOptions, ...windowOptions };
+    const options = getClassicWindowOptions(app);
+    const shouldDeferReveal = launchOptions.deferWindowUntilReady !== false &&
+        options.deferShowUntilReady !== false;
+    const requiresExplicitReadySignal = app.id === 'explorer';
 
     // Create the container (start with active class since it's being opened)
-    const $container = $('<div class="classic-app-container active"></div>');
+    const $container = $('<div class="classic-app-container"></div>');
     $container.attr('data-app-id', app.id);
+    $container.data('classicWindowReady', !shouldDeferReveal);
+
+    if (isBackgroundPreload) {
+        $container.addClass('inactive');
+        $container.data('backgroundPreload', true);
+    } else {
+        $container.addClass('active');
+    }
+
+    if (shouldDeferReveal) {
+        $container.addClass('launch-deferred');
+    }
 
     // Unfocus any currently active windows
-    $('.classic-app-container').removeClass('active').addClass('inactive');
+    if (!isBackgroundPreload) {
+        $('.classic-app-container').removeClass('active').addClass('inactive');
+    }
 
     // Create titlebar
     const $titlebar = $('<div class="classic-window-titlebar"></div>');
@@ -2749,6 +2991,48 @@ function openClassicApp(app, launchOptions = {}) {
     // Create content area
     const $content = $('<div class="classic-window-content"></div>');
     let $iframe = null;
+    let windowId = null;
+    let revealTimeoutId = null;
+    let hasRevealedWindow = !shouldDeferReveal;
+
+    const revealClassicWindow = (source = 'ready') => {
+        if (hasRevealedWindow || isBackgroundPreload) {
+            return;
+        }
+
+        hasRevealedWindow = true;
+        $container.removeClass('launch-deferred');
+        console.log(`Classic window revealed for ${app.id} via ${source}`);
+        animateClassicWindowOpen($container);
+    };
+
+    const markClassicWindowReady = (source = 'ready') => {
+        if ($container.data('classicWindowReady')) {
+            return;
+        }
+
+        if (revealTimeoutId) {
+            clearTimeout(revealTimeoutId);
+            revealTimeoutId = null;
+        }
+
+        $container.data('classicWindowReady', true);
+        console.log(`Classic window ready for ${app.id} via ${source}`);
+
+        if ($container.data('pendingRestore')) {
+            $container.removeData('pendingRestore');
+            restoreClassicWindow(windowId || app.id);
+            return;
+        }
+
+        if ($container.data('pendingFreshLaunch')) {
+            $container.removeData('pendingFreshLaunch');
+            showPreloadedClassicWindow(AppsManager.getRunningWindow(windowId));
+            return;
+        }
+
+        revealClassicWindow(source);
+    };
 
     if (app.loadDirect) {
         // Load HTML content directly (similar to modern apps)
@@ -2830,10 +3114,13 @@ function openClassicApp(app, launchOptions = {}) {
                         $wrapper[0].dispatchEvent(event);
                     }, 100);
                 }
+
+                markClassicWindowReady('direct-load');
             })
             .catch(error => {
                 console.error('[App.js] Failed to load classic app HTML:', error);
                 $content.append($('<div class="error">Failed to load app</div>'));
+                markClassicWindowReady('load-error');
             });
     } else if (app.useWebview) {
         // Use Electron webview with nodeIntegration for apps that need Node.js access
@@ -2855,6 +3142,10 @@ function openClassicApp(app, launchOptions = {}) {
                     }
                 });
                 console.log('[App.js] Sent theme variables to classic app webview:', app.id);
+            }
+
+            if (!requiresExplicitReadySignal) {
+                markClassicWindowReady('dom-ready');
             }
         });
 
@@ -2893,6 +3184,10 @@ function openClassicApp(app, launchOptions = {}) {
                 }, '*');
                 console.log('[App.js] Sent theme variables to classic app iframe:', app.id);
             }
+
+            if (!requiresExplicitReadySignal) {
+                markClassicWindowReady('load');
+            }
         });
     }
 
@@ -2912,10 +3207,11 @@ function openClassicApp(app, launchOptions = {}) {
     $container.append($content);
 
     // Set initial position (centered) using window options
-    const windowWidth = options.width;
-    const windowHeight = options.height;
-    const left = ($(window).width() - windowWidth) / 2;
-    const top = ($(window).height() - windowHeight) / 2 - 20; // Account for taskbar
+    const initialBounds = getClassicWindowDefaultBounds(app);
+    const windowWidth = initialBounds.width;
+    const windowHeight = initialBounds.height;
+    const left = initialBounds.left;
+    const top = initialBounds.top;
 
     // Calculate initial z-index
     let initialZIndex = ++classicWindowZIndex;
@@ -2959,23 +3255,29 @@ function openClassicApp(app, launchOptions = {}) {
         });
     }
 
-    // Show with animation
-    setTimeout(function () {
-        $container.addClass('opening');
-        setTimeout(function () {
-            $container.removeClass('opening');
-        }, 150);
-    }, 10);
+    if (!shouldDeferReveal && !isBackgroundPreload) {
+        animateClassicWindowOpen($container);
+    } else if (shouldDeferReveal) {
+        revealTimeoutId = setTimeout(function () {
+            console.warn(`Classic window readiness timed out for ${app.id}; revealing fallback window`);
+            markClassicWindowReady('timeout');
+        }, CLASSIC_WINDOW_READY_FALLBACK_MS);
+    }
 
     // Register window as running and get unique window ID
-    const windowId = AppsManager.registerRunningWindow(app.id, app, $container);
+    windowId = AppsManager.registerRunningWindow(app.id, app, $container);
     $container.attr('data-window-id', windowId);
 
     // Clear launch flag now that window is registered
     launchingApps.delete(app.id);
 
     // Set as active window
-    activeClassicWindow = windowId;
+    if (isBackgroundPreload) {
+        $container.hide();
+        AppsManager.setWindowState(windowId, 'minimized');
+    } else {
+        activeClassicWindow = windowId;
+    }
 
     // Pass windowId to iframe/webview so it can identify itself in messages
     if ($iframe && $iframe[0]) {
@@ -3033,6 +3335,8 @@ function openClassicApp(app, launchOptions = {}) {
             closeClassicApp(windowId);
         } else if (e.data.action === 'updateWindowTitle' && e.data.title) {
             updateClassicWindowTitle(windowId, e.data.title);
+        } else if (e.data.action === 'classicAppReady') {
+            markClassicWindowReady('app-ready');
         } else if (e.data.action === 'applyTaskbarSettings') {
             // Handle taskbar settings from Taskbar Properties
             applyTaskbarSettings(e.data.settings);
@@ -3093,6 +3397,11 @@ async function closeClassicApp(windowIdOrAppId) {
 
     if (!windowData) {
         console.error('Classic window not running:', windowIdOrAppId);
+        return;
+    }
+
+    if (shouldRecycleExplorerWindow(windowData)) {
+        recycleExplorerWindow(windowData);
         return;
     }
 
@@ -3409,6 +3718,18 @@ function restoreClassicWindow(windowIdOrAppId) {
     if (!windowData) return;
 
     const $container = windowData.$container;
+    const wasBackgroundPreload = !!$container.data('backgroundPreload');
+
+    if (wasBackgroundPreload) {
+        $container.data('backgroundPreload', false);
+        scheduleExplorerPreload();
+    }
+
+    if ($container.hasClass('launch-deferred') && !$container.data('classicWindowReady')) {
+        console.log('Classic window restore deferred until ready:', windowId);
+        $container.data('pendingRestore', true);
+        return;
+    }
 
     let restoreOffsets = windowData.restoreAnimationOffsets;
 
@@ -3437,7 +3758,7 @@ function restoreClassicWindow(windowIdOrAppId) {
     }
 
     // Show the window and add restoring animation
-    $container.show().addClass('restoring');
+    $container.removeClass('launch-deferred').show().addClass('restoring');
 
     // Wait for animation to complete
     setTimeout(function () {
@@ -5494,12 +5815,98 @@ $(document).ready(function () {
     const $charmsBar = $('.charms-bar');
     const $charmsTriggers = $('.charms-trigger');
     const $charmsDateTimePanel = $('.charms-datetime-panel');
+    const CHARMS_TOUCH_EDGE_ZONE = 32;
+    const CHARMS_TOUCH_OPEN_THRESHOLD = 56;
+    const CHARMS_TOUCH_VERTICAL_CANCEL_THRESHOLD = 72;
     let charmsTimeout = null;
     let charmsInactivityTimeout = null;
+    let suppressNextCharmsDocumentClick = false;
+    const charmsTouchDrag = {
+        active: false,
+        startX: 0,
+        startY: 0,
+        currentX: 0,
+        revealWidth: 0
+    };
 
     // Function to check if charms bar should be accessible
     function isCharmsBarAllowed() {
         return currentView === 'desktop' || currentView === 'start';
+    }
+
+    function clearCharmsTimers() {
+        clearTimeout(charmsTimeout);
+        clearTimeout(charmsInactivityTimeout);
+    }
+
+    function getCharmsBarWidth() {
+        return $charmsBar.outerWidth() || parseFloat($charmsBar.css('width')) || 86;
+    }
+
+    function clearCharmsTouchDragStyles() {
+        $charmsBar.removeClass('touch-dragging').css('--charms-touch-offset', '');
+    }
+
+    function resetCharmsTouchDragState() {
+        charmsTouchDrag.active = false;
+        charmsTouchDrag.startX = 0;
+        charmsTouchDrag.startY = 0;
+        charmsTouchDrag.currentX = 0;
+        charmsTouchDrag.revealWidth = 0;
+        clearCharmsTouchDragStyles();
+    }
+
+    function closeTransientUiForCharms() {
+        // Close classic flyouts
+        if (window.ClassicFlyoutManager && typeof window.ClassicFlyoutManager.hideAll === 'function') {
+            window.ClassicFlyoutManager.hideAll();
+        }
+        // Close context menus
+        if (typeof hideContextMenu === 'function') hideContextMenu();
+        if (typeof hideTaskbarContextMenu === 'function') hideTaskbarContextMenu();
+        if (typeof hideDesktopContextMenu === 'function') hideDesktopContextMenu();
+        if (typeof hideQuickLinksMenu === 'function') hideQuickLinksMenu();
+        // Close taskbar item context menu
+        if (window.TaskbarItemContextMenu && typeof window.TaskbarItemContextMenu.hideContextMenu === 'function') {
+            window.TaskbarItemContextMenu.hideContextMenu();
+        }
+        // Close modern flyouts
+        if (typeof closeModernFlyout === 'function') closeModernFlyout();
+    }
+
+    function showCharmsBarFully(options = {}) {
+        const keyboardTriggered = Boolean(options.keyboardTriggered);
+
+        if (!isCharmsBarAllowed()) return;
+
+        clearCharmsTimers();
+        clearCharmsTouchDragStyles();
+        closeTransientUiForCharms();
+
+        $charmsBar.removeClass('hiding').addClass('visible show-background');
+        if (keyboardTriggered) {
+            $charmsBar.addClass('keyboard-triggered');
+            setTimeout(function () {
+                $charmsBar.removeClass('keyboard-triggered');
+            }, 250);
+        } else {
+            $charmsBar.removeClass('keyboard-triggered');
+        }
+
+        $charmsDateTimePanel.addClass('visible');
+    }
+
+    function setTouchDragReveal(revealWidth) {
+        const barWidth = getCharmsBarWidth();
+        const clampedRevealWidth = Math.max(0, Math.min(revealWidth, barWidth));
+        const touchOffset = Math.max(0, barWidth - clampedRevealWidth);
+
+        $charmsBar
+            .removeClass('hiding show-background keyboard-triggered')
+            .addClass('visible touch-dragging')
+            .css('--charms-touch-offset', `${touchOffset}px`);
+        $charmsDateTimePanel.removeClass('visible');
+        charmsTouchDrag.revealWidth = clampedRevealWidth;
     }
 
     // Function to update charms date/time panel
@@ -5537,8 +5944,7 @@ $(document).ready(function () {
     $charmsTriggers.on('mouseenter', function () {
         if (!isCharmsBarAllowed() || !navigationSettings.charmsHotCornersEnabled) return;
 
-        clearTimeout(charmsTimeout);
-        clearTimeout(charmsInactivityTimeout);
+        clearCharmsTimers();
         $charmsBar.removeClass('hiding').addClass('visible');
         console.log('Trigger hover: showing charms bar');
 
@@ -5592,57 +5998,97 @@ $(document).ready(function () {
 
     // When mouse enters the charms bar itself, show the background and date/time panel
     $charmsBar.on('mouseenter', function () {
-        if (!isCharmsBarAllowed()) return;
+        if (!isCharmsBarAllowed() || $charmsBar.hasClass('touch-dragging')) return;
 
-        clearTimeout(charmsTimeout);
-        clearTimeout(charmsInactivityTimeout);
-
-        // Close all other popups and menus when showing full charms bar
-        // Close classic flyouts
-        if (window.ClassicFlyoutManager && typeof window.ClassicFlyoutManager.hideAll === 'function') {
-            window.ClassicFlyoutManager.hideAll();
-        }
-        // Close context menus
-        if (typeof hideContextMenu === 'function') hideContextMenu();
-        if (typeof hideTaskbarContextMenu === 'function') hideTaskbarContextMenu();
-        if (typeof hideDesktopContextMenu === 'function') hideDesktopContextMenu();
-        if (typeof hideQuickLinksMenu === 'function') hideQuickLinksMenu();
-        // Close taskbar item context menu
-        if (window.TaskbarItemContextMenu && typeof window.TaskbarItemContextMenu.hideContextMenu === 'function') {
-            window.TaskbarItemContextMenu.hideContextMenu();
-        }
-        // Close modern flyouts
-        if (typeof closeModernFlyout === 'function') closeModernFlyout();
-
-        $charmsBar.removeClass('hiding').addClass('show-background');
-        $charmsDateTimePanel.addClass('visible');
+        showCharmsBarFully();
         console.log('Charms bar hover: showing background and date/time panel');
     });
 
     // When mouse leaves the charms bar, hide everything with extra grace period
     $charmsBar.on('mouseleave', function () {
         charmsTimeout = setTimeout(function () {
-            $charmsBar.addClass('hiding');
-            $charmsDateTimePanel.removeClass('visible');
-            setTimeout(function () {
-                $charmsBar.removeClass('visible show-background hiding');
-            }, 250);
+            hideCharmsBar();
             console.log('Charms bar leave: hiding everything');
         }, 150);
     });
 
+    $(document).on('touchstart.charmsedge', function (e) {
+        if (!isCharmsBarAllowed() || !navigationSettings.charmsHotCornersEnabled) return;
+
+        const originalEvent = e.originalEvent;
+        if (!originalEvent.touches || originalEvent.touches.length !== 1) return;
+
+        const touch = originalEvent.touches[0];
+        if (touch.clientX < window.innerWidth - CHARMS_TOUCH_EDGE_ZONE) return;
+
+        clearCharmsTimers();
+        charmsTouchDrag.active = true;
+        charmsTouchDrag.startX = touch.clientX;
+        charmsTouchDrag.startY = touch.clientY;
+        charmsTouchDrag.currentX = touch.clientX;
+        charmsTouchDrag.revealWidth = 0;
+
+        setTouchDragReveal(0);
+    });
+
+    $(document).on('touchmove.charmsedge', function (e) {
+        if (!charmsTouchDrag.active) return;
+
+        const originalEvent = e.originalEvent;
+        if (!originalEvent.touches || originalEvent.touches.length !== 1) {
+            resetCharmsTouchDragState();
+            hideCharmsBar();
+            return;
+        }
+
+        const touch = originalEvent.touches[0];
+        const dragDistance = Math.max(0, window.innerWidth - touch.clientX);
+        const verticalDistance = Math.abs(touch.clientY - charmsTouchDrag.startY);
+
+        charmsTouchDrag.currentX = touch.clientX;
+
+        if (verticalDistance > CHARMS_TOUCH_VERTICAL_CANCEL_THRESHOLD && dragDistance < CHARMS_TOUCH_OPEN_THRESHOLD) {
+            resetCharmsTouchDragState();
+            hideCharmsBar();
+            return;
+        }
+
+        setTouchDragReveal(dragDistance);
+        e.preventDefault();
+    });
+
+    $(document).on('touchend.charmsedge touchcancel.charmsedge', function () {
+        if (!charmsTouchDrag.active) return;
+
+        const shouldOpenFully = charmsTouchDrag.revealWidth >= CHARMS_TOUCH_OPEN_THRESHOLD;
+        resetCharmsTouchDragState();
+
+        suppressNextCharmsDocumentClick = true;
+        setTimeout(function () {
+            suppressNextCharmsDocumentClick = false;
+        }, 400);
+
+        if (shouldOpenFully) {
+            showCharmsBarFully();
+            console.log('Touch edge drag: showing charms bar');
+            return;
+        }
+
+        hideCharmsBar();
+        console.log('Touch edge drag: hiding charms bar');
+    });
+
     // Click outside charms bar to close immediately (no delay)
     $(document).on('click', function (e) {
+        if (suppressNextCharmsDocumentClick) {
+            return;
+        }
+
         if (isCharmsBarAllowed() && $charmsBar.hasClass('visible')) {
             // Check if click is outside charms bar, triggers, datetime panel, and modern flyouts
             if (!$(e.target).closest('.charms-bar, .charms-trigger, .charms-datetime-panel, .modern-flyout').length) {
-                clearTimeout(charmsTimeout);
-                clearTimeout(charmsInactivityTimeout);
-                $charmsBar.addClass('hiding');
-                $charmsDateTimePanel.removeClass('visible');
-                setTimeout(function () {
-                    $charmsBar.removeClass('visible show-background hiding');
-                }, 250);
+                clearCharmsTimers();
+                hideCharmsBar();
                 console.log('Click outside: hiding charms bar immediately');
             }
         }
@@ -5666,8 +6112,7 @@ $(document).ready(function () {
         } else if (currentView === 'start') {
             closeStartScreen();
         }
-        $charmsBar.removeClass('visible show-background');
-        $charmsDateTimePanel.removeClass('visible');
+        hideCharmsBar();
     });
 
     $('.charms-icon[data-charm="devices"]').on('click', function () {
@@ -8371,7 +8816,10 @@ function hideCharmsBar() {
     const $charmsBar = $('.charms-bar');
     const $charmsDateTimePanel = $('.charms-datetime-panel');
 
-    $charmsBar.addClass('hiding');
+    $charmsBar
+        .removeClass('keyboard-triggered touch-dragging')
+        .css('--charms-touch-offset', '')
+        .addClass('hiding');
     $charmsDateTimePanel.removeClass('visible');
     setTimeout(function () {
         $charmsBar.removeClass('visible show-background hiding');

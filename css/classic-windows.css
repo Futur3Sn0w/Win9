@@ -151,6 +151,12 @@
             color: #666;
         }
     }
+
+    &.launch-deferred {
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+    }
 }
 
 /* Classic Window Titlebar */

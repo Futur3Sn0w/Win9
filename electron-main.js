@@ -113,6 +113,25 @@ function createMainWindow(options = {}) {
     title: 'Windows'
   });
 
+  const syncMainWindowMenuBar = (isFullscreen) => {
+    if (!mainWindow || mainWindow.isDestroyed()) {
+      return;
+    }
+
+    if (isFullscreen) {
+      mainWindow.setAutoHideMenuBar(true);
+      mainWindow.setMenuBarVisibility(false);
+      return;
+    }
+
+    mainWindow.setAutoHideMenuBar(false);
+    mainWindow.setMenuBarVisibility(true);
+  };
+
+  syncMainWindowMenuBar(mainWindow.isFullScreen());
+  mainWindow.on('enter-full-screen', () => syncMainWindowMenuBar(true));
+  mainWindow.on('leave-full-screen', () => syncMainWindowMenuBar(false));
+
   // Load the index.html
   mainWindow.loadFile('index.html');
 

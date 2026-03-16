@@ -32,7 +32,7 @@
     transition: opacity 0.25s ease, transform 0.25s ease;
     overflow: hidden;
 
-    &:not(.show-background) .charms-icon-label {
+    &:not(.show-background):not(.touch-dragging) .charms-icon-label {
         color: transparent;
     }
 }
@@ -41,6 +41,14 @@
     opacity: 1;
     transform: translateX(0);
     pointer-events: all;
+}
+
+.charms-bar.touch-dragging {
+    opacity: 1;
+    transform: translateX(var(--charms-touch-offset, 100%));
+    transition: none;
+    animation: none;
+    pointer-events: none;
 }
 
 /* When triggered by keyboard (Win+C), slide in from the edge */
@@ -78,7 +86,8 @@
     z-index: -1;
 }
 
-.charms-bar.show-background .charms-bar-background {
+.charms-bar.show-background .charms-bar-background,
+.charms-bar.touch-dragging .charms-bar-background {
     opacity: 1;
 }
 
@@ -195,31 +204,37 @@
 }
 
 /* Start icon color when full bar is shown (background + datetime panel visible) */
-.charms-bar.show-background .charms-icon[data-charm="start"] .charms-start-icon {
+.charms-bar.show-background .charms-icon[data-charm="start"] .charms-start-icon,
+.charms-bar.touch-dragging .charms-icon[data-charm="start"] .charms-start-icon {
     color: var(--ui-accent-plus);
 }
 
-.charms-bar.show-background .charms-icon-image--search {
+.charms-bar.show-background .charms-icon-image--search,
+.charms-bar.touch-dragging .charms-icon-image--search {
     -webkit-mask-image: url('../resources/images/icons/charms_search.png');
     mask-image: url('../resources/images/icons/charms_search.png');
 }
 
-.charms-bar.show-background .charms-icon-image--share {
+.charms-bar.show-background .charms-icon-image--share,
+.charms-bar.touch-dragging .charms-icon-image--share {
     -webkit-mask-image: url('../resources/images/icons/charms_share.png');
     mask-image: url('../resources/images/icons/charms_share.png');
 }
 
-.charms-bar.show-background .charms-icon-image--start {
+.charms-bar.show-background .charms-icon-image--start,
+.charms-bar.touch-dragging .charms-icon-image--start {
     -webkit-mask-image: url('../resources/images/icons/charms_start.png');
     mask-image: url('../resources/images/icons/charms_start.png');
 }
 
-.charms-bar.show-background .charms-icon-image--devices {
+.charms-bar.show-background .charms-icon-image--devices,
+.charms-bar.touch-dragging .charms-icon-image--devices {
     -webkit-mask-image: url('../resources/images/icons/charms_devices.png');
     mask-image: url('../resources/images/icons/charms_devices.png');
 }
 
-.charms-bar.show-background .charms-icon-image--settings {
+.charms-bar.show-background .charms-icon-image--settings,
+.charms-bar.touch-dragging .charms-icon-image--settings {
     -webkit-mask-image: url('../resources/images/icons/charms_settings.png');
     mask-image: url('../resources/images/icons/charms_settings.png');
 }
@@ -254,12 +269,15 @@ body.charms-hotcorners-disabled .charms-trigger {
 /* Lower z-index on system screens so they appear below those screens */
 body.view-boot .charms-bar,
 body.view-boot .charms-trigger,
+body.view-boot .charms-datetime-panel,
 body.view-boot .modern-flyout,
 body.view-lock .charms-bar,
 body.view-lock .charms-trigger,
+body.view-lock .charms-datetime-panel,
 body.view-lock .modern-flyout,
 body.view-login .charms-bar,
 body.view-login .charms-trigger,
+body.view-login .charms-datetime-panel,
 body.view-login .modern-flyout {
     z-index: 1;
     pointer-events: none;
@@ -273,7 +291,7 @@ body.view-login .modern-flyout {
     width: 449px;
     height: 140px;
     background-color: rgba(21, 21, 21, 1);
-    z-index: 14000;
+    z-index: 200000;
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.3s ease;

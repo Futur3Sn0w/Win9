@@ -189,6 +189,10 @@
                     console.log('Explorer window ID set:', windowId);
                 });
 
+                ipcRenderer.on('host-command', (event, data) => {
+                    handleHostCommand(data);
+                });
+
                 // Helper function to send messages to parent
                 window.sendToParent = function(action, data) {
                     const messageData = {
@@ -218,6 +222,8 @@
                 if (e.data.action === 'setWindowId') {
                     windowId = e.data.windowId;
                     console.log('Explorer window ID set:', windowId);
+                } else {
+                    handleHostCommand(e.data);
                 }
             });
         }
@@ -254,6 +260,46 @@
             await updateView();
             bindEventListeners();
             initializeSidebarResize();
+            notifyParentWhenReady();
+        }
+
+        async function handleHostCommand(command) {
+            if (!command || typeof command.action !== 'string') {
+                return;
+            }
+
+            if (command.action === 'resetForPreload') {
+                await resetForPreload();
+            }
+        }
+
+        async function resetForPreload() {
+            currentLocation = 'this-pc';
+            currentPath = null;
+            navigationHistory = [];
+            historyIndex = -1;
+            selectedItems = new Set();
+
+            document.querySelectorAll('.explorer-sidebar-item').forEach(item => item.classList.remove('active'));
+            const thisPcItem = document.querySelector('.explorer-sidebar-item[data-location="this-pc"]');
+            if (thisPcItem) {
+                thisPcItem.classList.add('active');
+            }
+
+            await updateView();
+        }
+
+        function notifyParentWhenReady(attempt = 0) {
+            if (!window.sendToParent) {
+                return;
+            }
+
+            if (!windowId && attempt < 20) {
+                setTimeout(() => notifyParentWhenReady(attempt + 1), 50);
+                return;
+            }
+
+            window.sendToParent('classicAppReady');
         }
 
         function bindEventListeners() {

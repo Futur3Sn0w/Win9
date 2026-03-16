@@ -803,6 +803,14 @@ function getAppWindows(appId) {
     return Array.from(windowIds).map(windowId => runningWindows.get(windowId)).filter(w => w);
 }
 
+function isBackgroundWindow(windowData) {
+    return !!windowData?.$container?.data('backgroundPreload');
+}
+
+function getVisibleAppWindows(appId) {
+    return getAppWindows(appId).filter(windowData => !isBackgroundWindow(windowData));
+}
+
 // Get all window IDs for a specific app
 function getAppWindowIds(appId) {
     return appWindows.get(appId) ? Array.from(appWindows.get(appId)) : [];
@@ -810,12 +818,12 @@ function getAppWindowIds(appId) {
 
 // Check if app has any running windows
 function isAppRunning(appId) {
-    return appWindows.has(appId) && appWindows.get(appId).size > 0;
+    return getVisibleAppWindows(appId).length > 0;
 }
 
 // Get window count for an app
 function getAppWindowCount(appId) {
-    return appWindows.has(appId) ? appWindows.get(appId).size : 0;
+    return getVisibleAppWindows(appId).length;
 }
 
 // Set window state
@@ -870,7 +878,7 @@ function unregisterRunningApp(appId) {
 
 // Get running app data (backward compatible - returns first window)
 function getRunningApp(appId) {
-    const windows = getAppWindows(appId);
+    const windows = getVisibleAppWindows(appId);
     if (windows.length === 0) return null;
 
     // Return data in old format
@@ -890,7 +898,7 @@ function setAppState(appId, state) {
 
 // Get app state (backward compatible - returns first window's state)
 function getAppState(appId) {
-    const windows = getAppWindows(appId);
+    const windows = getVisibleAppWindows(appId);
     return windows.length > 0 ? windows[0].state : null;
 }
 
@@ -965,6 +973,8 @@ function updateTaskbar() {
 
     // Add all running apps (iterate through windows, collect unique app IDs)
     runningWindows.forEach((windowData) => {
+        if (isBackgroundWindow(windowData)) return;
+
         const appId = windowData.appId;
 
         // Don't show desktop in taskbar
@@ -1096,7 +1106,7 @@ function updateTaskbar() {
                 // Create new item
                 const isRunning = isAppRunning(appId);
                 // Check if any window of this app is active
-                const windows = getAppWindows(appId);
+                const windows = getVisibleAppWindows(appId);
                 const isActive = isRunning && windows.some(w => w.state === 'active');
 
                 // Check if app has MIF icon class - this determines the fallback hierarchy
@@ -1174,7 +1184,7 @@ function updateTaskbar() {
         if ($existingIcon.length > 0) {
             const isRunning = isAppRunning(appId);
             // Check if any window of this app is active
-            const windows = getAppWindows(appId);
+            const windows = getVisibleAppWindows(appId);
             const isActive = isRunning && windows.some(w => w.state === 'active');
             const wasRunning = $existingIcon.attr('data-running') === 'true';
 
@@ -1235,6 +1245,7 @@ window.AppsManager = {
     unregisterRunningWindow,
     getRunningWindow,
     getAppWindows,
+    getVisibleAppWindows,
     getAppWindowIds,
     getAppWindowCount,
     setWindowState,

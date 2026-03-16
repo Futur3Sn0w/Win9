@@ -2651,7 +2651,6 @@ function resetClassicWindowForFreshLaunch(windowData) {
     const options = getClassicWindowOptions(app);
     const bounds = getClassicWindowDefaultBounds(app);
     const nextZIndex = options.alwaysOnTop ? 9998 : ++classicWindowZIndex;
-    const $maximizeIcon = $container.find('.classic-window-control-btn.maximize img');
 
     windowData.restoreAnimationOffsets = null;
 
@@ -2675,9 +2674,7 @@ function resetClassicWindowForFreshLaunch(windowData) {
             '--restore-y': ''
         });
 
-    if ($maximizeIcon.length) {
-        $maximizeIcon.attr('src', 'resources/images/window_btn_glyphs/max_black.png');
-    }
+    setClassicWindowMaximizeButtonState($container, false);
 
     if (options.alwaysOnTop) {
         $container.addClass('always-on-top');
@@ -2916,39 +2913,21 @@ function openClassicApp(app, launchOptions = {}) {
     // Minimize button
     const $minimizeBtn = $(`
         <button class="classic-window-control-btn minimize" title="Minimize">
-            <img src="resources/images/window_btn_glyphs/min_black.png" width="10" height="10" alt="" />
+            <span class="classic-window-control-glyph" aria-hidden="true"></span>
         </button>
     `);
-
-    // Add hover effect for minimize button
-    $minimizeBtn.on('mouseenter', function () {
-        $(this).find('img').attr('src', 'resources/images/window_btn_glyphs/min_white.png');
-    }).on('mouseleave', function () {
-        $(this).find('img').attr('src', 'resources/images/window_btn_glyphs/min_black.png');
-    });
 
     // Maximize button
     const $maximizeBtn = $(`
         <button class="classic-window-control-btn maximize" title="Maximize">
-            <img src="resources/images/window_btn_glyphs/max_black.png" width="10" height="10" alt="" />
+            <span class="classic-window-control-glyph" aria-hidden="true"></span>
         </button>
     `);
-
-    // Add hover effect for maximize button
-    $maximizeBtn.on('mouseenter', function () {
-        const isMaximized = $container.hasClass('maximized');
-        const whiteSrc = isMaximized ? 'resources/images/window_btn_glyphs/restore_white.png' : 'resources/images/window_btn_glyphs/max_white.png';
-        $(this).find('img').attr('src', whiteSrc);
-    }).on('mouseleave', function () {
-        const isMaximized = $container.hasClass('maximized');
-        const blackSrc = isMaximized ? 'resources/images/window_btn_glyphs/restore_black.png' : 'resources/images/window_btn_glyphs/max_black.png';
-        $(this).find('img').attr('src', blackSrc);
-    });
 
     // Close button
     const $closeBtn = $(`
         <button class="classic-window-control-btn close" title="Close">
-            <img src="resources/images/window_btn_glyphs/close.png" width="10" height="10" alt="" />
+            <span class="classic-window-control-glyph" aria-hidden="true"></span>
         </button>
     `);
 
@@ -3779,6 +3758,11 @@ function restoreClassicWindow(windowIdOrAppId) {
     }, 200); // Match the animation duration in CSS
 }
 
+function setClassicWindowMaximizeButtonState($container, isRestored) {
+    const $maximizeBtn = $container.find('.classic-window-control-btn.maximize');
+    $maximizeBtn.toggleClass('is-restored', Boolean(isRestored));
+}
+
 // Toggle maximize/restore for a classic window
 function toggleMaximizeClassicWindow(windowIdOrAppId) {
     // Determine if this is a windowId or appId
@@ -3800,7 +3784,6 @@ function toggleMaximizeClassicWindow(windowIdOrAppId) {
     if (!windowData) return;
 
     const $container = windowData.$container;
-    const $maximizeBtn = $container.find('.classic-window-control-btn.maximize img');
 
     if ($container.hasClass('maximized')) {
         // Restore to previous size/position
@@ -3814,8 +3797,7 @@ function toggleMaximizeClassicWindow(windowIdOrAppId) {
             });
         }
         $container.removeClass('maximized');
-        // Update icon to maximize
-        $maximizeBtn.attr('src', 'resources/images/window_btn_glyphs/max_black.png');
+        setClassicWindowMaximizeButtonState($container, false);
     } else {
         // If window is snapped, save the snap state to restore to later
         const isSnapped = $container.data('isSnapped');
@@ -3840,8 +3822,7 @@ function toggleMaximizeClassicWindow(windowIdOrAppId) {
         }
         // Maximize
         $container.addClass('maximized');
-        // Update icon to restore
-        $maximizeBtn.attr('src', 'resources/images/window_btn_glyphs/restore_black.png');
+        setClassicWindowMaximizeButtonState($container, true);
     }
 }
 
@@ -4017,8 +3998,7 @@ function initClassicWindowDrag($container, $titlebar) {
                         height: prevState.height
                     });
 
-                    // Update maximize button icon to maximize
-                    $container.find('.classic-window-control-btn.maximize img').attr('src', 'resources/images/window_btn_glyphs/max_black.png');
+                    setClassicWindowMaximizeButtonState($container, false);
 
                     // Calculate new position so cursor stays at the same spot in the titlebar
                     const newWidth = parseInt(prevState.width);
@@ -4261,8 +4241,7 @@ function initClassicWindowDrag($container, $titlebar) {
                         $container.data('prevState', preSnapState);
                     }
                     $container.addClass('maximized');
-                    // Update maximize button icon to restore
-                    $container.find('.classic-window-control-btn.maximize img').attr('src', 'resources/images/window_btn_glyphs/restore_black.png');
+                    setClassicWindowMaximizeButtonState($container, true);
                     $container.removeData('isSnapped');
                     $container.removeData('snapZone');
                 }

@@ -242,6 +242,24 @@
         "alwaysOnTop": false,
         "showInTaskbar": true
       },
+      "fileAssociations": [
+        ".txt",
+        ".text",
+        ".log",
+        ".md",
+        ".json",
+        ".js",
+        ".css",
+        ".html",
+        ".htm"
+      ],
+      "compatibleFileAssociations": [
+        ".rtf",
+        ".xml",
+        ".csv",
+        ".ini",
+        ".cfg"
+      ],
       "runCommands": [
         "notepad",
         "notepad.exe"

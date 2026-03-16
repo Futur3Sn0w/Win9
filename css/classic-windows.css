@@ -235,6 +235,16 @@
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
+.classic-window-control-glyph {
+    position: relative;
+    display: block;
+    width: 10px;
+    height: 10px;
+    flex-shrink: 0;
+    pointer-events: none;
+    color: currentColor;
+}
+
 /* Fade-out transition for minimize and maximize buttons only */
 .classic-window-control-btn:not(.close) {
     transition: background-color 0.33s linear;
@@ -275,17 +285,65 @@
     display: none;
 }
 
-.classic-window-control-btn svg,
-.classic-window-control-btn img {
-    width: 16px;
-    height: 16px;
-    object-fit: none;
-    image-rendering: pixelated;
-    pointer-events: none;
+.classic-window-control-glyph::before,
+.classic-window-control-glyph::after {
+    content: '';
+    position: absolute;
+    box-sizing: border-box;
 }
 
-.classic-window-control-btn.minimize img {
-    padding-top: 6px;
+.classic-window-control-btn.minimize .classic-window-control-glyph {
+    width: 8px;
+    height: 2px;
+    transform: translateY(4px);
+}
+
+.classic-window-control-btn.minimize .classic-window-control-glyph::before {
+    inset: 0;
+    background: currentColor;
+}
+
+.classic-window-control-btn.maximize .classic-window-control-glyph::before {
+    inset: 1px 0 1px 0;
+    border: 1px solid currentColor;
+    background: transparent;
+}
+
+.classic-window-control-btn.maximize.is-restored .classic-window-control-glyph::before,
+.classic-window-control-btn.maximize.is-restored .classic-window-control-glyph::after {
+    inset: auto;
+    width: 8px;
+    height: 6px;
+    border: 1px solid currentColor;
+    background: transparent;
+}
+
+.classic-window-control-btn.maximize.is-restored .classic-window-control-glyph::before {
+    top: 2px;
+    left: 0;
+}
+
+.classic-window-control-btn.maximize.is-restored .classic-window-control-glyph::after {
+    top: 0;
+    right: 0;
+}
+
+.classic-window-control-btn.close .classic-window-control-glyph::before,
+.classic-window-control-btn.close .classic-window-control-glyph::after {
+    top: -1px;
+    left: 4px;
+    width: 2px;
+    height: 12px;
+    background: currentColor;
+    transform-origin: center;
+}
+
+.classic-window-control-btn.close .classic-window-control-glyph::before {
+    transform: rotate(45deg);
+}
+
+.classic-window-control-btn.close .classic-window-control-glyph::after {
+    transform: rotate(-45deg);
 }
 
 /* Classic Window Content (iframe) */

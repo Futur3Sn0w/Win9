@@ -304,7 +304,7 @@ class SystemDialog {
                 </div>
                 <div class="classic-window-controls">
                     <button class="classic-window-control-btn close" data-action="close" aria-label="Close" title="Close">
-                        <img src="resources/images/window_btn_glyphs/close.png" width="10" height="10" alt="" />
+                        <span class="classic-window-control-glyph" aria-hidden="true"></span>
                     </button>
                 </div>
             </div>

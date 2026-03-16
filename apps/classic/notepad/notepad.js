@@ -59,6 +59,7 @@ class Notepad {
         this.applyWordWrapState();
         this.applyStatusBarState();
         this.setupTextareaHandlers();
+        this.setupLaunchOpenHandlers();
         this.setupKeyboardShortcuts();
         this.setupWindowCloseHandler();
         this.updateStatusBar();
@@ -263,6 +264,20 @@ class Notepad {
         });
     }
 
+    setupLaunchOpenHandlers() {
+        window.addEventListener('message', (event) => {
+            if (event.data?.action === 'openFile' && event.data.filePath) {
+                this.loadFileFromLaunch(event.data.filePath);
+            }
+        });
+
+        document.addEventListener('openFile', (event) => {
+            if (event.detail?.filePath) {
+                this.loadFileFromLaunch(event.detail.filePath);
+            }
+        });
+    }
+
     setupKeyboardShortcuts() {
         document.addEventListener('keydown', (e) => {
             // Ctrl+N - New
@@ -348,6 +363,11 @@ class Notepad {
     }
 
     async openFile() {
+        const canProceed = await this.ensureCanReplaceCurrentDocument();
+        if (!canProceed) {
+            return;
+        }
+
         if (this.ipcRenderer) {
             try {
                 const result = await this.ipcRenderer.invoke('notepad-open-file');
@@ -355,12 +375,7 @@ class Notepad {
                     return;
                 }
 
-                this.textarea.value = result.content ?? '';
-                this.currentFilePath = result.filePath || null;
-                this.currentFile = this.getDisplayName(this.currentFilePath) || DEFAULT_FILENAME;
-                this.isModified = false;
-                this.updateStatusBar();
-                this.updateWindowTitle();
+                this.applyOpenedFile(result);
             } catch (error) {
                 await this.showError('Unable to open the selected file.\n\n' + (error?.message || 'Unknown error.'));
             }
@@ -369,25 +384,76 @@ class Notepad {
 
         const input = document.createElement('input');
         input.type = 'file';
-        input.accept = '.txt,.text';
+        input.accept = '.txt,.text,.rtf,.log,.md,.json,.js,.css,.html,.htm,.xml,.csv,.ini,.cfg';
 
         input.onchange = (e) => {
             const file = e.target.files[0];
             if (file) {
                 const reader = new FileReader();
                 reader.onload = (event) => {
-                    this.textarea.value = event.target.result;
-                    this.currentFile = file.name;
-                    this.currentFilePath = null;
-                    this.isModified = false;
-                    this.updateStatusBar();
-                    this.updateWindowTitle();
+                    this.applyOpenedFile({
+                        filePath: null,
+                        fileName: file.name,
+                        content: event.target.result
+                    });
                 };
                 reader.readAsText(file);
             }
         };
 
         input.click();
+    }
+
+    async loadFileFromLaunch(filePath) {
+        if (!filePath || !this.ipcRenderer) {
+            return;
+        }
+
+        const canProceed = await this.ensureCanReplaceCurrentDocument();
+        if (!canProceed) {
+            return;
+        }
+
+        try {
+            const result = await this.ipcRenderer.invoke('notepad-open-file-path', filePath);
+            if (!result || result.canceled) {
+                if (result?.error) {
+                    await this.showError('Unable to open the selected file.\n\n' + result.error);
+                }
+                return;
+            }
+
+            this.applyOpenedFile(result);
+        } catch (error) {
+            await this.showError('Unable to open the selected file.\n\n' + (error?.message || 'Unknown error.'));
+        }
+    }
+
+    applyOpenedFile(result) {
+        this.textarea.value = result?.content ?? '';
+        this.currentFilePath = result?.filePath || null;
+        this.currentFile = result?.fileName || this.getDisplayName(this.currentFilePath) || DEFAULT_FILENAME;
+        this.isModified = false;
+        this.updateStatusBar();
+        this.updateWindowTitle();
+    }
+
+    async ensureCanReplaceCurrentDocument() {
+        if (!this.isModified) {
+            return true;
+        }
+
+        const result = await this.confirmSaveChanges();
+
+        if (result === 'cancel') {
+            return false;
+        }
+
+        if (result === 'save') {
+            return this.saveFile();
+        }
+
+        return true;
     }
 
     async saveFile() {

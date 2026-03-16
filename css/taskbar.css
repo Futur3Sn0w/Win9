@@ -491,8 +491,14 @@ body.view-login .quick-links-menu {
     display: flex;
     flex-shrink: 0;
     display: block;
-    image-rendering: pixelated;
+    image-rendering: auto;
     /* filter: brightness(0) invert(1); */
+}
+
+@media (max-resolution: 1.1dppx) {
+    .system-icon img {
+        image-rendering: pixelated;
+    }
 }
 
 .taskbar.resized {

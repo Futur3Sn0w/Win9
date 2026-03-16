@@ -1,0 +1,170 @@
+.open-with-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 200000;
+    background: transparent;
+}
+
+.open-with-dialog {
+    position: fixed;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: min(432px, calc(100vw - 32px));
+    background: #fff;
+    border: 2px solid #000;
+    box-shadow: 0 20px 48px rgba(0, 0, 0, 0.24);
+    z-index: 200001;
+    padding: 22px 22px 18px;
+    font-family: "Segoe UI", Tahoma, sans-serif;
+    color: #111;
+}
+
+.open-with-dialog__title {
+    margin: 0 0 18px;
+    font-size: 18px;
+    line-height: 1.15;
+    font-weight: 400;
+}
+
+.open-with-dialog__remember {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.open-with-dialog__remember input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.open-with-dialog__checkbox {
+    width: 20px;
+    height: 20px;
+    border: 1px solid #8f8f8f;
+    background: #fff;
+    position: relative;
+    flex: 0 0 auto;
+}
+
+.open-with-dialog__checkbox::after {
+    content: "";
+    position: absolute;
+    left: 4px;
+    top: -1px;
+    width: 7px;
+    height: 13px;
+    border-right: 4px solid #000;
+    border-bottom: 4px solid #000;
+    transform: rotate(40deg) scale(0);
+    transform-origin: center;
+    transition: transform 0.08s ease;
+}
+
+.open-with-dialog__remember input:checked + .open-with-dialog__checkbox::after {
+    transform: rotate(40deg) scale(1);
+}
+
+.open-with-dialog__remember-text {
+    font-size: 14px;
+    line-height: 1.2;
+    font-weight: 400;
+}
+
+.open-with-dialog__list {
+    margin: 2px 0 6px;
+    padding: 0;
+    list-style: none;
+}
+
+.open-with-dialog__option {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 6px 8px;
+    margin: 0;
+    cursor: pointer;
+    transition: background-color 0.08s ease;
+}
+
+.open-with-dialog__option:hover,
+.open-with-dialog__option.is-selected {
+    background: #ececec;
+}
+
+.open-with-dialog__icon-plate {
+    width: 44px;
+    height: 44px;
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--plate-start, #0a7f95), var(--plate-end, #0aa5bc));
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.22);
+}
+
+.open-with-dialog__icon-plate img {
+    width: 28px;
+    height: 28px;
+    object-fit: contain;
+}
+
+.open-with-dialog__icon-plate .mif {
+    font-size: 24px;
+    color: #fff;
+}
+
+.open-with-dialog__label {
+    font-size: 14px;
+    line-height: 1.18;
+    font-weight: 400;
+    color: #151515;
+}
+
+.open-with-dialog__host {
+    appearance: none;
+    background: none;
+    border: none;
+    padding: 8px 8px 0;
+    margin-top: 2px;
+    font: inherit;
+    font-size: 14px;
+    line-height: 1.2;
+    font-weight: 400;
+    color: #178d99;
+    cursor: pointer;
+}
+
+.open-with-dialog__host:hover {
+    color: #0f6f79;
+}
+
+@media (max-width: 720px) {
+    .open-with-dialog {
+        width: calc(100vw - 24px);
+        padding: 18px 16px 16px;
+    }
+
+    .open-with-dialog__title {
+        font-size: 17px;
+    }
+
+    .open-with-dialog__remember-text,
+    .open-with-dialog__label {
+        font-size: 13px;
+    }
+
+    .open-with-dialog__icon-plate {
+        width: 40px;
+        height: 40px;
+    }
+
+    .open-with-dialog__icon-plate img {
+        width: 24px;
+        height: 24px;
+    }
+}

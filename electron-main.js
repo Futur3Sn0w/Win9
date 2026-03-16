@@ -5,6 +5,7 @@ const networkControl = require('./components/network/network-control');
 const batteryControl = require('./components/battery/battery-control');
 const USBMonitor = require('./components/device_connectivity/usb-monitor');
 const { setupTrashHandlers } = require('./components/explorer/trash-manager');
+const { decodeTextBuffer } = require('./components/explorer/file-openability');
 const fs = require('fs/promises');
 const path = require('path');
 const { applyDefaultRegistryState } = require('./setup-registry');
@@ -345,12 +346,32 @@ ipcMain.on('setup-reset-request', () => {
 
 // ===== Notepad File Operations =====
 
+async function readNotepadFile(filePath) {
+  if (!filePath) {
+    throw new Error('Missing file path for open operation');
+  }
+
+  const buffer = await fs.readFile(filePath);
+  const decoded = decodeTextBuffer(buffer);
+
+  if (!decoded.canOpen) {
+    throw new Error('This file is not in a text format that the simulated Notepad can open.');
+  }
+
+  return {
+    canceled: false,
+    filePath,
+    content: decoded.content,
+    encoding: decoded.encoding
+  };
+}
+
 ipcMain.handle('notepad-open-file', async () => {
   try {
     const { canceled, filePaths } = await dialog.showOpenDialog({
       properties: ['openFile'],
       filters: [
-        { name: 'Text Files', extensions: ['txt', 'text', 'md', 'log', 'json', 'js', 'css', 'html'] },
+        { name: 'Text Files', extensions: ['txt', 'text', 'rtf', 'log', 'md', 'json', 'js', 'css', 'html', 'htm', 'xml', 'csv', 'ini', 'cfg'] },
         { name: 'All Files', extensions: ['*'] }
       ]
     });
@@ -359,16 +380,18 @@ ipcMain.handle('notepad-open-file', async () => {
       return { canceled: true };
     }
 
-    const filePath = filePaths[0];
-    const content = await fs.readFile(filePath, 'utf8');
-
-    return {
-      canceled: false,
-      filePath,
-      content
-    };
+    return await readNotepadFile(filePaths[0]);
   } catch (error) {
     console.error('Failed to open file:', error);
+    return { canceled: true, error: error.message };
+  }
+});
+
+ipcMain.handle('notepad-open-file-path', async (event, filePath) => {
+  try {
+    return await readNotepadFile(filePath);
+  } catch (error) {
+    console.error('Failed to open file by path:', error);
     return { canceled: true, error: error.message };
   }
 });
@@ -392,7 +415,7 @@ ipcMain.handle('notepad-save-file-as', async (event, { defaultPath, content }) =
     const { canceled, filePath } = await dialog.showSaveDialog({
       defaultPath,
       filters: [
-        { name: 'Text Files', extensions: ['txt', 'text', 'md', 'log'] },
+        { name: 'Text Files', extensions: ['txt', 'text', 'rtf', 'log', 'md', 'json', 'js', 'css', 'html', 'htm', 'xml', 'csv', 'ini', 'cfg'] },
         { name: 'All Files', extensions: ['*'] }
       ]
     });

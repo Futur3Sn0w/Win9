@@ -4,9 +4,22 @@
 
     const {
         loadDesktopBackgroundSettings,
-        saveDesktopBackgroundSettings,
-        toFullWallpaperPath
+        saveDesktopBackgroundSettings
     } = require('../../../registry/wallpaper-registry.js');
+
+    function getWallpaperController() {
+        const contexts = [window, window.parent, window.top];
+        for (const ctx of contexts) {
+            try {
+                if (ctx && ctx.WallpaperController) {
+                    return ctx.WallpaperController;
+                }
+            } catch (error) {
+                console.warn('[DesktopBackground] Could not access wallpaper controller:', error);
+            }
+        }
+        return null;
+    }
 
     function resolveColorRegistry() {
         const contexts = [window, window.parent, window.top];
@@ -181,6 +194,12 @@
 
     // Pause slideshow in main app
     function pauseMainAppSlideshow() {
+        const controller = getWallpaperController();
+        if (controller && typeof controller.pauseSlideshow === 'function') {
+            controller.pauseSlideshow();
+            return;
+        }
+
         if (window.parent && window.parent !== window && window.parent.pauseWallpaperSlideshow) {
             window.parent.pauseWallpaperSlideshow();
         } else if (window.top && window.top !== window) {
@@ -196,6 +215,12 @@
 
     // Resume slideshow in main app
     function resumeMainAppSlideshow() {
+        const controller = getWallpaperController();
+        if (controller && typeof controller.resumeSlideshow === 'function') {
+            controller.resumeSlideshow();
+            return;
+        }
+
         if (window.parent && window.parent !== window && window.parent.resumeWallpaperSlideshow) {
             window.parent.resumeWallpaperSlideshow();
         } else if (window.top && window.top !== window) {
@@ -228,7 +253,10 @@
     // Load saved settings from registry
     function loadSavedSettings() {
         try {
-            const settings = loadDesktopBackgroundSettings();
+            const controller = getWallpaperController();
+            const settings = controller && typeof controller.getSettings === 'function'
+                ? controller.getSettings()
+                : loadDesktopBackgroundSettings();
             state.currentWallpaper = settings.currentWallpaper || null;
             state.currentWallpaperType = settings.currentWallpaperType || 'builtin';
             state.selectedWallpapers = Array.isArray(settings.selectedWallpapers) ? [...settings.selectedWallpapers] : [];
@@ -531,6 +559,21 @@
 
     // Apply wallpaper to desktop
     function applyWallpaper(wallpaperPath, type = 'builtin') {
+        const controller = getWallpaperController();
+        if (controller && typeof controller.previewWallpaper === 'function') {
+            controller.previewWallpaper({
+                currentWallpaper: wallpaperPath,
+                currentWallpaperType: type,
+                picturePosition: state.picturePosition
+            }, {
+                withCrossfade: false,
+                updateTile: true,
+                keepSlideshowPaused: true,
+                reason: 'control-panel-preview'
+            });
+            return;
+        }
+
         // For builtin wallpapers, convert to main app's path format
         // For custom wallpapers, use the full path directly
         const mainAppPath = type === 'custom' ? wallpaperPath : (getMainAppWallpapersPath() + wallpaperPath);
@@ -710,12 +753,15 @@
         // Select All button
         elements.selectAllButton.addEventListener('click', () => {
             state.selectedWallpapers = [];
+            state.selectedWallpapersTypes = [];
             document.querySelectorAll('.wallpaper-checkbox').forEach(checkbox => {
                 checkbox.checked = true;
                 const item = checkbox.closest('.wallpaper-item');
                 const path = item.dataset.path;
+                const type = item.dataset.type || 'builtin';
                 if (!state.selectedWallpapers.includes(path)) {
                     state.selectedWallpapers.push(path);
+                    state.selectedWallpapersTypes.push(type);
                 }
             });
             updateSlideshowControls();
@@ -724,6 +770,7 @@
         // Clear All button
         elements.clearAllButton.addEventListener('click', () => {
             state.selectedWallpapers = [];
+            state.selectedWallpapersTypes = [];
             document.querySelectorAll('.wallpaper-checkbox').forEach(checkbox => {
                 checkbox.checked = false;
             });
@@ -733,7 +780,7 @@
         // Picture Position dropdown
         elements.picturePosition.addEventListener('change', () => {
             state.picturePosition = elements.picturePosition.value;
-            updateBackgroundPosition();
+            applyWallpaper(state.currentWallpaper, state.currentWallpaperType);
         });
 
         // Change Picture dropdown
@@ -752,11 +799,12 @@
         });
 
         // Save button
-        elements.saveButton.addEventListener('click', () => {
-            saveSettings();
-            saveCurrentState(); // Update saved state after saving
-            // Navigate back to personalization page
-            navigateBack();
+        elements.saveButton.addEventListener('click', async () => {
+            const saved = await saveSettings();
+            if (saved) {
+                saveCurrentState();
+                navigateBack();
+            }
         });
 
         // Cancel button
@@ -907,7 +955,7 @@
     }
 
     // Save settings to registry
-    function saveSettings() {
+    async function saveSettings() {
         const settings = {
             currentWallpaper: state.currentWallpaper,
             currentWallpaperType: state.currentWallpaperType,
@@ -922,7 +970,14 @@
         };
 
         try {
-            const normalized = saveDesktopBackgroundSettings(settings);
+            const controller = getWallpaperController();
+            const normalized = controller && typeof controller.saveSettings === 'function'
+                ? await controller.saveSettings(settings, {
+                    withCrossfade: false,
+                    keepSlideshowPaused: true,
+                    reason: 'control-panel-save'
+                })
+                : saveDesktopBackgroundSettings(settings);
 
             state.currentWallpaper = normalized.currentWallpaper;
             state.currentWallpaperType = normalized.currentWallpaperType;
@@ -934,30 +989,6 @@
             state.pauseOnBattery = normalized.pauseOnBattery;
             state.customFolders = normalized.customFolders.map(folder => ({ ...folder }));
             state.currentLocation = normalized.currentLocation;
-
-            // Apply the wallpaper if one is selected
-            if (state.currentWallpaper) {
-                applyWallpaper(state.currentWallpaper, state.currentWallpaperType);
-            }
-
-            // Trigger slideshow in main app
-            if (state.selectedWallpapers.length > 1) {
-                // Start slideshow in main app
-                if (window.parent && window.parent !== window && window.parent.startWallpaperSlideshow) {
-                    window.parent.startWallpaperSlideshow(normalized);
-                } else if (window.top && window.top !== window) {
-                    try {
-                        if (window.top.startWallpaperSlideshow) {
-                            window.top.startWallpaperSlideshow(normalized);
-                        }
-                    } catch (e) {
-                        console.warn('Could not access top window slideshow:', e);
-                    }
-                }
-            } else {
-                // Stop slideshow in main app
-                stopSlideshow();
-            }
 
             // Persist new baseline for cancel functionality
             saveCurrentState();
@@ -976,9 +1007,11 @@
                     console.warn('Unable to notify parent about wallpaper change:', error);
                 }
             }
+            return true;
         } catch (e) {
             console.error('Failed to save settings:', e);
             systemDialog.error('Failed to save settings. Please try again.', 'Desktop Background');
+            return false;
         }
     }
 
@@ -998,7 +1031,26 @@
 
             // Reapply the previous wallpaper
             if (state.currentWallpaper) {
-                applyWallpaper(state.currentWallpaper, state.currentWallpaperType);
+                const controller = getWallpaperController();
+                if (controller && typeof controller.previewWallpaper === 'function') {
+                    controller.previewWallpaper({
+                        currentWallpaper: state.currentWallpaper,
+                        currentWallpaperType: state.currentWallpaperType,
+                        selectedWallpapers: state.selectedWallpapers,
+                        selectedWallpapersTypes: state.selectedWallpapersTypes,
+                        picturePosition: state.picturePosition,
+                        changeInterval: state.changeInterval,
+                        shuffle: state.shuffle,
+                        pauseOnBattery: state.pauseOnBattery
+                    }, {
+                        withCrossfade: false,
+                        updateTile: true,
+                        keepSlideshowPaused: true,
+                        reason: 'control-panel-restore'
+                    });
+                } else {
+                    applyWallpaper(state.currentWallpaper, state.currentWallpaperType);
+                }
             }
 
             updateUI();
@@ -1010,6 +1062,12 @@
 
     // Stop slideshow (delegates to main app)
     function stopSlideshow() {
+        const controller = getWallpaperController();
+        if (controller && typeof controller.stopSlideshow === 'function') {
+            controller.stopSlideshow();
+            return;
+        }
+
         // Stop slideshow in main app
         if (window.parent && window.parent !== window && window.parent.stopWallpaperSlideshow) {
             window.parent.stopWallpaperSlideshow();

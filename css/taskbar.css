@@ -83,6 +83,15 @@ body.taskbar-autohide .taskbar:hover {
     transform: translateY(0);
 }
 
+body.view-modern.taskbar-autohide .taskbar.touch-visible,
+body.view-modern.taskbar-autohide .taskbar.touch-pinned {
+    transform: translateY(0);
+}
+
+body.view-modern.taskbar-autohide .taskbar.touch-dragging {
+    transform: translateY(var(--taskbar-touch-offset, 100%));
+}
+
 /* Temporarily reveal taskbar when transitioning to desktop */
 body.taskbar-autohide.taskbar-peek .taskbar {
     transform: translateY(0);

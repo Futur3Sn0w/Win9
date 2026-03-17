@@ -156,6 +156,20 @@ class NotificationManager {
             </div>
         `;
 
+        const interactionState = {
+            suppressClick: false
+        };
+
+        notification.addEventListener('click', (e) => {
+            if (!interactionState.suppressClick) {
+                return;
+            }
+
+            interactionState.suppressClick = false;
+            e.preventDefault();
+            e.stopPropagation();
+        }, true);
+
         // Add click handler if provided
         if (onClick && typeof onClick === 'function') {
             const content = notification.querySelector('.notification-content');
@@ -174,7 +188,7 @@ class NotificationManager {
         });
 
         // Add drag-to-dismiss functionality
-        this.addDragToDismiss(notification, notificationId);
+        this.addDragToDismiss(notification, notificationId, interactionState);
 
         // Add to container at the beginning (bottom of stack due to column-reverse)
         this.container.insertBefore(notification, this.container.firstChild);
@@ -210,21 +224,32 @@ class NotificationManager {
      * @param {HTMLElement} notification - The notification element
      * @param {string} notificationId - ID of the notification
      */
-    addDragToDismiss(notification, notificationId) {
-        let isDragging = false;
+    addDragToDismiss(notification, notificationId, interactionState) {
+        const DRAG_THRESHOLD = 8;
+        const DISMISS_THRESHOLD = 150;
+
+        let isPointerDown = false;
+        let activePointerId = null;
         let startX = 0;
         let currentX = 0;
         let isPressedOnLeft = false;
+        let hasDragged = false;
 
-        const handleMouseDown = (e) => {
+        const handlePointerDown = (e) => {
             // Don't start drag if clicking close button
             if (e.target.closest('.notification-close')) {
                 return;
             }
 
-            isDragging = true;
+            if (e.button !== undefined && e.button !== 0) {
+                return;
+            }
+
+            isPointerDown = true;
+            activePointerId = e.pointerId ?? 'mouse';
             startX = e.clientX;
             currentX = 0;
+            hasDragged = false;
 
             // Determine if pressed on left half or right half
             const rect = notification.getBoundingClientRect();
@@ -237,15 +262,24 @@ class NotificationManager {
                 notification.classList.add('pressing-left');
             }
 
-            notification.classList.add('dragging');
-
             e.preventDefault();
         };
 
-        const handleMouseMove = (e) => {
-            if (!isDragging) return;
+        const handlePointerMove = (e) => {
+            if (!isPointerDown || ((e.pointerId ?? 'mouse') !== activePointerId)) return;
 
             const deltaX = e.clientX - startX;
+            const absDeltaX = Math.abs(deltaX);
+
+            if (!hasDragged && absDeltaX > DRAG_THRESHOLD) {
+                hasDragged = true;
+                interactionState.suppressClick = true;
+                notification.classList.add('dragging');
+            }
+
+            if (!hasDragged) {
+                return;
+            }
 
             // Only allow dragging to the right (positive) and limit leftward movement
             currentX = Math.max(0, deltaX);
@@ -253,30 +287,40 @@ class NotificationManager {
             notification.style.transform = `translateX(${currentX}px)`;
         };
 
-        const handleMouseUp = () => {
-            if (!isDragging) return;
+        const handlePointerEnd = (e) => {
+            if (!isPointerDown || ((e.pointerId ?? 'mouse') !== activePointerId)) return;
 
-            isDragging = false;
+            isPointerDown = false;
+            activePointerId = null;
             notification.classList.remove('dragging');
             notification.classList.remove('pressing-left');
 
+            if (hasDragged) {
+                interactionState.suppressClick = true;
+            }
+
             // If dragged more than 150px to the right, dismiss
-            if (currentX > 150) {
+            if (currentX > DISMISS_THRESHOLD) {
                 this.hide(notificationId);
             } else {
                 // Snap back to original position
                 notification.style.transform = '';
             }
+
+            currentX = 0;
+            hasDragged = false;
         };
 
-        notification.addEventListener('mousedown', handleMouseDown);
-        document.addEventListener('mousemove', handleMouseMove);
-        document.addEventListener('mouseup', handleMouseUp);
+        notification.addEventListener('pointerdown', handlePointerDown);
+        document.addEventListener('pointermove', handlePointerMove);
+        document.addEventListener('pointerup', handlePointerEnd);
+        document.addEventListener('pointercancel', handlePointerEnd);
 
         // Store cleanup function
         notification._dragCleanup = () => {
-            document.removeEventListener('mousemove', handleMouseMove);
-            document.removeEventListener('mouseup', handleMouseUp);
+            document.removeEventListener('pointermove', handlePointerMove);
+            document.removeEventListener('pointerup', handlePointerEnd);
+            document.removeEventListener('pointercancel', handlePointerEnd);
         };
     }
 

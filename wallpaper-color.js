@@ -85,6 +85,13 @@ class WallpaperColorExtractor {
      * Extract the wallpaper path from CSS
      */
     getWallpaperPath() {
+        if (window.WallpaperController && typeof window.WallpaperController.getCurrentFullPath === 'function') {
+            const controllerPath = window.WallpaperController.getCurrentFullPath();
+            if (controllerPath) {
+                return controllerPath;
+            }
+        }
+
         // Try the new wallpaper layer first
         let wallpaperEl = document.getElementById('desktop-wallpaper');
 

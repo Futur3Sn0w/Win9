@@ -35,5 +35,20 @@
       ]
     },
     "sections": []
+  },
+  "screen-resolution": {
+    "title": "Screen Resolution",
+    "externalPath": "screen-resolution.html",
+    "sidebarFooter": {
+      "title": "See also",
+      "links": [
+        {
+          "text": "Personalization",
+          "action": "open",
+          "target": "personalization"
+        }
+      ]
+    },
+    "sections": []
   }
 }

@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculator</title>
+    <link rel="stylesheet" href="../../../css/modern-ui.css">
+    <style>
+        :root { --bg:#1f1f1f; --panel:#303030; --key:#474747; --key-hover:#535353; --muted:#b6b6b6; --txt:#f4f4f4; --std:#1cb317; --sci:#25a8a8; --conv:#b06428; --eq:#3f9100; --eq-hover:#4ca900; --gap:6px; --shell:1170px; --disp-h:300px; --key-h:102px; --pad-x:32px; --pad-y:34px; --fit-scale:1; --viewport-pad:24px; }
+        * { box-sizing:border-box; }
+        html, body { margin:0; min-height:100%; }
+        body { min-height:100vh; background:var(--bg); color:#fff; font-family:"Segoe UI Light","Segoe UI",sans-serif; overflow:hidden; }
+        .viewport { min-height:100vh; padding:var(--viewport-pad); display:flex; justify-content:center; align-items:flex-start; overflow:hidden; }
+        .app { width:var(--shell); margin:0 auto; padding:44px 0 56px; transform:scale(var(--fit-scale)); transform-origin:top center; will-change:transform; }
+        .tabs { display:flex; gap:38px; margin:0 0 34px; font-size:clamp(30px,3vw,36px); font-weight:300; }
+        .tab { border:0; background:none; color:#8d8d8d; font:inherit; padding:0; cursor:pointer; }
+        .tab.active { color:#fff; }
+        .stage { position:relative; transition:height .34s cubic-bezier(.18,.84,.32,1); }
+        .view { position:absolute; inset:0; opacity:0; visibility:hidden; pointer-events:none; transform:translateX(64px) scale(.986); transition:opacity .28s ease,transform .34s cubic-bezier(.18,.84,.32,1),visibility 0s linear .34s; }
+        .view.active,.view.enter-left,.view.enter-right,.view.leave-left,.view.leave-right { visibility:visible; transition-delay:0s; }
+        .view.active { position:relative; opacity:1; pointer-events:auto; transform:none; }
+        .view.enter-left,.view.leave-right { transform:translateX(-64px) scale(.986); }
+        .view.enter-right,.view.leave-left { transform:translateX(64px) scale(.986); }
+        .view.leave-left,.view.leave-right { opacity:0; }
+        .display { min-height:var(--disp-h); background:var(--panel); padding:var(--pad-y) var(--pad-x) 28px; margin:0 0 38px; border-top:3px solid var(--std); position:relative; }
+        .display.sci { border-top-color:var(--sci); min-height:220px; padding-bottom:18px; }
+        .meta,.expr { min-height:30px; color:rgba(255,255,255,.42); font:21px "Segoe UI",sans-serif; }
+        .meta { position:absolute; top:22px; left:28px; font-size:24px; letter-spacing:.08em; }
+        .expr { text-align:right; padding-right:6px; }
+        .out { min-height:212px; display:flex; align-items:flex-end; justify-content:flex-end; font-size:clamp(112px,12vw,148px); font-weight:200; letter-spacing:-.05em; line-height:.92; word-break:break-all; }
+        .display.sci .out { min-height:128px; align-items:center; font-size:clamp(50px,4.35vw,70px); }
+        .out.error { font:300 clamp(34px,4.2vw,54px)/1.15 "Segoe UI",sans-serif; letter-spacing:-.02em; }
+        .grid { display:grid; gap:var(--gap); }
+        .std-grid { grid-template-columns:repeat(5,minmax(0,1fr)); grid-auto-rows:minmax(var(--key-h),1fr); }
+        .sci-grid { grid-template-columns:repeat(9,minmax(0,1fr)); grid-auto-rows:minmax(74px,1fr); }
+        .key { min-height:var(--key-h); border:0; background:var(--key); color:var(--txt); display:flex; align-items:center; justify-content:center; font:200 clamp(50px,5vw,78px)/1 "Segoe UI Light","Segoe UI",sans-serif; padding:0; }
+        .key:hover { background:var(--key-hover); }
+        .key:focus-visible { outline:2px solid #fff; outline-offset:-6px; }
+        .key.fn { color:var(--muted); font:300 clamp(34px,3.3vw,56px)/1 "Segoe UI",sans-serif; }
+        .key.eq { background:var(--eq); color:#fff; font-family:"Segoe UI",sans-serif; }
+        .key.eq:hover { background:var(--eq-hover); }
+        .key.zero { grid-column:span 2; }
+        .key.sci { min-height:74px; font-size:clamp(28px,2vw,44px); }
+        .key.sci.fn { font-size:clamp(18px,1.35vw,26px); font-weight:400; }
+        .key.sci.mode { justify-content:flex-start; padding-left:16px; color:#d2d2d2; }
+        .key.sci.eq { background:#0f90b4; }
+        .key.sci.eq:hover { background:#18a4cb; }
+        .key.sci sup { font-size:.55em; line-height:0; }
+        .bk { width:56px; height:40px; }
+        .bk.sci { width:40px; height:28px; }
+        .bk path,.bk line { stroke:currentColor; stroke-width:3; fill:none; stroke-linecap:round; stroke-linejoin:round; }
+        .conv { display:grid; grid-template-columns:minmax(0,1fr) .46fr; gap:30px; padding-top:8px; }
+        .conv-title { margin:0 0 18px; font-size:clamp(28px,4vw,52px); font-weight:300; }
+        .chev { width:10px; height:10px; display:inline-block; border-right:2px solid var(--conv); border-bottom:2px solid var(--conv); transform:rotate(45deg) translateY(-2px); }
+        .unit-btn,.cat-btn { border:0; background:none; color:inherit; font:inherit; padding:0; display:inline-flex; align-items:center; gap:10px; cursor:pointer; }
+        .field { margin:0 0 12px; }
+        .field-box { min-height:146px; background:var(--panel); border-top:3px solid var(--conv); padding:0 16px; display:flex; align-items:center; font-size:clamp(52px,7vw,76px); font-weight:200; letter-spacing:-.04em; }
+        .field-lab { margin-top:6px; color:#d7d7d7; font:300 28px "Segoe UI",sans-serif; }
+        .sum-title { margin-top:18px; color:rgba(255,255,255,.45); font:14px "Segoe UI",sans-serif; }
+        .sum { margin-top:2px; display:flex; flex-wrap:wrap; gap:14px 18px; color:#d9d9d9; font:300 27px "Segoe UI",sans-serif; }
+        .sum span { white-space:nowrap; }
+        .menu { position:absolute; min-width:224px; max-height:320px; overflow:auto; background:#000; border:1px solid #8c8c8c; opacity:0; pointer-events:none; transform:translateY(-6px); transition:opacity .14s ease,transform .14s ease; z-index:20; }
+        .menu.open { opacity:1; pointer-events:auto; transform:none; }
+        .menu-item { width:100%; border:0; background:none; color:#fff; font:300 16px "Segoe UI",sans-serif; text-align:left; padding:7px 10px; display:block; }
+        .menu-item:hover { background:#171717; }
+        .menu-item.sel { background:#f67c00; }
+        .pad { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); grid-auto-rows:minmax(74px,1fr); gap:var(--gap); padding-top:110px; }
+        .key.padk { min-height:74px; font-size:clamp(30px,2.4vw,54px); }
+        .key.padk.fn { font-size:clamp(18px,1.35vw,28px); }
+        .wide { grid-column:span 2; }
+        .active-scale-effect { transition:transform .2s ease; }
+        .active-scale-effect:active { transform:scale(.966); }
+        @media (max-width:1200px){ :root { --disp-h:250px; --key-h:84px; --viewport-pad:18px; } .app{padding-top:28px;} .display{margin-bottom:24px;} }
+        @media (max-width:900px){ .sci-grid{grid-template-columns:repeat(6,minmax(0,1fr));} .conv{grid-template-columns:1fr;} .pad{padding-top:0;} }
+        @media (max-width:720px){ :root{ --gap:4px; --disp-h:190px; --key-h:68px; --pad-x:18px; --pad-y:24px; --viewport-pad:12px; } .tabs{gap:20px;margin-bottom:22px;} .meta{top:16px;left:18px;font-size:18px;} .expr{font-size:16px;} .out{min-height:126px;font-size:clamp(72px,16vw,110px);} .key{min-height:68px;font-size:clamp(34px,8.3vw,52px);} .key.fn{font-size:clamp(24px,6vw,34px);} .sci-grid{grid-template-columns:repeat(5,minmax(0,1fr));} .key.sci,.key.padk{min-height:60px;font-size:clamp(24px,6vw,34px);} .key.sci.fn,.key.padk.fn{font-size:clamp(14px,3.5vw,22px);} .display.sci .out{font-size:clamp(38px,9vw,62px);} .field-box{min-height:110px;font-size:clamp(42px,12vw,62px);} .field-lab{font-size:22px;} .sum{font-size:18px;gap:8px 12px;} }
+    </style>
+</head>
+<body>
+    <div class="viewport" id="viewport">
+    <main class="app" id="app">
+        <nav class="tabs">
+            <button type="button" class="tab active" data-tab="standard">Standard</button>
+            <button type="button" class="tab" data-tab="scientific">Scientific</button>
+            <button type="button" class="tab" data-tab="converter">Converter</button>
+        </nav>
+        <div class="stage" id="stage">
+            <section class="view active" data-view="standard">
+                <section class="display">
+                    <div class="meta" id="stdMeta"></div><div class="expr" id="stdExpr"></div><div class="out" id="stdOut">0</div>
+                </section>
+                <section class="grid std-grid" id="stdKeys">
+                    <button class="key fn active-scale-effect" data-a="memory">M</button><button class="key fn active-scale-effect" data-a="ce">CE</button><button class="key fn active-scale-effect" data-a="c">C</button><button class="key fn active-scale-effect active-scale-effect" data-a="back" aria-label="Backspace"><svg class="bk" viewBox="0 0 56 40"><path d="M18 6H50V34H18L4 20L18 6Z"></path><line x1="25" y1="14" x2="37" y2="26"></line><line x1="37" y1="14" x2="25" y2="26"></line></svg></button><button class="key fn active-scale-effect" data-a="op" data-v="/">&divide;</button>
+                    <button class="key fn active-scale-effect" data-a="sign">&plusmn;</button><button class="key active-scale-effect" data-a="d" data-v="7">7</button><button class="key active-scale-effect" data-a="d" data-v="8">8</button><button class="key active-scale-effect" data-a="d" data-v="9">9</button><button class="key fn active-scale-effect" data-a="op" data-v="*">&times;</button>
+                    <button class="key fn active-scale-effect" data-a="sqrt">&radic;</button><button class="key active-scale-effect" data-a="d" data-v="4">4</button><button class="key active-scale-effect" data-a="d" data-v="5">5</button><button class="key active-scale-effect" data-a="d" data-v="6">6</button><button class="key fn active-scale-effect" data-a="op" data-v="-">&minus;</button>
+                    <button class="key fn active-scale-effect" data-a="pct">%</button><button class="key active-scale-effect" data-a="d" data-v="1">1</button><button class="key active-scale-effect" data-a="d" data-v="2">2</button><button class="key active-scale-effect" data-a="d" data-v="3">3</button><button class="key fn active-scale-effect" data-a="op" data-v="+">+</button>
+                    <button class="key fn active-scale-effect" data-a="recip">1/x</button><button class="key zero active-scale-effect" data-a="d" data-v="0">0</button><button class="key active-scale-effect" data-a="dot">.</button><button class="key eq active-scale-effect" data-a="eq">=</button>
+                </section>
+            </section>
+
+            <section class="view" data-view="scientific">
+                <section class="display sci">
+                    <div class="meta" id="sciMeta"></div><div class="expr" id="sciExpr"></div><div class="out" id="sciOut">0</div>
+                </section>
+                <section class="grid sci-grid" id="sciKeys">
+                    <button class="key sci fn mode active-scale-effect" data-a="angle" id="angleBtn">Deg</button><button class="key sci fn active-scale-effect" data-a="noop">(</button><button class="key sci fn active-scale-effect" data-a="noop">)</button><button class="key sci fn active-scale-effect" data-a="fe">F-E</button><button class="key sci fn active-scale-effect" data-a="memory">M</button><button class="key sci fn active-scale-effect" data-a="ce">CE</button><button class="key sci fn active-scale-effect" data-a="c">C</button><button class="key sci fn active-scale-effect" data-a="back"><svg class="bk sci" viewBox="0 0 56 40"><path d="M18 6H50V34H18L4 20L18 6Z"></path><line x1="25" y1="14" x2="37" y2="26"></line><line x1="37" y1="14" x2="25" y2="26"></line></svg></button><button class="key sci fn active-scale-effect" data-a="op" data-v="/">&divide;</button>
+                    <button class="key sci fn active-scale-effect" data-a="pi">&pi;</button><button class="key sci fn active-scale-effect" data-a="sin">sin</button><button class="key sci fn active-scale-effect" data-a="cos">cos</button><button class="key sci fn active-scale-effect" data-a="tan">tan</button><button class="key sci fn active-scale-effect" data-a="sign">&plusmn;</button><button class="key sci active-scale-effect" data-a="d" data-v="7">7</button><button class="key sci active-scale-effect" data-a="d" data-v="8">8</button><button class="key sci active-scale-effect" data-a="d" data-v="9">9</button><button class="key sci fn active-scale-effect" data-a="op" data-v="*">&times;</button>
+                    <button class="key sci fn active-scale-effect" data-a="sq">x<sup>2</sup></button><button class="key sci fn active-scale-effect" data-a="asin">sin<sup>-1</sup></button><button class="key sci fn active-scale-effect" data-a="acos">cos<sup>-1</sup></button><button class="key sci fn active-scale-effect" data-a="atan">tan<sup>-1</sup></button><button class="key sci fn active-scale-effect" data-a="sqrt">&radic;</button><button class="key sci active-scale-effect" data-a="d" data-v="4">4</button><button class="key sci active-scale-effect" data-a="d" data-v="5">5</button><button class="key sci active-scale-effect" data-a="d" data-v="6">6</button><button class="key sci fn active-scale-effect" data-a="op" data-v="-">&minus;</button>
+                    <button class="key sci fn active-scale-effect" data-a="op" data-v="pow">x<sup>y</sup></button><button class="key sci fn active-scale-effect" data-a="ten">10<sup>x</sup></button><button class="key sci fn active-scale-effect" data-a="exp">e<sup>x</sup></button><button class="key sci fn active-scale-effect" data-a="op" data-v="mod">Mod</button><button class="key sci fn active-scale-effect" data-a="pct">%</button><button class="key sci active-scale-effect" data-a="d" data-v="1">1</button><button class="key sci active-scale-effect" data-a="d" data-v="2">2</button><button class="key sci active-scale-effect" data-a="d" data-v="3">3</button><button class="key sci fn active-scale-effect" data-a="op" data-v="+">+</button>
+                    <button class="key sci fn active-scale-effect" data-a="op" data-v="root"><sup>y</sup>&radic;x</button><button class="key sci fn active-scale-effect" data-a="log">log</button><button class="key sci fn active-scale-effect" data-a="ln">ln</button><button class="key sci fn active-scale-effect" data-a="fact">n!</button><button class="key sci fn active-scale-effect" data-a="recip">1/x</button><button class="key sci zero active-scale-effect" data-a="d" data-v="0">0</button><button class="key sci active-scale-effect" data-a="dot">.</button><button class="key sci eq active-scale-effect" data-a="eq">=</button>
+                </section>
+            </section>
+
+            <section class="view" data-view="converter">
+                <div class="conv">
+                    <section>
+                        <h2 class="conv-title"><button class="cat-btn active-scale-effect" type="button" id="catBtn"><span id="catLabel">Volume</span> <span class="chev"></span></button></h2>
+                        <div class="field"><div class="field-box" id="cin">4</div><div class="field-lab"><button class="unit-btn active-scale-effect" type="button" id="fromBtn"><span id="fromLabel">Milliliters</span> <span class="chev"></span></button></div></div>
+                        <div class="field"><div class="field-box" id="cout">0.811536</div><div class="field-lab"><button class="unit-btn active-scale-effect" type="button" id="toBtn"><span id="toLabel">Teaspoons (US)</span> <span class="chev"></span></button></div></div>
+                        <div class="sum-title">About equal to</div><div class="sum" id="csum"></div>
+                        <div class="menu" id="convMenu" aria-hidden="true"></div>
+                    </section>
+                    <section class="pad" id="cpad">
+                        <button class="key padk fn active-scale-effect" data-a="ce">CE</button><button class="key padk fn wide active-scale-effect" data-a="back"><svg class="bk sci" viewBox="0 0 56 40"><path d="M18 6H50V34H18L4 20L18 6Z"></path><line x1="25" y1="14" x2="37" y2="26"></line><line x1="37" y1="14" x2="25" y2="26"></line></svg></button>
+                        <button class="key padk active-scale-effect" data-a="d" data-v="7">7</button><button class="key padk active-scale-effect" data-a="d" data-v="8">8</button><button class="key padk active-scale-effect" data-a="d" data-v="9">9</button>
+                        <button class="key padk active-scale-effect" data-a="d" data-v="4">4</button><button class="key padk active-scale-effect" data-a="d" data-v="5">5</button><button class="key padk active-scale-effect" data-a="d" data-v="6">6</button>
+                        <button class="key padk active-scale-effect" data-a="d" data-v="1">1</button><button class="key padk active-scale-effect" data-a="d" data-v="2">2</button><button class="key padk active-scale-effect" data-a="d" data-v="3">3</button>
+                        <button class="key padk zero active-scale-effect" data-a="d" data-v="0">0</button><button class="key padk active-scale-effect" data-a="dot">.</button>
+                    </section>
+                </div>
+            </section>
+        </div>
+    </main>
+    </div>
+
+    <script>
+        (() => {
+            const modeOrder = ['standard','scientific','converter'];
+            const viewport = document.getElementById('viewport');
+            const app = document.getElementById('app');
+            const stage = document.getElementById('stage');
+            const tabs = [...document.querySelectorAll('[data-tab]')];
+            const views = Object.fromEntries([...document.querySelectorAll('[data-view]')].map(v => [v.dataset.view, v]));
+            let mode = 'standard', token = 0;
+
+            const makeCalc = (keys, out, expr, meta, extra = {}) => {
+                const s = { d:'0', p:null, o:null, wait:false, m:null, x:'', err:false, fe:false, deg:true };
+                const sym = { '/':'\u00f7', '*':'\u00d7', '-':'\u2212', '+':'+', pow:'^', root:'\u221ay', mod:'mod' };
+                const fmt = n => {
+                    if (!Number.isFinite(n)) return null;
+                    if (Object.is(n,-0)) return '0';
+                    if (s.fe || Math.abs(n) >= 1e13 || (Math.abs(n) > 0 && Math.abs(n) < 1e-9)) return n.toExponential(8).replace(/\.?0+e/,'e');
+                    let v = Number(n.toPrecision(12)).toString();
+                    return v.includes('.') ? v.replace(/\.?0+$/,'') : v;
+                };
+                const val = () => Number(s.d);
+                const draw = () => {
+                    out.textContent = s.d; out.classList.toggle('error', s.err); expr.textContent = s.x;
+                    const left = []; if (s.m !== null) left.push('M'); if (extra.ang) { left.push(s.deg ? 'Deg' : 'Rad'); extra.ang.textContent = s.deg ? 'Deg' : 'Rad'; } meta.textContent = left.join('   ');
+                };
+                const reset = () => { s.d='0'; s.p=null; s.o=null; s.wait=false; s.x=''; s.err=false; s.fe=false; draw(); };
+                const setErr = t => { s.err=true; s.d=t; s.p=null; s.o=null; s.wait=true; s.x=''; draw(); };
+                const calc = (a,b,o) => o==='+'?a+b:o==='-'?a-b:o==='*'?a*b:o==='/'?(b===0?null:a/b):o==='pow'?Math.pow(a,b):o==='root'?(b===0?null:Math.pow(a,1/b)):o==='mod'?(b===0?null:a%b):b;
+                const unary = a => {
+                    const n = val(), rad = s.deg ? (n*Math.PI/180) : n;
+                    let r = null, label = '';
+                    if (a==='sqrt') { if (n<0) return setErr('Invalid input'); r=Math.sqrt(n); label=`\u221a(${s.d})`; }
+                    if (a==='recip') { if (n===0) return setErr('Cannot divide by zero'); r=1/n; label=`1/(${s.d})`; }
+                    if (a==='sin') { r=Math.sin(rad); label=`${s.deg?'sind':'sin'}(${s.d})`; }
+                    if (a==='cos') { r=Math.cos(rad); label=`${s.deg?'cosd':'cos'}(${s.d})`; }
+                    if (a==='tan') { r=Math.tan(rad); label=`${s.deg?'tand':'tan'}(${s.d})`; }
+                    if (a==='asin') { if (n < -1 || n > 1) return setErr('Invalid input'); r=Math.asin(n); if (s.deg) r=r*180/Math.PI; label=`${s.deg?'asind':'asin'}(${s.d})`; }
+                    if (a==='acos') { if (n < -1 || n > 1) return setErr('Invalid input'); r=Math.acos(n); if (s.deg) r=r*180/Math.PI; label=`${s.deg?'acosd':'acos'}(${s.d})`; }
+                    if (a==='atan') { r=Math.atan(n); if (s.deg) r=r*180/Math.PI; label=`${s.deg?'atand':'atan'}(${s.d})`; }
+                    if (a==='sq') { r=n*n; label=`sqr(${s.d})`; }
+                    if (a==='cube') { r=n*n*n; label=`cube(${s.d})`; }
+                    if (a==='ten') { r=Math.pow(10,n); label=`10^(${s.d})`; }
+                    if (a==='log') { if (n<=0) return setErr('Invalid input'); r=Math.log10(n); label=`log(${s.d})`; }
+                    if (a==='ln') { if (n<=0) return setErr('Invalid input'); r=Math.log(n); label=`ln(${s.d})`; }
+                    if (a==='exp') { r=Math.exp(n); label=`exp(${s.d})`; }
+                    if (a==='fact') { if (!Number.isInteger(n) || n < 0 || n > 170) return setErr('Invalid input'); r=1; for (let i=2;i<=n;i++) r*=i; label=`fact(${s.d})`; }
+                    const f = fmt(r); if (f===null) return setErr('Invalid input'); s.d=f; s.x=label; s.wait=false; draw();
+                };
+                keys.addEventListener('click', e => {
+                    const b = e.target.closest('[data-a]'); if (!b) return; const a = b.dataset.a, v = b.dataset.v;
+                    if (a==='noop') return;
+                    if (a==='d') { if (s.err) reset(); s.d = s.wait ? v : (s.d==='0'?v:s.d+v); s.wait=false; return draw(); }
+                    if (a==='dot') { if (s.err) reset(); if (s.wait) { s.d='0.'; s.wait=false; } else if (!s.d.includes('.')) s.d+='.'; return draw(); }
+                    if (a==='c') return reset();
+                    if (a==='ce') { s.d='0'; s.err=false; return draw(); }
+                    if (a==='back') { if (s.err) return reset(); if (!s.wait) s.d = (s.d.length<=1 || (s.d.length===2 && s.d.startsWith('-'))) ? '0' : s.d.slice(0,-1); return draw(); }
+                    if (a==='sign') { if (!s.err && s.d!=='0') s.d = s.d.startsWith('-') ? s.d.slice(1) : `-${s.d}`; return draw(); }
+                    if (a==='pct') { const r = s.p!==null && s.o ? (s.p*val()/100) : val()/100, f = fmt(r); if (f===null) return setErr('Invalid input'); s.d=f; s.wait=false; return draw(); }
+                    if (['sqrt','recip','sin','cos','tan','asin','acos','atan','sq','cube','ten','log','ln','exp','fact'].includes(a)) return unary(a);
+                    if (a==='memory') { if (s.m===null) s.m=val(); else { s.d = fmt(s.m) || '0'; s.wait=false; } return draw(); }
+                    if (a==='mclr') { s.m=null; return draw(); }
+                    if (a==='mrec') { if (s.m!==null) { s.d = fmt(s.m) || '0'; s.wait=false; draw(); } return; }
+                    if (a==='madd') { s.m=(s.m===null?0:s.m)+val(); return draw(); }
+                    if (a==='msub') { s.m=(s.m===null?0:s.m)-val(); return draw(); }
+                    if (a==='angle') { s.deg=!s.deg; return draw(); }
+                    if (a==='fe') { s.fe=!s.fe; const f = fmt(Number(s.d)); if (f) s.d=f; return draw(); }
+                    if (a==='pi') { s.d = fmt(Math.PI) || '3.141592654'; s.x='pi'; s.wait=false; return draw(); }
+                    if (a==='op') {
+                        if (s.err) return;
+                        const n = val();
+                        if (s.p!==null && s.o && !s.wait) { const r = calc(s.p,n,s.o); if (r===null) return setErr('Cannot divide by zero'); const f = fmt(r); if (f===null) return setErr('Invalid input'); s.d=f; s.p=r; } else s.p=n;
+                        s.o=v; s.wait=true; s.x=`${fmt(s.p)||s.d} ${sym[v]}`; return draw();
+                    }
+                    if (a==='eq') {
+                        if (s.err || s.o===null || s.p===null) return;
+                        const n = val(), l = fmt(s.p) || '0', rtxt = s.wait ? l : s.d, r = calc(s.p,n,s.o);
+                        if (r===null) return setErr('Cannot divide by zero');
+                        const f = fmt(r); if (f===null) return setErr('Invalid input');
+                        s.d=f; s.x=`${l} ${sym[s.o]} ${rtxt} =`; s.p=null; s.o=null; s.wait=true; return draw();
+                    }
+                });
+                draw();
+                return {
+                    key(e) {
+                        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase()==='m') return false;
+                        if (/^[0-9]$/.test(e.key)) { e.preventDefault(); keys.querySelector(`[data-a="d"][data-v="${e.key}"]`)?.click(); return true; }
+                        const map = { '.':'dot', ',':'dot', '+':'+', '-':'-', '*':'*', '/':'/', '%':'pct', 'Enter':'eq', '=':'eq', 'Backspace':'back', 'Delete':'c', 'Escape':'c' };
+                        if (map[e.key]==='dot') { e.preventDefault(); keys.querySelector('[data-a="dot"]')?.click(); return true; }
+                        if (['+','-','*','/'].includes(map[e.key])) { e.preventDefault(); keys.querySelector(`[data-a="op"][data-v="${map[e.key]}"]`)?.click(); return true; }
+                        if (map[e.key]==='pct') { e.preventDefault(); keys.querySelector('[data-a="pct"]')?.click(); return true; }
+                        if (map[e.key]==='eq') { e.preventDefault(); keys.querySelector('[data-a="eq"]')?.click(); return true; }
+                        if (map[e.key]==='back') { e.preventDefault(); keys.querySelector('[data-a="back"]')?.click(); return true; }
+                        if (map[e.key]==='c') { e.preventDefault(); keys.querySelector('[data-a="c"]')?.click(); return true; }
+                        if (extra.ang && ['s','c','t','p'].includes(e.key.toLowerCase())) { const id = { s:'sin', c:'cos', t:'tan', p:'pi' }[e.key.toLowerCase()]; e.preventDefault(); keys.querySelector(`[data-a="${id}"]`)?.click(); return true; }
+                        return false;
+                    }
+                };
+            };
+
+            const std = makeCalc(document.getElementById('stdKeys'), document.getElementById('stdOut'), document.getElementById('stdExpr'), document.getElementById('stdMeta'));
+            const sci = makeCalc(document.getElementById('sciKeys'), document.getElementById('sciOut'), document.getElementById('sciExpr'), document.getElementById('sciMeta'), { ang:document.getElementById('angleBtn') });
+
+            const linear = (id, n, s, f, summary) => ({ id, n, s, summary: summary || s, toBase:v => v * f, fromBase:v => v / f });
+            const cats = [
+                { id:'volume', n:'Volume', input:'4', from:'milliliters', to:'teaspoons-us', units:[
+                    linear('milliliters','Milliliters','mL',1), linear('liters','Liters','L',1000), linear('teaspoons-us','Teaspoons (US)','tsp. (US)',4.92892159375),
+                    linear('tablespoons-us','Tablespoons (US)','tbsp. (US)',14.78676478125), linear('fluid-ounces-us','Fluid ounces (US)','fl oz. (US)',29.5735295625),
+                    linear('cups-us','Cups (US)','cups (US)',236.5882365), linear('pints-us','Pints (US)','pt. (US)',473.176473), linear('quarts-us','Quarts (US)','qt. (US)',946.352946),
+                    linear('gallons-us','Gallons (US)','gal. (US)',3785.411784), linear('teaspoons-uk','Teaspoons (UK)','tsp. (UK)',5.919388020833333),
+                    linear('tablespoons-uk','Tablespoons (UK)','tbsp. (UK)',17.7581640625), linear('cubic-centimeters','Cubic centimeters','cm^3',1),
+                    linear('cubic-inches','Cubic inches','in^3',16.387064), linear('coffee-cups','Coffee cups','coffee cups',177.441177375,'coffee cups')
+                ], summary:['teaspoons-uk','tablespoons-us','cubic-centimeters','cubic-inches','coffee-cups'] },
+                { id:'length', n:'Length', input:'12', from:'centimeters', to:'inches', units:[
+                    linear('millimeters','Millimeters','mm',0.001), linear('centimeters','Centimeters','cm',0.01), linear('meters','Meters','m',1), linear('kilometers','Kilometers','km',1000),
+                    linear('inches','Inches','in',0.0254), linear('feet','Feet','ft',0.3048), linear('yards','Yards','yd',0.9144), linear('miles','Miles','mi',1609.344)
+                ], summary:['meters','inches','feet','yards','miles'] },
+                { id:'weight', n:'Weight', input:'1', from:'kilograms', to:'pounds', units:[
+                    linear('grams','Grams','g',1), linear('kilograms','Kilograms','kg',1000), linear('ounces','Ounces','oz',28.349523125), linear('pounds','Pounds','lb',453.59237), linear('stones','Stones','st',6350.29318), linear('metric-tons','Metric tons','t',1000000)
+                ], summary:['grams','ounces','pounds','stones','metric-tons'] },
+                { id:'temperature', n:'Temperature', input:'20', from:'celsius', to:'fahrenheit', units:[
+                    { id:'celsius', n:'Celsius', s:'°C', summary:'°C', toBase:v => v, fromBase:v => v },
+                    { id:'fahrenheit', n:'Fahrenheit', s:'°F', summary:'°F', toBase:v => (v - 32) * 5 / 9, fromBase:v => (v * 9 / 5) + 32 },
+                    { id:'kelvin', n:'Kelvin', s:'K', summary:'K', toBase:v => v - 273.15, fromBase:v => v + 273.15 }
+                ], summary:['celsius','fahrenheit','kelvin'] },
+                { id:'energy', n:'Energy', input:'500', from:'joules', to:'calories', units:[
+                    linear('joules','Joules','J',1), linear('kilojoules','Kilojoules','kJ',1000), linear('calories','Calories','cal',4.184), linear('kilocalories','Kilocalories','kcal',4184), linear('watt-hours','Watt-hours','Wh',3600), linear('kilowatt-hours','Kilowatt-hours','kWh',3600000), linear('btu','BTU','BTU',1055.05585262)
+                ], summary:['joules','calories','kilocalories','watt-hours','btu'] },
+                { id:'area', n:'Area', input:'25', from:'square-meters', to:'square-feet', units:[
+                    linear('square-meters','Square meters','m²',1), linear('square-kilometers','Square kilometers','km²',1000000), linear('square-centimeters','Square centimeters','cm²',0.0001), linear('square-inches','Square inches','in²',0.00064516), linear('square-feet','Square feet','ft²',0.09290304), linear('acres','Acres','ac',4046.8564224), linear('hectares','Hectares','ha',10000)
+                ], summary:['square-meters','square-feet','square-inches','acres','hectares'] },
+                { id:'speed', n:'Speed', input:'60', from:'miles-per-hour', to:'kilometers-per-hour', units:[
+                    linear('meters-per-second','Meters per second','m/s',1), linear('kilometers-per-hour','Kilometers per hour','km/h',0.2777777778), linear('miles-per-hour','Miles per hour','mph',0.44704), linear('knots','Knots','kn',0.5144444444), linear('feet-per-second','Feet per second','ft/s',0.3048)
+                ], summary:['meters-per-second','kilometers-per-hour','miles-per-hour','knots','feet-per-second'] },
+                { id:'time', n:'Time', input:'24', from:'hours', to:'minutes', units:[
+                    linear('microseconds','Microseconds','us',0.000001), linear('milliseconds','Milliseconds','ms',0.001), linear('seconds','Seconds','s',1), linear('minutes','Minutes','min',60), linear('hours','Hours','h',3600), linear('days','Days','d',86400), linear('weeks','Weeks','wk',604800)
+                ], summary:['days','weeks','seconds','milliseconds','microseconds'] },
+                { id:'power', n:'Power', input:'100', from:'watts', to:'horsepower', units:[
+                    linear('watts','Watts','W',1), linear('kilowatts','Kilowatts','kW',1000), linear('horsepower','Horsepower','hp',745.6998715823), linear('btu-per-minute','BTU per minute','BTU/min',17.5842666667)
+                ], summary:['watts','kilowatts','horsepower','btu-per-minute'] },
+                { id:'data', n:'Data', input:'1024', from:'bytes', to:'kilobytes', units:[
+                    { id:'bits', n:'Bits', s:'b', summary:'b', toBase:v => v / 8, fromBase:v => v * 8 },
+                    linear('bytes','Bytes','B',1), linear('kilobytes','Kilobytes','KB',1000), linear('megabytes','Megabytes','MB',1000000), linear('gigabytes','Gigabytes','GB',1000000000), linear('terabytes','Terabytes','TB',1000000000000)
+                ], summary:['bits','bytes','kilobytes','megabytes','gigabytes'] }
+            ];
+            const c = { cat:'volume', from:'milliliters', to:'teaspoons-us', input:'4' };
+            const cin = document.getElementById('cin'), cout = document.getElementById('cout'), csum = document.getElementById('csum');
+            const catBtn = document.getElementById('catBtn'), fromBtn = document.getElementById('fromBtn'), toBtn = document.getElementById('toBtn');
+            const catLabel = document.getElementById('catLabel'), fromLabel = document.getElementById('fromLabel'), toLabel = document.getElementById('toLabel');
+            const menu = document.getElementById('convMenu');
+            let menuAnchor = null;
+            const cfmt = n => {
+                if (!Number.isFinite(n)) return '0';
+                if (Math.abs(n) >= 1e6 || (Math.abs(n) > 0 && Math.abs(n) < 1e-4)) return n.toExponential(6).replace(/\.?0+e/,'e');
+                let v = new Intl.NumberFormat('en-US',{ maximumFractionDigits:6 }).format(n);
+                if (v.includes('.')) v = v.replace(/0+$/,'').replace(/\.$/,'');
+                return v;
+            };
+            const cat = () => cats.find(x => x.id === c.cat) || cats[0];
+            const unit = (id) => cat().units.find(x => x.id === id) || cat().units[0];
+            const baseValue = () => unit(c.from).toBase(Number(c.input) || 0);
+            const convert = (value, fromId, toId) => unit(toId).fromBase(unit(fromId).toBase(value));
+            const closeMenu = () => { menu.classList.remove('open'); menu.setAttribute('aria-hidden','true'); menu.innerHTML=''; menuAnchor=null; };
+            const openMenu = (anchor, items, selectedId, pick) => {
+                const host = anchor.closest('section');
+                const a = anchor.getBoundingClientRect(), h = host.getBoundingClientRect();
+                menu.style.left = `${a.left - h.left}px`;
+                menu.style.top = `${a.bottom - h.top + 8}px`;
+                menu.innerHTML = items.map(item => `<button type="button" class="menu-item${item.id === selectedId ? ' sel' : ''}" data-id="${item.id}">${item.label}</button>`).join('');
+                menu.classList.add('open');
+                menu.setAttribute('aria-hidden','false');
+                menuAnchor = anchor;
+                menu.querySelectorAll('.menu-item').forEach(btn => btn.addEventListener('click', () => { pick(btn.dataset.id); closeMenu(); }));
+            };
+            const setCategory = id => {
+                const next = cats.find(x => x.id === id);
+                if (!next) return;
+                c.cat = next.id; c.from = next.from; c.to = next.to; c.input = next.input;
+                drawConv();
+            };
+            const drawConv = () => {
+                const category = cat(), inputNumber = Number(c.input) || 0, out = convert(inputNumber, c.from, c.to), base = baseValue();
+                catLabel.textContent = category.n; fromLabel.textContent = unit(c.from).n; toLabel.textContent = unit(c.to).n;
+                cin.textContent = cfmt(inputNumber); cout.textContent = cfmt(out);
+                csum.innerHTML = category.summary.map(id => {
+                    const u = category.units.find(item => item.id === id);
+                    return u ? `<span>${cfmt(u.fromBase(base))} ${u.summary}</span>` : '';
+                }).join('');
+            };
+            document.getElementById('cpad').addEventListener('click', e => {
+                const b = e.target.closest('[data-a]'); if (!b) return;
+                if (b.dataset.a==='d') c.input = c.input==='0' ? b.dataset.v : c.input + b.dataset.v;
+                if (b.dataset.a==='dot' && !c.input.includes('.')) c.input += '.';
+                if (b.dataset.a==='back') c.input = c.input.length <= 1 ? '0' : c.input.slice(0,-1);
+                if (b.dataset.a==='ce') c.input = '0';
+                drawConv();
+            });
+            catBtn.addEventListener('click', e => {
+                e.stopPropagation();
+                if (menu.classList.contains('open') && menuAnchor === catBtn) return closeMenu();
+                openMenu(catBtn, cats.map(item => ({ id:item.id, label:item.n })), c.cat, setCategory);
+            });
+            fromBtn.addEventListener('click', e => {
+                e.stopPropagation();
+                if (menu.classList.contains('open') && menuAnchor === fromBtn) return closeMenu();
+                openMenu(fromBtn, cat().units.map(item => ({ id:item.id, label:item.n })), c.from, id => { c.from = id; if (c.from === c.to) c.to = cat().units.find(item => item.id !== id).id; drawConv(); });
+            });
+            toBtn.addEventListener('click', e => {
+                e.stopPropagation();
+                if (menu.classList.contains('open') && menuAnchor === toBtn) return closeMenu();
+                openMenu(toBtn, cat().units.map(item => ({ id:item.id, label:item.n })), c.to, id => { c.to = id; if (c.from === c.to) c.from = cat().units.find(item => item.id !== id).id; drawConv(); });
+            });
+            document.addEventListener('click', e => { if (!menu.classList.contains('open')) return; if (menu.contains(e.target) || (menuAnchor && menuAnchor.contains(e.target))) return; closeMenu(); });
+
+            const maxViewHeight = () => Math.max(...Object.values(views).map(h));
+            const designHeight = () => (app.offsetHeight - stage.offsetHeight) + maxViewHeight();
+            const fit = () => {
+                const pad = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--viewport-pad')) || 0;
+                const widthScale = (window.innerWidth - (pad * 2)) / app.offsetWidth;
+                const heightScale = (window.innerHeight - (pad * 2)) / designHeight();
+                const scale = Math.min(1, widthScale, heightScale);
+                document.documentElement.style.setProperty('--fit-scale', `${Math.max(scale, 0.5)}`);
+                viewport.style.alignItems = scale < 1 ? 'flex-start' : 'flex-start';
+            };
+            const h = v => Math.ceil(v.scrollHeight);
+            const sync = () => { stage.style.height = `${h(views[mode])}px`; requestAnimationFrame(fit); };
+            const clean = v => v.classList.remove('enter-left','enter-right','leave-left','leave-right');
+            const open = next => {
+                if (next===mode) return;
+                closeMenu();
+                const prev = mode, a = views[prev], b = views[next], f = modeOrder.indexOf(next) > modeOrder.indexOf(prev), ec = f ? 'enter-right' : 'enter-left', lc = f ? 'leave-left' : 'leave-right';
+                token += 1; const t = token;
+                clean(a); clean(b); b.classList.add(ec); stage.style.height = `${h(a)}px`; tabs.forEach(x => x.classList.toggle('active', x.dataset.tab===next));
+                requestAnimationFrame(() => requestAnimationFrame(() => { a.classList.remove('active'); a.classList.add(lc); b.classList.add('active'); b.classList.remove(ec); stage.style.height = `${h(b)}px`; fit(); }));
+                const end = e => { if (e.target!==b || e.propertyName!=='transform') return; b.removeEventListener('transitionend', end); if (t!==token) return; clean(a); clean(b); mode=next; sync(); fit(); };
+                b.addEventListener('transitionend', end);
+            };
+
+            tabs.forEach(t => t.addEventListener('click', () => open(t.dataset.tab)));
+            window.addEventListener('keydown', e => {
+                if (mode==='converter') {
+                    if (/^[0-9]$/.test(e.key)) { e.preventDefault(); c.input = c.input==='0' ? e.key : c.input + e.key; return drawConv(); }
+                    if (e.key==='.' || e.key===',') { e.preventDefault(); if (!c.input.includes('.')) c.input += '.'; return drawConv(); }
+                    if (e.key==='Backspace') { e.preventDefault(); c.input = c.input.length <= 1 ? '0' : c.input.slice(0,-1); return drawConv(); }
+                    if (e.key==='Delete' || e.key==='Escape') { e.preventDefault(); c.input='0'; return drawConv(); }
+                    return;
+                }
+                (mode==='scientific' ? sci : std).key(e);
+            });
+            window.addEventListener('resize', () => { closeMenu(); sync(); fit(); });
+            stage.addEventListener('transitionend', e => { if (e.propertyName === 'height') fit(); });
+            drawConv(); sync(); fit();
+        })();
+    </script>
+</body>
+</html>

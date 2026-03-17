@@ -38,6 +38,7 @@ body.view-login .notification-container {
     overflow: visible;
     position: relative;
     user-select: none;
+    touch-action: pan-y;
     perspective: 1000px;
     transform-style: preserve-3d;
 }

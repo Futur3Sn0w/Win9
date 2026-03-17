@@ -2,6 +2,20 @@
 (function () {
     'use strict';
 
+    function getWallpaperController() {
+        const contexts = [window, window.parent, window.top];
+        for (const ctx of contexts) {
+            try {
+                if (ctx && ctx.WallpaperController) {
+                    return ctx.WallpaperController;
+                }
+            } catch (error) {
+                console.warn('[Colors] Could not access wallpaper controller:', error);
+            }
+        }
+        return null;
+    }
+
     function resolveWallColorRegistry() {
         const contexts = [window, window.parent, window.top];
         for (const ctx of contexts) {
@@ -361,12 +375,17 @@
         // Try to access the WallpaperColorExtractor from the main window
         let colorExtractor = null;
         let currentWallpaper = null;
+        const controller = getWallpaperController();
+
+        if (controller && typeof controller.getCurrentFullPath === 'function') {
+            currentWallpaper = controller.getCurrentFullPath();
+        }
 
         // Get the current wallpaper path
         if (window.parent && window.parent !== window) {
             try {
                 const wallpaperEl = window.parent.document.getElementById('desktop-wallpaper');
-                if (wallpaperEl) {
+                if (!currentWallpaper && wallpaperEl) {
                     const bgImage = wallpaperEl.style.backgroundImage;
                     if (bgImage) {
                         // Extract URL from background-image
@@ -382,7 +401,7 @@
         if (!colorExtractor && window.top && window.top !== window) {
             try {
                 const wallpaperEl = window.top.document.getElementById('desktop-wallpaper');
-                if (wallpaperEl) {
+                if (!currentWallpaper && wallpaperEl) {
                     const bgImage = wallpaperEl.style.backgroundImage;
                     if (bgImage) {
                         currentWallpaper = bgImage.replace(/url\(['"]?(.*?)['"]?\)/i, '$1');

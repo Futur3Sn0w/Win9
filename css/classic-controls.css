@@ -148,6 +148,13 @@
     background: #cce8ff;
 }
 
+.classic-button:disabled {
+    color: #8c8c8c;
+    border-color: #c6c6c6;
+    background: linear-gradient(to bottom, #f4f4f4, #ececec);
+    cursor: default;
+}
+
 .classic-button.default-button {
     border: 1px solid #0078d7;
 }
@@ -180,6 +187,33 @@
 
 .classic-select:not(:disabled):active {
     background: #cce8ff;
+}
+
+.classic-select:disabled {
+    color: #8c8c8c;
+    border-color: #c6c6c6;
+    background: linear-gradient(to bottom, #f4f4f4, #ececec);
+}
+
+/* Reusable Control Panel form rows */
+.classic-control-row {
+    display: grid;
+    grid-template-columns: 80px minmax(0, 1fr);
+    align-items: center;
+    gap: 10px;
+}
+
+.classic-control-label {
+    font-size: 13px;
+    color: #000;
+    line-height: 23px;
+    white-space: nowrap;
+}
+
+.classic-control-field {
+    width: 100%;
+    max-width: 170px;
+    min-width: 0;
 }
 
 /* Button Bar */

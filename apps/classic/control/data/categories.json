@@ -86,7 +86,7 @@
         },
         {
           "text": "Adjust screen resolution",
-          "appletId": "display"
+          "appletId": "screen-resolution"
         }
       ]
     },

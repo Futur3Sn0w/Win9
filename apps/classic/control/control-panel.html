@@ -73,6 +73,9 @@
         let currentCategory = null;
         let currentApplet = null;
         let currentSubPage = null; // Track sub-pages like desktop-background
+        let currentWindowId = null;
+        let dataLoaded = false;
+        let queuedAppletId = null;
         let navigationHistory = [];
         let historyIndex = -1;
 
@@ -95,9 +98,16 @@
                 applets = appletsData.applets;
                 categoryPages = categoryPagesData;
                 appletPages = appletPagesData;
+                dataLoaded = true;
 
                 // Initialize view
                 updateView();
+
+                if (queuedAppletId) {
+                    const pendingAppletId = queuedAppletId;
+                    queuedAppletId = null;
+                    openApplet(pendingAppletId);
+                }
             } catch (error) {
                 console.error('Error loading Control Panel data:', error);
             }
@@ -137,6 +147,7 @@
 
             updateNavigationButtons();
             updateBreadcrumbs();
+            updateHostWindowTitle();
         }
 
         // Render category view (main view)
@@ -248,7 +259,7 @@
                     </div>
                     <div class="cp-category-section-links">
                         ${section.links.map(link => `
-                            <a href="#" class="cp-category-section-link" data-applet="${section.appletId}" data-action="${link.action}">
+                            <a href="#" class="cp-category-section-link" data-applet="${section.appletId}" data-action="${link.action}" data-target="${link.target || ''}">
                                 ${link.text}
                             </a>
                         `).join('')}
@@ -267,7 +278,8 @@
                     linkEl.addEventListener('click', (e) => {
                         e.preventDefault();
                         const appletId = e.target.dataset.applet;
-                        openApplet(appletId);
+                        const targetAppletId = e.target.dataset.target;
+                        openApplet(targetAppletId || appletId);
                     });
                 });
 
@@ -527,7 +539,11 @@
             const iconGrid = document.createElement('div');
             iconGrid.className = `cp-icon-grid cp-icon-grid-${size}`;
 
-            applets.forEach(applet => {
+            const sortedApplets = [...applets].sort((left, right) =>
+                left.name.localeCompare(right.name, undefined, { sensitivity: 'base' })
+            );
+
+            sortedApplets.forEach(applet => {
                 const iconItem = document.createElement('div');
                 iconItem.className = 'cp-icon-item';
                 iconItem.innerHTML = `
@@ -753,9 +769,55 @@
             }
         }
 
+        function getCurrentWindowTitle() {
+            if (currentSubPage) {
+                return currentSubPage.title || 'Control Panel';
+            }
+
+            if (currentApplet) {
+                const appletPage = appletPages[currentApplet];
+                if (appletPage && appletPage.title) {
+                    return appletPage.title;
+                }
+
+                const applet = applets.find(item => item.id === currentApplet);
+                return applet ? applet.name : 'Control Panel';
+            }
+
+            if (currentCategory) {
+                const category = categories.find(item => item.id === currentCategory);
+                return category ? category.name : 'Control Panel';
+            }
+
+            if (currentView === 'small-icons' || currentView === 'large-icons') {
+                return 'All Control Panel Items';
+            }
+
+            return 'Control Panel';
+        }
+
+        function updateHostWindowTitle() {
+            if (!window.parent || window.parent === window) {
+                document.title = getCurrentWindowTitle();
+                return;
+            }
+
+            window.parent.postMessage({
+                action: 'updateWindowTitle',
+                title: getCurrentWindowTitle(),
+                windowId: currentWindowId,
+                appId: APP_ID
+            }, '*');
+        }
+
         // Open an applet
         function openApplet(appletId) {
             console.log('Opening applet:', appletId);
+
+            if (!dataLoaded) {
+                queuedAppletId = appletId;
+                return;
+            }
 
             // Special case: Taskbar and Navigation opens the existing taskbar-properties app
             if (appletId === 'taskbar') {
@@ -867,7 +929,14 @@
 
         // Listen for messages from parent window and iframe children
         window.addEventListener('message', function (e) {
-            if (e.data.action === 'openApplet' && e.data.appletId) {
+            if (e.data.action === 'setWindowId') {
+                currentWindowId = e.data.windowId || null;
+                updateHostWindowTitle();
+            } else if (e.data.action === 'openApplet' && e.data.appletId) {
+                if (!dataLoaded) {
+                    queuedAppletId = e.data.appletId;
+                    return;
+                }
                 openApplet(e.data.appletId);
             } else if (e.data.action === 'navigateToSubPage') {
                 // Navigate to a sub-page (from personalization to desktop-background)
@@ -895,6 +964,14 @@
             } else if (e.data.action === 'subPageLoaded') {
                 // Sub-page has loaded, update title if needed
                 console.log('Sub-page loaded:', e.data.page);
+            } else if (e.data.action === 'closeControlPanel') {
+                if (window.parent && window.parent !== window) {
+                    window.parent.postMessage({
+                        action: 'closeClassicApp',
+                        windowId: currentWindowId,
+                        appId: APP_ID
+                    }, '*');
+                }
             }
         });
 

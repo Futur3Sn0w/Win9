@@ -303,17 +303,10 @@
     function togglePinToTaskbar() {
         console.log('Toggling taskbar pin for app:', currentAppId);
 
-        const app = AppsManager.getAppById(currentAppId);
-        if (app) {
-            app.pinnedToTaskbar = !app.pinnedToTaskbar;
-            savePinnedTaskbarApps();
-
-            // Update the taskbar to show/hide pinned app
-            if (window.updateTaskbar) {
-                window.updateTaskbar();
-            } else {
-                AppsManager.updateTaskbar();
-            }
+        if (AppsManager && typeof AppsManager.toggleTaskbarPin === 'function') {
+            AppsManager.toggleTaskbarPin(currentAppId);
+        } else {
+            console.warn('[TaskbarContextMenu] AppsManager.toggleTaskbarPin() is unavailable');
         }
     }
 
@@ -368,21 +361,10 @@
      * Save pinned taskbar apps via registry
      */
     function savePinnedTaskbarApps() {
-        const allApps = AppsManager.getAllApps();
-        const pinnedTaskbarApps = allApps
-            .filter(app => app.pinnedToTaskbar)
-            .map(app => app.id);
-
-        const registry = window.TileLayoutRegistry;
-        if (registry && typeof registry.saveTaskbarPins === 'function') {
-            try {
-                registry.saveTaskbarPins(pinnedTaskbarApps);
-                console.log('[TaskbarContextMenu] Saved pinned taskbar apps to registry:', pinnedTaskbarApps);
-            } catch (error) {
-                console.error('[TaskbarContextMenu] Failed to save pinned taskbar apps to registry:', error);
-            }
+        if (AppsManager && typeof AppsManager.saveTaskbarPins === 'function') {
+            AppsManager.saveTaskbarPins();
         } else {
-            console.warn('[TaskbarContextMenu] Tile layout registry API unavailable; pinned taskbar apps not persisted');
+            console.warn('[TaskbarContextMenu] AppsManager.saveTaskbarPins() is unavailable');
         }
     }
 

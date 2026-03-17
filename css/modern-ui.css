@@ -38,6 +38,15 @@
     transform: translateY(0);
 }
 
+.modern-app-titlebar.touch-visible,
+.modern-app-titlebar.touch-pinned {
+    transform: translateY(0);
+}
+
+.modern-app-titlebar.touch-dragging {
+    transform: translateY(var(--modern-titlebar-touch-offset, -100%));
+}
+
 /* Titlebar hover trigger - invisible area at top of screen */
 .modern-app-titlebar-trigger {
     position: absolute;

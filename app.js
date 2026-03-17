@@ -5,6 +5,7 @@ const {
     getDesktopWallpaperFullPath,
     toFullWallpaperPath
 } = require('./registry/wallpaper-registry.js');
+const { createWallpaperController } = require('./components/wallpaper/wallpaper-controller.js');
 const {
     loadLockScreenWallpaperState,
     saveLockScreenWallpaperState,
@@ -24,10 +25,13 @@ const {
     clearPreviousStartScreenBackground
 } = require('./registry/start-background-registry.js');
 const SettingsRegistry = require('./registry/settings-registry.js');
+const { pathToFileURL: appPathToFileURL } = require('url');
 
 let electronIpc = null;
+let electronScreen = null;
+let electronWebFrame = null;
 try {
-    ({ ipcRenderer: electronIpc } = require('electron'));
+    ({ ipcRenderer: electronIpc, screen: electronScreen, webFrame: electronWebFrame } = require('electron'));
 } catch (error) {
     console.debug('[App] ipcRenderer unavailable:', error.message || error);
 }
@@ -89,10 +93,68 @@ function isAccentAutomaticMode() {
     return false;
 }
 
+function toAssetUrl(path) {
+    if (!path || typeof path !== 'string') {
+        return path;
+    }
+
+    if (path.startsWith('http://') || path.startsWith('https://') ||
+        path.startsWith('file://') || path.startsWith('resources/')) {
+        return path;
+    }
+
+    if (path.startsWith('/') || path.startsWith('\\\\') || /^[A-Z]:[\\/]/i.test(path)) {
+        try {
+            return appPathToFileURL(path).href;
+        } catch (error) {
+            console.warn('[App] Failed to convert asset path to file URL:', path, error);
+        }
+    }
+
+    return path;
+}
+
+function resolveWallpaperPreviewType(path) {
+    if (!path || typeof path !== 'string') {
+        return 'builtin';
+    }
+
+    if (path.startsWith('resources/')) {
+        return 'builtin';
+    }
+
+    if (path.startsWith('/') || path.startsWith('\\\\') || /^[A-Z]:[\\/]/i.test(path) || path.startsWith('file://') || path.startsWith('http://') || path.startsWith('https://')) {
+        return 'custom';
+    }
+
+    return 'builtin';
+}
+
+function handleWallpaperControllerStateChanged(detail) {
+    if (currentBackground && currentBackground.pattern === 'desktop') {
+        applyDesktopWallpaperBackground(detail.currentWallpaperPath);
+    }
+
+    refreshPersonalizeBackgroundSelection();
+}
+
+const wallpaperController = createWallpaperController({
+    getWallpaperElement: () => document.getElementById('desktop-wallpaper'),
+    toAssetUrl,
+    setDesktopTileImage: (path) => AppsManager.setTileImage('desktop', path),
+    shouldExtractColor: () => isAccentAutomaticMode(),
+    onStateChanged: handleWallpaperControllerStateChanged
+});
+
+if (typeof window !== 'undefined') {
+    window.WallpaperController = wallpaperController;
+}
+
 // View management
 let views = {};
 let currentView = 'boot';
 let viewBeforeLock = null; // Track which view the user was on before locking
+let startReturnModernAppId = null;
 
 let bootSequenceTimer = null;
 let bootTransitionTimer = null;
@@ -235,12 +297,273 @@ const REGISTRY_PATHS = {
     edgeUI: 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\ImmersiveShell\\EdgeUI',
     startPage: 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\StartPage',
     launcher: 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\ImmersiveShell\\Launcher',
-    accent: 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Accent'
+    accent: 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Accent',
+    display: 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Display'
 };
+const DISPLAY_ZOOM_VALUE_NAME = 'ZoomPercent';
+const DISPLAY_DEFAULT_ZOOM_PERCENT = 100;
+const DISPLAY_MIN_ZOOM_PERCENT = 25;
+const DISPLAY_MAX_ZOOM_PERCENT = 500;
+const DISPLAY_ZOOM_PRESETS = [50, 67, 80, 90, 100, 110, 125, 150, 175, 200];
+let currentShellZoomPercent = DISPLAY_DEFAULT_ZOOM_PERCENT;
+let displayZoomMonitorId = null;
 let taskbarAutoHideEnabled = loadTaskbarAutoHidePreference();
 let taskbarHeight = loadTaskbarHeightPreference();
 let taskbarUseSmallIcons = loadTaskbarSmallIconsPreference();
 let lockScreenWallpaperState = getDefaultLockScreenWallpaperState();
+
+function normalizeDisplayZoomPercent(value, fallback = DISPLAY_DEFAULT_ZOOM_PERCENT) {
+    const numeric = Number(value);
+    if (!Number.isFinite(numeric)) {
+        return fallback;
+    }
+
+    const rounded = Math.round(numeric);
+    return Math.max(DISPLAY_MIN_ZOOM_PERCENT, Math.min(DISPLAY_MAX_ZOOM_PERCENT, rounded));
+}
+
+function roundResolutionDimension(value) {
+    const numeric = Number(value);
+    if (!Number.isFinite(numeric) || numeric <= 0) {
+        return 1;
+    }
+
+    return Math.max(1, Math.round(numeric));
+}
+
+function getPrimaryDisplayMetrics() {
+    const display = electronScreen && typeof electronScreen.getPrimaryDisplay === 'function'
+        ? electronScreen.getPrimaryDisplay()
+        : null;
+
+    const scaleFactor = Number(display?.scaleFactor) || 1;
+    const width = roundResolutionDimension((display?.size?.width || window.screen.width || 1366) * scaleFactor);
+    const height = roundResolutionDimension((display?.size?.height || window.screen.height || 768) * scaleFactor);
+
+    return {
+        id: display?.id || 'primary',
+        label: display?.label || 'Generic PnP Monitor',
+        width,
+        height,
+        aspectRatio: height > 0 ? width / height : 1
+    };
+}
+
+function getStoredDisplayZoomPercent() {
+    const registry = getRegistry();
+    return normalizeDisplayZoomPercent(
+        registry.getValue(REGISTRY_PATHS.display, DISPLAY_ZOOM_VALUE_NAME, DISPLAY_DEFAULT_ZOOM_PERCENT)
+    );
+}
+
+function persistDisplayZoomPercent(zoomPercent) {
+    const registry = getRegistry();
+    const normalized = normalizeDisplayZoomPercent(zoomPercent);
+    registry.setValue(
+        REGISTRY_PATHS.display,
+        DISPLAY_ZOOM_VALUE_NAME,
+        normalized,
+        RegistryType.REG_DWORD
+    );
+    return normalized;
+}
+
+function getActualShellZoomPercent() {
+    if (electronWebFrame && typeof electronWebFrame.getZoomFactor === 'function') {
+        return normalizeDisplayZoomPercent(electronWebFrame.getZoomFactor() * 100, currentShellZoomPercent);
+    }
+
+    return currentShellZoomPercent;
+}
+
+function buildDisplayResolutionOption(displayMetrics, zoomPercent) {
+    const normalizedZoomPercent = normalizeDisplayZoomPercent(zoomPercent);
+    const zoomFactor = normalizedZoomPercent / 100;
+    const width = roundResolutionDimension(displayMetrics.width / zoomFactor);
+    const height = roundResolutionDimension(displayMetrics.height / zoomFactor);
+    const isDefault = normalizedZoomPercent === DISPLAY_DEFAULT_ZOOM_PERCENT;
+    const suffix = isDefault ? ' (Default)' : ` (${normalizedZoomPercent}% zoom)`;
+
+    return {
+        zoomPercent: normalizedZoomPercent,
+        zoomFactor,
+        width,
+        height,
+        label: `${width} x ${height}${suffix}`,
+        isDefault
+    };
+}
+
+function getDisplayResolutionOptions(displayMetrics = getPrimaryDisplayMetrics(), currentZoomPercent = getActualShellZoomPercent()) {
+    const zoomPercents = new Set(DISPLAY_ZOOM_PRESETS.map(preset => normalizeDisplayZoomPercent(preset)));
+    zoomPercents.add(normalizeDisplayZoomPercent(currentZoomPercent));
+
+    return Array.from(zoomPercents)
+        .map(zoomPercent => buildDisplayResolutionOption(displayMetrics, zoomPercent))
+        .sort((left, right) => {
+            const areaDelta = (right.width * right.height) - (left.width * left.height);
+            if (areaDelta !== 0) {
+                return areaDelta;
+            }
+
+            return left.zoomPercent - right.zoomPercent;
+        });
+}
+
+function getDisplaySettingsState() {
+    const displayMetrics = getPrimaryDisplayMetrics();
+    const zoomPercent = getActualShellZoomPercent();
+    const resolutionOptions = getDisplayResolutionOptions(displayMetrics, zoomPercent);
+    const currentResolution = resolutionOptions.find(option => option.zoomPercent === zoomPercent)
+        || buildDisplayResolutionOption(displayMetrics, zoomPercent);
+
+    return {
+        display: displayMetrics,
+        zoomPercent,
+        zoomFactor: zoomPercent / 100,
+        currentResolution,
+        resolutionOptions
+    };
+}
+
+function dispatchDisplaySettingsChanged(source = 'shell') {
+    if (typeof window === 'undefined') {
+        return;
+    }
+
+    window.dispatchEvent(new CustomEvent('win8-display-settings-changed', {
+        detail: {
+            source,
+            state: getDisplaySettingsState()
+        }
+    }));
+}
+
+function applyShellZoomPercent(zoomPercent, options = {}) {
+    const {
+        persist = true,
+        notify = true,
+        source = 'shell'
+    } = options;
+
+    const normalized = normalizeDisplayZoomPercent(zoomPercent);
+
+    if (electronWebFrame && typeof electronWebFrame.setZoomFactor === 'function') {
+        electronWebFrame.setZoomFactor(normalized / 100);
+    }
+
+    currentShellZoomPercent = normalized;
+
+    if (persist) {
+        persistDisplayZoomPercent(normalized);
+    }
+
+    if (notify) {
+        dispatchDisplaySettingsChanged(source);
+    }
+
+    return normalized;
+}
+
+function syncShellZoomPercentFromFrame() {
+    const actualZoomPercent = getActualShellZoomPercent();
+    if (actualZoomPercent === currentShellZoomPercent) {
+        return;
+    }
+
+    currentShellZoomPercent = actualZoomPercent;
+    persistDisplayZoomPercent(actualZoomPercent);
+    dispatchDisplaySettingsChanged('shortcut');
+}
+
+function startDisplayZoomMonitoring() {
+    if (typeof window === 'undefined') {
+        return;
+    }
+
+    applyShellZoomPercent(getStoredDisplayZoomPercent(), {
+        persist: false,
+        notify: false,
+        source: 'startup'
+    });
+
+    if (displayZoomMonitorId) {
+        clearInterval(displayZoomMonitorId);
+    }
+
+    displayZoomMonitorId = window.setInterval(syncShellZoomPercentFromFrame, 500);
+
+    window.addEventListener('beforeunload', () => {
+        if (displayZoomMonitorId) {
+            clearInterval(displayZoomMonitorId);
+            displayZoomMonitorId = null;
+        }
+    }, { once: true });
+}
+
+function sendControlPanelAppletNavigation(appletId, attemptsRemaining = 20) {
+    const runningControlPanel = AppsManager.getRunningApp('control-panel');
+    const iframe = runningControlPanel?.$container?.find('iframe')[0];
+
+    if (iframe && iframe.contentWindow) {
+        iframe.contentWindow.postMessage({
+            action: 'openApplet',
+            appletId
+        }, '*');
+        return;
+    }
+
+    if (attemptsRemaining <= 0) {
+        console.warn('Unable to navigate Control Panel to applet:', appletId);
+        return;
+    }
+
+    setTimeout(() => {
+        sendControlPanelAppletNavigation(appletId, attemptsRemaining - 1);
+    }, 150);
+}
+
+function openControlPanelApplet(appletId) {
+    if (!appletId) {
+        return;
+    }
+
+    const controlPanelApp = AppsManager.getAppById('control-panel');
+    if (!controlPanelApp) {
+        console.warn('Control Panel app is not available for applet launch:', appletId);
+        return;
+    }
+
+    if (AppsManager.isAppRunning('control-panel')) {
+        if (AppsManager.getAppState('control-panel') === 'minimized') {
+            restoreClassicWindow('control-panel');
+        } else {
+            focusClassicWindow('control-panel');
+        }
+        sendControlPanelAppletNavigation(appletId);
+        return;
+    }
+
+    launchApp(controlPanelApp, null, {
+        initialAppletId: appletId
+    });
+}
+
+startDisplayZoomMonitoring();
+
+if (typeof window !== 'undefined') {
+    window.DisplaySettingsAPI = {
+        getState: getDisplaySettingsState,
+        getResolutionOptions: () => getDisplaySettingsState().resolutionOptions,
+        getZoomPercent: getActualShellZoomPercent,
+        setZoomPercent: (zoomPercent) => applyShellZoomPercent(zoomPercent, {
+            persist: true,
+            notify: true,
+            source: 'control-panel'
+        }),
+        openControlPanelApplet
+    };
+}
 
 function isDefaultLockScreenState(state) {
     if (!state) {
@@ -819,11 +1142,11 @@ function showView(viewName, keepLoginVisible = false) {
 }
 
 function shouldDisplayTaskbar(viewName) {
-    return viewName === 'desktop' || viewName === 'start';
+    return viewName === 'desktop' || viewName === 'start' || viewName === 'modern';
 }
 
 function shouldAutoHideTaskbarForView(viewName) {
-    if (viewName === 'start') {
+    if (viewName === 'start' || viewName === 'modern') {
         return true;
     }
 
@@ -932,6 +1255,41 @@ $(document).ready(function () {
 let lockDragging = false;
 let lockStartY = 0;
 let lockCurrentY = 0;
+let lockTouchMoved = false;
+let suppressNextLockClick = false;
+let lockBounceTimeout = null;
+const LOCK_SCREEN_TOUCH_TAP_MAX_DRAG = 18;
+const LOCK_SCREEN_DISMISS_DRAG_THRESHOLD = -100;
+
+function suppressLockScreenClick(duration = 450) {
+    suppressNextLockClick = true;
+    setTimeout(function () {
+        suppressNextLockClick = false;
+    }, duration);
+}
+
+function playLockScreenTouchBounce() {
+    const $lockScreen = views.lock;
+    if (!$lockScreen.length) {
+        return;
+    }
+
+    clearTimeout(lockBounceTimeout);
+    suppressLockScreenClick();
+
+    $lockScreen.removeClass('touch-bouncing');
+    $lockScreen.css({
+        'transition': '',
+        'transform': 'translateY(0)'
+    });
+
+    void $lockScreen[0].offsetHeight;
+    $lockScreen.addClass('touch-bouncing');
+
+    lockBounceTimeout = setTimeout(function () {
+        $lockScreen.removeClass('touch-bouncing');
+    }, 450);
+}
 
 function initLockScreen() {
     // Clear any existing lock screen interval first
@@ -944,13 +1302,18 @@ function initLockScreen() {
     const $lockScreen = views.lock;
 
     // Remove any existing event handlers to avoid duplicates
-    $lockScreen.off('mousedown touchstart touchmove touchend click');
+    $lockScreen.off('mousedown touchstart touchmove touchend touchcancel click');
     $(document).off('mousemove.lockscreen mouseup.lockscreen keydown.lockscreen');
+    clearTimeout(lockBounceTimeout);
+    $lockScreen.removeClass('touch-bouncing');
 
     // Mouse drag support
     $lockScreen.on('mousedown', function (e) {
+        $lockScreen.removeClass('touch-bouncing');
         lockStartY = e.clientY;
+        lockCurrentY = e.clientY;
         lockDragging = true;
+        lockTouchMoved = false;
         $lockScreen.css('transition', 'none');
     });
 
@@ -969,7 +1332,7 @@ function initLockScreen() {
         $lockScreen.css('transition', '');
 
         const deltaY = lockCurrentY - lockStartY;
-        if (deltaY < -100) { // Dragged up enough
+        if (deltaY < LOCK_SCREEN_DISMISS_DRAG_THRESHOLD) { // Dragged up enough
             transitionToLogin();
         } else {
             $lockScreen.css('transform', 'translateY(0)');
@@ -978,28 +1341,51 @@ function initLockScreen() {
 
     // Touch drag support
     $lockScreen.on('touchstart', function (e) {
-        lockStartY = e.originalEvent.touches[0].clientY;
+        const originalEvent = e.originalEvent;
+        if (!originalEvent.touches || originalEvent.touches.length !== 1) {
+            return;
+        }
+
+        const touch = originalEvent.touches[0];
+        $lockScreen.removeClass('touch-bouncing');
+        lockStartY = touch.clientY;
+        lockCurrentY = touch.clientY;
         lockDragging = true;
+        lockTouchMoved = false;
         $lockScreen.css('transition', 'none');
     });
 
     $lockScreen.on('touchmove', function (e) {
         if (!lockDragging) return;
-        lockCurrentY = e.originalEvent.touches[0].clientY;
+
+        const originalEvent = e.originalEvent;
+        if (!originalEvent.touches || originalEvent.touches.length !== 1) {
+            return;
+        }
+
+        const touch = originalEvent.touches[0];
+        lockCurrentY = touch.clientY;
         const deltaY = lockCurrentY - lockStartY;
+        if (Math.abs(deltaY) >= LOCK_SCREEN_TOUCH_TAP_MAX_DRAG) {
+            lockTouchMoved = true;
+        }
         if (deltaY < 0) { // Only allow upward drag
             $lockScreen.css('transform', `translateY(${deltaY}px)`);
+            e.preventDefault();
         }
     });
 
-    $lockScreen.on('touchend', function () {
+    $lockScreen.on('touchend touchcancel', function () {
         if (!lockDragging) return;
         lockDragging = false;
         $lockScreen.css('transition', '');
 
         const deltaY = lockCurrentY - lockStartY;
-        if (deltaY < -100) { // Dragged up enough
+        if (deltaY < LOCK_SCREEN_DISMISS_DRAG_THRESHOLD) { // Dragged up enough
+            suppressLockScreenClick();
             transitionToLogin();
+        } else if (!lockTouchMoved && Math.abs(deltaY) < LOCK_SCREEN_TOUCH_TAP_MAX_DRAG) {
+            playLockScreenTouchBounce();
         } else {
             $lockScreen.css('transform', 'translateY(0)');
         }
@@ -1007,6 +1393,12 @@ function initLockScreen() {
 
     // Click to go to login screen
     $lockScreen.on('click', function (e) {
+        if (suppressNextLockClick) {
+            e.preventDefault();
+            e.stopPropagation();
+            return;
+        }
+
         if (!lockDragging && Math.abs(lockCurrentY - lockStartY) < 10) {
             transitionToLogin();
         }
@@ -1375,6 +1767,58 @@ function login() {
 let contextMenuAppId = null;
 let tooltipTimeout = null;
 let tooltipHideTimeout = null;
+const START_SCREEN_TOUCH_SWIPE_GATE = 24;
+const START_SCREEN_TOUCH_DIRECTION_LOCK_THRESHOLD = 12;
+const START_SCREEN_TOUCH_COMMIT_THRESHOLD = 96;
+const START_SCREEN_TOUCH_HORIZONTAL_BIAS = 16;
+const START_SCREEN_TOUCH_RIGHT_EDGE_EXCLUSION = 32;
+const startScreenTouchDrag = {
+    active: false,
+    engaged: false,
+    startX: 0,
+    startY: 0,
+    initialAllAppsOpen: false,
+    baselineOffset: 0,
+    currentOffset: 0,
+    maxOffset: 0
+};
+
+function isStartScreenTouchSwipeContext() {
+    const $startScreen = $('#start-screen');
+    return $('body').hasClass('view-start') && $startScreen.length > 0 && $startScreen.hasClass('visible');
+}
+
+function getStartScreenSwipeExtent() {
+    const $viewsContainer = $('#start-screen .start-views-container');
+    return $viewsContainer.outerHeight() || $('#start-screen').outerHeight() || window.innerHeight;
+}
+
+function clearStartScreenTouchDragStyles() {
+    $('#start-screen')
+        .removeClass('touch-dragging')
+        .css('--start-touch-offset', '');
+}
+
+function resetStartScreenTouchDragState() {
+    startScreenTouchDrag.active = false;
+    startScreenTouchDrag.engaged = false;
+    startScreenTouchDrag.startX = 0;
+    startScreenTouchDrag.startY = 0;
+    startScreenTouchDrag.initialAllAppsOpen = false;
+    startScreenTouchDrag.baselineOffset = 0;
+    startScreenTouchDrag.currentOffset = 0;
+    startScreenTouchDrag.maxOffset = 0;
+    clearStartScreenTouchDragStyles();
+}
+
+function updateStartScreenTouchDragOffset(nextOffset) {
+    const clampedOffset = Math.max(-startScreenTouchDrag.maxOffset, Math.min(0, nextOffset));
+    startScreenTouchDrag.currentOffset = clampedOffset;
+
+    $('#start-screen')
+        .addClass('touch-dragging')
+        .css('--start-touch-offset', `${clampedOffset}px`);
+}
 
 $(document).ready(async function () {
     // Load apps data
@@ -1429,7 +1873,98 @@ $(document).ready(async function () {
 
     // All Apps toggle button click
     $('.all-apps-toggle').on('click', function () {
-        $('#start-screen').toggleClass('all-apps-open');
+        toggleStartScreenAllAppsOpen();
+    });
+
+    $('#start-screen').on('touchstart.startswipe', function (e) {
+        if (!isStartScreenTouchSwipeContext()) {
+            resetStartScreenTouchDragState();
+            return;
+        }
+
+        const originalEvent = e.originalEvent;
+        if (!originalEvent.touches || originalEvent.touches.length !== 1) {
+            return;
+        }
+
+        const touch = originalEvent.touches[0];
+        if (touch.clientX >= window.innerWidth - START_SCREEN_TOUCH_RIGHT_EDGE_EXCLUSION) {
+            return;
+        }
+
+        startScreenTouchDrag.active = true;
+        startScreenTouchDrag.engaged = false;
+        startScreenTouchDrag.startX = touch.clientX;
+        startScreenTouchDrag.startY = touch.clientY;
+        startScreenTouchDrag.initialAllAppsOpen = $('#start-screen').hasClass('all-apps-open');
+        startScreenTouchDrag.maxOffset = getStartScreenSwipeExtent();
+        startScreenTouchDrag.baselineOffset = startScreenTouchDrag.initialAllAppsOpen
+            ? -startScreenTouchDrag.maxOffset
+            : 0;
+        startScreenTouchDrag.currentOffset = startScreenTouchDrag.baselineOffset;
+    });
+
+    $(document).on('touchmove.startswipe', function (e) {
+        if (!startScreenTouchDrag.active) {
+            return;
+        }
+
+        if (!isStartScreenTouchSwipeContext()) {
+            resetStartScreenTouchDragState();
+            return;
+        }
+
+        const originalEvent = e.originalEvent;
+        if (!originalEvent.touches || originalEvent.touches.length !== 1) {
+            resetStartScreenTouchDragState();
+            return;
+        }
+
+        const touch = originalEvent.touches[0];
+        const deltaX = touch.clientX - startScreenTouchDrag.startX;
+        const deltaY = touch.clientY - startScreenTouchDrag.startY;
+
+        if (!startScreenTouchDrag.engaged) {
+            if (Math.abs(deltaY) < START_SCREEN_TOUCH_DIRECTION_LOCK_THRESHOLD) {
+                return;
+            }
+
+            if (Math.abs(deltaX) > Math.abs(deltaY) + START_SCREEN_TOUCH_HORIZONTAL_BIAS) {
+                resetStartScreenTouchDragState();
+                return;
+            }
+
+            const wantsAllApps = !startScreenTouchDrag.initialAllAppsOpen && deltaY <= -START_SCREEN_TOUCH_SWIPE_GATE;
+            const wantsPinned = startScreenTouchDrag.initialAllAppsOpen && deltaY >= START_SCREEN_TOUCH_SWIPE_GATE;
+
+            if (!wantsAllApps && !wantsPinned) {
+                return;
+            }
+
+            startScreenTouchDrag.engaged = true;
+        }
+
+        const gatedDeltaY = startScreenTouchDrag.initialAllAppsOpen
+            ? Math.max(0, deltaY - START_SCREEN_TOUCH_SWIPE_GATE)
+            : Math.min(0, deltaY + START_SCREEN_TOUCH_SWIPE_GATE);
+
+        updateStartScreenTouchDragOffset(startScreenTouchDrag.baselineOffset + gatedDeltaY);
+        e.preventDefault();
+    });
+
+    $(document).on('touchend.startswipe touchcancel.startswipe', function () {
+        if (!startScreenTouchDrag.active) {
+            return;
+        }
+
+        const shouldSwitchViews = startScreenTouchDrag.engaged &&
+            Math.abs(startScreenTouchDrag.currentOffset - startScreenTouchDrag.baselineOffset) >= START_SCREEN_TOUCH_COMMIT_THRESHOLD;
+        const nextAllAppsOpen = shouldSwitchViews
+            ? !startScreenTouchDrag.initialAllAppsOpen
+            : startScreenTouchDrag.initialAllAppsOpen;
+
+        setStartScreenAllAppsOpen(nextAllAppsOpen);
+        resetStartScreenTouchDragState();
     });
 
     // Initialize context menu
@@ -1514,7 +2049,7 @@ $(document).ready(async function () {
             const appId = $(this).attr('data-app');
             console.log('App clicked:', appId);
             launchApp(appId);
-            $('#start-screen').removeClass('all-apps-open');
+            setStartScreenAllAppsOpen(false);
         }
     });
 
@@ -1529,6 +2064,14 @@ $(document).ready(async function () {
 });
 
 function setDesktopTileWallpaper() {
+    if (window.WallpaperController) {
+        const currentWallpaperPath = window.WallpaperController.getCurrentFullPath();
+        if (currentWallpaperPath) {
+            AppsManager.setTileImage('desktop', currentWallpaperPath);
+            return;
+        }
+    }
+
     // First, try to get the wallpaper from registry-backed settings
     try {
         const settings = loadDesktopBackgroundSettings();
@@ -1880,6 +2423,7 @@ function openModernApp(app, launchOptions = {}) {
 
     // Hide any other active modern apps (only one modern app visible at a time)
     hideAllActiveModernApps();
+    hideModernTouchEdgeBars();
 
     const fromTaskbar = !!launchOptions.fromTaskbar;
 
@@ -2347,11 +2891,8 @@ function openModernApp(app, launchOptions = {}) {
     // Keep charms bar enabled for modern apps (they need access to Settings charm, etc.)
     $('body').addClass('charms-allowed');
 
-    // Set taskbar to auto-hide for modern apps
-    $('body').removeClass('taskbar-visible').addClass('taskbar-autohide');
-
-    // Set view class for modern app
-    $('body').removeClass('view-desktop view-start').addClass('view-modern');
+    setCurrentView('modern');
+    updateTaskbarVisibility('modern');
 
     console.log('Modern app opened:', app.name);
 }
@@ -2366,6 +2907,8 @@ function closeModernApp(appId) {
 
     const $container = runningApp.$container;
     const launchOrigin = runningApp.launchOrigin || 'desktop';
+
+    hideModernTouchEdgeBars();
 
     // Add closing animation
     $container.addClass('closing');
@@ -2448,6 +2991,8 @@ function minimizeModernApp(appId) {
     const launchOrigin = runningApp.launchOrigin || 'desktop';
     let restoreOffsets = null;
 
+    hideModernTouchEdgeBars();
+
     // Get the taskbar icon position
     const $taskbarIcon = $(`.taskbar-app[data-app-id="${appId}"]`);
     if ($taskbarIcon.length) {
@@ -2528,6 +3073,8 @@ function restoreModernApp(appId) {
 
     const $container = runningApp.$container;
 
+    hideModernTouchEdgeBars();
+
     // Hide any other active modern apps (only one modern app visible at a time)
     hideAllActiveModernApps(appId);
 
@@ -2580,8 +3127,8 @@ function restoreModernApp(appId) {
     // Keep charms bar enabled for modern apps
     $('body').addClass('charms-allowed');
 
-    // Set taskbar to auto-hide for modern apps
-    $('body').removeClass('taskbar-visible').addClass('taskbar-autohide');
+    setCurrentView('modern');
+    updateTaskbarVisibility('modern');
 
     // Remove restoring class after animation completes
     setTimeout(function () {
@@ -2619,10 +3166,56 @@ function getClassicWindowOptions(app) {
     return { ...defaultOptions, ...windowOptions };
 }
 
+function getTaskbarReservedHeight() {
+    if (Number.isFinite(taskbarHeight)) {
+        return taskbarAutoHideEnabled ? 0 : taskbarHeight;
+    }
+
+    const reservedHeight = parseInt(
+        getComputedStyle(document.body).getPropertyValue('--taskbar-reserved-height'),
+        10
+    );
+
+    return Number.isFinite(reservedHeight) ? reservedHeight : 40;
+}
+
 function getClassicWindowDefaultBounds(app) {
     const options = getClassicWindowOptions(app);
     const width = options.width;
     const height = options.height;
+    const defaultPosition = options.defaultPosition;
+
+    if (defaultPosition && typeof defaultPosition === 'object') {
+        const viewportWidth = $(window).width();
+        const respectTaskbar = defaultPosition.respectTaskbar !== false;
+        const viewportHeight = $(window).height() - (respectTaskbar ? getTaskbarReservedHeight() : 0);
+        const horizontal = defaultPosition.horizontal || 'center';
+        const vertical = defaultPosition.vertical || 'center';
+        const marginX = Number(defaultPosition.marginX) || 0;
+        const marginY = Number(defaultPosition.marginY) || 0;
+
+        let left = (viewportWidth - width) / 2;
+        let top = (viewportHeight - height) / 2 - 20;
+
+        if (horizontal === 'left') {
+            left = marginX;
+        } else if (horizontal === 'right') {
+            left = viewportWidth - width - marginX;
+        }
+
+        if (vertical === 'top') {
+            top = marginY;
+        } else if (vertical === 'bottom') {
+            top = viewportHeight - height - marginY;
+        }
+
+        return {
+            width,
+            height,
+            left: Math.max(0, Math.min(left, Math.max(0, viewportWidth - width))),
+            top: Math.max(0, Math.min(top, Math.max(0, viewportHeight - height)))
+        };
+    }
 
     return {
         width,
@@ -3210,30 +3803,6 @@ function openClassicApp(app, launchOptions = {}) {
     // Add to desktop
     $('#desktop').append($container);
 
-    // If app was launched with a file path, send it to the iframe after it loads (only for iframe mode)
-    if (launchOptions.openFilePath && $iframe) {
-        $iframe.on('load', function () {
-            const iframeWindow = $iframe[0].contentWindow;
-            if (iframeWindow) {
-                iframeWindow.postMessage({
-                    action: 'openFile',
-                    filePath: launchOptions.openFilePath
-                }, '*');
-            }
-        });
-    }
-
-    // If app was launched with a folder path, pass launchOptions to iframe (only for iframe mode)
-    if (launchOptions.openFolderPath && $iframe) {
-        $iframe.on('load', function () {
-            const iframeWindow = $iframe[0].contentWindow;
-            if (iframeWindow) {
-                // Pass launchOptions directly to the window
-                iframeWindow.launchOptions = launchOptions;
-            }
-        });
-    }
-
     if (!shouldDeferReveal && !isBackgroundPreload) {
         animateClassicWindowOpen($container);
     } else if (shouldDeferReveal) {
@@ -3269,15 +3838,46 @@ function openClassicApp(app, launchOptions = {}) {
                 });
             });
         } else if ($iframe[0].contentWindow) {
-            // For regular iframes, use postMessage
-            $iframe.on('load', function () {
-                if ($iframe[0].contentWindow) {
-                    $iframe[0].contentWindow.postMessage({
-                        action: 'setWindowId',
-                        windowId: windowId,
-                        appId: app.id
+            const deliverLaunchContextToIframe = () => {
+                const iframeWindow = $iframe[0].contentWindow;
+                if (!iframeWindow) {
+                    return;
+                }
+
+                const normalizedLaunchOptions = { ...launchOptions };
+                iframeWindow.launchOptions = normalizedLaunchOptions;
+                iframeWindow.postMessage({
+                    action: 'setWindowId',
+                    windowId: windowId,
+                    appId: app.id
+                }, '*');
+
+                if (Object.keys(normalizedLaunchOptions).length > 0) {
+                    iframeWindow.postMessage({
+                        action: 'setLaunchOptions',
+                        launchOptions: normalizedLaunchOptions
                     }, '*');
                 }
+
+                if (normalizedLaunchOptions.openFilePath) {
+                    iframeWindow.postMessage({
+                        action: 'openFile',
+                        filePath: normalizedLaunchOptions.openFilePath
+                    }, '*');
+                }
+
+                if (normalizedLaunchOptions.initialAppletId) {
+                    iframeWindow.postMessage({
+                        action: 'openApplet',
+                        appletId: normalizedLaunchOptions.initialAppletId
+                    }, '*');
+                }
+            };
+
+            // For regular iframes, use postMessage plus a direct launchOptions assignment.
+            $iframe.on('load', function () {
+                deliverLaunchContextToIframe();
+                setTimeout(deliverLaunchContextToIframe, 50);
             });
         }
     }
@@ -4666,7 +5266,7 @@ $(document).ready(function () {
     if ($startButton.length) {
         $startButton.on('click', function () {
             console.log('Start button clicked, currentView:', currentView);
-            if (currentView === 'desktop') {
+            if (currentView === 'desktop' || currentView === 'modern') {
                 console.log('Calling openStartScreen');
                 openStartScreen();
             } else if (currentView === 'start') {
@@ -4861,28 +5461,11 @@ function initDesktopContextMenu() {
                 break;
             case 'personalize':
                 console.log('Opening personalization...');
-                // Launch Control Panel and open Personalization applet
-                const controlPanelApp = AppsManager.getAppById('control-panel');
-                if (controlPanelApp) {
-                    launchApp(controlPanelApp);
-                    // Wait for the Control Panel window to be created, then navigate to personalization
-                    setTimeout(() => {
-                        const runningCP = AppsManager.getRunningApp('control-panel');
-                        if (runningCP && runningCP.$container) {
-                            const iframe = runningCP.$container.find('iframe')[0];
-                            if (iframe && iframe.contentWindow) {
-                                iframe.contentWindow.postMessage({
-                                    action: 'openApplet',
-                                    appletId: 'personalization'
-                                }, '*');
-                            }
-                        }
-                    }, 300);
-                }
+                openControlPanelApplet('personalization');
                 break;
-            case 'display':
-                console.log('Opening display settings...');
-                // Add display settings functionality
+            case 'screen-resolution':
+                console.log('Opening screen resolution...');
+                openControlPanelApplet('screen-resolution');
                 break;
         }
 
@@ -4948,7 +5531,7 @@ function showDesktopContextMenu(x, y) {
             ]
         },
         { type: 'separator' },
-        { action: 'display', icon: 'mif-display', text: 'Display settings' },
+        { action: 'screen-resolution', icon: 'mif-display', text: 'Screen resolution' },
         { action: 'personalize', icon: 'resources/images/icons/control panel applets/Personalize/16.png', iconType: 'image', text: 'Personalize' }
     ];
 
@@ -5231,6 +5814,28 @@ function updateTaskbarLockDisplay() {
     }
 }
 
+function setStartScreenAllAppsOpen(isOpen) {
+    const $startScreen = $('#start-screen');
+    if (!$startScreen.length) {
+        return;
+    }
+
+    $startScreen.toggleClass('all-apps-open', Boolean(isOpen));
+
+    if (typeof window.syncStartScreenAllAppsIdleState === 'function') {
+        window.syncStartScreenAllAppsIdleState();
+    }
+}
+
+function toggleStartScreenAllAppsOpen() {
+    const $startScreen = $('#start-screen');
+    if (!$startScreen.length) {
+        return;
+    }
+
+    setStartScreenAllAppsOpen(!$startScreen.hasClass('all-apps-open'));
+}
+
 function applyStartScreenDefaultView(enforce = false) {
     const $startScreen = $('#start-screen');
     if (!$startScreen.length) {
@@ -5238,21 +5843,41 @@ function applyStartScreenDefaultView(enforce = false) {
     }
 
     if (navigationSettings.showAppsViewOnStart) {
-        $startScreen.addClass('all-apps-open');
+        setStartScreenAllAppsOpen(true);
     } else if (enforce) {
-        $startScreen.removeClass('all-apps-open');
+        setStartScreenAllAppsOpen(false);
     }
+}
+
+function getActiveModernRunningApp() {
+    if (typeof AppsManager === 'undefined' || typeof AppsManager.getRunningApps !== 'function') {
+        return null;
+    }
+
+    return AppsManager.getRunningApps().find(runningApp =>
+        runningApp.app &&
+        runningApp.app.type === 'modern' &&
+        AppsManager.getAppState(runningApp.app.id) === 'active'
+    ) || null;
 }
 
 function openStartScreen() {
     const $startScreen = views.start;
     const $desktop = views.desktop;
+    const activeModernApp = getActiveModernRunningApp();
 
     console.log('openStartScreen called');
     console.log('Start screen classes:', $startScreen.attr('class'));
 
     // Close all popups and menus before showing start screen
     closeAllPopupsAndMenus();
+
+    startReturnModernAppId = activeModernApp ? activeModernApp.app.id : null;
+
+    if (activeModernApp) {
+        hideModernTouchEdgeBars();
+        hideAllActiveModernApps();
+    }
 
     applyStartScreenDefaultView();
     requestExplorerDesktopRefresh();
@@ -5293,9 +5918,11 @@ function openStartScreen() {
     }, 300);
 }
 
-function closeStartScreen() {
+function closeStartScreen(options = {}) {
     const $startScreen = views.start;
     const $desktop = views.desktop;
+    const forceDesktop = !!options.forceDesktop;
+    const restoreModernAppId = !forceDesktop ? startReturnModernAppId : null;
 
     console.log('closeStartScreen called');
 
@@ -5305,6 +5932,18 @@ function closeStartScreen() {
 
     // Remove show-content classes to slide UI out to the right
     $startScreen.removeClass('show-content show-content-from-desktop');
+    startReturnModernAppId = null;
+
+    if (restoreModernAppId && AppsManager.isAppRunning(restoreModernAppId)) {
+        setTimeout(function () {
+            if (currentView === 'start') {
+                restoreModernApp(restoreModernAppId);
+            } else {
+                console.log('closeStartScreen modern restore cancelled - view changed to:', currentView);
+            }
+        }, 500);
+        return;
+    }
 
     // After UI slides out, fade out background and crossfade to desktop
     setTimeout(function () {
@@ -5350,6 +5989,9 @@ function transitionToDesktop() {
     const $desktop = views.desktop;
 
     console.log('transitionToDesktop called');
+
+    hideModernTouchEdgeBars();
+    hideAllActiveModernApps();
 
     // Close all popups and menus before transitioning to desktop
     closeAllPopupsAndMenus();
@@ -5540,7 +6182,7 @@ $(document).on('keydown', function (e) {
 
             // Switch to desktop first if on Start screen
             if (currentView === 'start') {
-                closeStartScreen();
+                closeStartScreen({ forceDesktop: true });
                 // Launch File Explorer after transition
                 setTimeout(() => {
                     launchApp('explorer');
@@ -5592,7 +6234,7 @@ $(document).on('keyup', function (e) {
 
         if (!isSystemLocked) {
             e.preventDefault();
-            if (currentView === 'desktop') {
+            if (currentView === 'desktop' || currentView === 'modern') {
                 openStartScreen();
             } else if (currentView === 'start') {
                 closeStartScreen();
@@ -5649,8 +6291,12 @@ function initContextMenu() {
             // If we just pinned an app (not unpinned) and we're in the all apps view,
             // navigate back to the pinned view
             if (wasUnpinned && isInAllAppsView) {
-                $('#start-screen').removeClass('all-apps-open');
+                setStartScreenAllAppsOpen(false);
             }
+        } else if (action === 'pin-taskbar') {
+            console.log('Toggling taskbar pin for:', contextMenuAppId);
+            AppsManager.toggleTaskbarPin(contextMenuAppId);
+            hideContextMenu();
         } else if (action.startsWith('resize-')) {
             const size = $item.attr('data-size');
             console.log('Setting size to:', size, 'for app:', contextMenuAppId);
@@ -5680,6 +6326,13 @@ function showContextMenu(x, y, appId) {
     // Update pin/unpin text
     const $pinItem = $contextMenu.find('[data-action="pin"] .context-menu-item-text');
     $pinItem.text(app.pinned ? 'Unpin from Start' : 'Pin to Start');
+
+    const shouldShowTaskbarPin =
+        app.type !== 'meta' && app.type !== 'meta-classic';
+    const $taskbarPinItem = $contextMenu.find('[data-action="pin-taskbar"]');
+    $taskbarPinItem.toggle(shouldShowTaskbarPin);
+    $taskbarPinItem.find('.context-menu-item-text')
+        .text(app.pinnedToTaskbar ? 'Unpin from Taskbar' : 'Pin to Taskbar');
 
     // Update resize checkmarks
     $contextMenu.find('.context-submenu .context-menu-item').removeClass('checked');
@@ -5786,7 +6439,7 @@ function closeAllPopupsAndMenus() {
     hideCharmsBar();
 
     // Close all apps view on start screen
-    $('#start-screen').removeClass('all-apps-open');
+    setStartScreenAllAppsOpen(false);
 }
 
 // ===== CHARMS BAR =====
@@ -6202,7 +6855,7 @@ $(document).ready(function () {
     // Click handler - same as taskbar start button
     $floatingStartButton.on('click', function () {
         console.log('Floating start button clicked');
-        if (currentView === 'desktop') {
+        if (currentView === 'desktop' || currentView === 'modern') {
             openStartScreen();
         } else if (currentView === 'start') {
             closeStartScreen();
@@ -6923,23 +7576,30 @@ function applyTileSize(showMoreTiles) {
 function calculateTileRows() {
     const showMoreTiles = loadShowMoreTilesFromRegistry();
 
-    // Get the actual pinned-view container
     const $pinnedView = $('.pinned-view');
-    const $tiles = $('.tiles');
+    const $tiles = $('#pinned-tiles');
+    const pinnedViewElement = $pinnedView.get(0);
 
-    // The view height is 100% of window
-    // We need to subtract the areas taken by header and footer
-    // The tiles sit in the padded area but need to account for overlays
-
-    // Get window height
     const windowHeight = $(window).height();
 
-    // Get padding from the view - dynamically read from computed CSS
-    const topPadding = parseInt($pinnedView.css('padding-top')) || 190;
-    const bottomPadding = parseInt($pinnedView.css('padding-bottom')) || 100;
+    let topInset = 190;
+    let bottomInset = 100;
+    let scrollPaddingTop = 0;
 
-    // Available space is window height minus the padding reservations
-    const availableHeight = windowHeight - topPadding - bottomPadding;
+    if (pinnedViewElement) {
+        const styles = window.getComputedStyle(pinnedViewElement);
+        topInset = parseInt(styles.getPropertyValue('--start-content-top'), 10) || topInset;
+        bottomInset = parseInt(styles.getPropertyValue('--start-content-bottom'), 10) || bottomInset;
+    }
+
+    const pinnedScrollRegion = document.querySelector('.start-scroll-region--pinned');
+    if (pinnedScrollRegion) {
+        const scrollStyles = window.getComputedStyle(pinnedScrollRegion);
+        scrollPaddingTop = parseInt(scrollStyles.paddingTop, 10) || 0;
+    }
+
+    // Available space is window height minus the fixed header/footer insets.
+    const availableHeight = windowHeight - topInset - bottomInset - scrollPaddingTop;
 
     // Tile size based on mode
     let tileSize, gap;
@@ -6974,6 +7634,13 @@ function calculateTileRows() {
 
 // Get desktop wallpaper path (from saved preference or default)
 function getDesktopWallpaperPath() {
+    if (window.WallpaperController) {
+        const currentWallpaperPath = window.WallpaperController.getCurrentFullPath();
+        if (currentWallpaperPath && typeof currentWallpaperPath === 'string') {
+            return currentWallpaperPath;
+        }
+    }
+
     const fullPath = getDesktopWallpaperFullPath();
     if (fullPath && typeof fullPath === 'string') {
         return fullPath;
@@ -6983,406 +7650,61 @@ function getDesktopWallpaperPath() {
 
 // Unified function to apply wallpaper and update desktop tile
 function applyDesktopWallpaper(wallpaperPath, options = {}) {
-    const {
-        withCrossfade = false,
-        updateTile = true,
-        extractColor = true
-    } = options;
-
-    const wallpaperEl = document.getElementById('desktop-wallpaper');
-    if (!wallpaperEl) {
-        console.warn('Desktop wallpaper element not found');
-        return;
+    if (window.WallpaperController) {
+        return window.WallpaperController.previewWallpaper({
+            currentWallpaper: wallpaperPath,
+            currentWallpaperType: resolveWallpaperPreviewType(wallpaperPath)
+        }, {
+            withCrossfade: options.withCrossfade === true,
+            updateTile: options.updateTile !== false,
+            extractColor: typeof options.extractColor === 'boolean' ? options.extractColor : undefined,
+            reason: options.withCrossfade ? 'direct-apply-crossfade' : 'direct-apply'
+        });
     }
 
-    // Helper function to convert absolute paths to file:// URLs
-    const toFileURL = (path) => {
-        if (!path) return path;
-
-        // If it's already a URL (starts with http://, https://, file://, or resources/), return as-is
-        if (path.startsWith('http://') || path.startsWith('https://') ||
-            path.startsWith('file://') || path.startsWith('resources/')) {
-            return path;
-        }
-
-        // If it's an absolute path (starts with / on Unix or C:\ on Windows), convert to file:// URL
-        if (path.startsWith('/') || /^[A-Z]:\\/.test(path)) {
-            // Encode the path to handle special characters and spaces
-            const encodedPath = path.split('/').map(segment => encodeURIComponent(segment)).join('/');
-            return `file://${encodedPath}`;
-        }
-
-        return path;
-    };
-
-    const formattedPath = toFileURL(wallpaperPath);
-
-    if (withCrossfade) {
-        // Use crossfade transition
-        applyWallpaperWithCrossfade(wallpaperPath);
-    } else {
-        // Direct application with preloading to ensure large images load properly
-        const img = new Image();
-
-        img.onload = () => {
-            wallpaperEl.style.backgroundImage = `url("${formattedPath}")`;
-            console.log('Wallpaper applied successfully:', formattedPath);
-
-            // Extract color if requested
-            if (extractColor && window.WallpaperColorExtractor) {
-                window.WallpaperColorExtractor.extractDominantColor(wallpaperPath)
-                    .then(color => {
-                        window.WallpaperColorExtractor.dominantColor = color;
-                        window.WallpaperColorExtractor.setCSSVariable(color);
-                        window.WallpaperColorExtractor.saveCachedColor(wallpaperPath, color);
-                    })
-                    .catch(error => {
-                        console.error('Failed to extract wallpaper color:', error);
-                    });
-            }
-        };
-
-        img.onerror = (error) => {
-            console.error('Failed to load wallpaper image:', formattedPath, error);
-            // Try setting it anyway - sometimes the error is spurious
-            wallpaperEl.style.backgroundImage = `url("${formattedPath}")`;
-        };
-
-        // Start loading the image
-        img.src = formattedPath;
-    }
-
-    // Update desktop tile
-    if (updateTile) {
-        AppsManager.setTileImage('desktop', wallpaperPath);
-    }
+    return Promise.resolve();
 }
 
 // Apply saved wallpaper settings on app launch
 function applySavedWallpaperSettings() {
-    try {
-        const settings = loadDesktopBackgroundSettings();
-        const wallpaperEl = document.getElementById('desktop-wallpaper');
-        if (!wallpaperEl) return;
-
-        // Apply picture position if saved
-        if (settings.picturePosition) {
-            const position = settings.picturePosition;
-            switch (position) {
-                case 'fill':
-                    wallpaperEl.style.backgroundSize = 'cover';
-                    wallpaperEl.style.backgroundPosition = 'center';
-                    wallpaperEl.style.backgroundRepeat = 'no-repeat';
-                    break;
-                case 'fit':
-                    wallpaperEl.style.backgroundSize = 'contain';
-                    wallpaperEl.style.backgroundPosition = 'center';
-                    wallpaperEl.style.backgroundRepeat = 'no-repeat';
-                    break;
-                case 'stretch':
-                    wallpaperEl.style.backgroundSize = '100% 100%';
-                    wallpaperEl.style.backgroundPosition = 'center';
-                    wallpaperEl.style.backgroundRepeat = 'no-repeat';
-                    break;
-                case 'tile':
-                    wallpaperEl.style.backgroundSize = 'auto';
-                    wallpaperEl.style.backgroundPosition = 'top left';
-                    wallpaperEl.style.backgroundRepeat = 'repeat';
-                    break;
-                case 'center':
-                    wallpaperEl.style.backgroundSize = 'auto';
-                    wallpaperEl.style.backgroundPosition = 'center';
-                    wallpaperEl.style.backgroundRepeat = 'no-repeat';
-                    break;
-            }
-        }
-
-        // Apply saved wallpaper (falling back to default if needed)
-        let wallpaperPath = null;
-        if (settings.currentWallpaper) {
-            wallpaperPath = toFullWallpaperPath(settings.currentWallpaper, settings.currentWallpaperType);
-        }
-        if (!wallpaperPath) {
-            wallpaperPath = getDesktopWallpaperPath();
-        }
-
-        if (wallpaperPath) {
-            // Check if user has a custom color selected (not automatic)
-            // Only extract color from wallpaper if color is set to automatic
-            const shouldExtractColor = isAccentAutomaticMode();
-
-            applyDesktopWallpaper(wallpaperPath, {
-                withCrossfade: false,
-                updateTile: true,
-                extractColor: shouldExtractColor
-            });
-        }
-
-        // Start slideshow if multiple wallpapers are selected
-        if (settings.selectedWallpapers && settings.selectedWallpapers.length > 1) {
-            startWallpaperSlideshow(settings);
-        } else {
-            stopWallpaperSlideshow();
-        }
-    } catch (e) {
-        console.error('Failed to apply saved wallpaper settings:', e);
+    if (window.WallpaperController) {
+        return window.WallpaperController.initialize();
     }
-}
 
-// Slideshow state
-let wallpaperSlideshowInterval = null;
-let wallpaperSlideshowIndex = 0;
-let wallpaperSlideshowPaused = false;
-let wallpaperSlideshowSettings = null;
+    return Promise.resolve();
+}
 
 // Start wallpaper slideshow
 function startWallpaperSlideshow(settings) {
-    stopWallpaperSlideshow(); // Clear any existing interval
-
-    if (!settings || !settings.selectedWallpapers || settings.selectedWallpapers.length <= 1) {
-        return;
+    if (window.WallpaperController) {
+        return window.WallpaperController.startSlideshow(settings || window.WallpaperController.getSettings());
     }
-
-    const toRelativePath = (path, type = 'builtin') => {
-        if (!path || typeof path !== 'string') return null;
-        // For custom wallpapers, return as-is
-        if (type === 'custom') {
-            return path;
-        }
-        const prefix = 'resources/images/wallpapers/';
-        if (path.startsWith(prefix)) {
-            return path.slice(prefix.length);
-        }
-        return path;
-    };
-
-    const toFullWallpaperPath = (path, type = 'builtin') => {
-        if (!path || typeof path !== 'string') return null;
-        // For custom wallpapers, return as-is (already an absolute path)
-        if (type === 'custom') {
-            return path;
-        }
-        return path.startsWith('resources/')
-            ? path
-            : `resources/images/wallpapers/${path}`;
-    };
-
-    // Get wallpaper types array (for backwards compatibility, default to 'builtin')
-    const wallpaperTypes = settings.selectedWallpapersTypes || settings.selectedWallpapers.map(() => 'builtin');
-
-    let wallpapers = settings.selectedWallpapers
-        .map((path, index) => toRelativePath(path, wallpaperTypes[index]))
-        .filter(Boolean);
-
-    if (wallpapers.length <= 1) {
-        return;
-    }
-
-    const currentWallpaperType = settings.currentWallpaperType || 'builtin';
-    const normalizedCurrent = toRelativePath(settings.currentWallpaper, currentWallpaperType);
-
-    // Convert interval string to milliseconds
-    const intervals = {
-        '10s': 10000,
-        '30s': 30000,
-        '1m': 60000,
-        '3m': 180000,
-        '5m': 300000,
-        '10m': 600000,
-        '15m': 900000,
-        '20m': 1200000,
-        '30m': 1800000,
-        '1h': 3600000,
-        '2h': 7200000,
-        '3h': 10800000,
-        '4h': 14400000,
-        '6h': 21600000,
-        '12h': 43200000,
-        '24h': 86400000
-    };
-
-    const intervalMs = intervals[settings.changeInterval] || 1800000; // Default 30 minutes
-
-    // Shuffle if enabled
-    if (settings.shuffle) {
-        wallpapers = shuffleArray(wallpapers);
-    }
-
-    // Save settings for pause/resume (normalized copy)
-    wallpaperSlideshowSettings = {
-        ...settings,
-        selectedWallpapers: [...wallpapers],
-        selectedWallpapersTypes: [...wallpaperTypes],
-        currentWallpaper: normalizedCurrent
-    };
-    wallpaperSlideshowPaused = false;
-
-    // Determine the next index, advancing past the current wallpaper when possible
-    let startIndex = 0;
-    if (!settings.shuffle && normalizedCurrent) {
-        const currentIndex = wallpapers.indexOf(normalizedCurrent);
-        if (currentIndex >= 0) {
-            startIndex = currentIndex;
-        }
-    }
-
-    wallpaperSlideshowIndex = wallpapers.length > 1
-        ? ((startIndex + 1) % wallpapers.length)
-        : 0;
-
-    const advanceWallpaper = () => {
-        const relativePath = wallpapers[wallpaperSlideshowIndex];
-        if (!relativePath) {
-            return;
-        }
-
-        const type = wallpaperTypes[wallpaperSlideshowIndex] || 'builtin';
-        const fullPath = toFullWallpaperPath(relativePath, type);
-
-        // Apply wallpaper with crossfade
-        applyWallpaperWithCrossfade(fullPath);
-
-        wallpaperSlideshowIndex = (wallpaperSlideshowIndex + 1) % wallpapers.length;
-    };
-
-    wallpaperSlideshowInterval = setInterval(() => {
-        // Don't change if paused
-        if (wallpaperSlideshowPaused) {
-            return;
-        }
-
-        // Check battery if needed
-        if (settings.pauseOnBattery && navigator.getBattery) {
-            navigator.getBattery().then(battery => {
-                if (!battery.charging && battery.level < 1) {
-                    return; // Skip this change
-                }
-                advanceWallpaper();
-            });
-        } else {
-            advanceWallpaper();
-        }
-    }, intervalMs);
 }
 
 // Stop wallpaper slideshow
 function stopWallpaperSlideshow() {
-    if (wallpaperSlideshowInterval) {
-        clearInterval(wallpaperSlideshowInterval);
-        wallpaperSlideshowInterval = null;
+    if (window.WallpaperController) {
+        window.WallpaperController.stopSlideshow();
     }
-    wallpaperSlideshowPaused = false;
-    wallpaperSlideshowSettings = null;
 }
 
 // Pause wallpaper slideshow (keeps interval running but skips changes)
 function pauseWallpaperSlideshow() {
-    if (wallpaperSlideshowInterval) {
-        wallpaperSlideshowPaused = true;
-        console.log('Wallpaper slideshow paused');
+    if (window.WallpaperController) {
+        window.WallpaperController.pauseSlideshow();
     }
 }
 
 // Resume wallpaper slideshow
 function resumeWallpaperSlideshow() {
-    if (wallpaperSlideshowInterval && wallpaperSlideshowPaused) {
-        wallpaperSlideshowPaused = false;
-        console.log('Wallpaper slideshow resumed');
+    if (window.WallpaperController) {
+        window.WallpaperController.resumeSlideshow();
     }
 }
 
 // Apply wallpaper with 1s crossfade effect
 function applyWallpaperWithCrossfade(wallpaperPath) {
-    const wallpaperEl = document.getElementById('desktop-wallpaper');
-    if (!wallpaperEl) return;
-
-    // Helper function to convert absolute paths to file:// URLs
-    const toFileURL = (path) => {
-        if (!path) return path;
-
-        // If it's already a URL (starts with http://, https://, file://, or resources/), return as-is
-        if (path.startsWith('http://') || path.startsWith('https://') ||
-            path.startsWith('file://') || path.startsWith('resources/')) {
-            return path;
-        }
-
-        // If it's an absolute path (starts with / on Unix or C:\ on Windows), convert to file:// URL
-        if (path.startsWith('/') || /^[A-Z]:\\/.test(path)) {
-            // Encode the path to handle special characters and spaces
-            const encodedPath = path.split('/').map(segment => encodeURIComponent(segment)).join('/');
-            return `file://${encodedPath}`;
-        }
-
-        return path;
-    };
-
-    const formattedPath = toFileURL(wallpaperPath);
-
-    // Preload the image before starting crossfade
-    const img = new Image();
-
-    img.onload = () => {
-        // Create a temporary element for crossfade
-        const tempWallpaper = document.createElement('div');
-        tempWallpaper.style.position = 'fixed';
-        tempWallpaper.style.top = '0';
-        tempWallpaper.style.left = '0';
-        tempWallpaper.style.width = '100%';
-        tempWallpaper.style.height = '100%';
-        tempWallpaper.style.backgroundImage = `url("${formattedPath}")`;
-        tempWallpaper.style.backgroundSize = window.getComputedStyle(wallpaperEl).backgroundSize || 'cover';
-        tempWallpaper.style.backgroundPosition = window.getComputedStyle(wallpaperEl).backgroundPosition || 'center';
-        tempWallpaper.style.backgroundRepeat = window.getComputedStyle(wallpaperEl).backgroundRepeat || 'no-repeat';
-        tempWallpaper.style.zIndex = '598'; // Just below wallpaper layer (599) and below desktop (600)
-        tempWallpaper.style.opacity = '0';
-        tempWallpaper.style.transition = 'opacity 1s ease-in-out';
-        tempWallpaper.style.pointerEvents = 'none'; // Don't block clicks
-
-        document.body.appendChild(tempWallpaper);
-
-        // Trigger fade in
-        requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-                tempWallpaper.style.opacity = '1';
-            });
-        });
-
-        // After fade completes, update wallpaper layer and remove temp
-        setTimeout(() => {
-            wallpaperEl.style.backgroundImage = `url("${formattedPath}")`;
-
-            // Update desktop tile
-            AppsManager.setTileImage('desktop', wallpaperPath);
-
-            // Extract color for new wallpaper ONLY if user has automatic color selected
-            const shouldExtractColor = isAccentAutomaticMode();
-            if (!shouldExtractColor) {
-                console.log('Crossfade: Custom color selected, not extracting wallpaper color');
-            }
-
-            if (window.WallpaperColorExtractor && shouldExtractColor) {
-                window.WallpaperColorExtractor.extractDominantColor(wallpaperPath)
-                    .then(color => {
-                        window.WallpaperColorExtractor.dominantColor = color;
-                        window.WallpaperColorExtractor.setCSSVariable(color);
-                        window.WallpaperColorExtractor.saveCachedColor(wallpaperPath, color);
-                    })
-                    .catch(error => {
-                        console.error('Failed to extract wallpaper color:', error);
-                    });
-            }
-
-            // Remove temp element
-            document.body.removeChild(tempWallpaper);
-        }, 1050); // Slightly longer than transition to ensure completion
-    };
-
-    img.onerror = (error) => {
-        console.error('Failed to preload wallpaper for crossfade:', formattedPath, error);
-    };
-
-    // Start preloading
-    img.src = formattedPath;
+    return applyDesktopWallpaper(wallpaperPath, { withCrossfade: true });
 }
 
 // Utility: Shuffle array
@@ -7424,6 +7746,13 @@ function loadPatternThumbnails() {
     // Add desktop wallpaper option at the end
     // Helper to get wallpaper path with type awareness
     const getSavedWallpaperPath = () => {
+        if (window.WallpaperController) {
+            const controllerPath = window.WallpaperController.getCurrentFullPath();
+            if (controllerPath) {
+                return controllerPath;
+            }
+        }
+
         try {
             const settings = loadDesktopBackgroundSettings();
             if (settings.currentWallpaper) {
@@ -7438,21 +7767,7 @@ function loadPatternThumbnails() {
         return getDesktopWallpaperPath(); // Fallback to default
     };
 
-    // Helper to convert to file:// URL if needed
-    const toFileURL = (path) => {
-        if (!path) return path;
-        if (path.startsWith('http://') || path.startsWith('https://') ||
-            path.startsWith('file://') || path.startsWith('resources/')) {
-            return path;
-        }
-        if (path.startsWith('/') || /^[A-Z]:\\/.test(path)) {
-            const encodedPath = path.split('/').map(segment => encodeURIComponent(segment)).join('/');
-            return `file://${encodedPath}`;
-        }
-        return path;
-    };
-
-    const desktopWallpaperPath = toFileURL(getSavedWallpaperPath());
+    const desktopWallpaperPath = toAssetUrl(getSavedWallpaperPath());
     const isDesktopSelected = (currentBackground.pattern === 'desktop');
     const $desktopThumbnail = $(`
         <div class="pattern-thumbnail desktop-wallpaper ${isDesktopSelected ? 'selected' : ''}"
@@ -7946,28 +8261,20 @@ function applyBackgroundPattern(patternId, variant) {
 }
 
 // Apply desktop wallpaper as Start Screen background
-function applyDesktopWallpaperBackground() {
-    // Helper function to convert absolute paths to file:// URLs
-    const toFileURL = (path) => {
-        if (!path) return path;
-
-        // If it's already a URL, return as-is
-        if (path.startsWith('http://') || path.startsWith('https://') ||
-            path.startsWith('file://') || path.startsWith('resources/')) {
-            return path;
-        }
-
-        // If it's an absolute path, convert to file:// URL
-        if (path.startsWith('/') || /^[A-Z]:\\/.test(path)) {
-            const encodedPath = path.split('/').map(segment => encodeURIComponent(segment)).join('/');
-            return `file://${encodedPath}`;
-        }
-
-        return path;
-    };
-
+function applyDesktopWallpaperBackground(explicitWallpaperPath = null) {
     // Helper to get wallpaper path with type awareness
     const getSavedWallpaperPath = () => {
+        if (explicitWallpaperPath) {
+            return explicitWallpaperPath;
+        }
+
+        if (window.WallpaperController) {
+            const controllerPath = window.WallpaperController.getCurrentFullPath();
+            if (controllerPath) {
+                return controllerPath;
+            }
+        }
+
         try {
             const settings = loadDesktopBackgroundSettings();
             if (settings.currentWallpaper) {
@@ -7983,7 +8290,7 @@ function applyDesktopWallpaperBackground() {
     };
 
     const wallpaperPath = getSavedWallpaperPath();
-    const formattedPath = toFileURL(wallpaperPath);
+    const formattedPath = toAssetUrl(wallpaperPath);
 
     const $startScreen = $('#start-screen');
     const $startScreenBg = $('.start-screen-background');
@@ -8228,6 +8535,8 @@ $(document).ready(function () {
         }
     }
 
+    window.syncStartScreenAllAppsIdleState = resetAllAppsIdleTimer;
+
     // Track mouse movement in start screen
     $('#start-screen').on('mousemove', function () {
         if ($('#start-screen').hasClass('all-apps-open')) {
@@ -8237,17 +8546,7 @@ $(document).ready(function () {
 
     // Reset timer when switching to all apps view
     $('.all-apps-toggle').on('click', function () {
-        setTimeout(function () {
-            if ($('#start-screen').hasClass('all-apps-open')) {
-                resetAllAppsIdleTimer();
-            } else {
-                // Clear timer when switching back to pinned view
-                if (allAppsIdleTimer) {
-                    clearTimeout(allAppsIdleTimer);
-                }
-                $('.all-apps-up-toggle').removeClass('fade-idle');
-            }
-        }, 100);
+        resetAllAppsIdleTimer();
     });
 });
 
@@ -8484,7 +8783,7 @@ $(document).on('click', '.quick-links-menu-item', function (e) {
         case 'desktop':
             // Switch to desktop
             if (currentView === 'start') {
-                closeStartScreen();
+                closeStartScreen({ forceDesktop: true });
             }
             break;
     }
@@ -8805,6 +9104,298 @@ function hideCharmsBar() {
     }, 250);
 }
 
+// ===== TOUCH EDGE BARS FOR MODERN APPS =====
+const MODERN_TOUCH_EDGE_ZONE = 32;
+const MODERN_TOUCH_RIGHT_EDGE_EXCLUSION = 32;
+const MODERN_TOUCH_TITLEBAR_OPEN_THRESHOLD = 20;
+const MODERN_TOUCH_TASKBAR_OPEN_THRESHOLD = 32;
+const MODERN_TOUCH_CANCEL_HORIZONTAL_THRESHOLD = 96;
+const MODERN_TOUCH_BAR_AUTOHIDE_DELAY = 2200;
+const modernTouchEdgeBars = {
+    titlebar: {
+        active: false,
+        startX: 0,
+        startY: 0,
+        reveal: 0,
+        pinned: false,
+        hideTimeout: null
+    },
+    taskbar: {
+        active: false,
+        startX: 0,
+        startY: 0,
+        reveal: 0,
+        pinned: false,
+        hideTimeout: null
+    }
+};
+
+function isModernTouchBarContext() {
+    return $('body').hasClass('view-modern') && $('.modern-app-container.active .modern-app-titlebar').length > 0;
+}
+
+function getModernTouchTitlebar() {
+    return $('.modern-app-container.active').last().find('.modern-app-titlebar').first();
+}
+
+function getModernTouchBarElement(barName, options = {}) {
+    if (barName === 'titlebar') {
+        return options.all ? $('.modern-app-titlebar') : getModernTouchTitlebar();
+    }
+
+    return $('.taskbar');
+}
+
+function getModernTouchBarHeight(barName) {
+    const $bar = getModernTouchBarElement(barName);
+    return $bar.outerHeight() || parseFloat($bar.css('height')) || (barName === 'titlebar' ? 30 : 40);
+}
+
+function getModernTouchBarOffsetVariable(barName) {
+    return barName === 'titlebar'
+        ? '--modern-titlebar-touch-offset'
+        : '--taskbar-touch-offset';
+}
+
+function clearModernTouchBarTimer(barName) {
+    const barState = modernTouchEdgeBars[barName];
+    clearTimeout(barState.hideTimeout);
+    barState.hideTimeout = null;
+}
+
+function isModernTouchBarShown(barName) {
+    const $bar = getModernTouchBarElement(barName);
+    return $bar.hasClass('touch-visible') || $bar.hasClass('touch-pinned') || $bar.hasClass('touch-dragging');
+}
+
+function applyModernTouchBarReveal(barName, revealAmount) {
+    const $bar = getModernTouchBarElement(barName);
+    if (!$bar.length) {
+        return;
+    }
+
+    const barHeight = getModernTouchBarHeight(barName);
+    const clampedReveal = Math.max(0, Math.min(revealAmount, barHeight));
+    const offsetValue = barName === 'titlebar'
+        ? `${clampedReveal - barHeight}px`
+        : `${barHeight - clampedReveal}px`;
+
+    clearModernTouchBarTimer(barName);
+    modernTouchEdgeBars[barName].reveal = clampedReveal;
+
+    $bar
+        .removeClass('touch-visible touch-pinned')
+        .addClass('touch-dragging')
+        .css(getModernTouchBarOffsetVariable(barName), offsetValue);
+}
+
+function hideModernTouchBar(barName) {
+    const $bar = getModernTouchBarElement(barName, { all: true });
+    const barState = modernTouchEdgeBars[barName];
+
+    clearModernTouchBarTimer(barName);
+    barState.active = false;
+    barState.reveal = 0;
+    barState.pinned = false;
+
+    $bar
+        .removeClass('touch-visible touch-pinned touch-dragging')
+        .css(getModernTouchBarOffsetVariable(barName), '');
+}
+
+function scheduleModernTouchBarHide(barName) {
+    const barState = modernTouchEdgeBars[barName];
+    if (barState.pinned) {
+        return;
+    }
+
+    clearModernTouchBarTimer(barName);
+    barState.hideTimeout = setTimeout(function () {
+        if (!barState.pinned) {
+            hideModernTouchBar(barName);
+        }
+    }, MODERN_TOUCH_BAR_AUTOHIDE_DELAY);
+}
+
+function showModernTouchBar(barName, options = {}) {
+    const $bar = getModernTouchBarElement(barName);
+    if (!$bar.length) {
+        return;
+    }
+
+    const { pinned = false } = options;
+    const barState = modernTouchEdgeBars[barName];
+
+    clearModernTouchBarTimer(barName);
+    barState.active = false;
+    barState.reveal = getModernTouchBarHeight(barName);
+    barState.pinned = pinned;
+
+    $bar
+        .removeClass('touch-dragging')
+        .addClass('touch-visible')
+        .toggleClass('touch-pinned', pinned)
+        .css(getModernTouchBarOffsetVariable(barName), '0px');
+
+    if (!pinned) {
+        scheduleModernTouchBarHide(barName);
+    }
+}
+
+function pinModernTouchBar(barName) {
+    if (!isModernTouchBarContext() || !isModernTouchBarShown(barName)) {
+        return;
+    }
+
+    showModernTouchBar(barName, { pinned: true });
+}
+
+function startModernTouchBarDrag(barName, touch) {
+    const barState = modernTouchEdgeBars[barName];
+    clearModernTouchBarTimer(barName);
+
+    barState.active = true;
+    barState.startX = touch.clientX;
+    barState.startY = touch.clientY;
+    barState.reveal = 0;
+    barState.pinned = false;
+
+    applyModernTouchBarReveal(barName, 0);
+}
+
+function hideModernTouchEdgeBars() {
+    hideModernTouchBar('titlebar');
+    hideModernTouchBar('taskbar');
+}
+
+$(document).ready(function () {
+    $(document).on('touchstart.modernedgebars', function (e) {
+        if (!isModernTouchBarContext()) {
+            hideModernTouchEdgeBars();
+            return;
+        }
+
+        const originalEvent = e.originalEvent;
+        if (!originalEvent.touches || originalEvent.touches.length !== 1) {
+            return;
+        }
+
+        const touch = originalEvent.touches[0];
+        const $target = $(e.target);
+        const insideTitlebar = $target.closest('.modern-app-titlebar').length > 0;
+        const insideTaskbar = $target.closest('.taskbar').length > 0;
+        let hidExistingBar = false;
+
+        if (insideTitlebar) {
+            pinModernTouchBar('titlebar');
+        } else if (isModernTouchBarShown('titlebar')) {
+            hideModernTouchBar('titlebar');
+            hidExistingBar = true;
+        }
+
+        if (insideTaskbar) {
+            pinModernTouchBar('taskbar');
+        } else if (isModernTouchBarShown('taskbar')) {
+            hideModernTouchBar('taskbar');
+            hidExistingBar = true;
+        }
+
+        if (insideTitlebar || insideTaskbar || hidExistingBar) {
+            return;
+        }
+
+        if (touch.clientX >= window.innerWidth - MODERN_TOUCH_RIGHT_EDGE_EXCLUSION) {
+            return;
+        }
+
+        if (touch.clientY <= MODERN_TOUCH_EDGE_ZONE) {
+            startModernTouchBarDrag('titlebar', touch);
+            e.preventDefault();
+            return;
+        }
+
+        if (touch.clientY >= window.innerHeight - MODERN_TOUCH_EDGE_ZONE) {
+            startModernTouchBarDrag('taskbar', touch);
+            e.preventDefault();
+        }
+    });
+
+    $(document).on('touchmove.modernedgebars', function (e) {
+        const originalEvent = e.originalEvent;
+        if (!originalEvent.touches || originalEvent.touches.length !== 1) {
+            if (modernTouchEdgeBars.titlebar.active) {
+                hideModernTouchBar('titlebar');
+            }
+
+            if (modernTouchEdgeBars.taskbar.active) {
+                hideModernTouchBar('taskbar');
+            }
+
+            return;
+        }
+
+        const touch = originalEvent.touches[0];
+        const titlebarState = modernTouchEdgeBars.titlebar;
+        const taskbarState = modernTouchEdgeBars.taskbar;
+
+        if (titlebarState.active) {
+            const revealAmount = Math.max(0, touch.clientY - titlebarState.startY);
+            const horizontalDistance = Math.abs(touch.clientX - titlebarState.startX);
+
+            if (horizontalDistance > MODERN_TOUCH_CANCEL_HORIZONTAL_THRESHOLD &&
+                revealAmount < MODERN_TOUCH_TITLEBAR_OPEN_THRESHOLD) {
+                hideModernTouchBar('titlebar');
+                return;
+            }
+
+            applyModernTouchBarReveal('titlebar', revealAmount);
+            e.preventDefault();
+            return;
+        }
+
+        if (taskbarState.active) {
+            const revealAmount = Math.max(0, taskbarState.startY - touch.clientY);
+            const horizontalDistance = Math.abs(touch.clientX - taskbarState.startX);
+
+            if (horizontalDistance > MODERN_TOUCH_CANCEL_HORIZONTAL_THRESHOLD &&
+                revealAmount < MODERN_TOUCH_TASKBAR_OPEN_THRESHOLD) {
+                hideModernTouchBar('taskbar');
+                return;
+            }
+
+            applyModernTouchBarReveal('taskbar', revealAmount);
+            e.preventDefault();
+        }
+    });
+
+    $(document).on('touchend.modernedgebars touchcancel.modernedgebars', function () {
+        const titlebarState = modernTouchEdgeBars.titlebar;
+        const taskbarState = modernTouchEdgeBars.taskbar;
+
+        if (titlebarState.active) {
+            const shouldOpen = titlebarState.reveal >= MODERN_TOUCH_TITLEBAR_OPEN_THRESHOLD;
+            titlebarState.active = false;
+
+            if (shouldOpen) {
+                showModernTouchBar('titlebar');
+            } else {
+                hideModernTouchBar('titlebar');
+            }
+        }
+
+        if (taskbarState.active) {
+            const shouldOpen = taskbarState.reveal >= MODERN_TOUCH_TASKBAR_OPEN_THRESHOLD;
+            taskbarState.active = false;
+
+            if (shouldOpen) {
+                showModernTouchBar('taskbar');
+            } else {
+                hideModernTouchBar('taskbar');
+            }
+        }
+    });
+});
+
 // Helper function to show intermediary screen with random duration
 function showIntermediaryScreen(text, callback) {
     console.log('Showing intermediary screen:', text);
@@ -8878,7 +9469,16 @@ function sleepSystem() {
     console.log('Sleep: System is sleeping');
 }
 
-// Shut down system - show intermediary screen, fade to black, then close tab
+function requestHostAppQuit() {
+    if (!electronIpc || typeof electronIpc.send !== 'function') {
+        return false;
+    }
+
+    electronIpc.send('shell:quit-app');
+    return true;
+}
+
+// Shut down system - show intermediary screen, fade to black, then quit app
 function shutDownSystem() {
     console.log('Shut Down: Starting shutdown sequence');
 
@@ -8894,22 +9494,21 @@ function shutDownSystem() {
         const $fadeToBlack = $('#fade-to-black');
         $fadeToBlack.addClass('visible');
 
-        // Wait for fade animation to complete, then prompt to close
+        // Wait for fade animation to complete, then quit on the black screen
         setTimeout(async function () {
-            const result = await systemDialog.question('Shut down this Windows 8 session?\n\nThis will close the current tab.', 'Shut Down Windows');
-            if (result === 'yes') {
-                console.log('Shut Down: User confirmed - closing tab');
-                window.close();
+            console.log('Shut Down: Shutdown flow complete');
 
-                // Fallback if window.close() doesn't work (browser security)
-                setTimeout(async function () {
-                    await systemDialog.info('Please close this tab manually to shut down.', 'Shut Down Windows');
-                }, 100);
-            } else {
-                console.log('Shut Down: User cancelled');
-                // Fade back in if user cancels
-                $fadeToBlack.removeClass('visible');
+            if (requestHostAppQuit()) {
+                return;
             }
+
+            console.log('Shut Down: Electron IPC unavailable - falling back to window.close()');
+            window.close();
+
+            // Fallback if window.close() doesn't work (browser security)
+            setTimeout(async function () {
+                await systemDialog.info('Please close this tab manually to shut down.', 'Shut Down Windows');
+            }, 100);
         }, 500); // Wait for fade animation
     });
 }

@@ -1,10 +1,10 @@
-const { app, BrowserWindow, ipcMain, dialog, globalShortcut } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, globalShortcut, Menu } = require('electron');
 const Store = require('electron-store');
 const volumeControl = require('./components/volume/volume-control');
 const networkControl = require('./components/network/network-control');
 const batteryControl = require('./components/battery/battery-control');
 const USBMonitor = require('./components/device_connectivity/usb-monitor');
-const { setupTrashHandlers } = require('./components/explorer/trash-manager');
+const { setupRecycleBinHandlers } = require('./components/recycle_bin');
 const { decodeTextBuffer } = require('./components/explorer/file-openability');
 const fs = require('fs/promises');
 const path = require('path');
@@ -34,6 +34,15 @@ const SKIP_BOOT_FLAG = '--skip-boot';
 const resetModeEnabled = process.argv.includes(RESET_FLAG);
 const skipBootSequenceEnabled = process.argv.includes(SKIP_BOOT_FLAG);
 const skipSetupSequenceEnabled = skipBootSequenceEnabled || process.argv.includes(SKIP_SETUP_FLAG);
+
+function hideWindowMenuBar(window) {
+  if (!window || window.isDestroyed()) {
+    return;
+  }
+
+  window.setAutoHideMenuBar(true);
+  window.setMenuBarVisibility(false);
+}
 
 function clearSetupData() {
   store.delete('setup');
@@ -104,6 +113,7 @@ function createMainWindow(options = {}) {
     minHeight: 600,
     backgroundColor: '#000000',
     show: false, // Don't show until ready
+    autoHideMenuBar: true,
     webPreferences: {
       contextIsolation: false,
       nodeIntegration: true,
@@ -114,24 +124,9 @@ function createMainWindow(options = {}) {
     title: 'Windows'
   });
 
-  const syncMainWindowMenuBar = (isFullscreen) => {
-    if (!mainWindow || mainWindow.isDestroyed()) {
-      return;
-    }
-
-    if (isFullscreen) {
-      mainWindow.setAutoHideMenuBar(true);
-      mainWindow.setMenuBarVisibility(false);
-      return;
-    }
-
-    mainWindow.setAutoHideMenuBar(false);
-    mainWindow.setMenuBarVisibility(true);
-  };
-
-  syncMainWindowMenuBar(mainWindow.isFullScreen());
-  mainWindow.on('enter-full-screen', () => syncMainWindowMenuBar(true));
-  mainWindow.on('leave-full-screen', () => syncMainWindowMenuBar(false));
+  hideWindowMenuBar(mainWindow);
+  mainWindow.on('enter-full-screen', () => hideWindowMenuBar(mainWindow));
+  mainWindow.on('leave-full-screen', () => hideWindowMenuBar(mainWindow));
 
   // Load the index.html
   mainWindow.loadFile('index.html');
@@ -195,6 +190,7 @@ function createInstallWindow() {
     maximizable: false,
     backgroundColor: '#000000',
     show: false,
+    autoHideMenuBar: true,
     webPreferences: {
       contextIsolation: false,
       nodeIntegration: true,
@@ -202,6 +198,8 @@ function createInstallWindow() {
     },
     title: 'Windows Setup'
   });
+
+  hideWindowMenuBar(installWindow);
 
   installWindow.loadFile('install.html').catch(error => {
     console.error('[Setup] Failed to load install window:', error);
@@ -242,6 +240,8 @@ if (!gotTheLock) {
 
   // This method will be called when Electron has finished initialization
   app.whenReady().then(() => {
+    Menu.setApplicationMenu(null);
+
     if (resetModeEnabled) {
       clearSetupData();
     }
@@ -261,7 +261,7 @@ if (!gotTheLock) {
     }
 
     // Setup trash/recycle bin handlers
-    setupTrashHandlers();
+    setupRecycleBinHandlers();
 
     app.on('activate', () => {
       if (BrowserWindow.getAllWindows().length === 0) {
@@ -342,6 +342,10 @@ ipcMain.on('setup-request-restart', () => {
 
 ipcMain.on('setup-reset-request', () => {
   triggerSetupReset({ reason: 'renderer-ipc' });
+});
+
+ipcMain.on('shell:quit-app', () => {
+  app.quit();
 });
 
 // ===== Notepad File Operations =====
@@ -470,11 +474,14 @@ ipcMain.handle('launch-app', async (event, appData) => {
       parent: appData.windowOptions?.modal ? mainWindow : null,
       modal: appData.windowOptions?.modal || false,
       title: appData.name,
+      autoHideMenuBar: true,
       webPreferences: {
         contextIsolation: false,
         nodeIntegration: true
       }
     });
+
+    hideWindowMenuBar(appWindow);
 
     // Load the app content
     if (appData.path) {

@@ -79,7 +79,12 @@
         "minimizable": false,
         "maximizable": false,
         "alwaysOnTop": false,
-        "showInTaskbar": true
+        "showInTaskbar": true,
+        "defaultPosition": {
+          "horizontal": "left",
+          "vertical": "bottom",
+          "respectTaskbar": true
+        }
       },
       "runCommands": [
         "run",
@@ -214,6 +219,19 @@
       "type": "modern",
       "path": "apps/modern/iexplore/index.html",
       "loadDirect": true
+    },
+    {
+      "id": "calculator-modern",
+      "name": "Calculator",
+      "color": "green",
+      "size": "normal",
+      "pinned": false,
+      "category": "accessories",
+      "type": "modern",
+      "path": "apps/modern/calculator-modern/index.html",
+      "showInStart": true,
+      "familyId": "calculator",
+      "variant": "modern"
     },
     {
       "id": "notepad",

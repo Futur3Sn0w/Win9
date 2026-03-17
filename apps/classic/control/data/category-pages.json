@@ -145,7 +145,7 @@
         "appletId": "display",
         "links": [
           { "text": "Make text and other items larger or smaller", "action": "open" },
-          { "text": "Adjust screen resolution", "action": "open" },
+          { "text": "Adjust screen resolution", "action": "open", "target": "screen-resolution" },
           { "text": "How to correct monitor flicker (refresh rate)", "action": "open" }
         ]
       },
@@ -226,7 +226,7 @@
         "appletId": "display",
         "links": [
           { "text": "Make text and other items larger or smaller", "action": "open" },
-          { "text": "Adjust screen resolution", "action": "open" }
+          { "text": "Adjust screen resolution", "action": "open", "target": "screen-resolution" }
         ]
       },
       {

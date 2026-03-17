@@ -266,6 +266,44 @@ function normalizeSettings(input = {}) {
     return rel || wallpaper;
   });
 
+  if (!merged.currentWallpaper && merged.selectedWallpapers.length > 0) {
+    merged.currentWallpaper = merged.selectedWallpapers[0];
+    merged.currentWallpaperType = merged.selectedWallpapersTypes[0] === 'custom' ? 'custom' : 'builtin';
+  }
+
+  if (merged.currentWallpaper) {
+    const currentKey = `${merged.currentWallpaperType}:${merged.currentWallpaper}`;
+    const selectionHasCurrent = merged.selectedWallpapers.some((wallpaper, index) => {
+      const type = merged.selectedWallpapersTypes[index] === 'custom' ? 'custom' : 'builtin';
+      return `${type}:${wallpaper}` === currentKey;
+    });
+
+    if (!selectionHasCurrent) {
+      merged.selectedWallpapers.unshift(merged.currentWallpaper);
+      merged.selectedWallpapersTypes.unshift(merged.currentWallpaperType);
+    }
+  }
+
+  if (merged.selectedWallpapers.length > 0) {
+    const dedupedWallpapers = [];
+    const dedupedTypes = [];
+    const seen = new Set();
+
+    merged.selectedWallpapers.forEach((wallpaper, index) => {
+      const type = merged.selectedWallpapersTypes[index] === 'custom' ? 'custom' : 'builtin';
+      const key = `${type}:${wallpaper}`;
+      if (seen.has(key)) {
+        return;
+      }
+      seen.add(key);
+      dedupedWallpapers.push(wallpaper);
+      dedupedTypes.push(type);
+    });
+
+    merged.selectedWallpapers = dedupedWallpapers;
+    merged.selectedWallpapersTypes = dedupedTypes;
+  }
+
   merged.picturePosition = VALID_POSITIONS.has(merged.picturePosition)
     ? merged.picturePosition
     : DEFAULT_SETTINGS.picturePosition;
@@ -480,6 +518,7 @@ function saveWallpaperColorCache(entry) {
 module.exports = {
   loadDesktopBackgroundSettings,
   saveDesktopBackgroundSettings,
+  normalizeSettings,
   getDesktopWallpaperFullPath,
   getDefaultDesktopBackgroundSettings,
   toFullWallpaperPath,

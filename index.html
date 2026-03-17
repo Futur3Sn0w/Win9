@@ -151,8 +151,10 @@
                             </div>
                         </div>
                     </div>
-                    <div class="tiles" id="pinned-tiles">
-                        <!-- Pinned tiles will be generated here -->
+                    <div class="start-scroll-region start-scroll-region--pinned">
+                        <div class="tiles" id="pinned-tiles">
+                            <!-- Pinned tiles will be generated here -->
+                        </div>
                     </div>
                     <div class="start-footer">
                         <button class="all-apps-toggle pinned-apps-toggle">
@@ -166,8 +168,10 @@
                     <div class="start-header">
                         <span class="start-header-title">Apps</span>
                     </div>
-                    <div class="all-apps-list" id="all-apps-list">
-                        <!-- App list will be generated here -->
+                    <div class="start-scroll-region start-scroll-region--apps">
+                        <div class="all-apps-list" id="all-apps-list">
+                            <!-- App list will be generated here -->
+                        </div>
                     </div>
                     <div class="start-footer">
                         <button class="all-apps-toggle all-apps-up-toggle">
@@ -184,6 +188,9 @@
     <div id="app-context-menu" class="context-menu">
         <div class="context-menu-item" data-action="pin">
             <span class="context-menu-item-text">Pin to Start</span>
+        </div>
+        <div class="context-menu-item" data-action="pin-taskbar">
+            <span class="context-menu-item-text">Pin to Taskbar</span>
         </div>
         <div class="context-menu-item context-menu-item-submenu" data-action="resize">
             <span class="context-menu-item-text">Resize</span>
@@ -666,6 +673,7 @@
     <script src="components/battery/battery-monitor.js"></script>
     <script src="components/explorer/open-with-dialog.js"></script>
     <script src="components/explorer/file-associations.js"></script>
+    <script src="components/explorer/icon-builder.js"></script>
     <script src="components/explorer/explorer-engine.js"></script>
     <script src="taskbar-item-context-menu.js"></script>
     <script src="taskbar-drag.js"></script>

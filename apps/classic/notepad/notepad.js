@@ -1,5 +1,7 @@
 // Notepad Application Logic
 
+const APP_ID = 'notepad';
+
 let ipcRenderer = null;
 let path = null;
 
@@ -46,9 +48,13 @@ class Notepad {
         this.statusBarVisible = false;
         this.anyMenuOpen = false;
         this.baseTitle = 'Notepad';
+        this.windowId = null;
         this.ipcRenderer = ipcRenderer;
         this.path = path;
         this.preferenceStore = this.getPreferenceStore();
+        this.pendingLaunchFilePath = null;
+        this.activeLaunchFilePath = null;
+        this.isProcessingLaunchFile = false;
 
         this.init();
     }
@@ -64,19 +70,21 @@ class Notepad {
         this.setupWindowCloseHandler();
         this.updateStatusBar();
         this.updateWindowTitle();
+        this.consumeInitialLaunchOptions();
     }
 
     updateWindowTitle() {
-        const titleElement = window.parent?.document.querySelector(`iframe[src*="notepad"]`)?.closest('.classic-app-container')?.querySelector('.classic-window-name');
         const showName = Boolean(this.isModified || this.currentFilePath || this.currentFile);
         const displayName = this.currentFile || DEFAULT_FILENAME;
         const title = showName ? `${displayName} - ${this.baseTitle}` : this.baseTitle;
+        const titleElement = window.frameElement?.closest('.classic-app-container')?.querySelector('.classic-window-name');
 
         if (titleElement) {
             titleElement.textContent = title;
         }
 
         document.title = title;
+        this.sendToParent('updateWindowTitle', { title });
     }
 
     setupWindowCloseHandler() {
@@ -265,17 +273,87 @@ class Notepad {
     }
 
     setupLaunchOpenHandlers() {
+        if (this.ipcRenderer?.on) {
+            this.ipcRenderer.on('setWindowId', (event, data) => {
+                if (data?.windowId) {
+                    this.windowId = data.windowId;
+                    this.updateWindowTitle();
+                }
+            });
+
+            this.ipcRenderer.on('setLaunchOptions', (event, data) => {
+                this.handleLaunchOptions(data?.launchOptions);
+            });
+        }
+
         window.addEventListener('message', (event) => {
+            if (event.data?.action === 'setWindowId' && event.data.windowId) {
+                this.windowId = event.data.windowId;
+                this.updateWindowTitle();
+                return;
+            }
+
+            if (event.data?.action === 'setLaunchOptions') {
+                this.handleLaunchOptions(event.data.launchOptions);
+                return;
+            }
+
             if (event.data?.action === 'openFile' && event.data.filePath) {
-                this.loadFileFromLaunch(event.data.filePath);
+                this.queueLaunchFileOpen(event.data.filePath);
             }
         });
 
         document.addEventListener('openFile', (event) => {
             if (event.detail?.filePath) {
-                this.loadFileFromLaunch(event.detail.filePath);
+                this.queueLaunchFileOpen(event.detail.filePath);
             }
         });
+    }
+
+    consumeInitialLaunchOptions() {
+        this.handleLaunchOptions(window.launchOptions);
+    }
+
+    handleLaunchOptions(launchOptions) {
+        if (launchOptions?.openFilePath) {
+            this.queueLaunchFileOpen(launchOptions.openFilePath);
+        }
+    }
+
+    queueLaunchFileOpen(filePath) {
+        if (!filePath) {
+            return;
+        }
+
+        if (filePath === this.pendingLaunchFilePath || filePath === this.activeLaunchFilePath) {
+            return;
+        }
+
+        this.pendingLaunchFilePath = filePath;
+        if (!this.isProcessingLaunchFile) {
+            this.flushLaunchFileQueue();
+        }
+    }
+
+    async flushLaunchFileQueue() {
+        if (this.isProcessingLaunchFile) {
+            return;
+        }
+
+        this.isProcessingLaunchFile = true;
+
+        try {
+            while (this.pendingLaunchFilePath) {
+                const nextFilePath = this.pendingLaunchFilePath;
+                this.pendingLaunchFilePath = null;
+                this.activeLaunchFilePath = nextFilePath;
+                await this.loadFileFromLaunch(nextFilePath);
+                this.activeLaunchFilePath = null;
+            }
+        } finally {
+            this.activeLaunchFilePath = null;
+            this.isProcessingLaunchFile = false;
+        }
     }
 
     setupKeyboardShortcuts() {
@@ -406,12 +484,12 @@ class Notepad {
 
     async loadFileFromLaunch(filePath) {
         if (!filePath || !this.ipcRenderer) {
-            return;
+            return false;
         }
 
         const canProceed = await this.ensureCanReplaceCurrentDocument();
         if (!canProceed) {
-            return;
+            return false;
         }
 
         try {
@@ -420,12 +498,14 @@ class Notepad {
                 if (result?.error) {
                     await this.showError('Unable to open the selected file.\n\n' + result.error);
                 }
-                return;
+                return false;
             }
 
             this.applyOpenedFile(result);
+            return true;
         } catch (error) {
             await this.showError('Unable to open the selected file.\n\n' + (error?.message || 'Unknown error.'));
+            return false;
         }
     }
 
@@ -573,6 +653,19 @@ class Notepad {
 
     print() {
         window.print();
+    }
+
+    sendToParent(action, data = {}) {
+        if (!this.windowId || !window.parent || window.parent === window) {
+            return;
+        }
+
+        window.parent.postMessage({
+            action,
+            windowId: this.windowId,
+            appId: APP_ID,
+            ...data
+        }, '*');
     }
 
     async exit() {

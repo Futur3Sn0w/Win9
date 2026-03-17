@@ -4,6 +4,28 @@
  */
 
 const STORE_DIRECTORY_PATH = 'apps/modern/msstore/msstoredirectory.json';
+const { pathToFileURL: appsManagerPathToFileURL } = require('url');
+
+function toAssetUrl(path) {
+    if (!path || typeof path !== 'string') {
+        return path;
+    }
+
+    if (path.startsWith('http://') || path.startsWith('https://') ||
+        path.startsWith('file://') || path.startsWith('resources/')) {
+        return path;
+    }
+
+    if (path.startsWith('/') || path.startsWith('\\\\') || /^[A-Z]:[\\/]/i.test(path)) {
+        try {
+            return appsManagerPathToFileURL(path).href;
+        } catch (error) {
+            console.warn('[AppsManager] Failed to convert asset path to file URL:', path, error);
+        }
+    }
+
+    return path;
+}
 
 let appsData = null;
 
@@ -422,6 +444,19 @@ function togglePin(appId) {
     }
 }
 
+function toggleTaskbarPin(appId) {
+    const app = getAppById(appId);
+    if (!app) {
+        return null;
+    }
+
+    app.pinnedToTaskbar = !app.pinnedToTaskbar;
+    saveTaskbarPins();
+    updateTaskbar();
+
+    return app.pinnedToTaskbar;
+}
+
 // Set tile size
 function setTileSize(appId, size) {
     const app = getAppById(appId);
@@ -444,6 +479,36 @@ function savePinnedApps() {
             console.log('[AppsManager] Saved pinned apps to registry:', pinnedIds);
         } catch (error) {
             console.error('Failed to save pinned apps to registry:', error);
+        }
+    }
+}
+
+function saveTaskbarPins() {
+    if (!appsData) {
+        return;
+    }
+
+    const pinnedIds = appsData
+        .filter(app => app.pinnedToTaskbar)
+        .map(app => app.id);
+
+    const registry = window.TileLayoutRegistry;
+    if (registry && typeof registry.saveTaskbarPins === 'function') {
+        try {
+            registry.saveTaskbarPins(pinnedIds);
+            console.log('[AppsManager] Saved pinned taskbar apps to registry:', pinnedIds);
+        } catch (error) {
+            console.error('Failed to save pinned taskbar apps to registry:', error);
+        }
+    } else {
+        console.warn('[AppsManager] Tile layout registry API unavailable; taskbar pins not persisted');
+    }
+
+    if (typeof localStorage !== 'undefined') {
+        try {
+            localStorage.removeItem('pinnedTaskbarApps');
+        } catch (error) {
+            console.warn('Failed to remove legacy pinnedTaskbarApps key:', error);
         }
     }
 }
@@ -659,27 +724,7 @@ function generateAppListItemHTML(app) {
 function setTileImage(appId, imageUrl) {
     const app = getAppById(appId);
     if (app) {
-        // Helper function to convert absolute paths to file:// URLs
-        const toFileURL = (path) => {
-            if (!path) return path;
-
-            // If it's already a URL (starts with http://, https://, file://, or resources/), return as-is
-            if (path.startsWith('http://') || path.startsWith('https://') ||
-                path.startsWith('file://') || path.startsWith('resources/')) {
-                return path;
-            }
-
-            // If it's an absolute path (starts with / on Unix or C:\ on Windows), convert to file:// URL
-            if (path.startsWith('/') || /^[A-Z]:\\/.test(path)) {
-                // Encode the path to handle special characters and spaces
-                const encodedPath = path.split('/').map(segment => encodeURIComponent(segment)).join('/');
-                return `file://${encodedPath}`;
-            }
-
-            return path;
-        };
-
-        const formattedUrl = toFileURL(imageUrl);
+        const formattedUrl = toAssetUrl(imageUrl);
 
         app.showImage = true;
         app.imageUrl = formattedUrl; // Store the formatted URL
@@ -1227,6 +1272,7 @@ window.AppsManager = {
     getAppListLogo,
     getTileLargeSplash,
     togglePin,
+    toggleTaskbarPin,
     setTileSize,
     setTileImage,
     removeTileImage,
@@ -1251,5 +1297,6 @@ window.AppsManager = {
     setWindowState,
     getWindowState,
     generateWindowId,
+    saveTaskbarPins,
     updateTaskbar
 };

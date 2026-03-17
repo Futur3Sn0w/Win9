@@ -11,6 +11,29 @@ const {
     getDefaultThemeSettings,
     isDefaultThemeSettings
 } = require('../../../registry/theme-registry.js');
+const { pathToFileURL } = require('url');
+
+function getWallpaperController() {
+    const contexts = [window, window.parent, window.top];
+    for (const ctx of contexts) {
+        try {
+            if (ctx && ctx.WallpaperController) {
+                return ctx.WallpaperController;
+            }
+        } catch (error) {
+            console.warn('[Personalization] Could not access wallpaper controller:', error);
+        }
+    }
+    return null;
+}
+
+function loadCurrentWallpaperSettings() {
+    const controller = getWallpaperController();
+    if (controller && typeof controller.getSettings === 'function') {
+        return controller.getSettings();
+    }
+    return loadDesktopBackgroundSettings();
+}
 
 var ColorRegistry = (function () {
     const contexts = [window, window.parent, window.top];
@@ -79,6 +102,27 @@ function loadControlPanelColorSettings() {
         return ControlPanelColorRegistry.loadControlPanelColor();
     }
     return { mode: 'automatic', color: null };
+}
+
+function toPreviewAssetUrl(path) {
+    if (!path || typeof path !== 'string') {
+        return path;
+    }
+
+    if (path.startsWith('http://') || path.startsWith('https://') ||
+        path.startsWith('file://') || path.startsWith('resources/')) {
+        return path;
+    }
+
+    if (path.startsWith('/') || path.startsWith('\\\\') || /^[A-Z]:[\\/]/i.test(path)) {
+        try {
+            return pathToFileURL(path).href;
+        } catch (error) {
+            console.warn('[Personalization] Failed to convert preview asset path to file URL:', path, error);
+        }
+    }
+
+    return path;
 }
 
 const WALLPAPERS_BASE_PATH = '../../../resources/images/wallpapers/';
@@ -235,7 +279,7 @@ function loadSavedSettings() {
 
     // Load current wallpaper settings
     try {
-        const bgSettings = loadDesktopBackgroundSettings();
+        const bgSettings = loadCurrentWallpaperSettings();
         if (Array.isArray(bgSettings.selectedWallpapers) && bgSettings.selectedWallpapers.length > 0) {
             state.currentWallpaper = [...bgSettings.selectedWallpapers];
         } else if (bgSettings.currentWallpaper) {
@@ -552,7 +596,7 @@ function applyTheme(theme) {
 
     // CRITICAL: Ensure registry write is complete before applying wallpaper
     // Use a small delay to ensure color settings are saved before wallpaper extraction
-    const applyWallpaperAfterColorSaved = () => {
+    const applyWallpaperAfterColorSaved = async () => {
         // Now apply wallpaper
         const wallpaperSettings = {
             selectedWallpapers: theme.wallpapers,
@@ -560,50 +604,22 @@ function applyTheme(theme) {
             currentWallpaper: theme.wallpapers[0],
             currentWallpaperType: 'builtin',
             picturePosition: 'fill',
-            changeInterval: theme.wallpapers.length > 1 ? '30m' : null,
+            changeInterval: '30m',
             shuffle: false,
             pauseOnBattery: false,
             customFolders: [],
             currentLocation: 'windows'
         };
 
-        const normalized = saveDesktopBackgroundSettings(wallpaperSettings);
+        const controller = getWallpaperController();
+        const normalized = controller && typeof controller.saveSettings === 'function'
+            ? await controller.saveSettings(wallpaperSettings, {
+                withCrossfade: true,
+                reason: 'theme-apply'
+            })
+            : saveDesktopBackgroundSettings(wallpaperSettings);
         state.currentWallpaper = [...normalized.selectedWallpapers];
         console.log('Saved wallpaper settings to registry');
-
-        // Apply wallpaper to desktop using the same approach as desktop-background.js
-        const mainAppPath = 'resources/images/wallpapers/' + normalized.currentWallpaper;
-        console.log('Wallpaper path:', mainAppPath);
-
-        // Only extract color from wallpaper if color is set to automatic
-        const shouldExtractColor = theme.color === 'automatic';
-        console.log('Should extract color from wallpaper:', shouldExtractColor);
-
-        // Try window.parent.applyDesktopWallpaper
-        if (window.parent && window.parent !== window && window.parent.applyDesktopWallpaper) {
-            console.log('Calling window.parent.applyDesktopWallpaper');
-            window.parent.applyDesktopWallpaper(mainAppPath, {
-                withCrossfade: true,
-                updateTile: true,
-                extractColor: shouldExtractColor
-            });
-        } else if (window.top && window.top !== window) {
-            // Try window.top.applyDesktopWallpaper
-            try {
-                if (window.top.applyDesktopWallpaper) {
-                    console.log('Calling window.top.applyDesktopWallpaper');
-                    window.top.applyDesktopWallpaper(mainAppPath, {
-                        withCrossfade: true,
-                        updateTile: true,
-                        extractColor: shouldExtractColor
-                    });
-                }
-            } catch (e) {
-                console.warn('Could not access top window function:', e);
-            }
-        } else {
-            console.warn('No applyDesktopWallpaper function found in parent or top window');
-        }
 
         // If the color is not automatic, re-apply it after wallpaper to ensure it sticks
         // Use multiple timeouts to combat async color extraction
@@ -627,38 +643,15 @@ function applyTheme(theme) {
             }, 500);
         }
 
-        // If multiple wallpapers, start slideshow
-        if (normalized.selectedWallpapers.length > 1) {
-            if (window.parent && window.parent !== window && window.parent.startWallpaperSlideshow) {
-                window.parent.startWallpaperSlideshow(normalized);
-            } else if (window.top && window.top !== window) {
-                try {
-                    if (window.top.startWallpaperSlideshow) {
-                        window.top.startWallpaperSlideshow(normalized);
-                    }
-                } catch (e) {
-                    console.warn('Could not start slideshow:', e);
-                }
-            }
-        } else {
-            if (window.parent && window.parent !== window && window.parent.stopWallpaperSlideshow) {
-                window.parent.stopWallpaperSlideshow();
-            } else if (window.top && window.top !== window) {
-                try {
-                    if (window.top.stopWallpaperSlideshow) {
-                        window.top.stopWallpaperSlideshow();
-                    }
-                } catch (e) {
-                    console.warn('Could not stop slideshow:', e);
-                }
-            }
-        }
-
         // State was already updated before this timeout
     };
 
     // Call the wallpaper application after a small delay to ensure color is saved
-    setTimeout(applyWallpaperAfterColorSaved, 10);
+    setTimeout(() => {
+        applyWallpaperAfterColorSaved().catch(error => {
+            console.error('Failed to apply theme wallpaper:', error);
+        });
+    }, 10);
 }
 
 // Apply color to UI across all windows
@@ -714,7 +707,7 @@ function checkForSettingsChanges() {
     console.log('checkForSettingsChanges - checking registry');
 
     try {
-        const bgSettings = loadDesktopBackgroundSettings();
+        const bgSettings = loadCurrentWallpaperSettings();
         const newWallpaper = Array.isArray(bgSettings.selectedWallpapers) && bgSettings.selectedWallpapers.length > 0
             ? bgSettings.selectedWallpapers
             : (bgSettings.currentWallpaper ? [bgSettings.currentWallpaper] : null);
@@ -940,8 +933,9 @@ function updateDesktopBackgroundButton() {
             const wallpaperPath = wallpaperEntry.startsWith('resources/') || wallpaperEntry.startsWith('file://') || /^[a-zA-Z]:\\/.test(wallpaperEntry)
                 ? wallpaperEntry
                 : `${WALLPAPERS_BASE_PATH}${wallpaperEntry}`;
-            console.log('updateDesktopBackgroundButton: Setting single wallpaper to:', wallpaperPath);
-            desktopBgIcon.style.backgroundImage = `url('${wallpaperPath}')`;
+            const previewPath = toPreviewAssetUrl(wallpaperPath);
+            console.log('updateDesktopBackgroundButton: Setting single wallpaper to:', previewPath);
+            desktopBgIcon.style.backgroundImage = `url('${previewPath}')`;
             desktopBgIcon.style.backgroundSize = 'cover';
             desktopBgIcon.style.backgroundPosition = 'center';
 
@@ -962,7 +956,7 @@ function updateDesktopBackgroundButton() {
                 const wallpaperPath = wallpaperEntry.startsWith('resources/') || wallpaperEntry.startsWith('file://') || /^[a-zA-Z]:\\/.test(wallpaperEntry)
                     ? wallpaperEntry
                     : `${WALLPAPERS_BASE_PATH}${wallpaperEntry}`;
-                layer.style.backgroundImage = `url('${wallpaperPath}')`;
+                layer.style.backgroundImage = `url('${toPreviewAssetUrl(wallpaperPath)}')`;
                 layer.style.backgroundSize = 'cover';
                 layer.style.backgroundPosition = 'center';
                 layer.style.position = 'absolute';

@@ -89,6 +89,14 @@
       "navigationType": "page"
     },
     {
+      "id": "screen-resolution",
+      "name": "Screen Resolution",
+      "icon": "mif-display",
+      "category": "appearance",
+      "description": "Adjust your screen resolution and preview how browser zoom maps to the desktop.",
+      "navigationType": "page"
+    },
+    {
       "id": "ease-of-access-center",
       "name": "Ease of Access Center",
       "icon": "mif-accessibility",

@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Screen Resolution</title>
+    <link rel="stylesheet" href="../../../css/classic-windows.css">
+    <link rel="stylesheet" href="../../../css/classic-controls.css">
+    <link rel="stylesheet" href="../../../css/styles.css">
+    <link rel="stylesheet" href="../../../css/fonts.css">
+    <link rel="stylesheet" href="screen-resolution.css">
+</head>
+
+<body>
+    <div class="screen-resolution-page">
+        <h1 class="sr-page-title">Change the appearance of your display</h1>
+
+        <section class="sr-display-panel">
+            <div class="sr-display-preview">
+                <div class="sr-identify-overlay" id="identifyOverlay">1</div>
+                <div class="sr-monitor" id="monitorPreview">
+                    <div class="sr-monitor-screen" id="monitorScreen">
+                        <div class="sr-monitor-screen-gloss"></div>
+                        <div class="sr-monitor-number">1</div>
+                        <div class="sr-monitor-caption" id="monitorCaption"></div>
+                        <div class="sr-monitor-dots">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </div>
+                    </div>
+                    <div class="sr-monitor-stand"></div>
+                </div>
+            </div>
+
+            <div class="sr-side-actions">
+                <button type="button" class="classic-button" id="detectButton">Detect</button>
+                <button type="button" class="classic-button" id="identifyButton">Identify</button>
+            </div>
+        </section>
+
+        <section class="sr-settings-grid">
+            <label class="classic-control-row sr-field">
+                <span class="classic-control-label">Display:</span>
+                <select class="classic-select classic-control-field" id="displaySelect" disabled></select>
+            </label>
+
+            <label class="classic-control-row sr-field">
+                <span class="classic-control-label">Resolution:</span>
+                <select class="classic-select classic-control-field" id="resolutionSelect"></select>
+            </label>
+        </section>
+
+        <div class="sr-current-summary" id="currentSummary"></div>
+
+        <div class="sr-advanced-row">
+            <button type="button" class="sr-link-button" id="advancedSettingsButton">Advanced settings</button>
+        </div>
+
+        <div class="sr-help-links">
+            <button type="button" class="sr-link-button" id="sizeHelpButton">Make text and other items larger or smaller</button>
+            <button type="button" class="sr-link-button" id="mappingHelpButton">How does browser zoom map to screen resolution?</button>
+        </div>
+
+        <div class="sr-status" id="statusMessage" aria-live="polite"></div>
+
+        <footer class="sr-footer">
+            <div class="sr-footer-buttons">
+                <button type="button" class="classic-button default-button" id="okButton">OK</button>
+                <button type="button" class="classic-button" id="cancelButton">Cancel</button>
+                <button type="button" class="classic-button" id="applyButton" disabled>Apply</button>
+            </div>
+        </footer>
+    </div>
+
+    <script src="screen-resolution.js"></script>
+</body>
+
+</html>

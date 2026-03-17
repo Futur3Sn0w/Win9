@@ -1,9 +1,9 @@
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
-const { shell } = require('electron');
 
 let ExplorerRegistry = null;
+let ExplorerIconBuilder = null;
 
 try {
     ExplorerRegistry = require('../../registry/explorer-registry.js');
@@ -27,14 +27,42 @@ try {
     ExplorerRegistry = resolved;
 }
 
+try {
+    ExplorerIconBuilder = require('./components/explorer/icon-builder.js');
+} catch (error) {
+    let resolved = null;
+
+    if (!resolved && typeof window !== 'undefined' && typeof window.require === 'function') {
+        try {
+            resolved = window.require('./components/explorer/icon-builder.js');
+        } catch (nestedError) {
+            if (typeof console !== 'undefined' && console.debug) {
+                console.debug('ExplorerEngine: window.require icon-builder fallback failed:', nestedError);
+            }
+        }
+    }
+
+    if (!resolved && typeof window !== 'undefined') {
+        resolved = window.ExplorerIconBuilder || null;
+    }
+
+    ExplorerIconBuilder = resolved;
+}
+
 const ExplorerEngine = (() => {
     const fsp = fs.promises;
     const desktopPath = path.join(os.homedir(), 'Desktop');
-    const RECYCLE_BIN_PATH = process.platform === 'darwin'
-        ? path.join(os.homedir(), '.Trash')
-        : null;
-
     const RECYCLE_BIN_KEY = '__recycle_bin__';
+    let electronIpcRenderer = null;
+    let electronShell = null;
+
+    try {
+        ({ ipcRenderer: electronIpcRenderer, shell: electronShell } = require('electron'));
+    } catch (error) {
+        if (typeof console !== 'undefined' && console.debug) {
+            console.debug('ExplorerEngine: electron module unavailable:', error);
+        }
+    }
 
     const SIZE_PRESETS = {
         small: {
@@ -92,6 +120,15 @@ const ExplorerEngine = (() => {
     let resizeRaf = null;
     let lastLayoutWidth = 0;
     let lastLayoutHeight = 0;
+    let recycleBinEventsBound = false;
+    let recycleBinState = {
+        available: process.platform === 'darwin' || process.platform === 'win32',
+        path: process.platform === 'darwin'
+            ? path.join(os.homedir(), '.Trash')
+            : null,
+        empty: true,
+        itemCount: 0
+    };
 
     const itemEntryMap = new WeakMap();
     let entryElementsByPath = new Map();
@@ -135,6 +172,16 @@ const ExplorerEngine = (() => {
         return null;
     }
 
+    function getExplorerIconBuilderApi() {
+        if (ExplorerIconBuilder && typeof ExplorerIconBuilder === 'object') {
+            return ExplorerIconBuilder;
+        }
+        if (typeof window !== 'undefined' && window.ExplorerIconBuilder) {
+            return window.ExplorerIconBuilder;
+        }
+        return null;
+    }
+
     function ensureDesktopContainer() {
         if (desktopContainer) {
             return true;
@@ -164,6 +211,56 @@ const ExplorerEngine = (() => {
         desktopContainer.addEventListener('mousedown', handleDesktopMouseDown);
         window.addEventListener('resize', handleWindowResize);
         eventsBound = true;
+    }
+
+    function normalizeRecycleBinState(state) {
+        return {
+            available: Boolean(state?.available),
+            path: typeof state?.path === 'string' ? state.path : null,
+            empty: Boolean(state?.empty ?? true),
+            itemCount: Number.isFinite(Number(state?.itemCount)) ? Number(state.itemCount) : 0
+        };
+    }
+
+    async function loadRecycleBinState() {
+        if (!electronIpcRenderer || typeof electronIpcRenderer.invoke !== 'function') {
+            return recycleBinState;
+        }
+
+        try {
+            const nextState = await electronIpcRenderer.invoke('trash:get-info');
+            recycleBinState = normalizeRecycleBinState(nextState);
+        } catch (error) {
+            console.warn('ExplorerEngine: Failed to load recycle bin state.', error);
+        }
+
+        return recycleBinState;
+    }
+
+    function bindRecycleBinEvents() {
+        if (recycleBinEventsBound || !electronIpcRenderer || typeof electronIpcRenderer.on !== 'function') {
+            return;
+        }
+
+        electronIpcRenderer.on('trash:state-changed', (event, nextState) => {
+            const previous = recycleBinState;
+            recycleBinState = normalizeRecycleBinState(nextState);
+
+            if (!initialized) {
+                return;
+            }
+
+            if (previous.available !== recycleBinState.available
+                || previous.path !== recycleBinState.path
+                || previous.empty !== recycleBinState.empty
+                || previous.itemCount !== recycleBinState.itemCount) {
+                refreshDesktop().catch(error => {
+                    console.error('ExplorerEngine: Failed to refresh desktop after recycle bin update.', error);
+                });
+            }
+        });
+
+        recycleBinEventsBound = true;
     }
 
     function handleWindowResize() {
@@ -277,6 +374,8 @@ const ExplorerEngine = (() => {
         loadSettings();
         applySizeClass();
         bindDesktopEvents();
+        bindRecycleBinEvents();
+        await loadRecycleBinState();
         initialized = true;
         await refreshDesktop();
     }
@@ -301,7 +400,12 @@ const ExplorerEngine = (() => {
 
         refreshInFlight = (async () => {
             try {
-                const entries = await readDesktopEntries();
+                const [entries, nextRecycleBinState] = await Promise.all([
+                    readDesktopEntries(),
+                    loadRecycleBinState()
+                ]);
+
+                recycleBinState = nextRecycleBinState;
 
                 gridElement.innerHTML = '';
                 entryElementsByPath = new Map();
@@ -377,10 +481,10 @@ const ExplorerEngine = (() => {
     function buildRecycleEntry() {
         return {
             name: 'Recycle Bin',
-            path: RECYCLE_BIN_PATH,
+            path: recycleBinState.path,
             type: 'recycle-bin',
             extension: '',
-            recycleBinEmpty: true
+            recycleBinEmpty: recycleBinState.empty
         };
     }
 
@@ -407,43 +511,21 @@ const ExplorerEngine = (() => {
             item.classList.add('desktop-item--disabled');
         }
 
-        const icon = document.createElement('div');
-        icon.className = `desktop-item__icon desktop-item__icon--${resolveIconClass(entry)}`;
-
         const preset = resolveSizePreset(settings.iconSize);
-        const iconSize = preset.iconSize;
-        let desiredIconSize = 48;
-
-        if (iconSize <= 56) {
-            desiredIconSize = 48;
-        } else if (iconSize <= 68) {
-            desiredIconSize = 64;
-        } else if (iconSize <= 84) {
-            desiredIconSize = 64;
-        } else {
-            desiredIconSize = 96;
-        }
-
-        // Check if this is a displayable image file - if so, render thumbnail
-        if (isDisplayableImage(entry)) {
-            const img = document.createElement('img');
-            img.src = `file://${entry.path}`;
-            img.className = 'desktop-item__icon-image desktop-item__icon-image--thumbnail';
-            img.draggable = false;
-            icon.classList.add('desktop-item__icon--thumbnail');
-            icon.appendChild(img);
-        } else {
-            const iconPath = getIconPath(entry, desiredIconSize);
-            if (iconPath) {
-                const img = document.createElement('img');
-                img.src = iconPath;
-                img.className = 'desktop-item__icon-image';
-                img.draggable = false;
-                icon.appendChild(img);
-            } else {
-                icon.textContent = formatIconLabel(entry);
-            }
-        }
+        const iconBuilder = getExplorerIconBuilderApi();
+        const icon = iconBuilder && typeof iconBuilder.createDesktopIconElement === 'function'
+            ? iconBuilder.createDesktopIconElement({
+                entry,
+                displaySize: preset.iconSize,
+                documentRef: document
+            })
+            : (() => {
+                const fallbackIcon = document.createElement('div');
+                fallbackIcon.className = 'desktop-item__icon desktop-item__icon--file';
+                fallbackIcon.textContent = '?';
+                console.warn('ExplorerEngine: Icon builder unavailable, using fallback icon.');
+                return fallbackIcon;
+            })();
 
         const labelContainer = document.createElement('div');
         labelContainer.className = 'desktop-item__label-container';
@@ -1422,7 +1504,7 @@ const ExplorerEngine = (() => {
 
         if (entry.type === 'recycle-bin') {
             const emptyLabel = process.platform === 'darwin' ? 'Empty Trash' : 'Empty Recycle Bin';
-            const recycleBinAvailable = Boolean(RECYCLE_BIN_PATH);
+            const recycleBinAvailable = Boolean(recycleBinState.available);
 
             menuItems = [
                 {
@@ -1806,7 +1888,7 @@ const ExplorerEngine = (() => {
         const recycleLabel = process.platform === 'darwin' ? 'Trash' : 'Recycle Bin';
 
         try {
-            const result = await ipcRenderer.invoke('trash:empty');
+            const result = await electronIpcRenderer.invoke('trash:empty');
 
             if (result.success && result.deletedCount === 0) {
                 systemDialog.info(`The ${recycleLabel.toLowerCase()} is already empty.`, recycleLabel);
@@ -1848,13 +1930,13 @@ const ExplorerEngine = (() => {
             throw new Error('No path provided for trash operation.');
         }
 
-        if (typeof shell.trashItem === 'function') {
-            await shell.trashItem(targetPath);
+        if (electronShell && typeof electronShell.trashItem === 'function') {
+            await electronShell.trashItem(targetPath);
             return;
         }
 
-        if (typeof shell.moveItemToTrash === 'function') {
-            const result = shell.moveItemToTrash(targetPath);
+        if (electronShell && typeof electronShell.moveItemToTrash === 'function') {
+            const result = electronShell.moveItemToTrash(targetPath);
             if (!result) {
                 throw new Error('Electron moveItemToTrash failed.');
             }
@@ -2050,13 +2132,13 @@ const ExplorerEngine = (() => {
         } else {
             // Fallback to external opening if file associations not available
             console.warn('ExplorerEngine: File associations not available, opening externally.');
-            if (typeof shell.openPath === 'function') {
-                const result = await shell.openPath(targetPath);
+            if (electronShell && typeof electronShell.openPath === 'function') {
+                const result = await electronShell.openPath(targetPath);
                 if (result) {
                     console.error('ExplorerEngine: Electron failed to open path.', result);
                 }
-            } else if (typeof shell.showItemInFolder === 'function') {
-                shell.showItemInFolder(targetPath);
+            } else if (electronShell && typeof electronShell.showItemInFolder === 'function') {
+                electronShell.showItemInFolder(targetPath);
             } else {
                 console.warn('ExplorerEngine: No available method to open path.');
             }
@@ -2064,21 +2146,18 @@ const ExplorerEngine = (() => {
     }
 
     async function openRecycleBin() {
-        if (!RECYCLE_BIN_PATH) {
-            console.warn('ExplorerEngine: Recycle bin path unavailable for this platform.');
-            return;
-        }
-
         try {
-            if (typeof shell.openPath === 'function') {
-                const result = await shell.openPath(RECYCLE_BIN_PATH);
+            if (electronIpcRenderer && typeof electronIpcRenderer.invoke === 'function') {
+                await electronIpcRenderer.invoke('trash:open');
+            } else if (recycleBinState.path && electronShell && typeof electronShell.openPath === 'function') {
+                const result = await electronShell.openPath(recycleBinState.path);
                 if (result) {
                     console.error('ExplorerEngine: Electron failed to open recycle bin.', result);
                 }
-            } else if (typeof shell.openExternal === 'function') {
-                await shell.openExternal(`file://${RECYCLE_BIN_PATH}`);
+            } else if (recycleBinState.path && electronShell && typeof electronShell.openExternal === 'function') {
+                await electronShell.openExternal(`file://${recycleBinState.path}`);
             } else {
-                console.warn('ExplorerEngine: No available method to open recycle bin.');
+                console.warn('ExplorerEngine: Recycle bin open is unavailable on this platform.');
             }
         } catch (error) {
             console.error('ExplorerEngine: Error opening recycle bin.', error);
@@ -2088,150 +2167,9 @@ const ExplorerEngine = (() => {
 
     function isEntryClickable(entry) {
         if (entry.type === 'recycle-bin') {
-            return Boolean(RECYCLE_BIN_PATH);
+            return Boolean(recycleBinState.available);
         }
         return Boolean(entry.path);
-    }
-
-    function isDisplayableImage(entry) {
-        if (entry.type !== 'file' || !entry.extension) {
-            return false;
-        }
-        const ext = entry.extension.toLowerCase();
-        const displayableExtensions = ['png', 'jpg', 'jpeg', 'gif', 'bmp', 'webp', 'svg'];
-        return displayableExtensions.includes(ext);
-    }
-
-    const AVAILABLE_ICON_SIZES = [16, 20, 24, 32, 40, 48, 64, 96, 128, 256];
-
-    const ICON_SIZE_AVAILABILITY = {
-        'recycle_bin/empty': [16, 24, 32, 48, 256],
-        'recycle_bin/full': [16, 24, 32, 48, 256],
-        'generic_folder': [16, 32, 48],
-        'folder_of_folders': [16, 32, 48],
-        'image/png': [16, 32, 48],
-        'image/jpg': [16, 32, 48],
-        'video': [16, 32, 48],
-        'music': [16, 32, 48],
-        'zip': [16, 32, 48],
-        'text_document': [16, 32, 48],
-        'rich_text_document': [16, 32, 48],
-        'explorer': [16, 32, 48, 64, 128],
-        'desktop': [16, 20, 24, 32, 40, 48, 128],
-        'this_pc': [16, 24, 32, 48, 64],
-        'main_drive': [16, 24, 32, 48, 64, 96, 128],
-        'uac': [16, 24, 32, 48, 64]
-    };
-
-    function selectBestIconSize(iconCategory, desiredSize) {
-        const availableSizes = ICON_SIZE_AVAILABILITY[iconCategory] || [16, 32, 48];
-
-        if (availableSizes.includes(desiredSize)) {
-            return desiredSize;
-        }
-
-        const largerSizes = availableSizes.filter(size => size >= desiredSize);
-        if (largerSizes.length > 0) {
-            return Math.min(...largerSizes);
-        }
-
-        return Math.max(...availableSizes);
-    }
-
-    function getIconPath(entry, desiredSize = 48) {
-        const baseIconPath = 'resources/images/icons/explorer/';
-
-        if (entry.type === 'recycle-bin') {
-            const state = entry.recycleBinEmpty ? 'empty' : 'full';
-            const category = `recycle_bin/${state}`;
-            const size = selectBestIconSize(category, desiredSize);
-            return `${baseIconPath}${category}/${size}.png`;
-        }
-
-        if (entry.type === 'folder') {
-            const size = selectBestIconSize('generic_folder', desiredSize);
-            return `${baseIconPath}generic_folder/${size}.png`;
-        }
-
-        if (entry.type === 'file' && entry.extension) {
-            const ext = entry.extension.toLowerCase();
-
-            if (ext === 'png') {
-                const size = selectBestIconSize('image/png', desiredSize);
-                return `${baseIconPath}image/png/${size}.png`;
-            }
-
-            const jpgExtensions = ['jpg', 'jpeg'];
-            if (jpgExtensions.includes(ext)) {
-                const size = selectBestIconSize('image/jpg', desiredSize);
-                return `${baseIconPath}image/jpg/${size}.png`;
-            }
-
-            const otherImageExtensions = ['gif', 'bmp', 'svg', 'webp', 'tiff', 'tif', 'ico'];
-            if (otherImageExtensions.includes(ext)) {
-                const size = selectBestIconSize('image/jpg', desiredSize);
-                return `${baseIconPath}image/jpg/${size}.png`;
-            }
-
-            const videoExtensions = ['mp4', 'mov', 'avi', 'mkv', 'wmv', 'flv', 'webm', 'm4v'];
-            if (videoExtensions.includes(ext)) {
-                const size = selectBestIconSize('video', desiredSize);
-                return `${baseIconPath}video/${size}.png`;
-            }
-
-            const musicExtensions = ['mp3', 'wav', 'flac', 'aac', 'm4a', 'ogg', 'wma', 'aiff'];
-            if (musicExtensions.includes(ext)) {
-                const size = selectBestIconSize('music', desiredSize);
-                return `${baseIconPath}music/${size}.png`;
-            }
-
-            const zipExtensions = ['zip', 'rar', '7z', 'tar', 'gz', 'bz2', 'xz'];
-            if (zipExtensions.includes(ext)) {
-                const size = selectBestIconSize('zip', desiredSize);
-                return `${baseIconPath}zip/${size}.png`;
-            }
-
-            if (ext === 'txt') {
-                const size = selectBestIconSize('text_document', desiredSize);
-                return `${baseIconPath}text document/${size}.png`;
-            }
-
-            if (ext === 'rtf') {
-                const size = selectBestIconSize('rich_text_document', desiredSize);
-                return `${baseIconPath}rich text document/${size}.png`;
-            }
-        }
-
-        return null;
-    }
-
-    function resolveIconClass(entry) {
-        switch (entry.type) {
-            case 'folder':
-                return 'folder';
-            case 'file':
-                return 'file';
-            case 'recycle-bin':
-                return 'recycle';
-            default:
-                return 'file';
-        }
-    }
-
-    function formatIconLabel(entry) {
-        if (entry.type === 'folder') {
-            return 'DIR';
-        }
-
-        if (entry.type === 'recycle-bin') {
-            return 'BIN';
-        }
-
-        if (!entry.extension) {
-            return 'FILE';
-        }
-
-        return entry.extension.slice(0, 3).toUpperCase();
     }
 
     function clamp(value, min, max) {

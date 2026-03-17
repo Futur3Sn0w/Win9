@@ -669,7 +669,7 @@ function generateTileHTML(app) {
     }
 
     return `
-        <a href="" class="tiles__tile ${sizeClass} ${colorClass} ${imageClass}" data-app="${app.id}">
+        <a href="" class="tiles__tile ${sizeClass} ${colorClass} ${imageClass}" data-app="${app.id}" draggable="false">
             ${tileContent}
         </a>
     `;

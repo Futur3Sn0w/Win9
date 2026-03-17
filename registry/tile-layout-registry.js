@@ -172,7 +172,12 @@ function loadTileOrder(groupId) {
   if (!registry) {
     return [];
   }
-  const value = registry.getValue(`${TILE_ORDER_PATH}\\${groupId}`, null, null);
+  let value = registry.getValue(TILE_ORDER_PATH, groupId, null);
+
+  // Backward-compatible fallback in case an older build stored a subkey.
+  if (!value) {
+    value = registry.getValue(`${TILE_ORDER_PATH}\\${groupId}`, null, null);
+  }
 
   if (!value) {
     return [];
@@ -248,7 +253,10 @@ function clearTileOrder(groupId) {
     return;
   }
   try {
-    registry.deleteValue(`${TILE_ORDER_PATH}\\${groupId}`);
+    const clearedValue = registry.deleteValue(TILE_ORDER_PATH, groupId);
+    if (!clearedValue) {
+      registry.deleteKey(`${TILE_ORDER_PATH}\\${groupId}`);
+    }
   } catch (error) {
     console.warn('[TileLayoutRegistry] Failed to clear tile order:', error);
   }

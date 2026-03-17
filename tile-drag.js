@@ -12,11 +12,17 @@ const TileDrag = (function() {
     let enabled = false;
     let sortableInstance = null;
     let tilesContainer = null;
+    let dragStartOrder = [];
+    let layoutSyncFrame = null;
 
     // Configuration
     const CONFIG = {
         containerSelector: '#pinned-tiles',
         storageKey: 'tileOrder'
+    };
+    const REORDER_ANIMATION = {
+        duration: 220,
+        easing: 'cubic-bezier(0.22, 1, 0.36, 1)'
     };
 
     /**
@@ -42,19 +48,30 @@ const TileDrag = (function() {
         sortableInstance = Sortable.create(tilesContainer, {
             animation: 250,                    // Animation speed in ms
             easing: 'cubic-bezier(0.4, 0, 0.2, 1)', // Smooth easing
+            dataIdAttr: 'data-app',
             ghostClass: 'tile-drag-ghost',     // Class for the drop placeholder
             dragClass: 'tile-dragging',        // Class for the dragging item
             chosenClass: 'tile-chosen',        // Class for the chosen item
-            forceFallback: false,              // Use native HTML5 drag
+            forceFallback: true,
             fallbackClass: 'tile-drag-fallback',
             fallbackOnBody: true,
+            fallbackTolerance: 4,
             swapThreshold: 0.65,               // Threshold for swapping items
 
             // Dragging callbacks
             onStart: function(evt) {
                 console.log('[TileDrag] Started dragging');
+                dragStartOrder = getCurrentOrder();
                 // Add body class to shrink other tiles
                 document.body.classList.add('tile-drag-active');
+            },
+
+            onChange: function() {
+                syncLiveLayout(getCurrentOrder());
+            },
+
+            onSort: function() {
+                syncLiveLayout(getCurrentOrder());
             },
 
             onEnd: function(evt) {
@@ -62,20 +79,22 @@ const TileDrag = (function() {
                 // Remove body class
                 document.body.classList.remove('tile-drag-active');
 
+                const newOrder = getCurrentOrder();
+                syncLiveLayout(newOrder);
+
                 // Save new order if position changed
-                if (evt.oldIndex !== evt.newIndex) {
-                    const newOrder = getCurrentOrder();
+                if (!ordersMatch(dragStartOrder, newOrder)) {
                     saveOrder(newOrder);
                     console.log('[TileDrag] New order:', newOrder);
 
-                    // Trigger layout recalculation after reordering
-                    // Use a small delay to ensure Sortable has finished updating the DOM
-                    setTimeout(() => {
+                    requestAnimationFrame(() => {
                         if (typeof renderPinnedTiles === 'function') {
                             renderPinnedTiles();
                         }
-                    }, 50);
+                    });
                 }
+
+                dragStartOrder = [];
             },
 
             // Filter function - prevent dragging certain elements
@@ -105,7 +124,13 @@ const TileDrag = (function() {
             sortableInstance = null;
         }
 
+        if (layoutSyncFrame !== null) {
+            cancelAnimationFrame(layoutSyncFrame);
+            layoutSyncFrame = null;
+        }
+
         document.body.classList.remove('tile-drag-active');
+        dragStartOrder = [];
         tilesContainer = null;
         console.log('[TileDrag] Destroyed successfully');
     }
@@ -116,10 +141,167 @@ const TileDrag = (function() {
     function getCurrentOrder() {
         if (!tilesContainer) return [];
 
+        if (sortableInstance && typeof sortableInstance.toArray === 'function') {
+            const sortableOrder = sortableInstance.toArray().filter(id => id);
+            if (sortableOrder.length > 0) {
+                return sortableOrder;
+            }
+        }
+
         const tiles = tilesContainer.querySelectorAll('.tiles__tile');
         return Array.from(tiles)
             .map(tile => tile.getAttribute('data-app'))
             .filter(id => id); // Remove any nulls
+    }
+
+    function syncLiveLayout(order) {
+        if (!tilesContainer || !Array.isArray(order) || order.length === 0) {
+            return;
+        }
+
+        if (layoutSyncFrame !== null) {
+            cancelAnimationFrame(layoutSyncFrame);
+        }
+
+        layoutSyncFrame = requestAnimationFrame(() => {
+            layoutSyncFrame = null;
+            applyOrderLayout(order);
+        });
+    }
+
+    function applyOrderLayout(order) {
+        if (!tilesContainer ||
+            !window.AppsManager ||
+            typeof window.AppsManager.getAppById !== 'function' ||
+            typeof window.calculateTileLayout !== 'function') {
+            return;
+        }
+
+        const shouldAnimate = document.body.classList.contains('tile-drag-active');
+        const previousRects = shouldAnimate ? captureTileRects() : null;
+
+        const orderedApps = order
+            .map(appId => window.AppsManager.getAppById(appId))
+            .filter(Boolean);
+
+        if (orderedApps.length === 0) {
+            return;
+        }
+
+        const layout = window.calculateTileLayout(orderedApps);
+        if (!layout || !Array.isArray(layout.tiles)) {
+            return;
+        }
+
+        const tilesById = new Map(
+            Array.from(tilesContainer.querySelectorAll('.tiles__tile'))
+                .map(tile => [tile.getAttribute('data-app'), tile])
+        );
+
+        layout.tiles.forEach(tileInfo => {
+            const tile = tilesById.get(tileInfo.app.id);
+            if (!tile || !tileInfo.size) {
+                return;
+            }
+
+            tile.style.gridRow = `${tileInfo.row} / span ${tileInfo.size.rows}`;
+            tile.style.gridColumn = `${tileInfo.col} / span ${tileInfo.size.cols}`;
+        });
+
+        if (previousRects) {
+            animateTileReflow(previousRects, tilesById);
+        }
+    }
+
+    function ordersMatch(left, right) {
+        if (!Array.isArray(left) || !Array.isArray(right) || left.length !== right.length) {
+            return false;
+        }
+
+        for (let index = 0; index < left.length; index += 1) {
+            if (left[index] !== right[index]) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    function captureTileRects() {
+        const rects = new Map();
+        const tiles = tilesContainer ? tilesContainer.querySelectorAll('.tiles__tile') : [];
+
+        Array.from(tiles).forEach(tile => {
+            if (shouldSkipTileAnimation(tile)) {
+                return;
+            }
+
+            rects.set(tile.getAttribute('data-app'), tile.getBoundingClientRect());
+        });
+
+        return rects;
+    }
+
+    function animateTileReflow(previousRects, tilesById) {
+        tilesById.forEach((tile, appId) => {
+            if (shouldSkipTileAnimation(tile)) {
+                return;
+            }
+
+            const previousRect = previousRects.get(appId);
+            if (!previousRect) {
+                return;
+            }
+
+            const nextRect = tile.getBoundingClientRect();
+            const deltaX = previousRect.left - nextRect.left;
+            const deltaY = previousRect.top - nextRect.top;
+
+            if (Math.abs(deltaX) < 1 && Math.abs(deltaY) < 1) {
+                return;
+            }
+
+            if (tile._tileReflowAnimation && typeof tile._tileReflowAnimation.cancel === 'function') {
+                tile._tileReflowAnimation.cancel();
+            }
+
+            try {
+                const animation = tile.animate(
+                    [
+                        { transform: `translate(${deltaX}px, ${deltaY}px)` },
+                        { transform: 'translate(0px, 0px)' }
+                    ],
+                    {
+                        duration: REORDER_ANIMATION.duration,
+                        easing: REORDER_ANIMATION.easing,
+                        composite: 'add'
+                    }
+                );
+
+                tile._tileReflowAnimation = animation;
+
+                const clearAnimationRef = () => {
+                    if (tile._tileReflowAnimation === animation) {
+                        tile._tileReflowAnimation = null;
+                    }
+                };
+
+                animation.onfinish = clearAnimationRef;
+                animation.oncancel = clearAnimationRef;
+            } catch (error) {
+                // Ignore animation failures and keep the layout update functional.
+                tile._tileReflowAnimation = null;
+            }
+        });
+    }
+
+    function shouldSkipTileAnimation(tile) {
+        return !tile ||
+            tile.classList.contains('sortable-drag') ||
+            tile.classList.contains('tile-drag-fallback') ||
+            tile.classList.contains('tile-drag-ghost') ||
+            tile.classList.contains('tile-chosen') ||
+            tile.classList.contains('tile-dragging');
     }
 
     /**

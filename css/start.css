@@ -946,7 +946,8 @@ body.tiles-compact .tiles {
 .tiles__tile {
     user-select: none;
     transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
-    cursor: default;
+    cursor: grab;
+    -webkit-user-drag: none;
 }
 
 /* When any tile is being dragged, shrink all other tiles */
@@ -954,10 +955,21 @@ body.tile-drag-active .tiles__tile:not(.sortable-drag):not(.tile-drag-ghost) {
     transform: scale(0.95);
 }
 
+body.tile-drag-active .tiles__tile,
+.tiles__tile.tile-chosen,
+.tiles__tile.tile-dragging {
+    cursor: grabbing;
+}
+
+.tiles__tile.tile-chosen,
+.tiles__tile.tile-dragging {
+    transition: none !important;
+}
+
 /* The tile being dragged (Sortable.js adds sortable-drag class) */
 .tiles__tile.sortable-drag {
     opacity: 0.8;
-    transform: scale(1.05) !important;
+    transition: none !important;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
 }
 
@@ -970,8 +982,9 @@ body.tile-drag-active .tiles__tile:not(.sortable-drag):not(.tile-drag-ghost) {
 /* Fallback for browsers without HTML5 drag */
 .tiles__tile.tile-drag-fallback {
     opacity: 0.8;
-    transform: scale(1.05);
+    transition: none !important;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    pointer-events: none;
 }
 
 /* ===== TILE FLIP ANIMATION (App Launch) ===== */

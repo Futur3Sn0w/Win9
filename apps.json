@@ -26,7 +26,7 @@
     },
     {
       "id": "taskbar-properties",
-      "name": "Taskbar and Navigation properties",
+      "name": "Taskbar and Start Menu properties",
       "icon": "mif-wrench",
       "color": "blue",
       "size": "normal",
@@ -338,11 +338,17 @@
       "useWebview": true,
       "iconImages": {
         "16": "resources/images/icons/explorer/explorer/16.png",
+        "20": "resources/images/icons/explorer/explorer/20.png",
         "24": "resources/images/icons/explorer/explorer/24.png",
         "32": "resources/images/icons/explorer/explorer/32.png",
+        "40": "resources/images/icons/explorer/explorer/40.png",
         "48": "resources/images/icons/explorer/explorer/48.png",
         "64": "resources/images/icons/explorer/explorer/64.png",
-        "128": "resources/images/icons/explorer/explorer/128.png"
+        "80": "resources/images/icons/explorer/explorer/80.png",
+        "96": "resources/images/icons/explorer/explorer/96.png",
+        "256": "resources/images/icons/explorer/explorer/256.png",
+        "512": "resources/images/icons/explorer/explorer/512.png",
+        "768": "resources/images/icons/explorer/explorer/768.png"
       },
       "showInStart": true,
       "windowOptions": {

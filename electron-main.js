@@ -44,6 +44,14 @@ function hideWindowMenuBar(window) {
   window.setMenuBarVisibility(false);
 }
 
+function sendFullscreenState(window) {
+  if (!window || window.isDestroyed()) {
+    return;
+  }
+
+  window.webContents.send('fullscreen-state-changed', window.isFullScreen());
+}
+
 function clearSetupData() {
   store.delete('setup');
   store.set('setup.completed', false);
@@ -125,11 +133,18 @@ function createMainWindow(options = {}) {
   });
 
   hideWindowMenuBar(mainWindow);
-  mainWindow.on('enter-full-screen', () => hideWindowMenuBar(mainWindow));
-  mainWindow.on('leave-full-screen', () => hideWindowMenuBar(mainWindow));
+  mainWindow.on('enter-full-screen', () => {
+    hideWindowMenuBar(mainWindow);
+    sendFullscreenState(mainWindow);
+  });
+  mainWindow.on('leave-full-screen', () => {
+    hideWindowMenuBar(mainWindow);
+    sendFullscreenState(mainWindow);
+  });
 
   // Load the index.html
   mainWindow.loadFile('index.html');
+  mainWindow.webContents.on('did-finish-load', () => sendFullscreenState(mainWindow));
 
   if (skipBoot) {
     const sendSkipBoot = () => {
@@ -346,6 +361,22 @@ ipcMain.on('setup-reset-request', () => {
 
 ipcMain.on('shell:quit-app', () => {
   app.quit();
+});
+
+ipcMain.on('toggle-simple-fullscreen', (_event, shouldBeFullscreen) => {
+  if (!mainWindow || mainWindow.isDestroyed()) {
+    return;
+  }
+
+  const nextState = typeof shouldBeFullscreen === 'boolean'
+    ? shouldBeFullscreen
+    : !mainWindow.isFullScreen();
+
+  if (mainWindow.isFullScreen() !== nextState) {
+    mainWindow.setFullScreen(nextState);
+  } else {
+    sendFullscreenState(mainWindow);
+  }
 });
 
 // ===== Notepad File Operations =====

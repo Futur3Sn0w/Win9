@@ -32,6 +32,7 @@ const getRegistryFn = registryApi.getRegistry;
 const registryTypeConstants = registryApi.RegistryType;
 const REG_MULTI_SZ = registryTypeConstants ? registryTypeConstants.REG_MULTI_SZ : 7;
 const REG_SZ = registryTypeConstants ? registryTypeConstants.REG_SZ : 1;
+const REG_DWORD = registryTypeConstants ? registryTypeConstants.REG_DWORD : 4;
 
 const TILE_LAYOUT_PATH = 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\ImmersiveShell\\Launcher\\TileLayout';
 const PINNED_APPS_VALUE = 'PinnedApps';
@@ -40,6 +41,10 @@ const TILE_ORDER_PATH = 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Imm
 const TASKBAR_PATH = 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Taskband\\PinnedApplications';
 const TASKBAR_LIST_VALUE = 'List';
 const TASKBAR_ORDER_VALUE = 'Order';
+const START_MENU_PATH = 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\StartPage';
+const START_MENU_PINS_VALUE = 'StartMenuPinnedApps';
+const START_MENU_RECENTS_VALUE = 'StartMenuRecentApps';
+const START_MENU_TILE_ROWS_VALUE = 'StartMenuTileRows';
 
 function getRegistrySafe() {
   if (typeof getRegistryFn !== 'function') {
@@ -118,6 +123,109 @@ function saveTaskbarPins(appIds) {
   );
 
   return list;
+}
+
+function loadStartMenuPins() {
+  const registry = getRegistrySafe();
+  if (!registry) {
+    return null;
+  }
+  const value = registry.getValue(START_MENU_PATH, START_MENU_PINS_VALUE, null);
+  if (value == null) {
+    return null;
+  }
+  if (Array.isArray(value)) {
+    return value.filter(Boolean);
+  }
+  return ensureArray(value).filter(Boolean);
+}
+
+function saveStartMenuPins(appIds) {
+  const registry = getRegistrySafe();
+  if (!registry) {
+    return [];
+  }
+  const list = Array.isArray(appIds) ? appIds.filter(Boolean) : [];
+
+  registry.setValue(
+    START_MENU_PATH,
+    START_MENU_PINS_VALUE,
+    list,
+    REG_MULTI_SZ
+  );
+
+  return list;
+}
+
+function loadStartMenuRecents() {
+  const registry = getRegistrySafe();
+  if (!registry) {
+    return null;
+  }
+  const value = registry.getValue(START_MENU_PATH, START_MENU_RECENTS_VALUE, null);
+  if (value == null) {
+    return null;
+  }
+  if (Array.isArray(value)) {
+    return value.filter(Boolean);
+  }
+  return ensureArray(value).filter(Boolean);
+}
+
+function saveStartMenuRecents(appIds) {
+  const registry = getRegistrySafe();
+  if (!registry) {
+    return [];
+  }
+  const list = Array.isArray(appIds) ? appIds.filter(Boolean) : [];
+
+  registry.setValue(
+    START_MENU_PATH,
+    START_MENU_RECENTS_VALUE,
+    list,
+    REG_MULTI_SZ
+  );
+
+  return list;
+}
+
+function loadStartMenuTileRows() {
+  const registry = getRegistrySafe();
+  if (!registry) {
+    return null;
+  }
+
+  const value = registry.getValue(START_MENU_PATH, START_MENU_TILE_ROWS_VALUE, null);
+  const normalized = Number(value);
+
+  if (!Number.isFinite(normalized) || normalized < 1) {
+    return null;
+  }
+
+  return Math.round(normalized);
+}
+
+function saveStartMenuTileRows(rowCount) {
+  const registry = getRegistrySafe();
+  if (!registry) {
+    return null;
+  }
+
+  const normalized = Number(rowCount);
+  if (!Number.isFinite(normalized) || normalized < 1) {
+    registry.deleteValue(START_MENU_PATH, START_MENU_TILE_ROWS_VALUE);
+    return null;
+  }
+
+  const savedValue = Math.round(normalized);
+  registry.setValue(
+    START_MENU_PATH,
+    START_MENU_TILE_ROWS_VALUE,
+    savedValue,
+    REG_DWORD
+  );
+
+  return savedValue;
 }
 
 function loadTileSizes() {
@@ -272,6 +380,12 @@ const api = {
   clearTileOrder,
   loadTaskbarPins,
   saveTaskbarPins,
+  loadStartMenuPins,
+  saveStartMenuPins,
+  loadStartMenuRecents,
+  saveStartMenuRecents,
+  loadStartMenuTileRows,
+  saveStartMenuTileRows,
   loadTaskbarOrder,
   saveTaskbarOrder
 };

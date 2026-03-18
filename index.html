@@ -184,6 +184,55 @@
         </div>
     </div>
 
+    <!-- START MENU -->
+    <div id="start-menu">
+        <div class="start-menu-resize-handle"></div>
+        <div class="start-menu-shell">
+            <div class="start-menu-left">
+                <div class="start-menu-top">
+                    <div class="user-tile start-menu-user-tile active-scale-effect">
+                        <img src="resources/images/user.png" alt="User" class="user-tile-icon">
+                        <span class="user-tile-name">User</span>
+                    </div>
+                    <button class="start-menu-power-button power-button active-scale-effect" title="Power">
+                        <span class="mif-switch"></span>
+                    </button>
+                </div>
+                <div class="start-menu-list-separator"></div>
+                <div class="start-menu-left-scroll">
+                    <div class="start-menu-left-list" id="start-menu-left-list"></div>
+                </div>
+                <div class="start-menu-bottom">
+                    <button class="start-menu-all-apps-toggle" id="start-menu-all-apps-toggle">
+                        <span class="start-menu-all-apps-icon"><span class="mif-arrow-right"></span></span>
+                        <span class="start-menu-all-apps-text">All apps</span>
+                    </button>
+                    <div class="start-menu-search">
+                        <input type="text" id="start-menu-search-input" placeholder="Search everywhere" autocomplete="off">
+                        <button class="start-menu-search-button" id="start-menu-search-button" title="Search">
+                            <span class="mif-search"></span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="start-menu-right">
+                <div class="tiles start-menu-tiles" id="start-menu-tiles"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- START MENU DROPDOWNS (outside #start-menu to avoid overflow clipping) -->
+    <div class="modern-dropdown start-menu-power-dropdown start-power-menu">
+        <div class="modern-dropdown-item start-power-menu-item" data-action="sleep">Sleep</div>
+        <div class="modern-dropdown-item start-power-menu-item" data-action="shut-down">Shut down</div>
+        <div class="modern-dropdown-item start-power-menu-item" data-action="restart">Restart</div>
+    </div>
+    <div class="modern-dropdown start-menu-user-dropdown user-tile-dropdown">
+        <div class="modern-dropdown-item user-tile-dropdown-item" data-action="change-picture">Change account picture</div>
+        <div class="modern-dropdown-item user-tile-dropdown-item" data-action="lock">Lock</div>
+        <div class="modern-dropdown-item user-tile-dropdown-item" data-action="sign-out">Sign out</div>
+    </div>
+
     <!-- CONTEXT MENU -->
     <div id="app-context-menu" class="context-menu">
         <div class="context-menu-item" data-action="pin">
@@ -216,6 +265,18 @@
         </div>
     </div>
 
+    <div id="start-menu-item-context-menu" class="context-menu">
+        <div class="context-menu-item" data-action="keep-in-list">
+            <span class="context-menu-item-text">Keep in this list</span>
+        </div>
+        <div class="context-menu-item" data-action="remove-from-list">
+            <span class="context-menu-item-text">Remove from this list</span>
+        </div>
+        <div class="context-menu-item" data-action="pin-start-tile">
+            <span class="context-menu-item-text">Pin to tiles</span>
+        </div>
+    </div>
+
     <!-- TILE TOOLTIP -->
     <div id="tile-tooltip" class="tile-tooltip"></div>
 
@@ -232,6 +293,14 @@
     <div class="taskbar">
         <button class="start-button">
             <span class="start-icon"></span>
+        </button>
+        <button class="taskbar-shell-button taskbar-search-button" type="button" title="Search" aria-label="Search">
+            <img class="taskbar-shell-button-icon taskbar-shell-button-icon--search" data-icon-folder="search" alt=""
+                draggable="false">
+        </button>
+        <button class="taskbar-shell-button taskbar-task-view-button" type="button" title="Task View" aria-label="Task View">
+            <img class="taskbar-shell-button-icon taskbar-shell-button-icon--task-view" data-icon-folder="task_view"
+                alt="" draggable="false">
         </button>
 
         <div class="taskbar-apps">
@@ -251,6 +320,11 @@
             </div>
             <div class="system-icon battery-icon" id="battery-icon">
                 <div id="battery-icon-img"></div>
+            </div>
+            <div class="system-icon notification-center-icon" id="notification-center-icon"
+                title="Notification center">
+                <img id="notification-center-icon-img" src="resources/images/taskbar/notif_center/none/34.png"
+                    alt="Notification center">
             </div>
             <div class="clock">
                 <span>10:30 AM</span>
@@ -320,6 +394,20 @@
             </div>
         </div>
 
+        <div class="notification-center-panel" id="notification-center-panel" aria-hidden="true">
+            <div class="notification-center-panel-header">
+                <div class="notification-center-panel-title">Notifications</div>
+                <button class="notification-center-panel-clear" id="notification-center-clear" type="button">
+                    Clear all
+                </button>
+                <button class="notification-center-panel-close" id="notification-center-close" type="button"
+                    aria-label="Close notification center">
+                    &times;
+                </button>
+            </div>
+            <div class="notification-center-panel-body" id="notification-center-panel-body"></div>
+        </div>
+
         <!-- EJECT ICON CONTEXT MENU -->
         <div id="eject-icon-context-menu" class="classic-context-menu"
             style="display: none; position: fixed; z-index: 200010;">
@@ -329,15 +417,26 @@
 
     <!-- TASKBAR CONTEXT MENU -->
     <div id="taskbar-context-menu" class="classic-context-menu taskbar-context-menu" style="display: none;">
+        <div class="classic-context-menu-item taskbar-context-menu-button" data-action="toggle-task-view-button">
+            <span class="classic-context-menu-item-icon taskbar-task-view-check"><span></span></span>
+            <span class="classic-context-menu-item-text">Show Task View button</span>
+        </div>
+        <div class="classic-context-menu-item taskbar-context-menu-button" data-action="toggle-search-button">
+            <span class="classic-context-menu-item-icon taskbar-search-check"><span></span></span>
+            <span class="classic-context-menu-item-text">Show Search button</span>
+        </div>
+        <div class="classic-context-menu-separator"></div>
         <div class="classic-context-menu-item taskbar-context-menu-button" data-action="task-manager">
             <span class="classic-context-menu-item-icon"></span>
             <span class="classic-context-menu-item-text">Task Manager</span>
         </div>
+        <div class="classic-context-menu-separator"></div>
         <div class="classic-context-menu-item taskbar-context-menu-button taskbar-lock-toggle"
             data-action="lock-taskbar">
-            <span class="classic-context-menu-item-icon taskbar-lock-check">✓</span>
+            <span class="classic-context-menu-item-icon taskbar-lock-check"><span></span></span>
             <span class="classic-context-menu-item-text">Lock the taskbar</span>
         </div>
+        <div class="classic-context-menu-separator"></div>
         <div class="classic-context-menu-item taskbar-context-menu-button" data-action="properties">
             <span class="classic-context-menu-item-icon"></span>
             <span class="classic-context-menu-item-text">Properties</span>
@@ -561,9 +660,10 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="settings-control-item" data-control="notifications">
-                            <span class="mif-notifications"></span>
-                            <span class="settings-control-label">Notifications</span>
+                        <div class="settings-control-item" data-control="fullscreen">
+                            <span class="settings-control-glyph settings-control-glyph--fullscreen"
+                                aria-hidden="true"></span>
+                            <span class="settings-control-label">Fullscreen</span>
                         </div>
                         <div class="settings-control-item" data-control="power">
                             <span class="mif-settings-power"></span>

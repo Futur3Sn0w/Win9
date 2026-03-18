@@ -293,13 +293,6 @@ body.view-login .taskbar-context-menu {
     pointer-events: none;
 }
 
-/* Taskbar lock check mark styling */
-.taskbar-lock-check {
-    font-weight: bold;
-    font-size: 14px;
-    text-align: center;
-}
-
 /* Desktop fade-out animation for Start Screen transition */
 #desktop.fade-out-to-start {
     opacity: 0;

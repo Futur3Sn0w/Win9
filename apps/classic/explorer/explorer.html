@@ -39,14 +39,14 @@
                 </button>
             </div>
             <div class="explorer-address-bar">
-                <img src="../../../resources/images/icons/explorer/this_pc/16.png" class="explorer-address-icon"
-                    id="addressIcon" alt="This PC">
+                <img src="../../../resources/images/icons/explorer/folder_home/16.png" class="explorer-address-icon"
+                    id="addressIcon" alt="Home">
                 <div class="explorer-breadcrumbs" id="breadcrumbs">
-                    <span class="explorer-breadcrumb active">This PC</span>
+                    <span class="explorer-breadcrumb active">Home</span>
                 </div>
             </div>
             <div class="explorer-search-box">
-                <input type="text" id="searchInput" placeholder="Search This PC" />
+                <input type="text" id="searchInput" placeholder="Search Home" />
                 <span class="mif-search"></span>
             </div>
         </div>
@@ -55,6 +55,14 @@
         <div class="explorer-main">
             <!-- Sidebar -->
             <div class="explorer-sidebar" id="explorerSidebar">
+                <div class="explorer-sidebar-section explorer-sidebar-section--pinned">
+                    <div class="explorer-sidebar-item active" data-location="home">
+                        <img src="../../../resources/images/icons/explorer/folder_home/16.png"
+                            class="explorer-sidebar-icon" />
+                        <span>Home</span>
+                    </div>
+                </div>
+
                 <div class="explorer-sidebar-section">
                     <div class="explorer-sidebar-item explorer-sidebar-item--expandable explorer-sidebar-item--non-navigable"
                         data-location="favorites">
@@ -74,16 +82,16 @@
                                 class="explorer-sidebar-icon" />
                             <span>Downloads</span>
                         </div>
-                        <div class="explorer-sidebar-item explorer-sidebar-item--nested" data-location="recent">
-                            <img src="../../../resources/images/icons/explorer/folder_recent-places/16.png"
+                        <div class="explorer-sidebar-item explorer-sidebar-item--nested" data-location="videos">
+                            <img src="../../../resources/images/icons/explorer/folder_videos/16.png"
                                 class="explorer-sidebar-icon" />
-                            <span>Recent places</span>
+                            <span>Videos</span>
                         </div>
                     </div>
                 </div>
 
                 <div class="explorer-sidebar-section">
-                    <div class="explorer-sidebar-item explorer-sidebar-item--expandable active" data-location="this-pc">
+                    <div class="explorer-sidebar-item explorer-sidebar-item--expandable" data-location="this-pc">
                         <span class="explorer-sidebar-disclosure" data-expanded="true">▼</span>
                         <img src="../../../resources/images/icons/explorer/this_pc/16.png"
                             class="explorer-sidebar-icon" />
@@ -126,8 +134,14 @@
 
                 <div class="explorer-sidebar-section">
                     <div class="explorer-sidebar-item explorer-sidebar-item--non-navigable" data-location="network">
-                        <span class="mif-share explorer-sidebar-icon-text"></span>
+                        <img src="../../../resources/images/icons/explorer/network/16.png"
+                            class="explorer-sidebar-icon" />
                         <span>Network</span>
+                    </div>
+                    <div class="explorer-sidebar-item explorer-sidebar-item--non-navigable explorer-sidebar-item--spaced" data-location="homegroup">
+                        <img src="../../../resources/images/icons/explorer/homegroup/16.png"
+                            class="explorer-sidebar-icon" />
+                        <span>Homegroup</span>
                     </div>
                 </div>
             </div>
@@ -170,6 +184,46 @@
         const os = require('os');
         const path = require('path');
         const fs = require('fs').promises;
+        const HOME_LOCATION = 'home';
+        const THIS_PC_LOCATION = 'this-pc';
+        const HOME_FAVORITE_LOCATIONS = ['desktop', 'downloads', 'videos'];
+        const HOME_FREQUENT_LOCATIONS = ['desktop', 'documents', 'downloads', 'music', 'pictures', 'videos'];
+        const HOME_RECENT_FILE_LIMIT = 8;
+        const DEFAULT_ICON_SIZES = [16, 20, 24, 32, 40, 48, 64, 80, 96, 128, 256, 512, 768];
+        const ICON_SIZE_AVAILABILITY = {
+            'desktop': [16, 20, 24, 32, 40, 48, 64, 80, 96, 256, 512, 768],
+            'external_drive': [16, 32, 48, 256],
+            'folder_documents': [16, 24, 32, 48, 256],
+            'folder_downloads': [16, 24, 32, 48, 256],
+            'folder_favorites': [16, 20, 24, 32, 40, 48, 64, 80, 96, 256, 512, 768],
+            'folder_home': [16, 20, 24, 32, 40, 48, 64, 80, 96, 768],
+            'folder_music': [16, 24, 32, 48, 64, 256],
+            'folder_pictures': [16, 24, 32, 48, 256],
+            'folder_recent-places': [16, 24, 32, 48, 256],
+            'folder_videos': [16, 24, 32, 48, 256],
+            'generic_file': [16, 32, 48, 256],
+            'generic_folder': [16, 32, 48],
+            'generic_program': [16, 24, 32, 48, 256],
+            'homegroup': [16, 20, 24, 32, 40, 48, 64, 80, 96, 256, 512, 768],
+            'image/jpg': [16, 32, 48],
+            'image/png': [16, 32, 48],
+            'main_drive': [16, 24, 32, 48, 64, 96, 128],
+            'music': [16, 32, 48],
+            'network': [16, 20, 24, 32, 40, 48, 64, 80, 96, 256, 512, 768],
+            'rich_text_document': [16, 24, 48],
+            'text_document': [16, 32, 48],
+            'this_pc': [16, 20, 24, 32, 40, 48, 64, 80, 96, 256, 512, 768],
+            'video': [16, 32, 48],
+            'zip': [16, 32, 48]
+        };
+        const SPECIAL_FOLDER_DEFINITIONS = [
+            { id: 'desktop', name: 'Desktop', icon: 'desktop', relativePath: ['Desktop'], sidebarLocation: 'desktop', thisPcLocation: 'desktop-folder' },
+            { id: 'documents', name: 'Documents', icon: 'folder_documents', relativePath: ['Documents'], sidebarLocation: 'documents', thisPcLocation: 'documents' },
+            { id: 'downloads', name: 'Downloads', icon: 'folder_downloads', relativePath: ['Downloads'], sidebarLocation: 'downloads', thisPcLocation: 'downloads-folder' },
+            { id: 'music', name: 'Music', icon: 'folder_music', relativePath: ['Music'], sidebarLocation: 'music', thisPcLocation: 'music' },
+            { id: 'pictures', name: 'Pictures', icon: 'folder_pictures', relativePath: ['Pictures'], sidebarLocation: 'pictures', thisPcLocation: 'pictures' },
+            { id: 'videos', name: 'Videos', icon: 'folder_videos', relativePath: ['Videos'], sidebarLocation: 'videos', thisPcLocation: 'videos' }
+        ];
 
         // Window ID for multi-window support
         let windowId = null;
@@ -187,6 +241,10 @@
                 ipcRenderer.on('setWindowId', (event, data) => {
                     windowId = data.windowId;
                     console.log('Explorer window ID set:', windowId);
+                });
+
+                ipcRenderer.on('setLaunchOptions', (event, data) => {
+                    queueLaunchOptions(data?.launchOptions);
                 });
 
                 ipcRenderer.on('host-command', (event, data) => {
@@ -222,18 +280,25 @@
                 if (e.data.action === 'setWindowId') {
                     windowId = e.data.windowId;
                     console.log('Explorer window ID set:', windowId);
+                } else if (e.data.action === 'setLaunchOptions') {
+                    queueLaunchOptions(e.data.launchOptions);
                 } else {
                     handleHostCommand(e.data);
                 }
             });
         }
 
-        let currentLocation = 'this-pc';
+        let currentLocation = HOME_LOCATION;
         let currentPath = null;
         let navigationHistory = [];
         let historyIndex = -1;
         let currentView = 'large';
         let selectedItems = new Set();
+        let isInitialized = false;
+        let pendingLaunchOptions = window.launchOptions && typeof window.launchOptions === 'object'
+            ? { ...window.launchOptions }
+            : null;
+        let launchOptionsDrainInFlight = false;
         let dragSelectState = {
             active: false,
             originX: 0,
@@ -245,22 +310,27 @@
         window.addEventListener('load', initialize);
 
         async function initialize() {
-            // Check if we should open a specific folder
-            const launchOptions = window.launchOptions || {};
+            const launchOptions = pendingLaunchOptions ? { ...pendingLaunchOptions } : {};
+            pendingLaunchOptions = null;
             console.log('[File Explorer] Initialize with launchOptions:', launchOptions);
 
             if (launchOptions.openFolderPath) {
                 console.log('[File Explorer] Opening folder:', launchOptions.openFolderPath);
                 currentLocation = 'path';
                 currentPath = launchOptions.openFolderPath;
-                navigationHistory.push({ type: 'path', path: launchOptions.openFolderPath });
-                historyIndex++;
+                pushHistoryEntry({ type: 'path', path: launchOptions.openFolderPath });
+            } else {
+                currentLocation = HOME_LOCATION;
+                currentPath = null;
+                pushHistoryEntry({ type: 'home' });
             }
 
             await updateView();
             bindEventListeners();
             initializeSidebarResize();
+            isInitialized = true;
             notifyParentWhenReady();
+            drainPendingLaunchOptions();
         }
 
         async function handleHostCommand(command) {
@@ -274,18 +344,63 @@
         }
 
         async function resetForPreload() {
-            currentLocation = 'this-pc';
+            currentLocation = HOME_LOCATION;
             currentPath = null;
             navigationHistory = [];
             historyIndex = -1;
             selectedItems = new Set();
+            pushHistoryEntry({ type: 'home' });
 
-            document.querySelectorAll('.explorer-sidebar-item').forEach(item => item.classList.remove('active'));
-            const thisPcItem = document.querySelector('.explorer-sidebar-item[data-location="this-pc"]');
-            if (thisPcItem) {
-                thisPcItem.classList.add('active');
+            await updateView();
+        }
+
+        function queueLaunchOptions(launchOptions) {
+            if (!launchOptions || typeof launchOptions !== 'object') {
+                return;
             }
 
+            pendingLaunchOptions = {
+                ...(pendingLaunchOptions || {}),
+                ...launchOptions
+            };
+
+            if (isInitialized) {
+                drainPendingLaunchOptions();
+            }
+        }
+
+        async function drainPendingLaunchOptions() {
+            if (!isInitialized || launchOptionsDrainInFlight || !pendingLaunchOptions) {
+                return;
+            }
+
+            launchOptionsDrainInFlight = true;
+            const launchOptions = pendingLaunchOptions;
+            pendingLaunchOptions = null;
+
+            try {
+                await handleLaunchOptions(launchOptions);
+            } finally {
+                launchOptionsDrainInFlight = false;
+                if (pendingLaunchOptions) {
+                    drainPendingLaunchOptions();
+                }
+            }
+        }
+
+        async function handleLaunchOptions(launchOptions) {
+            if (!launchOptions?.openFolderPath) {
+                return;
+            }
+
+            if (currentLocation === 'path' && currentPath && pathsMatch(currentPath, launchOptions.openFolderPath)) {
+                return;
+            }
+
+            console.log('[File Explorer] Applying launch folder:', launchOptions.openFolderPath);
+            pushHistoryEntry({ type: 'path', path: launchOptions.openFolderPath });
+            currentLocation = 'path';
+            currentPath = launchOptions.openFolderPath;
             await updateView();
         }
 
@@ -383,43 +498,26 @@
                 return;
             }
 
-            // Update active state
-            document.querySelectorAll('.explorer-sidebar-item').forEach(i => i.classList.remove('active'));
-            item.classList.add('active');
-
             // Navigate based on location
-            switch (location) {
-                case 'desktop':
-                case 'desktop-folder':
-                    navigateToPath(path.join(os.homedir(), 'Desktop'));
-                    break;
-                case 'downloads':
-                case 'downloads-folder':
-                    navigateToPath(path.join(os.homedir(), 'Downloads'));
-                    break;
-                case 'documents':
-                    navigateToPath(path.join(os.homedir(), 'Documents'));
-                    break;
-                case 'music':
-                    navigateToPath(path.join(os.homedir(), 'Music'));
-                    break;
-                case 'pictures':
-                    navigateToPath(path.join(os.homedir(), 'Pictures'));
-                    break;
-                case 'videos':
-                    navigateToPath(path.join(os.homedir(), 'Videos'));
-                    break;
-                case 'this-pc':
-                    navigateToThisPC();
-                    break;
-                case 'recent':
-                    // TODO: Implement recent places
-                    console.log('Recent places not yet implemented');
-                    break;
-                case 'network':
-                    // TODO: Implement network
-                    console.log('Network not yet implemented');
-                    break;
+            if (location === HOME_LOCATION) {
+                navigateToHome();
+                return;
+            }
+
+            if (location === THIS_PC_LOCATION) {
+                navigateToThisPC();
+                return;
+            }
+
+            const specialFolder = getSpecialFolderByLocation(location);
+            if (specialFolder) {
+                navigateToPath(specialFolder.path);
+                return;
+            }
+
+            if (location === 'network') {
+                // TODO: Implement network
+                console.log('Network not yet implemented');
             }
         }
 
@@ -454,19 +552,275 @@
         function initializeChildrenHeights() {
             // Set initial max-height for expanded children containers
             document.querySelectorAll('.explorer-sidebar-children').forEach(container => {
-                const disclosure = document.querySelector(`.explorer-sidebar-disclosure[data-expanded="true"]`);
-                if (disclosure) {
-                    const parentItem = disclosure.closest('.explorer-sidebar-item');
-                    if (parentItem) {
-                        const parentLocation = parentItem.dataset.location;
-                        const childContainer = document.querySelector(`.explorer-sidebar-children[data-parent="${parentLocation}"]`);
-                        if (childContainer === container) {
-                            container.style.maxHeight = container.scrollHeight + 'px';
-                            container.dataset.expanded = 'true';
-                        }
-                    }
-                }
+                const parentLocation = container.dataset.parent;
+                const disclosure = document.querySelector(`.explorer-sidebar-item[data-location="${parentLocation}"] .explorer-sidebar-disclosure`);
+                const isExpanded = disclosure ? disclosure.dataset.expanded !== 'false' : true;
+                container.style.maxHeight = isExpanded ? `${container.scrollHeight}px` : '0px';
+                container.dataset.expanded = isExpanded ? 'true' : 'false';
             });
+        }
+
+        function getKnownFolderEntries() {
+            return SPECIAL_FOLDER_DEFINITIONS.map(definition => ({
+                ...definition,
+                path: path.join(os.homedir(), ...definition.relativePath)
+            }));
+        }
+
+        function getSpecialFolderByLocation(location) {
+            return getKnownFolderEntries().find(entry =>
+                entry.id === location ||
+                entry.sidebarLocation === location ||
+                entry.thisPcLocation === location
+            ) || null;
+        }
+
+        function normalizePathValue(targetPath) {
+            if (!targetPath || typeof targetPath !== 'string') {
+                return '';
+            }
+
+            const normalized = path.normalize(targetPath);
+            return process.platform === 'win32' ? normalized.toLowerCase() : normalized;
+        }
+
+        function pathsMatch(leftPath, rightPath) {
+            return normalizePathValue(leftPath) === normalizePathValue(rightPath);
+        }
+
+        function isPathInside(parentPath, candidatePath) {
+            if (!parentPath || !candidatePath) {
+                return false;
+            }
+
+            const relativePath = path.relative(parentPath, candidatePath);
+            return Boolean(relativePath) && relativePath !== '.' && !relativePath.startsWith('..') && !path.isAbsolute(relativePath);
+        }
+
+        function findSpecialFolderByPath(targetPath) {
+            return getKnownFolderEntries().find(entry => pathsMatch(entry.path, targetPath)) || null;
+        }
+
+        function findContainingSpecialFolder(targetPath) {
+            return getKnownFolderEntries().find(entry => pathsMatch(entry.path, targetPath) || isPathInside(entry.path, targetPath)) || null;
+        }
+
+        async function getAccessibleSpecialFolders(folderIds) {
+            const candidates = folderIds
+                .map(folderId => getKnownFolderEntries().find(entry => entry.id === folderId))
+                .filter(Boolean);
+
+            const checks = await Promise.all(candidates.map(async entry => {
+                try {
+                    const stats = await fs.stat(entry.path);
+                    return stats.isDirectory() ? entry : null;
+                } catch (error) {
+                    return null;
+                }
+            }));
+
+            return checks.filter(Boolean);
+        }
+
+        function getAvailableIconSizes(iconKey) {
+            const configuredSizes = ICON_SIZE_AVAILABILITY[iconKey];
+            if (Array.isArray(configuredSizes) && configuredSizes.length > 0) {
+                return [...new Set(configuredSizes)].sort((left, right) => left - right);
+            }
+
+            return DEFAULT_ICON_SIZES;
+        }
+
+        function resolveIconPath(iconKey, desiredSize, fallbackIconKey = null) {
+            const resolvedKey = iconKey || fallbackIconKey || 'generic_file';
+            const sizes = getAvailableIconSizes(resolvedKey);
+            const exactSizes = sizes.filter(size => size === desiredSize);
+            const largerSizes = sizes.filter(size => size > desiredSize);
+            const smallerSizes = sizes.filter(size => size < desiredSize).sort((left, right) => right - left);
+            const candidateSize = [...exactSizes, ...largerSizes, ...smallerSizes][0];
+
+            if (candidateSize) {
+                return `../../../resources/images/icons/explorer/${resolvedKey}/${candidateSize}.png`;
+            }
+
+            if (fallbackIconKey && fallbackIconKey !== resolvedKey) {
+                return resolveIconPath(fallbackIconKey, desiredSize);
+            }
+
+            return `../../../resources/images/icons/explorer/generic_file/48.png`;
+        }
+
+        function resolveHostIconPath(iconKey, desiredSize, fallbackIconKey = null) {
+            return resolveIconPath(iconKey, desiredSize, fallbackIconKey).replace('../../../', '');
+        }
+
+        function getDisplayNameForRoot(rootPath) {
+            if (process.platform === 'win32') {
+                const driveLetter = path.parse(rootPath).root.charAt(0).toUpperCase();
+                return driveLetter ? `Local Disk (${driveLetter}:)` : rootPath;
+            }
+
+            return rootPath === path.sep ? path.sep : rootPath.replace(/[\\/]+$/, '');
+        }
+
+        function appendBreadcrumbSegment(container, segment, isLast) {
+            const crumb = document.createElement('span');
+            crumb.className = `explorer-breadcrumb${segment.active ? ' active' : ''}`;
+            crumb.textContent = segment.label;
+
+            if (!segment.active && typeof segment.onClick === 'function') {
+                crumb.addEventListener('click', segment.onClick);
+            }
+
+            container.appendChild(crumb);
+
+            if (!isLast) {
+                const separator = document.createElement('span');
+                separator.className = 'explorer-breadcrumb-separator';
+                separator.textContent = ' > ';
+                container.appendChild(separator);
+            }
+        }
+
+        function buildPathBreadcrumbs(targetPath) {
+            const containingFolder = findContainingSpecialFolder(targetPath);
+
+            if (containingFolder) {
+                const segments = [
+                    { label: 'Home', active: false, onClick: navigateToHome }
+                ];
+                const relativePath = path.relative(containingFolder.path, targetPath);
+                const trailingSegments = relativePath && relativePath !== '.'
+                    ? relativePath.split(path.sep).filter(Boolean)
+                    : [];
+
+                segments.push({
+                    label: containingFolder.name,
+                    active: trailingSegments.length === 0,
+                    onClick: trailingSegments.length === 0 ? null : () => navigateToPath(containingFolder.path)
+                });
+
+                let partialPath = containingFolder.path;
+                trailingSegments.forEach((segment, index) => {
+                    partialPath = path.join(partialPath, segment);
+                    const segmentPath = partialPath;
+                    segments.push({
+                        label: segment,
+                        active: index === trailingSegments.length - 1,
+                        onClick: index === trailingSegments.length - 1 ? null : () => navigateToPath(segmentPath)
+                    });
+                });
+
+                return segments;
+            }
+
+            const segments = [
+                { label: 'This PC', active: false, onClick: navigateToThisPC }
+            ];
+            const parsedPath = path.parse(targetPath);
+            const rootPath = parsedPath.root || targetPath;
+            const relativePath = rootPath ? path.relative(rootPath, targetPath) : '';
+            const trailingSegments = relativePath && relativePath !== '.'
+                ? relativePath.split(path.sep).filter(Boolean)
+                : [];
+
+            segments.push({
+                label: getDisplayNameForRoot(rootPath),
+                active: trailingSegments.length === 0,
+                onClick: trailingSegments.length === 0 ? null : () => navigateToPath(rootPath)
+            });
+
+            let partialPath = rootPath;
+            trailingSegments.forEach((segment, index) => {
+                partialPath = path.join(partialPath, segment);
+                const segmentPath = partialPath;
+                segments.push({
+                    label: segment,
+                    active: index === trailingSegments.length - 1,
+                    onClick: index === trailingSegments.length - 1 ? null : () => navigateToPath(segmentPath)
+                });
+            });
+
+            return segments;
+        }
+
+        function getCurrentAddressIconKey() {
+            if (currentLocation === HOME_LOCATION) {
+                return 'folder_home';
+            }
+
+            if (currentLocation === THIS_PC_LOCATION) {
+                return 'this_pc';
+            }
+
+            const exactFolder = findSpecialFolderByPath(currentPath);
+            if (exactFolder) {
+                return exactFolder.icon;
+            }
+
+            const parsedPath = currentPath ? path.parse(currentPath) : null;
+            if (parsedPath && parsedPath.root && pathsMatch(parsedPath.root, currentPath)) {
+                return 'main_drive';
+            }
+
+            return 'generic_folder';
+        }
+
+        function getCurrentLocationLabel() {
+            if (currentLocation === HOME_LOCATION) {
+                return 'Home';
+            }
+
+            if (currentLocation === THIS_PC_LOCATION) {
+                return 'This PC';
+            }
+
+            const exactFolder = findSpecialFolderByPath(currentPath);
+            if (exactFolder) {
+                return exactFolder.name;
+            }
+
+            if (currentPath) {
+                const parsedPath = path.parse(currentPath);
+                if (parsedPath.root && pathsMatch(parsedPath.root, currentPath)) {
+                    return getDisplayNameForRoot(currentPath);
+                }
+            }
+
+            return currentPath ? path.basename(currentPath) : 'File Explorer';
+        }
+
+        function getActiveSidebarLocation() {
+            if (currentLocation === HOME_LOCATION) {
+                return HOME_LOCATION;
+            }
+
+            if (currentLocation === THIS_PC_LOCATION) {
+                return THIS_PC_LOCATION;
+            }
+
+            const specialFolder = findContainingSpecialFolder(currentPath);
+            if (specialFolder) {
+                return HOME_FAVORITE_LOCATIONS.includes(specialFolder.id)
+                    ? specialFolder.sidebarLocation
+                    : (specialFolder.thisPcLocation || specialFolder.sidebarLocation || specialFolder.id);
+            }
+
+            return THIS_PC_LOCATION;
+        }
+
+        function syncSidebarActiveState() {
+            const activeLocation = getActiveSidebarLocation();
+            document.querySelectorAll('.explorer-sidebar-item').forEach(item => item.classList.remove('active'));
+
+            if (!activeLocation) {
+                return;
+            }
+
+            const activeItem = document.querySelector(`.explorer-sidebar-item[data-location="${activeLocation}"]`);
+            if (activeItem) {
+                activeItem.classList.add('active');
+            }
         }
 
         function handleSectionHeaderClick(event) {
@@ -560,13 +914,17 @@
         async function updateView() {
             const content = document.getElementById('content');
             content.innerHTML = '';
+            clearSelection();
 
-            if (currentLocation === 'this-pc') {
+            if (currentLocation === HOME_LOCATION) {
+                await renderHome();
+            } else if (currentLocation === THIS_PC_LOCATION) {
                 await renderThisPC();
             } else if (currentPath) {
                 await renderFolderView(currentPath);
             }
 
+            syncSidebarActiveState();
             updateNavigationButtons();
             updateBreadcrumbs();
             updateSearchPlaceholder();
@@ -644,6 +1002,7 @@
 
         async function renderThisPC() {
             const content = document.getElementById('content');
+            const userFolders = await getAccessibleSpecialFolders(HOME_FREQUENT_LOCATIONS);
 
             const container = document.createElement('div');
             container.className = 'explorer-this-pc';
@@ -654,7 +1013,7 @@
             foldersHeader.dataset.section = 'folders';
             foldersHeader.innerHTML = `
                 <span class="explorer-section-disclosure" data-expanded="true">▼</span>
-                <h2>Folders (6)</h2>
+                <h2>Folders (${userFolders.length})</h2>
             `;
             foldersHeader.addEventListener('click', handleSectionHeaderClick);
             container.appendChild(foldersHeader);
@@ -665,15 +1024,6 @@
 
             const foldersGrid = document.createElement('div');
             foldersGrid.className = `explorer-icon-grid explorer-icon-grid--${currentView}`;
-
-            const userFolders = [
-                { id: 'desktop', name: 'Desktop', icon: 'desktop', path: path.join(os.homedir(), 'Desktop') },
-                { id: 'documents', name: 'Documents', icon: 'folder_documents', path: path.join(os.homedir(), 'Documents') },
-                { id: 'downloads', name: 'Downloads', icon: 'folder_downloads', path: path.join(os.homedir(), 'Downloads') },
-                { id: 'music', name: 'Music', icon: 'folder_music', path: path.join(os.homedir(), 'Music') },
-                { id: 'pictures', name: 'Pictures', icon: 'folder_pictures', path: path.join(os.homedir(), 'Pictures') },
-                { id: 'videos', name: 'Videos', icon: 'folder_videos', path: path.join(os.homedir(), 'Videos') }
-            ];
 
             for (const folder of userFolders) {
                 const item = await createIconItem(folder, 'folder');
@@ -720,6 +1070,123 @@
             updateStatusBar(userFolders.length + drives.length);
         }
 
+        async function renderHome() {
+            const content = document.getElementById('content');
+            const container = document.createElement('div');
+            container.className = 'explorer-home';
+
+            const favoriteFolders = await getAccessibleSpecialFolders(HOME_FAVORITE_LOCATIONS);
+            const frequentFolders = await getAccessibleSpecialFolders(HOME_FREQUENT_LOCATIONS);
+            const recentFiles = await getRecentFiles(HOME_RECENT_FILE_LIMIT);
+
+            await appendCollapsibleSection(container, {
+                sectionName: 'favorites',
+                title: 'Favorites',
+                entries: favoriteFolders,
+                itemType: 'folder',
+                emptyMessage: 'No favorites are available.'
+            });
+
+            await appendCollapsibleSection(container, {
+                sectionName: 'frequent-folders',
+                title: 'Frequent folders',
+                entries: frequentFolders,
+                itemType: 'folder',
+                emptyMessage: 'No frequent folders are available.'
+            });
+
+            await appendCollapsibleSection(container, {
+                sectionName: 'recent-files',
+                title: 'Recent files',
+                entries: recentFiles,
+                itemType: 'file',
+                emptyMessage: 'No recent files were found.'
+            });
+
+            initializeSectionHeights();
+            content.appendChild(container);
+            updateStatusBar(favoriteFolders.length + frequentFolders.length + recentFiles.length);
+        }
+
+        async function appendCollapsibleSection(container, { sectionName, title, entries, itemType, emptyMessage }) {
+            const header = document.createElement('div');
+            header.className = 'explorer-section-header explorer-section-header--collapsible';
+            header.dataset.section = sectionName;
+            header.innerHTML = `
+                <span class="explorer-section-disclosure" data-expanded="true">&#9660;</span>
+                <h2>${title} (${entries.length})</h2>
+            `;
+            header.addEventListener('click', handleSectionHeaderClick);
+            container.appendChild(header);
+
+            const sectionContent = document.createElement('div');
+            sectionContent.className = 'explorer-section-content';
+            sectionContent.dataset.section = sectionName;
+
+            if (entries.length === 0) {
+                const emptyMessageElement = document.createElement('div');
+                emptyMessageElement.className = 'explorer-empty-message explorer-empty-message--inline';
+                emptyMessageElement.textContent = emptyMessage;
+                sectionContent.appendChild(emptyMessageElement);
+            } else {
+                const grid = document.createElement('div');
+                grid.className = `explorer-icon-grid explorer-icon-grid--${currentView}`;
+
+                for (const entry of entries) {
+                    const item = await createIconItem(entry, itemType);
+                    grid.appendChild(item);
+                }
+
+                sectionContent.appendChild(grid);
+            }
+
+            container.appendChild(sectionContent);
+        }
+
+        async function getRecentFiles(limit = HOME_RECENT_FILE_LIMIT) {
+            const frequentFolders = await getAccessibleSpecialFolders(HOME_FREQUENT_LOCATIONS);
+            const recentEntries = [];
+            const seenPaths = new Set();
+
+            await Promise.all(frequentFolders.map(async folder => {
+                try {
+                    const entries = await fs.readdir(folder.path, { withFileTypes: true });
+                    const visibleFiles = entries.filter(entry => entry.isFile() && !entry.name.startsWith('.')).slice(0, 100);
+
+                    await Promise.all(visibleFiles.map(async entry => {
+                        const filePath = path.join(folder.path, entry.name);
+                        const normalizedPath = normalizePathValue(filePath);
+
+                        if (seenPaths.has(normalizedPath)) {
+                            return;
+                        }
+
+                        try {
+                            const stats = await fs.stat(filePath);
+                            const extension = path.extname(entry.name).slice(1).toLowerCase();
+                            seenPaths.add(normalizedPath);
+                            recentEntries.push({
+                                id: `recent-${normalizedPath}`,
+                                name: entry.name,
+                                path: filePath,
+                                icon: getIconTypeForExtension(extension),
+                                extension,
+                                modifiedTime: stats.mtimeMs
+                            });
+                        } catch (error) {
+                            // Ignore files that disappear or become inaccessible.
+                        }
+                    }));
+                } catch (error) {
+                    // Ignore folders that are unavailable on this machine.
+                }
+            }));
+
+            return recentEntries
+                .sort((left, right) => right.modifiedTime - left.modifiedTime)
+                .slice(0, limit);
+        }
+
         async function createIconItem(entry, type = 'file') {
             const item = document.createElement('div');
             item.className = 'explorer-icon-item';
@@ -740,7 +1207,8 @@
                 icon.classList.add('explorer-icon-item__icon--thumbnail');
                 icon.appendChild(img);
             } else {
-                const iconPath = `../../../resources/images/icons/explorer/${entry.icon}/${iconSize}.png`;
+                const fallbackIcon = type === 'folder' ? 'generic_folder' : (type === 'drive' ? 'main_drive' : 'generic_file');
+                const iconPath = resolveIconPath(entry.icon, iconSize, fallbackIcon);
                 icon.innerHTML = `<img src="${iconPath}" alt="${entry.name}" />`;
             }
 
@@ -1098,48 +1566,69 @@
         }
 
         function navigateToPath(newPath) {
-            if (historyIndex < navigationHistory.length - 1) {
-                navigationHistory = navigationHistory.slice(0, historyIndex + 1);
-            }
-            navigationHistory.push({ type: 'path', path: newPath });
-            historyIndex++;
-
+            pushHistoryEntry({ type: 'path', path: newPath });
             currentLocation = 'path';
             currentPath = newPath;
             updateView();
         }
 
+        function navigateToHome() {
+            pushHistoryEntry({ type: 'home' });
+            currentLocation = HOME_LOCATION;
+            currentPath = null;
+            updateView();
+        }
+
         function navigateToThisPC() {
+            pushHistoryEntry({ type: 'this-pc' });
+            currentLocation = THIS_PC_LOCATION;
+            currentPath = null;
+            updateView();
+        }
+
+        function pushHistoryEntry(entry) {
             if (historyIndex < navigationHistory.length - 1) {
                 navigationHistory = navigationHistory.slice(0, historyIndex + 1);
             }
-            navigationHistory.push({ type: 'this-pc' });
-            historyIndex++;
 
-            currentLocation = 'this-pc';
-            currentPath = null;
-            updateView();
+            navigationHistory.push(entry);
+            historyIndex = navigationHistory.length - 1;
+        }
+
+        function applyHistoryEntry(historyItem) {
+            if (!historyItem) {
+                currentLocation = HOME_LOCATION;
+                currentPath = null;
+                return;
+            }
+
+            if (historyItem.type === 'home') {
+                currentLocation = HOME_LOCATION;
+                currentPath = null;
+                return;
+            }
+
+            if (historyItem.type === 'this-pc') {
+                currentLocation = THIS_PC_LOCATION;
+                currentPath = null;
+                return;
+            }
+
+            currentLocation = 'path';
+            currentPath = historyItem.path;
         }
 
         function navigateBack() {
             if (historyIndex > 0) {
                 historyIndex--;
-                const historyItem = navigationHistory[historyIndex];
-
-                if (historyItem.type === 'this-pc') {
-                    currentLocation = 'this-pc';
-                    currentPath = null;
-                } else if (historyItem.type === 'path') {
-                    currentLocation = 'path';
-                    currentPath = historyItem.path;
-                }
-
+                applyHistoryEntry(navigationHistory[historyIndex]);
                 updateView();
-            } else if (historyIndex === 0 && currentLocation !== 'this-pc') {
-                currentLocation = 'this-pc';
+            } else if (historyIndex === 0 && currentLocation !== HOME_LOCATION) {
+                currentLocation = HOME_LOCATION;
                 currentPath = null;
                 historyIndex = -1;
                 navigationHistory = [];
+                pushHistoryEntry({ type: 'home' });
                 updateView();
             }
         }
@@ -1147,31 +1636,26 @@
         function navigateForward() {
             if (historyIndex < navigationHistory.length - 1) {
                 historyIndex++;
-                const historyItem = navigationHistory[historyIndex];
-
-                if (historyItem.type === 'this-pc') {
-                    currentLocation = 'this-pc';
-                    currentPath = null;
-                } else if (historyItem.type === 'path') {
-                    currentLocation = 'path';
-                    currentPath = historyItem.path;
-                }
-
+                applyHistoryEntry(navigationHistory[historyIndex]);
                 updateView();
             }
         }
 
         function navigateUp() {
             if (currentPath) {
+                const specialFolder = findSpecialFolderByPath(currentPath);
+                if (specialFolder) {
+                    navigateToHome();
+                    return;
+                }
+
                 const parentPath = path.dirname(currentPath);
 
                 if (parentPath === currentPath || parentPath === os.homedir()) {
-                    navigateToThisPC();
+                    navigateToHome();
                 } else {
                     navigateToPath(parentPath);
                 }
-            } else if (currentLocation !== 'this-pc') {
-                navigateToThisPC();
             }
         }
 
@@ -1180,9 +1664,9 @@
             const forwardBtn = document.getElementById('forwardBtn');
             const upBtn = document.getElementById('upBtn');
 
-            backBtn.disabled = historyIndex <= 0 && currentLocation === 'this-pc';
+            backBtn.disabled = historyIndex <= 0;
             forwardBtn.disabled = historyIndex >= navigationHistory.length - 1;
-            upBtn.disabled = currentLocation === 'this-pc';
+            upBtn.disabled = currentLocation === HOME_LOCATION || currentLocation === THIS_PC_LOCATION;
         }
 
         function updateBreadcrumbs() {
@@ -1190,55 +1674,42 @@
             const addressIcon = document.getElementById('addressIcon');
             breadcrumbs.innerHTML = '';
 
-            if (currentLocation === 'this-pc') {
-                const thisPCCrumb = document.createElement('span');
-                thisPCCrumb.className = 'explorer-breadcrumb active';
-                thisPCCrumb.textContent = 'This PC';
-                breadcrumbs.appendChild(thisPCCrumb);
-
-                addressIcon.src = '../../../resources/images/icons/explorer/this_pc/16.png';
+            if (currentLocation === HOME_LOCATION) {
+                appendBreadcrumbSegment(breadcrumbs, { label: 'Home', active: true }, true);
+            } else if (currentLocation === THIS_PC_LOCATION) {
+                appendBreadcrumbSegment(breadcrumbs, { label: 'This PC', active: true }, true);
             } else if (currentPath) {
-                const rootCrumb = document.createElement('span');
-                rootCrumb.className = 'explorer-breadcrumb';
-                rootCrumb.textContent = 'This PC';
-                rootCrumb.addEventListener('click', navigateToThisPC);
-                breadcrumbs.appendChild(rootCrumb);
-
-                const separator = document.createElement('span');
-                separator.className = 'explorer-breadcrumb-separator';
-                separator.textContent = ' > ';
-                breadcrumbs.appendChild(separator);
-
-                const pathCrumb = document.createElement('span');
-                pathCrumb.className = 'explorer-breadcrumb active';
-                pathCrumb.textContent = path.basename(currentPath);
-                breadcrumbs.appendChild(pathCrumb);
-
-                addressIcon.src = '../../../resources/images/icons/explorer/generic_folder/16.png';
+                const segments = buildPathBreadcrumbs(currentPath);
+                segments.forEach((segment, index) => appendBreadcrumbSegment(breadcrumbs, segment, index === segments.length - 1));
             }
+
+            addressIcon.src = resolveIconPath(getCurrentAddressIconKey(), 16, 'generic_folder');
         }
 
         function updateSearchPlaceholder() {
             const searchInput = document.getElementById('searchInput');
             if (!searchInput) return;
 
-            if (currentLocation === 'this-pc') {
+            if (currentLocation === HOME_LOCATION) {
+                searchInput.placeholder = 'Search Home';
+            } else if (currentLocation === THIS_PC_LOCATION) {
                 searchInput.placeholder = 'Search This PC';
             } else if (currentPath) {
-                const folderName = path.basename(currentPath);
-                searchInput.placeholder = `Search ${folderName}`;
+                searchInput.placeholder = `Search ${getCurrentLocationLabel()}`;
             } else {
                 searchInput.placeholder = 'Search';
             }
         }
 
         function updateTitlebar() {
-            const newTitle = currentLocation === 'this-pc' ? 'This PC' : (currentPath ? path.basename(currentPath) : 'File Explorer');
+            const newTitle = getCurrentLocationLabel();
+            const newIconPath = resolveHostIconPath(getCurrentAddressIconKey(), 16, 'generic_folder');
             console.log('[File Explorer] Updating title to:', newTitle);
 
             // Send title update to parent with windowId
             if (window.sendToParent) {
                 window.sendToParent('updateWindowTitle', { title: newTitle });
+                window.sendToParent('updateWindowIcon', { iconPath: newIconPath });
             } else {
                 console.warn('[File Explorer] sendToParent not available');
             }

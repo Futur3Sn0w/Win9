@@ -172,6 +172,10 @@ function setCurrentView(viewName) {
     if (typeof window.updateFloatingStartButtonAvailability === 'function') {
         window.updateFloatingStartButtonAvailability();
     }
+
+    if (typeof updateStartButtonVisualState === 'function') {
+        updateStartButtonVisualState();
+    }
 }
 
 function cancelBootSequenceTimers() {
@@ -285,13 +289,25 @@ const defaultNavigationSettings = {
     showStartOnCurrentDisplay: false,
     showAppsViewOnStart: false,
     searchEverywhereFromApps: false,
-    listDesktopAppsFirst: false
+    listDesktopAppsFirst: false,
+    useStartMenu: false
 };
 
 let navigationSettings = { ...defaultNavigationSettings };
 // Taskbar settings now stored in registry (StuckRects2)
 const STUCKRECTS2_PATH = 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\StuckRects2';
 const TASKBAR_ADVANCED_PATH = 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced';
+const TASKBAR_SHOW_SEARCH_BUTTON_VALUE_NAME = 'ShowSearchButton';
+const TASKBAR_SHOW_TASK_VIEW_BUTTON_VALUE_NAME = 'ShowTaskViewButton';
+const TASKBAR_SHELL_BUTTON_ICON_SIZES = [16, 20, 24, 32, 40, 48, 64, 96, 128];
+const TASKBAR_SHELL_BUTTON_RESOURCE_SCALE = 2;
+const NOTIFICATION_CENTER_ICON_SIZES = {
+    none: [26, 34, 46, 61],
+    new: [27, 34, 46, 61],
+    dnd: [26, 34, 46, 61]
+};
+const NOTIFICATION_CENTER_RESOURCE_SCALE = 1;
+const NOTIFICATION_CENTER_MAX_ITEMS = 50;
 // Navigation settings registry paths
 const REGISTRY_PATHS = {
     edgeUI: 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\ImmersiveShell\\EdgeUI',
@@ -310,6 +326,12 @@ let displayZoomMonitorId = null;
 let taskbarAutoHideEnabled = loadTaskbarAutoHidePreference();
 let taskbarHeight = loadTaskbarHeightPreference();
 let taskbarUseSmallIcons = loadTaskbarSmallIconsPreference();
+let taskbarShowSearchButton = loadTaskbarSearchButtonPreference();
+let taskbarShowTaskViewButton = loadTaskbarTaskViewButtonPreference();
+let taskbarLocked = loadTaskbarLockedPreference();
+let notificationCenterQuietHoursEnabled = false;
+let notificationCenterUnreadCount = 0;
+let notificationCenterItems = [];
 let lockScreenWallpaperState = getDefaultLockScreenWallpaperState();
 
 function normalizeDisplayZoomPercent(value, fallback = DISPLAY_DEFAULT_ZOOM_PERCENT) {
@@ -586,6 +608,8 @@ loadNavigationSettingsIntoState();
 updateCharmsHotCornerAccessibility();
 
 setTaskbarSmallIcons(taskbarUseSmallIcons, { persist: false });
+setTaskbarSearchButtonVisible(taskbarShowSearchButton, { persist: false });
+setTaskbarTaskViewButtonVisible(taskbarShowTaskViewButton, { persist: false });
 
 function loadNavigationSettingsIntoState() {
     try {
@@ -619,6 +643,10 @@ function loadNavigationSettingsIntoState() {
         // listDesktopAppsFirst - store in StartPage for now
         const listDesktopFirst = registry.getValue(REGISTRY_PATHS.startPage, 'ListDesktopAppsFirst', 0);
         navigationSettings.listDesktopAppsFirst = listDesktopFirst === 1;
+
+        // useStartMenu - store in StartPage
+        const useStartMenu = registry.getValue(REGISTRY_PATHS.startPage, 'UseStartMenu', 0);
+        navigationSettings.useStartMenu = useStartMenu === 1;
 
     } catch (error) {
         console.error('Failed to load navigation settings from registry:', error);
@@ -683,6 +711,14 @@ function saveNavigationSettings() {
             REGISTRY_PATHS.startPage,
             'ListDesktopAppsFirst',
             navigationSettings.listDesktopAppsFirst ? 1 : 0,
+            RegistryType.REG_DWORD
+        );
+
+        // useStartMenu
+        registry.setValue(
+            REGISTRY_PATHS.startPage,
+            'UseStartMenu',
+            navigationSettings.useStartMenu ? 1 : 0,
             RegistryType.REG_DWORD
         );
 
@@ -835,6 +871,466 @@ function loadTaskbarSmallIconsPreference() {
     }
 }
 
+function loadTaskbarButtonVisibilityPreference(valueName, fallback = true) {
+    try {
+        const registry = getRegistry();
+        const value = registry.getValue(TASKBAR_ADVANCED_PATH, valueName, fallback ? 1 : 0);
+        return Number(value) !== 0;
+    } catch (error) {
+        console.error(`Failed to load taskbar button visibility preference for ${valueName}:`, error);
+        return fallback;
+    }
+}
+
+function persistTaskbarButtonVisibilityPreference(valueName, enabled) {
+    try {
+        const registry = getRegistry();
+        registry.setValue(TASKBAR_ADVANCED_PATH, valueName, enabled ? 1 : 0, RegistryType.REG_DWORD);
+    } catch (error) {
+        console.error(`Failed to persist taskbar button visibility preference for ${valueName}:`, error);
+    }
+}
+
+function updateTaskbarShellButtonsVisibility() {
+    $('.taskbar-search-button').toggleClass('is-hidden', !taskbarShowSearchButton);
+    $('.taskbar-task-view-button').toggleClass('is-hidden', !taskbarShowTaskViewButton);
+}
+
+function getTaskbarShellButtonAssetScaleFactor() {
+    const displayScale = electronScreen && typeof electronScreen.getPrimaryDisplay === 'function'
+        ? Number(electronScreen.getPrimaryDisplay()?.scaleFactor) || 1
+        : 1;
+    const zoomScale = getActualShellZoomPercent() / 100;
+
+    return Math.max(1, displayScale * zoomScale);
+}
+
+function getTaskbarShellButtonRenderSize($icon) {
+    if (!$icon || !$icon.length) {
+        return document.body.classList.contains('taskbar-small-icons') ? 20 : 24;
+    }
+
+    const element = $icon[0];
+    const computedStyle = window.getComputedStyle(element);
+    const width = parseFloat(computedStyle.width) || 0;
+    const height = parseFloat(computedStyle.height) || 0;
+
+    return Math.max(width, height, document.body.classList.contains('taskbar-small-icons') ? 20 : 24);
+}
+
+function selectTaskbarShellButtonIconSize(targetSize) {
+    const availableSizes = TASKBAR_SHELL_BUTTON_ICON_SIZES;
+    const exactMatch = availableSizes.find(size => size === targetSize);
+    if (exactMatch) {
+        return exactMatch;
+    }
+
+    const nextUpSize = availableSizes.find(size => size > targetSize);
+    if (typeof nextUpSize === 'number') {
+        return nextUpSize;
+    }
+
+    return availableSizes[availableSizes.length - 1];
+}
+
+function updateTaskbarShellButtonIcons() {
+    const scaleFactor = getTaskbarShellButtonAssetScaleFactor();
+
+    $('.taskbar-shell-button-icon[data-icon-folder]').each(function () {
+        const $icon = $(this);
+        const folderName = $icon.attr('data-icon-folder');
+        if (!folderName) {
+            return;
+        }
+
+        const renderSize = getTaskbarShellButtonRenderSize($icon);
+        const targetAssetSize = Math.max(1, Math.ceil(renderSize * scaleFactor * TASKBAR_SHELL_BUTTON_RESOURCE_SCALE));
+        const selectedSize = selectTaskbarShellButtonIconSize(targetAssetSize);
+        const nextSrc = `resources/images/taskbar/${folderName}/${selectedSize}.png`;
+
+        if ($icon.attr('src') !== nextSrc) {
+            $icon.attr('src', nextSrc);
+        }
+    });
+}
+
+function selectNotificationCenterIconSize(targetSize, state) {
+    const availableSizes = NOTIFICATION_CENTER_ICON_SIZES[state] || NOTIFICATION_CENTER_ICON_SIZES.none;
+    const exactMatch = availableSizes.find(size => size === targetSize);
+    if (exactMatch) {
+        return exactMatch;
+    }
+
+    const nextUpSize = availableSizes.find(size => size > targetSize);
+    if (typeof nextUpSize === 'number') {
+        return nextUpSize;
+    }
+
+    return availableSizes[availableSizes.length - 1];
+}
+
+function getNotificationCenterState() {
+    if (notificationCenterQuietHoursEnabled) {
+        return 'dnd';
+    }
+
+    return notificationCenterUnreadCount > 0 ? 'new' : 'none';
+}
+
+function getNotificationCenterTooltip(state) {
+    switch (state) {
+        case 'dnd':
+            return 'Notification center (Do not disturb)';
+        case 'new':
+            return 'Notification center (New notifications)';
+        default:
+            return 'Notification center';
+    }
+}
+
+function updateNotificationCenterIcon() {
+    const $icon = $('#notification-center-icon-img');
+    if (!$icon.length) {
+        return;
+    }
+
+    const state = getNotificationCenterState();
+    const scaleFactor = getTaskbarShellButtonAssetScaleFactor();
+    const renderSize = getTaskbarShellButtonRenderSize($icon);
+    const targetAssetSize = Math.max(1, Math.ceil(renderSize * scaleFactor * NOTIFICATION_CENTER_RESOURCE_SCALE));
+    const selectedSize = selectNotificationCenterIconSize(targetAssetSize, state);
+    const nextSrc = `resources/images/taskbar/notif_center/${state}/${selectedSize}.png`;
+
+    if ($icon.attr('src') !== nextSrc) {
+        $icon.attr('src', nextSrc);
+    }
+
+    $('#notification-center-icon')
+        .attr('data-state', state)
+        .attr('title', getNotificationCenterTooltip(state));
+}
+
+function escapeNotificationCenterText(value) {
+    const div = document.createElement('div');
+    div.textContent = value == null ? '' : String(value);
+    return div.innerHTML;
+}
+
+function formatNotificationCenterTime(timestamp) {
+    return new Date(timestamp).toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
+    });
+}
+
+function getNotificationCenterSectionLabel(detail) {
+    if (detail && detail.sourceLabel) {
+        return detail.sourceLabel;
+    }
+
+    if (detail && detail.appId && typeof AppsManager !== 'undefined') {
+        const app = AppsManager.getAppById(detail.appId);
+        if (app && app.name) {
+            return app.name;
+        }
+
+        return detail.appId;
+    }
+
+    return 'Windows.SystemToast.AutoPlay';
+}
+
+function getNotificationCenterSectionIcon(detail) {
+    if (detail && detail.appIcon) {
+        return detail.appIcon;
+    }
+
+    if (detail && detail.appId && typeof AppsManager !== 'undefined') {
+        const app = AppsManager.getAppById(detail.appId);
+        if (app) {
+            return AppsManager.getIconImage(app, 32) || app.icon || null;
+        }
+    }
+
+    return null;
+}
+
+function renderNotificationCenterPanel() {
+    const $panelBody = $('#notification-center-panel-body');
+    if (!$panelBody.length) {
+        return;
+    }
+
+    const sections = [];
+    const sectionMap = new Map();
+
+    notificationCenterItems.forEach(item => {
+        if (!sectionMap.has(item.sectionKey)) {
+            const section = {
+                key: item.sectionKey,
+                label: item.sectionLabel,
+                icon: item.sectionIcon,
+                items: []
+            };
+            sectionMap.set(item.sectionKey, section);
+            sections.push(section);
+        }
+
+        sectionMap.get(item.sectionKey).items.push(item);
+    });
+
+    const html = sections.map(section => {
+        const hasIcon = Boolean(section.icon);
+        const itemsHtml = section.items.map(item => {
+            const descriptionHtml = item.description
+                ? `<div class="notification-center-item-description">${escapeNotificationCenterText(item.description)}</div>`
+                : '';
+
+            return `
+                <div class="notification-center-item">
+                    <button
+                        class="notification-center-item-button"
+                        type="button"
+                        data-notification-id="${escapeNotificationCenterText(item.id)}"
+                        ${item.onClick ? '' : 'disabled'}
+                    >
+                        <div class="notification-center-item-topline">
+                            <div class="notification-center-item-title">${escapeNotificationCenterText(item.title)}</div>
+                            <div class="notification-center-item-time">${escapeNotificationCenterText(formatNotificationCenterTime(item.timestamp))}</div>
+                        </div>
+                        ${descriptionHtml}
+                    </button>
+                </div>
+            `;
+        }).join('');
+
+        return `
+            <section class="notification-center-section${hasIcon ? ' notification-center-section--with-icon' : ''}">
+                <div class="notification-center-section-header${hasIcon ? ' notification-center-section-header--with-icon' : ''}">
+                    ${hasIcon ? `<div class="notification-center-section-icon"><img src="${escapeNotificationCenterText(section.icon)}" alt=""></div>` : ''}
+                    <div class="notification-center-section-title">${escapeNotificationCenterText(section.label)}</div>
+                </div>
+                ${itemsHtml}
+            </section>
+        `;
+    }).join('');
+
+    $panelBody.html(html);
+    $('#notification-center-clear').prop('disabled', notificationCenterItems.length === 0);
+}
+
+function isNotificationCenterPanelVisible() {
+    return $('#notification-center-panel').hasClass('visible');
+}
+
+function markNotificationCenterRead() {
+    if (notificationCenterUnreadCount === 0) {
+        return;
+    }
+
+    notificationCenterUnreadCount = 0;
+    updateNotificationCenterIcon();
+}
+
+function showNotificationCenterPanel() {
+    const $panel = $('#notification-center-panel');
+    if (!$panel.length) {
+        return;
+    }
+
+    renderNotificationCenterPanel();
+    $panel.addClass('visible').attr('aria-hidden', 'false');
+    $('#notification-center-icon').addClass('active');
+    markNotificationCenterRead();
+}
+
+function hideNotificationCenterPanel() {
+    const $panel = $('#notification-center-panel');
+    if (!$panel.length) {
+        return;
+    }
+
+    $panel.removeClass('visible').attr('aria-hidden', 'true');
+    $('#notification-center-icon').removeClass('active');
+}
+
+function clearNotificationCenter() {
+    notificationCenterItems = [];
+    notificationCenterUnreadCount = 0;
+    renderNotificationCenterPanel();
+    updateNotificationCenterIcon();
+
+    if (window.notificationManager && typeof window.notificationManager.hideAll === 'function') {
+        window.notificationManager.hideAll();
+    }
+}
+
+function toggleNotificationCenterPanel() {
+    if (isNotificationCenterPanelVisible()) {
+        hideNotificationCenterPanel();
+        return;
+    }
+
+    closeAllTaskbarPopupsAndMenus();
+    showNotificationCenterPanel();
+}
+
+function addNotificationCenterItem(detail) {
+    const itemDetail = detail || {};
+    const item = {
+        id: itemDetail.id || `notification-center-${Date.now()}`,
+        sectionKey: itemDetail.appId || itemDetail.sourceLabel || 'windows-system-toast',
+        sectionLabel: getNotificationCenterSectionLabel(itemDetail),
+        sectionIcon: getNotificationCenterSectionIcon(itemDetail),
+        title: itemDetail.title || 'Notification',
+        description: itemDetail.description || '',
+        timestamp: itemDetail.timestamp || Date.now(),
+        onClick: typeof itemDetail.onClick === 'function' ? itemDetail.onClick : null
+    };
+
+    notificationCenterItems = [
+        item,
+        ...notificationCenterItems.filter(existingItem => existingItem.id !== item.id)
+    ].slice(0, NOTIFICATION_CENTER_MAX_ITEMS);
+
+    if (!isNotificationCenterPanelVisible()) {
+        notificationCenterUnreadCount = Math.min(notificationCenterItems.length, notificationCenterUnreadCount + 1);
+    }
+
+    renderNotificationCenterPanel();
+    updateNotificationCenterIcon();
+}
+
+function handleNotificationCenterItemClick(notificationId) {
+    const item = notificationCenterItems.find(entry => entry.id === notificationId);
+    if (!item || !item.onClick) {
+        return;
+    }
+
+    try {
+        item.onClick();
+        hideNotificationCenterPanel();
+    } catch (error) {
+        console.error('Notification center item action failed:', error);
+    }
+}
+
+function setNotificationCenterDoNotDisturb(enabled) {
+    notificationCenterQuietHoursEnabled = !!enabled;
+    updateNotificationCenterIcon();
+    return getNotificationCenterState();
+}
+
+function initNotificationCenter() {
+    const $notificationCenterIcon = $('#notification-center-icon');
+    if (!$notificationCenterIcon.length) {
+        return;
+    }
+
+    $notificationCenterIcon.on('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        toggleNotificationCenterPanel();
+    });
+
+    $(window)
+        .off('resize.notification-center')
+        .on('resize.notification-center', updateNotificationCenterIcon);
+    window.addEventListener('win8-display-settings-changed', updateNotificationCenterIcon);
+
+    document.addEventListener('win8:notification-shown', (event) => {
+        addNotificationCenterItem(event.detail);
+    });
+
+    $(document).on('click', '#notification-center-clear', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        clearNotificationCenter();
+    });
+
+    $(document).on('click', '#notification-center-close', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        hideNotificationCenterPanel();
+    });
+
+    $(document).on('click', '.notification-center-item-button[data-notification-id]', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        handleNotificationCenterItemClick($(this).attr('data-notification-id'));
+    });
+
+    $(document).on('click', function (e) {
+        if (isNotificationCenterPanelVisible() &&
+            !$(e.target).closest('#notification-center-panel, #notification-center-icon').length) {
+            hideNotificationCenterPanel();
+        }
+    });
+
+    $(document).on('keydown', function (e) {
+        if (e.key === 'Escape' && isNotificationCenterPanelVisible()) {
+            hideNotificationCenterPanel();
+        }
+    });
+
+    window.NotificationCenter = {
+        getState: getNotificationCenterState,
+        getItems: () => notificationCenterItems.slice(),
+        getUnreadCount: () => notificationCenterUnreadCount,
+        isDoNotDisturbEnabled: () => notificationCenterQuietHoursEnabled,
+        setDoNotDisturb: setNotificationCenterDoNotDisturb,
+        clearAll: clearNotificationCenter,
+        open: showNotificationCenterPanel,
+        close: hideNotificationCenterPanel,
+        toggle: toggleNotificationCenterPanel,
+        syncIcon: updateNotificationCenterIcon
+    };
+
+    renderNotificationCenterPanel();
+    updateNotificationCenterIcon();
+}
+
+function loadTaskbarSearchButtonPreference() {
+    return loadTaskbarButtonVisibilityPreference(TASKBAR_SHOW_SEARCH_BUTTON_VALUE_NAME, true);
+}
+
+function setTaskbarSearchButtonVisible(enabled, options = {}) {
+    const normalized = !!enabled;
+    const { persist = true } = options;
+    const changed = taskbarShowSearchButton !== normalized;
+
+    taskbarShowSearchButton = normalized;
+    updateTaskbarShellButtonsVisibility();
+    updateTaskbarContextMenuChecks();
+
+    if (persist) {
+        persistTaskbarButtonVisibilityPreference(TASKBAR_SHOW_SEARCH_BUTTON_VALUE_NAME, normalized);
+    }
+
+    return changed;
+}
+
+function loadTaskbarTaskViewButtonPreference() {
+    return loadTaskbarButtonVisibilityPreference(TASKBAR_SHOW_TASK_VIEW_BUTTON_VALUE_NAME, true);
+}
+
+function setTaskbarTaskViewButtonVisible(enabled, options = {}) {
+    const normalized = !!enabled;
+    const { persist = true } = options;
+    const changed = taskbarShowTaskViewButton !== normalized;
+
+    taskbarShowTaskViewButton = normalized;
+    updateTaskbarShellButtonsVisibility();
+    updateTaskbarContextMenuChecks();
+
+    if (persist) {
+        persistTaskbarButtonVisibilityPreference(TASKBAR_SHOW_TASK_VIEW_BUTTON_VALUE_NAME, normalized);
+    }
+
+    return changed;
+}
+
 function setTaskbarSmallIcons(enabled, options = {}) {
     const normalized = !!enabled;
     const { persist = true } = options;
@@ -842,6 +1338,8 @@ function setTaskbarSmallIcons(enabled, options = {}) {
     taskbarUseSmallIcons = normalized;
 
     document.body.classList.toggle('taskbar-small-icons', normalized);
+    updateTaskbarShellButtonIcons();
+    updateNotificationCenterIcon();
 
     if (persist) {
         try {
@@ -929,6 +1427,7 @@ function setTaskbarHeight(height, options = {}) {
         updateTaskbarClock();
         // Update taskbar resized class
         updateTaskbarResizedClass();
+        updateNotificationCenterIcon();
     }
 
     updateTaskbarReservedHeight();
@@ -1001,6 +1500,7 @@ function setTaskbarLocked(locked, options = {}) {
     }
 
     updateTaskbarLockState();
+    updateTaskbarContextMenuChecks();
 }
 
 function updateTaskbarLockState() {
@@ -1704,6 +2204,8 @@ function transitionToSigningIn() {
 function login() {
     const $signingInScreen = views.signingIn;
     const $startScreen = views.start;
+    const $desktop = views.desktop;
+    const shouldOpenDesktop = isStartMenuEnabled() || navigationSettings.goToDesktopOnSignIn;
 
     console.log('login() called - Fresh login flow (sliding animation)');
 
@@ -1717,6 +2219,11 @@ function login() {
 
     // Wait 1 second before starting the transition
     setTimeout(function () {
+        if (shouldOpenDesktop) {
+            $desktop.addClass('visible');
+            return;
+        }
+
         // Show start screen and make it visible
         $startScreen.addClass('visible');
 
@@ -1744,18 +2251,18 @@ function login() {
             // Remove lock state attribute since user is now logged in
             views.login.removeAttr('data-lock-state');
 
-            setCurrentView('start');
-            console.log('Fresh login complete - Current view:', currentView);
-            $('body').addClass('charms-allowed');
-            updateTaskbarVisibility('start');
-            applyStartScreenDefaultView();
-
-            if (navigationSettings.goToDesktopOnSignIn) {
-                setTimeout(() => {
-                    if (currentView === 'start') {
-                        transitionToDesktop();
-                    }
-                }, 50);
+            if (shouldOpenDesktop) {
+                $startScreen.removeClass('visible show-content show-content-from-desktop fade-background slide-in exit-to-desktop opening-from-desktop');
+                setCurrentView('desktop');
+                $('body').removeClass('view-start').addClass('view-desktop');
+                $('body').addClass('charms-allowed');
+                updateTaskbarVisibility('desktop');
+            } else {
+                setCurrentView('start');
+                console.log('Fresh login complete - Current view:', currentView);
+                $('body').addClass('charms-allowed');
+                updateTaskbarVisibility('start');
+                applyStartScreenDefaultView();
             }
         } else {
             console.log('Login animation skipped - view already changed to:', currentView);
@@ -1782,6 +2289,693 @@ const startScreenTouchDrag = {
     currentOffset: 0,
     maxOffset: 0
 };
+
+const DEFAULT_START_MENU_PINNED_IDS = ['settings', 'explorer', 'control-panel'];
+const MAX_START_MENU_RECENTS = 7;
+const START_MENU_MIN_ROWS = 4;
+const START_MENU_ROW_STEP = 2;
+const START_MENU_LEFT_WIDTH = 260;
+const START_MENU_VIEWPORT_MARGIN = 32;
+const startMenuState = {
+    pinnedIds: [],
+    recentIds: [],
+    allAppsOpen: false,
+    query: ''
+};
+let startMenuContextAppId = null;
+let startMenuContextMode = null;
+let startMenuTileRows = null;
+let startMenuRowsManuallySized = false;
+const startMenuResize = {
+    active: false,
+    startY: 0,
+    startRows: START_MENU_MIN_ROWS,
+    minRows: START_MENU_MIN_ROWS,
+    maxRows: START_MENU_MIN_ROWS
+};
+
+applyStartMenuModePreference();
+
+function hideStartMenuImmediately() {
+    const $startMenu = $('#start-menu');
+    if (!$startMenu.length) {
+        return;
+    }
+
+    endStartMenuResize();
+    $startMenu.removeClass('visible');
+    $('body').removeClass('start-menu-open taskbar-peek');
+    hideStartMenuItemContextMenu();
+    startMenuState.query = '';
+    startMenuState.allAppsOpen = false;
+
+    const searchInput = document.getElementById('start-menu-search-input');
+    if (searchInput) {
+        searchInput.value = '';
+    }
+
+    startReturnModernAppId = null;
+    updateStartMenuToggleButton();
+    updateStartButtonVisualState();
+}
+
+function getStartMenuEligibleApps() {
+    if (!window.AppsManager || typeof AppsManager.getAllApps !== 'function') {
+        return [];
+    }
+
+    const allApps = AppsManager.getAllApps();
+    return allApps.filter(app => app && app.id !== 'desktop' && app.showInStart !== false);
+}
+
+function sortAppsForStartMenu(apps) {
+    const source = Array.isArray(apps) ? apps.slice() : [];
+
+    source.sort((a, b) => {
+        if (navigationSettings.listDesktopAppsFirst) {
+            const aDesktop = a.type === 'classic' || a.type === 'meta-classic';
+            const bDesktop = b.type === 'classic' || b.type === 'meta-classic';
+
+            if (aDesktop !== bDesktop) {
+                return aDesktop ? -1 : 1;
+            }
+        }
+
+        return (a.name || '').localeCompare(b.name || '');
+    });
+
+    return source;
+}
+
+function getTileGridSizing(showMoreTiles = document.body.classList.contains('tiles-compact')) {
+    return showMoreTiles
+        ? { tileSize: 56, gap: 8 }
+        : { tileSize: 70, gap: 10 };
+}
+
+function getStartMenuTileGridSizing() {
+    const startMenuElement = document.getElementById('start-menu');
+
+    if (startMenuElement) {
+        const styles = getComputedStyle(startMenuElement);
+        const tileSize = parseFloat(styles.getPropertyValue('--start-menu-tile-cell'));
+        const gap = parseFloat(styles.getPropertyValue('--start-menu-tile-gap'));
+
+        if (Number.isFinite(tileSize) && Number.isFinite(gap)) {
+            return { tileSize, gap };
+        }
+    }
+
+    return { tileSize: 56, gap: 8 };
+}
+
+function normalizeStartMenuIds(ids, { fallback = [] } = {}) {
+    const eligibleIds = new Set(getStartMenuEligibleApps().map(app => app.id));
+    const normalized = Array.isArray(ids) ? ids.filter(id => eligibleIds.has(id)) : [];
+    const unique = [];
+    const seen = new Set();
+
+    normalized.forEach(id => {
+        if (!seen.has(id)) {
+            seen.add(id);
+            unique.push(id);
+        }
+    });
+
+    if (unique.length > 0) {
+        return unique;
+    }
+
+    return fallback.filter(id => eligibleIds.has(id));
+}
+
+function loadStartMenuState() {
+    const registry = window.TileLayoutRegistry;
+    const storedPins = registry && typeof registry.loadStartMenuPins === 'function'
+        ? registry.loadStartMenuPins()
+        : null;
+    const storedRecents = registry && typeof registry.loadStartMenuRecents === 'function'
+        ? registry.loadStartMenuRecents()
+        : [];
+    const storedTileRows = registry && typeof registry.loadStartMenuTileRows === 'function'
+        ? registry.loadStartMenuTileRows()
+        : null;
+
+    startMenuState.pinnedIds = normalizeStartMenuIds(
+        storedPins,
+        storedPins === null ? { fallback: DEFAULT_START_MENU_PINNED_IDS } : {}
+    );
+    startMenuState.recentIds = normalizeStartMenuIds(storedRecents).slice(0, MAX_START_MENU_RECENTS);
+    startMenuTileRows = Number.isFinite(storedTileRows) ? storedTileRows : null;
+    startMenuRowsManuallySized = Number.isFinite(startMenuTileRows);
+}
+
+function saveStartMenuState() {
+    const registry = window.TileLayoutRegistry;
+    if (!registry) {
+        return;
+    }
+
+    if (typeof registry.saveStartMenuPins === 'function') {
+        registry.saveStartMenuPins(startMenuState.pinnedIds);
+    }
+
+    if (typeof registry.saveStartMenuRecents === 'function') {
+        registry.saveStartMenuRecents(startMenuState.recentIds.slice(0, MAX_START_MENU_RECENTS));
+    }
+}
+
+function saveStartMenuSizePreference() {
+    const registry = window.TileLayoutRegistry;
+    if (!registry || typeof registry.saveStartMenuTileRows !== 'function') {
+        return;
+    }
+
+    registry.saveStartMenuTileRows(
+        startMenuRowsManuallySized && Number.isFinite(startMenuTileRows)
+            ? startMenuTileRows
+            : null
+    );
+}
+
+function recordStartMenuLaunch(appId) {
+    const app = window.AppsManager && typeof AppsManager.getAppById === 'function'
+        ? AppsManager.getAppById(appId)
+        : null;
+
+    if (!app || app.id === 'desktop' || app.showInStart === false) {
+        return;
+    }
+
+    startMenuState.recentIds = [
+        appId,
+        ...startMenuState.recentIds.filter(id => id !== appId)
+    ].slice(0, MAX_START_MENU_RECENTS);
+
+    saveStartMenuState();
+
+    if (isStartMenuEnabled()) {
+        renderStartMenuLeftPane();
+    }
+}
+
+function getStartMenuPinnedListApps() {
+    return startMenuState.pinnedIds
+        .map(id => AppsManager.getAppById(id))
+        .filter(Boolean);
+}
+
+function getStartMenuRecentApps() {
+    const pinnedSet = new Set(startMenuState.pinnedIds);
+    return startMenuState.recentIds
+        .filter(id => !pinnedSet.has(id))
+        .map(id => AppsManager.getAppById(id))
+        .filter(Boolean);
+}
+
+function escapeHtml(value) {
+    return String(value || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+function getStartMenuEntryIconMarkup(app, size = 40) {
+    const hasMifIcon = app.icon && app.icon.startsWith('mif-');
+    const isModernApp = app.type === 'modern';
+    let plateClass = isModernApp
+        ? (app.color ? `app-icon-plate--${app.color}` : 'app-icon-plate--accent')
+        : 'start-menu-entry__icon--plain';
+    let iconHtml = '';
+
+    if (hasMifIcon) {
+        const iconImage = AppsManager.getIconImage(app, size);
+        iconHtml = iconImage
+            ? `<img src="${iconImage}" alt="">`
+            : `<span class="${app.icon}"></span>`;
+    } else {
+        const iconImage = AppsManager.getIconImage(app, size);
+        if (iconImage) {
+            iconHtml = `<img src="${iconImage}" alt="">`;
+        } else {
+            const logoImage = AppsManager.getAppListLogo(app);
+            iconHtml = `<img src="${logoImage}" alt="">`;
+        }
+    }
+
+    return {
+        plateClass,
+        iconHtml
+    };
+}
+
+function updateStartMenuThemeColor() {
+    const rootStyles = getComputedStyle(document.documentElement);
+    const baseColor = rootStyles.getPropertyValue('--ui-wall-color').trim() || '#0078d7';
+    const adjustedColor = adjustBrightnessAndSaturation(baseColor, -30, +8);
+
+    document.documentElement.style.setProperty('--start-menu-color', adjustedColor);
+}
+
+function buildStartMenuEntryHtml(app, mode, { dense = false, subtitle = '' } = {}) {
+    const { plateClass, iconHtml } = getStartMenuEntryIconMarkup(app, dense ? 28 : 32);
+    const denseClass = dense ? ' start-menu-entry--dense' : '';
+    const subtitleHtml = subtitle
+        ? `<span class="start-menu-entry__subtitle">${escapeHtml(subtitle)}</span>`
+        : '';
+
+    return `
+        <button class="start-menu-entry${denseClass}" data-app="${app.id}" data-context="${mode}">
+            <span class="start-menu-entry__icon ${plateClass}">${iconHtml}</span>
+            <span class="start-menu-entry__text">
+                <span class="start-menu-entry__label">${escapeHtml(app.name)}</span>
+                ${subtitleHtml}
+            </span>
+        </button>
+    `;
+}
+
+function updateStartMenuToggleButton() {
+    const $button = $('#start-menu-all-apps-toggle');
+    if (!$button.length) {
+        return;
+    }
+
+    const showingAllApps = startMenuState.allAppsOpen && !startMenuState.query.trim();
+    $button.find('.start-menu-all-apps-text').text(showingAllApps ? 'Back' : 'All apps');
+    $button.find('.start-menu-all-apps-icon > span')
+        .toggleClass('mif-arrow-right', !showingAllApps)
+        .toggleClass('mif-arrow-left', showingAllApps);
+}
+
+function updateStartButtonVisualState() {
+    const isActive = isStartMenuOpen() || currentView === 'start';
+    $('.taskbar .start-button, .floating-start-button').toggleClass('active', isActive);
+}
+
+function getStartMenuSearchResults(query) {
+    const needle = query.trim().toLowerCase();
+    if (!needle) {
+        return [];
+    }
+
+    return sortAppsForStartMenu(getStartMenuEligibleApps()).filter(app =>
+        (app.name || '').toLowerCase().includes(needle)
+    );
+}
+
+function renderStartMenuLeftPane() {
+    const $list = $('#start-menu-left-list');
+    if (!$list.length || !window.AppsManager) {
+        return;
+    }
+
+    const query = startMenuState.query.trim();
+    const normalizedQuery = query.toLowerCase();
+    let html = '';
+
+    if (normalizedQuery) {
+        const results = getStartMenuSearchResults(normalizedQuery);
+
+        html += '<div class="start-menu-section-title">Results</div>';
+        if (results.length > 0) {
+            results.forEach(app => {
+                html += buildStartMenuEntryHtml(app, 'search', { dense: false });
+            });
+        } else {
+            html += '<div class="start-menu-empty-state">No matching apps.</div>';
+        }
+    } else if (startMenuState.allAppsOpen) {
+        sortAppsForStartMenu(getStartMenuEligibleApps()).forEach(app => {
+            html += buildStartMenuEntryHtml(app, 'all-apps', { dense: true });
+        });
+    } else {
+        const pinnedApps = getStartMenuPinnedListApps();
+        const recentApps = getStartMenuRecentApps();
+
+        pinnedApps.forEach(app => {
+            html += buildStartMenuEntryHtml(app, 'pinned');
+        });
+
+        if (pinnedApps.length > 0 && recentApps.length > 0) {
+            html += '<div class="start-menu-list-separator"></div>';
+        }
+
+        if (recentApps.length > 0) {
+            recentApps.forEach(app => {
+                html += buildStartMenuEntryHtml(app, 'recent');
+            });
+        } else {
+            html += '<div class="start-menu-empty-state">Recently opened apps will appear here.</div>';
+        }
+    }
+
+    $list.html(html);
+    updateStartMenuToggleButton();
+}
+
+function getStartMenuChromeMetrics() {
+    const topHeight = $('.start-menu-top').outerHeight() || 57;
+    const topSeparatorHeight = $('#start-menu .start-menu-left > .start-menu-list-separator').outerHeight(true) || 0;
+    const bottomHeight = $('.start-menu-bottom').outerHeight() || 92;
+    const rightPaddingTop = parseInt($('.start-menu-right').css('padding-top'), 10) || 14;
+    const rightPaddingBottom = parseInt($('.start-menu-right').css('padding-bottom'), 10) || 16;
+    const leftChromeHeight = topHeight + topSeparatorHeight + bottomHeight;
+    const rightChromeHeight = rightPaddingTop + rightPaddingBottom;
+
+    return {
+        leftChromeHeight: Math.ceil(leftChromeHeight),
+        rightChromeHeight: Math.ceil(rightChromeHeight)
+    };
+}
+
+function getTaskbarHeightForLayout() {
+    const taskbarHeightValue = getComputedStyle(document.body).getPropertyValue('--taskbar-height').trim();
+    const parsed = parseInt(taskbarHeightValue, 10);
+    return Number.isFinite(parsed) ? parsed : 40;
+}
+
+function getStartMenuRowBounds() {
+    const { tileSize, gap } = getStartMenuTileGridSizing();
+    const { rightChromeHeight } = getStartMenuChromeMetrics();
+    const availableHeight = Math.max(0, window.innerHeight - getTaskbarHeightForLayout() - 16 - rightChromeHeight);
+    const rawMaxRows = Math.floor((availableHeight + gap) / (tileSize + gap));
+    const snappedMaxRows = Math.max(
+        START_MENU_MIN_ROWS,
+        rawMaxRows - ((rawMaxRows - START_MENU_MIN_ROWS) % START_MENU_ROW_STEP)
+    );
+
+    return {
+        minRows: START_MENU_MIN_ROWS,
+        maxRows: snappedMaxRows
+    };
+}
+
+function getStartMenuPinnedTileApps() {
+    if (!window.AppsManager || typeof AppsManager.getPinnedApps !== 'function') {
+        return [];
+    }
+
+    return AppsManager.getPinnedApps().filter(app => app && app.id !== 'desktop');
+}
+
+function getStartMenuDimensionsForRows(rows) {
+    const pinnedApps = getStartMenuPinnedTileApps();
+    const layout = calculateTileLayout(pinnedApps, rows);
+    const { tileSize, gap } = getStartMenuTileGridSizing();
+    const { leftChromeHeight, rightChromeHeight } = getStartMenuChromeMetrics();
+    const rightPaddingLeft = parseInt($('.start-menu-right').css('padding-left'), 10) || 16;
+    const rightPaddingRight = parseInt($('.start-menu-right').css('padding-right'), 10) || 16;
+    const usedColumns = Math.max(layout.maxColumn, 0);
+    const tileWidth = usedColumns > 0
+        ? (usedColumns * tileSize) + ((usedColumns - 1) * gap)
+        : 0;
+    const tileHeight = rows > 0
+        ? (rows * tileSize) + (Math.max(0, rows - 1) * gap)
+        : 0;
+    const rightWidth = Math.ceil(Math.max(0, tileWidth) + rightPaddingLeft + rightPaddingRight);
+    const shellWidth = START_MENU_LEFT_WIDTH + rightWidth;
+    const shellHeight = Math.ceil(Math.max(
+        leftChromeHeight,
+        rightChromeHeight + tileHeight
+    ));
+
+    return {
+        rows,
+        layout,
+        rightWidth,
+        shellWidth,
+        shellHeight,
+        tileSize,
+        tileHeight
+    };
+}
+
+function resolveStartMenuTileRows(preferredRows = null) {
+    const bounds = getStartMenuRowBounds();
+    const viewportWidthLimit = Math.max(280, window.innerWidth - START_MENU_VIEWPORT_MARGIN);
+
+    let candidate;
+    if (preferredRows != null) {
+        candidate = preferredRows;
+    } else if (startMenuRowsManuallySized && Number.isFinite(startMenuTileRows)) {
+        candidate = startMenuTileRows;
+    } else {
+        candidate = bounds.minRows;
+    }
+
+    candidate = Math.max(bounds.minRows, Math.min(bounds.maxRows, candidate));
+    candidate = candidate - ((candidate - bounds.minRows) % START_MENU_ROW_STEP);
+
+    for (let rows = candidate; rows <= bounds.maxRows; rows += START_MENU_ROW_STEP) {
+        const dimensions = getStartMenuDimensionsForRows(rows);
+        if (dimensions.shellWidth <= viewportWidthLimit || rows === bounds.maxRows) {
+            startMenuTileRows = rows;
+            return dimensions;
+        }
+    }
+
+    const fallback = getStartMenuDimensionsForRows(bounds.maxRows);
+    startMenuTileRows = bounds.maxRows;
+    return fallback;
+}
+
+function applyStartMenuShellSize(dimensions) {
+    const startMenuElement = document.getElementById('start-menu');
+    if (!startMenuElement || !dimensions) {
+        return;
+    }
+
+    startMenuElement.style.setProperty('--start-menu-left-width', `${START_MENU_LEFT_WIDTH}px`);
+    startMenuElement.style.setProperty('--start-menu-right-width', `${Math.max(0, dimensions.rightWidth)}px`);
+    startMenuElement.style.setProperty('--start-menu-shell-width', `${Math.max(START_MENU_LEFT_WIDTH, dimensions.shellWidth)}px`);
+    startMenuElement.style.setProperty('--start-menu-shell-height', `${dimensions.shellHeight}px`);
+}
+
+function renderStartMenuTiles() {
+    const $tilesContainer = $('#start-menu-tiles');
+    if (!$tilesContainer.length || !window.AppsManager) {
+        return;
+    }
+
+    const pinnedApps = getStartMenuPinnedTileApps();
+    const dimensions = resolveStartMenuTileRows(startMenuRowsManuallySized ? startMenuTileRows : null);
+    const gridValue = `repeat(${dimensions.rows}, ${dimensions.tileSize}px)`;
+
+    applyStartMenuShellSize(dimensions);
+    $tilesContainer.css('grid-template-rows', gridValue);
+
+    if (pinnedApps.length === 0) {
+        $tilesContainer.html('<p class="start-menu-empty-state start-menu-empty-state--tiles">No tiles pinned.</p>');
+        return;
+    }
+
+    $tilesContainer.html(buildPositionedTileGridHtml(pinnedApps, dimensions.layout));
+
+    setTimeout(() => {
+        initializeTiles();
+    }, 0);
+}
+
+function renderStartMenu() {
+    updateStartMenuThemeColor();
+    renderStartMenuLeftPane();
+    renderStartMenuTiles();
+    updateStartButtonVisualState();
+}
+
+function hideStartMenuItemContextMenu() {
+    $('#start-menu-item-context-menu').removeClass('active');
+    startMenuContextAppId = null;
+    startMenuContextMode = null;
+}
+
+function showStartMenuItemContextMenu(x, y, appId, mode) {
+    const app = AppsManager.getAppById(appId);
+    const $menu = $('#start-menu-item-context-menu');
+
+    if (!app || !$menu.length) {
+        return;
+    }
+
+    startMenuContextAppId = appId;
+    startMenuContextMode = mode;
+    hideContextMenu();
+
+    const isPinnedToTiles = !!app.pinned;
+
+    $menu.find('[data-action="keep-in-list"]').toggle(mode === 'recent');
+    $menu.find('[data-action="remove-from-list"]').toggle(mode === 'pinned');
+    $menu.find('[data-action="pin-start-tile"]').toggle(mode === 'all-apps' || mode === 'search');
+    $menu.find('[data-action="pin-start-tile"] .context-menu-item-text')
+        .text(isPinnedToTiles ? 'Unpin from Start' : 'Pin to Start');
+
+    $menu.css({
+        left: x + 'px',
+        top: y + 'px'
+    });
+
+    const menuWidth = $menu.outerWidth();
+    const menuHeight = $menu.outerHeight();
+    const windowWidth = $(window).width();
+    const windowHeight = $(window).height();
+
+    if (x + menuWidth > windowWidth) {
+        $menu.css('left', (windowWidth - menuWidth - 10) + 'px');
+    }
+    if (y + menuHeight > windowHeight) {
+        $menu.css('top', (windowHeight - menuHeight - 10) + 'px');
+    }
+
+    $menu.addClass('active');
+}
+
+function openStartMenu() {
+    const $startMenu = $('#start-menu');
+    const $startScreen = views.start;
+    const $desktop = views.desktop;
+    const activeModernApp = getActiveModernRunningApp();
+
+    if (!$startMenu.length) {
+        return;
+    }
+
+    hideContextMenu();
+    hideTaskbarContextMenu();
+    hideDesktopContextMenu();
+    hideQuickLinksMenu();
+    hideStartMenuItemContextMenu();
+    closeModernFlyout();
+
+    if (activeModernApp) {
+        startReturnModernAppId = activeModernApp.app.id;
+        hideModernTouchEdgeBars();
+        hideAllActiveModernApps();
+        $desktop.addClass('visible');
+        setCurrentView('desktop');
+        $('body').removeClass('view-modern').addClass('view-desktop');
+        $('body').addClass('charms-allowed');
+        updateTaskbarVisibility('desktop');
+    }
+
+    $startScreen.removeClass('visible show-content show-content-from-desktop fade-background slide-in exit-to-desktop opening-from-desktop');
+    $desktop.addClass('visible');
+
+    renderStartMenu();
+    $startMenu.addClass('visible');
+    $('body').addClass('start-menu-open');
+
+    if ($('body').hasClass('taskbar-autohide')) {
+        $('body').addClass('taskbar-peek');
+    }
+
+    updateStartButtonVisualState();
+    requestExplorerDesktopRefresh();
+}
+
+function closeStartMenu(options = {}) {
+    const restoreModernAppId = !options.forceDesktop && !options.suppressRestore ? startReturnModernAppId : null;
+
+    endStartMenuResize();
+    hideStartMenuItemContextMenu();
+    $('#start-menu').removeClass('visible');
+    $('body').removeClass('start-menu-open taskbar-peek');
+
+    startMenuState.query = '';
+    const searchInput = document.getElementById('start-menu-search-input');
+    if (searchInput) {
+        searchInput.value = '';
+    }
+
+    startMenuState.allAppsOpen = false;
+    updateStartMenuToggleButton();
+    updateStartButtonVisualState();
+
+    startReturnModernAppId = null;
+
+    if (restoreModernAppId && AppsManager.isAppRunning(restoreModernAppId)) {
+        setTimeout(function () {
+            if (!isStartMenuOpen()) {
+                restoreModernApp(restoreModernAppId);
+            }
+        }, 50);
+    }
+}
+
+function toggleStartMenuAllApps(forceState) {
+    const wasAllAppsOpen = startMenuState.allAppsOpen;
+    const nextState = typeof forceState === 'boolean'
+        ? forceState
+        : !startMenuState.allAppsOpen;
+
+    startMenuState.allAppsOpen = nextState;
+    startMenuState.query = '';
+
+    const searchInput = document.getElementById('start-menu-search-input');
+    if (searchInput) {
+        searchInput.value = '';
+    }
+
+    renderStartMenuLeftPane();
+
+    if (!wasAllAppsOpen && nextState) {
+        const $list = $('#start-menu-left-list');
+        if (!$list.length) {
+            return;
+        }
+
+        $list.removeClass('entering-all-apps');
+        void $list[0].offsetHeight;
+        $list.addClass('entering-all-apps');
+        setTimeout(() => {
+            $list.removeClass('entering-all-apps');
+        }, 140);
+    }
+}
+
+function beginStartMenuResize(clientY) {
+    const bounds = getStartMenuRowBounds();
+    startMenuResize.active = true;
+    startMenuResize.startY = clientY;
+    startMenuResize.startRows = resolveStartMenuTileRows(startMenuRowsManuallySized ? startMenuTileRows : null).rows;
+    startMenuResize.minRows = bounds.minRows;
+    startMenuResize.maxRows = bounds.maxRows;
+    $('body').addClass('start-menu-resizing');
+}
+
+function updateStartMenuResize(clientY) {
+    if (!startMenuResize.active) {
+        return;
+    }
+
+    const { tileSize, gap } = getStartMenuTileGridSizing();
+    const stepHeight = (tileSize + gap) * START_MENU_ROW_STEP;
+    const deltaY = startMenuResize.startY - clientY;
+    const stepDelta = Math.round(deltaY / stepHeight);
+    const candidateRows = startMenuResize.startRows + (stepDelta * START_MENU_ROW_STEP);
+    const nextRows = Math.max(
+        startMenuResize.minRows,
+        Math.min(startMenuResize.maxRows, candidateRows)
+    );
+
+    if (nextRows !== startMenuTileRows) {
+        startMenuRowsManuallySized = true;
+        startMenuTileRows = nextRows;
+        renderStartMenuTiles();
+    }
+}
+
+function endStartMenuResize() {
+    if (!startMenuResize.active) {
+        return;
+    }
+
+    startMenuResize.active = false;
+    $('body').removeClass('start-menu-resizing');
+    saveStartMenuSizePreference();
+}
 
 function isStartScreenTouchSwipeContext() {
     const $startScreen = $('#start-screen');
@@ -1823,6 +3017,7 @@ function updateStartScreenTouchDragOffset(nextOffset) {
 $(document).ready(async function () {
     // Load apps data
     await AppsManager.loadApps();
+    loadStartMenuState();
 
     // Apply saved wallpaper settings (position, slideshow, etc.)
     applySavedWallpaperSettings();
@@ -1832,6 +3027,8 @@ $(document).ready(async function () {
 
     renderPinnedTiles();
     renderAllAppsList();
+    renderStartMenu();
+    applyStartMenuModePreference();
 
     // Update taskbar to show pinned apps
     AppsManager.updateTaskbar();
@@ -1858,6 +3055,7 @@ $(document).ready(async function () {
             renderPinnedTiles();
             // Re-render all apps list to recalculate column layout
             renderAllAppsList();
+            renderStartMenuTiles();
         }, 100);
     });
 
@@ -1868,6 +3066,7 @@ $(document).ready(async function () {
             console.log('Window fully loaded, recalculating tile rows...');
             calculateTileRows();
             renderPinnedTiles();
+            renderStartMenuTiles();
         }, 50);
     });
 
@@ -1970,6 +3169,140 @@ $(document).ready(async function () {
     // Initialize context menu
     initContextMenu();
 
+    $('#start-menu-all-apps-toggle').on('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        toggleStartMenuAllApps();
+    });
+
+    $('#start-menu-search-input').on('input', function () {
+        startMenuState.query = $(this).val() || '';
+        renderStartMenuLeftPane();
+    });
+
+    $('#start-menu-search-input').on('keydown', function (e) {
+        if (e.key === 'Escape') {
+            e.preventDefault();
+            if (startMenuState.query.trim()) {
+                startMenuState.query = '';
+                this.value = '';
+                renderStartMenuLeftPane();
+            } else {
+                closeStartMenu({ forceDesktop: false });
+            }
+            return;
+        }
+
+        if (e.key === 'Enter') {
+            const results = getStartMenuSearchResults(startMenuState.query);
+            if (results.length > 0) {
+                e.preventDefault();
+                launchApp(results[0].id);
+                closeStartMenu({ forceDesktop: true, suppressRestore: true });
+            }
+        }
+    });
+
+    $('#start-menu-search-button').on('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const query = startMenuState.query.trim();
+        if (!query) {
+            $('#start-menu-search-input').trigger('focus');
+            return;
+        }
+
+        const results = getStartMenuSearchResults(query);
+        if (results.length > 0) {
+            launchApp(results[0].id);
+            closeStartMenu({ forceDesktop: true, suppressRestore: true });
+        }
+    });
+
+    $('.start-menu-resize-handle').on('mousedown', function (e) {
+        if (!isStartMenuOpen()) {
+            return;
+        }
+
+        e.preventDefault();
+        e.stopPropagation();
+        beginStartMenuResize(e.clientY);
+    });
+
+    $(document).on('mousemove.startmenuresize', function (e) {
+        updateStartMenuResize(e.clientY);
+    });
+
+    $(document).on('mouseup.startmenuresize', function () {
+        endStartMenuResize();
+    });
+
+    $(document).on('click', '.start-menu-entry', function (e) {
+        if (e.button === 2 || e.which === 3) {
+            return;
+        }
+
+        e.preventDefault();
+        e.stopPropagation();
+
+        const appId = $(this).attr('data-app');
+        launchApp(appId);
+        closeStartMenu({ forceDesktop: true, suppressRestore: true });
+    });
+
+    $(document).on('contextmenu', '.start-menu-entry', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const appId = $(this).attr('data-app');
+        const mode = $(this).attr('data-context');
+        showStartMenuItemContextMenu(e.pageX, e.pageY, appId, mode);
+    });
+
+    $(document).on('click', '#start-menu-item-context-menu .context-menu-item', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (!startMenuContextAppId) {
+            return;
+        }
+
+        const action = $(this).attr('data-action');
+
+        if (action === 'keep-in-list') {
+            startMenuState.pinnedIds = [
+                startMenuContextAppId,
+                ...startMenuState.pinnedIds.filter(id => id !== startMenuContextAppId)
+            ];
+            saveStartMenuState();
+            renderStartMenuLeftPane();
+        } else if (action === 'remove-from-list') {
+            startMenuState.pinnedIds = startMenuState.pinnedIds.filter(id => id !== startMenuContextAppId);
+            saveStartMenuState();
+            renderStartMenuLeftPane();
+        } else if (action === 'pin-start-tile') {
+            AppsManager.togglePin(startMenuContextAppId);
+            renderPinnedTiles();
+            renderAllAppsList();
+            renderStartMenuTiles();
+        }
+
+        hideStartMenuItemContextMenu();
+    });
+
+    $(document).on('mousedown', function (e) {
+        if (!isStartMenuOpen()) {
+            return;
+        }
+
+        if ($(e.target).closest('#start-menu, #app-context-menu, #start-menu-item-context-menu, .start-power-menu, .user-tile-dropdown, .taskbar .start-button, .floating-start-button-container, .start-button-trigger.bottom-left').length) {
+            return;
+        }
+
+        closeStartMenu({ forceDesktop: false });
+    });
+
     // Tile click handlers (delegated for dynamically generated tiles)
     $(document).on('click', '.tiles__tile', function (e) {
         // Ignore if this was triggered by a right-click
@@ -1982,6 +3315,13 @@ $(document).ready(async function () {
         const appId = $(this).attr('data-app');
         const $tile = $(this);
         console.log('Tile clicked:', appId);
+
+        if ($(this).closest('#start-menu').length) {
+            launchApp(appId, $tile);
+            closeStartMenu({ forceDesktop: true, suppressRestore: true });
+            return;
+        }
+
         launchApp(appId, $tile);
     });
 
@@ -2049,7 +3389,12 @@ $(document).ready(async function () {
             const appId = $(this).attr('data-app');
             console.log('App clicked:', appId);
             launchApp(appId);
-            setStartScreenAllAppsOpen(false);
+
+            if ($(this).closest('#start-menu').length) {
+                closeStartMenu({ forceDesktop: true, suppressRestore: true });
+            } else {
+                setStartScreenAllAppsOpen(false);
+            }
         }
     });
 
@@ -2234,12 +3579,16 @@ function launchApp(appOrId, $clickedTile, launchOptions = {}) {
     }
 
     console.log('Launching app:', appId, 'Type:', app.type);
+    recordStartMenuLaunch(appId);
 
     // Determine if we should show the flip animation (only for modern apps when tile was clicked)
     let shouldAnimate = app.type === 'modern' && $clickedTile && $clickedTile.length > 0;
     if (launchOptions.fromTaskbar) {
         shouldAnimate = false;
     }
+
+    // Clear tile-level debounce so openClassicApp's own debounce doesn't conflict
+    launchingApps.delete(appId);
 
     switch (app.type) {
         case 'meta':
@@ -2428,7 +3777,7 @@ function openModernApp(app, launchOptions = {}) {
     const fromTaskbar = !!launchOptions.fromTaskbar;
 
     // Capture launch origin for minimize behavior (before we change currentView)
-    const launchOrigin = currentView === 'start' && !fromTaskbar ? 'start' : 'desktop';
+    const launchOrigin = isStartSurfaceVisible() && !fromTaskbar ? 'start' : 'desktop';
 
     // Hide start screen if we're launching from it
     // (tile flip animation or splash screen will cover the transition)
@@ -3276,6 +4625,47 @@ function resetClassicWindowForFreshLaunch(windowData) {
     }
 }
 
+function isStartMenuEnabled() {
+    return !!navigationSettings.useStartMenu;
+}
+
+function isStartMenuOpen() {
+    return $('#start-menu').hasClass('visible');
+}
+
+function isStartSurfaceVisible() {
+    return isStartMenuEnabled() ? isStartMenuOpen() : currentView === 'start';
+}
+
+function applyStartMenuModePreference() {
+    $('body').toggleClass('start-menu-mode', isStartMenuEnabled());
+
+    if (isStartMenuEnabled() &&
+        typeof loadShowMoreTilesFromRegistry === 'function' &&
+        typeof saveShowMoreTilesToRegistry === 'function' &&
+        typeof applyTileSize === 'function') {
+        const showMoreTilesEnabled = loadShowMoreTilesFromRegistry();
+        if (!showMoreTilesEnabled) {
+            saveShowMoreTilesToRegistry(true);
+        }
+        applyTileSize(true);
+    }
+
+    if (!isStartMenuEnabled()) {
+        hideStartMenuImmediately();
+        return;
+    }
+
+    if (currentView === 'start') {
+        transitionToDesktop();
+        return;
+    }
+
+    if (typeof renderStartMenu === 'function') {
+        renderStartMenu();
+    }
+}
+
 function showPreloadedClassicWindow(windowData) {
     if (!windowData?.$container?.length) {
         return;
@@ -3832,10 +5222,29 @@ function openClassicApp(app, launchOptions = {}) {
         if (app.useWebview) {
             // For webviews, use ipc-message
             $iframe.on('dom-ready', function () {
+                const normalizedLaunchOptions = { ...launchOptions };
                 $iframe[0].send('setWindowId', {
                     windowId: windowId,
                     appId: app.id
                 });
+
+                if (Object.keys(normalizedLaunchOptions).length > 0) {
+                    $iframe[0].send('setLaunchOptions', {
+                        launchOptions: normalizedLaunchOptions
+                    });
+                }
+
+                if (normalizedLaunchOptions.openFilePath) {
+                    $iframe[0].send('openFile', {
+                        filePath: normalizedLaunchOptions.openFilePath
+                    });
+                }
+
+                if (normalizedLaunchOptions.initialAppletId) {
+                    $iframe[0].send('openApplet', {
+                        appletId: normalizedLaunchOptions.initialAppletId
+                    });
+                }
             });
         } else if ($iframe[0].contentWindow) {
             const deliverLaunchContextToIframe = () => {
@@ -3914,6 +5323,8 @@ function openClassicApp(app, launchOptions = {}) {
             closeClassicApp(windowId);
         } else if (e.data.action === 'updateWindowTitle' && e.data.title) {
             updateClassicWindowTitle(windowId, e.data.title);
+        } else if (e.data.action === 'updateWindowIcon' && e.data.iconPath) {
+            updateClassicWindowIcon(windowId, e.data.iconPath);
         } else if (e.data.action === 'classicAppReady') {
             markClassicWindowReady('app-ready');
         } else if (e.data.action === 'applyTaskbarSettings') {
@@ -4171,6 +5582,48 @@ function updateClassicWindowTitle(windowIdOrAppId, newTitle) {
         $titleElement.text(newTitle);
         console.log(`Updated window title for ${windowIdOrAppId} to: ${newTitle}`);
     }
+}
+
+function updateClassicWindowIcon(windowIdOrAppId, iconPath) {
+    const isWindowId = windowIdOrAppId && windowIdOrAppId.includes('-') &&
+        windowIdOrAppId.split('-').length >= 3;
+
+    let windowData;
+
+    if (isWindowId) {
+        windowData = AppsManager.getRunningWindow(windowIdOrAppId);
+    } else {
+        const windows = AppsManager.getAppWindows(windowIdOrAppId);
+        if (windows.length > 0) {
+            windowData = windows[0];
+        }
+    }
+
+    if (!windowData?.$container || !iconPath) {
+        return;
+    }
+
+    const $titleElement = windowData.$container.find('.classic-window-title');
+    if (!$titleElement.length) {
+        return;
+    }
+
+    let $iconContainer = $titleElement.find('.classic-window-icon');
+    if (!$iconContainer.length) {
+        $iconContainer = $('<span class="classic-window-icon"></span>');
+        $titleElement.removeClass('no-icon');
+        $titleElement.prepend($iconContainer);
+    }
+
+    let $iconImage = $iconContainer.find('img');
+    if (!$iconImage.length) {
+        $iconContainer.empty();
+        $iconImage = $('<img alt="">');
+        $iconContainer.append($iconImage);
+    }
+
+    $iconImage.attr('src', iconPath);
+    console.log(`Updated window icon for ${windowIdOrAppId} to: ${iconPath}`);
 }
 
 // Unfocus all classic windows (when clicking on desktop)
@@ -4957,6 +6410,14 @@ function applyTaskbarSettings(settings) {
         setTaskbarSmallIcons(settings.smallIcons);
     }
 
+    if (settings.showSearchButton !== undefined) {
+        setTaskbarSearchButtonVisible(settings.showSearchButton);
+    }
+
+    if (settings.showTaskViewButton !== undefined) {
+        setTaskbarTaskViewButtonVisible(settings.showTaskViewButton);
+    }
+
     if (settings.taskbarButtons) {
         console.log('[Taskbar] Taskbar button combine mode change requested:', settings.taskbarButtons, '(not yet visualised)');
     }
@@ -4975,6 +6436,10 @@ function applyTaskbarSettings(settings) {
         if (Object.prototype.hasOwnProperty.call(navChanges, 'showAppsViewOnStart')) {
             applyStartScreenDefaultView(true);
         }
+
+        if (Object.prototype.hasOwnProperty.call(navChanges, 'useStartMenu')) {
+            applyStartMenuModePreference();
+        }
     }
 
     if (settings.location) {
@@ -4991,25 +6456,7 @@ function renderPinnedTiles() {
         return;
     }
 
-    // Calculate tile layout with smart positioning
-    const layout = calculateTileLayout(pinnedApps);
-
-    // Create tiles with grid positions
-    let html = '';
-    layout.tiles.forEach(tileInfo => {
-        const tileHTML = AppsManager.generateTileHTML(tileInfo.app);
-        // Add grid position as inline style with span
-        const size = tileInfo.size;
-        const gridRowStyle = `${tileInfo.row} / span ${size.rows}`;
-        const gridColStyle = `${tileInfo.col} / span ${size.cols}`;
-        const positioned = tileHTML.replace(
-            'class="tiles__tile',
-            `style="grid-row: ${gridRowStyle}; grid-column: ${gridColStyle};" class="tiles__tile`
-        );
-        html += positioned;
-    });
-
-    $tilesContainer.html(html);
+    $tilesContainer.html(buildPositionedTileGridHtml(pinnedApps));
 
     // Re-initialize tiles for 3D effect
     setTimeout(() => {
@@ -5022,11 +6469,31 @@ function renderPinnedTiles() {
     }, 0);
 }
 
+function buildPositionedTileGridHtml(apps, layout = null) {
+    const resolvedLayout = layout || calculateTileLayout(apps);
+    let html = '';
+
+    resolvedLayout.tiles.forEach(tileInfo => {
+        const tileHTML = AppsManager.generateTileHTML(tileInfo.app);
+        const size = tileInfo.size;
+        const gridRowStyle = `${tileInfo.row} / span ${size.rows}`;
+        const gridColStyle = `${tileInfo.col} / span ${size.cols}`;
+        const positioned = tileHTML.replace(
+            'class="tiles__tile',
+            `style="grid-row: ${gridRowStyle}; grid-column: ${gridColStyle};" class="tiles__tile`
+        );
+        html += positioned;
+    });
+
+    return html;
+}
+
 // Calculate smart tile layout based on size rules
-function calculateTileLayout(apps) {
-    // Use the dynamically calculated number of rows instead of hardcoded values
-    const maxRows = calculatedTileRows;
-    const layout = { tiles: [] };
+function calculateTileLayout(apps, maxRows = calculatedTileRows) {
+    const layout = {
+        tiles: [],
+        maxColumn: 0
+    };
 
     // Grid state: track occupied cells
     // Each column is 2 half-columns wide (for small tiles)
@@ -5129,6 +6596,7 @@ function calculateTileLayout(apps) {
                         col: pos.col,
                         size: { rows: 1, cols: 1 }
                     });
+                    layout.maxColumn = Math.max(layout.maxColumn, group.startCol + 1);
                     markOccupied(pos.row, pos.col, { rows: 1, cols: 1 });
                     group.tiles.push(app);
                     addedToGroup = true;
@@ -5150,6 +6618,7 @@ function calculateTileLayout(apps) {
                     col: pos.col,
                     size: { rows: 1, cols: 1 }
                 });
+                layout.maxColumn = Math.max(layout.maxColumn, pos.col + 1);
 
                 // Create group to track this reserved space
                 smallTileGroups.push({
@@ -5167,6 +6636,7 @@ function calculateTileLayout(apps) {
                 col: pos.col,
                 size: size
             });
+            layout.maxColumn = Math.max(layout.maxColumn, pos.col + size.cols - 1);
             markOccupied(pos.row, pos.col, size);
         }
     });
@@ -5266,13 +6736,7 @@ $(document).ready(function () {
     if ($startButton.length) {
         $startButton.on('click', function () {
             console.log('Start button clicked, currentView:', currentView);
-            if (currentView === 'desktop' || currentView === 'modern') {
-                console.log('Calling openStartScreen');
-                openStartScreen();
-            } else if (currentView === 'start') {
-                console.log('Calling closeStartScreen');
-                closeStartScreen();
-            }
+            toggleStartSurface();
         });
 
         // Right-click to show Quick Links menu (Win+X)
@@ -5282,6 +6746,9 @@ $(document).ready(function () {
             showQuickLinksMenu();
         });
     }
+
+    initTaskbarShellButtons();
+    initNotificationCenter();
 
     // Update clock in taskbar
     updateTaskbarClock();
@@ -5671,9 +7138,6 @@ function hideDesktopContextMenu() {
     $('.classic-window-iframe, .modern-app-iframe, webview').css('pointer-events', 'auto');
 }
 
-// Taskbar context menu
-let taskbarLocked = loadTaskbarLockedPreference(); // Load from registry (StuckRects2)
-
 function initTaskbarContextMenu() {
     const $taskbar = $('.taskbar');
 
@@ -5706,6 +7170,12 @@ function initTaskbarContextMenu() {
                 console.log('Opening Task Manager...');
                 // TODO: Implement Task Manager functionality
                 break;
+            case 'toggle-task-view-button':
+                setTaskbarTaskViewButtonVisible(!taskbarShowTaskViewButton);
+                break;
+            case 'toggle-search-button':
+                setTaskbarSearchButtonVisible(!taskbarShowSearchButton);
+                break;
             case 'lock-taskbar':
                 toggleTaskbarLock();
                 break;
@@ -5720,7 +7190,7 @@ function initTaskbarContextMenu() {
     });
 
     // Update the lock state display on load
-    updateTaskbarLockDisplay();
+    updateTaskbarContextMenuChecks();
 }
 
 function showTaskbarContextMenu(x, y) {
@@ -5733,7 +7203,7 @@ function showTaskbarContextMenu(x, y) {
     const $contextMenu = $('#taskbar-context-menu');
 
     // Update lock state display
-    updateTaskbarLockDisplay();
+    updateTaskbarContextMenuChecks();
 
     // Disable pointer events on all iframes and webviews
     $('.classic-window-iframe, .modern-app-iframe, webview').css('pointer-events', 'none');
@@ -5771,6 +7241,8 @@ function hideTaskbarContextMenu() {
  * This ensures mutual exclusion - only one popup/menu can be open at a time
  */
 function closeAllTaskbarPopupsAndMenus() {
+    hideNotificationCenterPanel();
+
     // Close all registered classic flyouts (clock, battery, etc.)
     if (window.ClassicFlyoutManager) {
         window.ClassicFlyoutManager.hideAll();
@@ -5802,17 +7274,105 @@ function closeAllTaskbarPopupsAndMenus() {
 
 function toggleTaskbarLock() {
     setTaskbarLocked(!taskbarLocked);
-    updateTaskbarLockDisplay();
+    updateTaskbarContextMenuChecks();
+}
+
+function setTaskbarContextMenuCheckState(selector, checked) {
+    const $icon = $(selector);
+    if (!$icon.length) {
+        return;
+    }
+
+    $icon.html(checked ? '<span class="mif-checkmark"></span>' : '<span></span>');
+    $icon.closest('.classic-context-menu-item').toggleClass('is-checked', checked);
+}
+
+function updateTaskbarContextMenuChecks() {
+    setTaskbarContextMenuCheckState('.taskbar-lock-check', taskbarLocked);
+    setTaskbarContextMenuCheckState('.taskbar-search-check', taskbarShowSearchButton);
+    setTaskbarContextMenuCheckState('.taskbar-task-view-check', taskbarShowTaskViewButton);
 }
 
 function updateTaskbarLockDisplay() {
-    const $checkmark = $('.taskbar-lock-check');
-    if (taskbarLocked) {
-        $checkmark.text('✓');
-    } else {
-        $checkmark.text('');
-    }
+    updateTaskbarContextMenuChecks();
 }
+
+function initTaskbarShellButtons() {
+    const $taskbarShellButtons = $('.taskbar-shell-button');
+    if (!$taskbarShellButtons.length) {
+        return;
+    }
+
+    $taskbarShellButtons.on('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+    });
+
+    $taskbarShellButtons.on('contextmenu', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        showTaskbarContextMenu(e.pageX, e.pageY);
+    });
+
+    updateTaskbarShellButtonsVisibility();
+    updateTaskbarShellButtonIcons();
+    updateTaskbarContextMenuChecks();
+
+    $(window).on('resize.taskbar-shell-buttons', updateTaskbarShellButtonIcons);
+    window.addEventListener('win8-display-settings-changed', updateTaskbarShellButtonIcons);
+}
+
+function applyFullscreenBodyState(isFullscreen) {
+    document.body.classList.toggle('fullscreen', !!isFullscreen);
+}
+
+function isShellFullscreenActive() {
+    if (electronIpc) {
+        return document.body.classList.contains('fullscreen');
+    }
+
+    return Boolean(document.fullscreenElement);
+}
+
+async function toggleShellFullscreen(forceState) {
+    const targetState = typeof forceState === 'boolean'
+        ? forceState
+        : !isShellFullscreenActive();
+
+    if (electronIpc && typeof electronIpc.send === 'function') {
+        electronIpc.send('toggle-simple-fullscreen', targetState);
+        applyFullscreenBodyState(targetState);
+        return targetState;
+    }
+
+    try {
+        if (targetState) {
+            if (!document.fullscreenElement) {
+                await document.documentElement.requestFullscreen();
+            }
+        } else if (document.fullscreenElement) {
+            await document.exitFullscreen();
+        }
+    } catch (error) {
+        console.error('Failed to toggle fullscreen:', error);
+    }
+
+    const nextState = Boolean(document.fullscreenElement);
+    applyFullscreenBodyState(nextState);
+    return nextState;
+}
+
+if (electronIpc && typeof electronIpc.on === 'function') {
+    electronIpc.on('fullscreen-state-changed', (_event, state) => {
+        applyFullscreenBodyState(Boolean(state));
+    });
+}
+
+document.addEventListener('fullscreenchange', () => {
+    if (!electronIpc) {
+        applyFullscreenBodyState(Boolean(document.fullscreenElement));
+    }
+});
 
 function setStartScreenAllAppsOpen(isOpen) {
     const $startScreen = $('#start-screen');
@@ -5849,6 +7409,30 @@ function applyStartScreenDefaultView(enforce = false) {
     }
 }
 
+function openStartSurface() {
+    if (isStartMenuEnabled()) {
+        openStartMenu();
+    } else {
+        openStartScreen();
+    }
+}
+
+function closeStartSurface(options = {}) {
+    if (isStartMenuEnabled()) {
+        closeStartMenu(options);
+    } else {
+        closeStartScreen(options);
+    }
+}
+
+function toggleStartSurface() {
+    if (isStartSurfaceVisible()) {
+        closeStartSurface();
+    } else {
+        openStartSurface();
+    }
+}
+
 function getActiveModernRunningApp() {
     if (typeof AppsManager === 'undefined' || typeof AppsManager.getRunningApps !== 'function') {
         return null;
@@ -5862,6 +7446,11 @@ function getActiveModernRunningApp() {
 }
 
 function openStartScreen() {
+    if (isStartMenuEnabled()) {
+        openStartMenu();
+        return;
+    }
+
     const $startScreen = views.start;
     const $desktop = views.desktop;
     const activeModernApp = getActiveModernRunningApp();
@@ -5919,6 +7508,11 @@ function openStartScreen() {
 }
 
 function closeStartScreen(options = {}) {
+    if (isStartMenuEnabled()) {
+        closeStartMenu(options);
+        return;
+    }
+
     const $startScreen = views.start;
     const $desktop = views.desktop;
     const forceDesktop = !!options.forceDesktop;
@@ -6181,8 +7775,8 @@ $(document).on('keydown', function (e) {
             metaKeyPressedAlone = false; // Prevent Start screen toggle
 
             // Switch to desktop first if on Start screen
-            if (currentView === 'start') {
-                closeStartScreen({ forceDesktop: true });
+            if (isStartSurfaceVisible()) {
+                closeStartSurface({ forceDesktop: true, suppressRestore: true });
                 // Launch File Explorer after transition
                 setTimeout(() => {
                     launchApp('explorer');
@@ -6234,11 +7828,7 @@ $(document).on('keyup', function (e) {
 
         if (!isSystemLocked) {
             e.preventDefault();
-            if (currentView === 'desktop' || currentView === 'modern') {
-                openStartScreen();
-            } else if (currentView === 'start') {
-                closeStartScreen();
-            }
+            toggleStartSurface();
         }
         metaKeyPressedAlone = false;
     }
@@ -6251,7 +7841,7 @@ function initContextMenu() {
         e.preventDefault();
         e.stopPropagation();
         const appId = $(this).attr('data-app');
-        showContextMenu(e.pageX, e.pageY, appId);
+        showContextMenu(e.pageX, e.pageY, appId, this);
     });
 
     // Right-click on app list items
@@ -6259,7 +7849,7 @@ function initContextMenu() {
         e.preventDefault();
         e.stopPropagation();
         const appId = $(this).attr('data-app');
-        showContextMenu(e.pageX, e.pageY, appId);
+        showContextMenu(e.pageX, e.pageY, appId, this);
     });
 
     // Context menu item clicks
@@ -6286,11 +7876,12 @@ function initContextMenu() {
             AppsManager.togglePin(contextMenuAppId);
             renderPinnedTiles();
             renderAllAppsList();
+            renderStartMenuTiles();
             hideContextMenu();
 
             // If we just pinned an app (not unpinned) and we're in the all apps view,
             // navigate back to the pinned view
-            if (wasUnpinned && isInAllAppsView) {
+            if (wasUnpinned && isInAllAppsView && contextMenuSource !== 'start-menu-app-list') {
                 setStartScreenAllAppsOpen(false);
             }
         } else if (action === 'pin-taskbar') {
@@ -6302,6 +7893,7 @@ function initContextMenu() {
             console.log('Setting size to:', size, 'for app:', contextMenuAppId);
             AppsManager.setTileSize(contextMenuAppId, size);
             renderPinnedTiles();
+            renderStartMenuTiles();
             hideContextMenu();
         }
     });
@@ -6311,21 +7903,31 @@ function initContextMenu() {
         // Don't hide if clicking inside the context menu
         if (!$(e.target).closest('.context-menu').length) {
             hideContextMenu();
+            hideStartMenuItemContextMenu();
         }
     });
 }
 
-function showContextMenu(x, y, appId) {
+let contextMenuSource = 'start-screen';
+
+function showContextMenu(x, y, appId, sourceElement = null) {
     const $contextMenu = $('#app-context-menu');
     const app = AppsManager.getAppById(appId);
+    const $source = sourceElement ? $(sourceElement) : $();
 
     if (!app) return;
 
     contextMenuAppId = appId;
+    hideStartMenuItemContextMenu();
+    contextMenuSource = $source.closest('#start-menu').length
+        ? ($source.closest('#start-menu-tiles').length ? 'start-menu-tile' : 'start-menu-app-list')
+        : 'start-screen';
 
     // Update pin/unpin text
     const $pinItem = $contextMenu.find('[data-action="pin"] .context-menu-item-text');
-    $pinItem.text(app.pinned ? 'Unpin from Start' : 'Pin to Start');
+    $pinItem.text(contextMenuSource === 'start-screen'
+        ? (app.pinned ? 'Unpin from Start' : 'Pin to Start')
+        : (app.pinned ? 'Unpin from Start' : 'Pin to Start'));
 
     const shouldShowTaskbarPin =
         app.type !== 'meta' && app.type !== 'meta-classic';
@@ -6337,6 +7939,9 @@ function showContextMenu(x, y, appId) {
     // Update resize checkmarks
     $contextMenu.find('.context-submenu .context-menu-item').removeClass('checked');
     $contextMenu.find(`.context-submenu [data-size="${app.size || 'normal'}"]`).addClass('checked');
+
+    const shouldShowResize = contextMenuSource !== 'start-menu-app-list';
+    $contextMenu.find('[data-action="resize"]').toggle(shouldShowResize);
 
     // Show/hide resize options based on tileOptions
     const tileOptions = app.tileOptions || {};
@@ -6384,12 +7989,14 @@ function showContextMenu(x, y, appId) {
 function hideContextMenu() {
     $('#app-context-menu').removeClass('active');
     contextMenuAppId = null;
+    contextMenuSource = 'start-screen';
 }
 
 // Helper function to close all UI popups and menus
 function closeAllPopupsAndMenus() {
     // Close tile context menu
     hideContextMenu();
+    hideStartMenuItemContextMenu();
 
     // Close taskbar context menu
     hideTaskbarContextMenu();
@@ -6739,11 +8346,7 @@ $(document).ready(function () {
 
     $('.charms-icon[data-charm="start"]').on('click', function () {
         console.log('Start charm clicked');
-        if (currentView === 'desktop' || currentView === 'modern') {
-            openStartScreen();
-        } else if (currentView === 'start') {
-            closeStartScreen();
-        }
+        toggleStartSurface();
         hideCharmsBar();
     });
 
@@ -6855,11 +8458,7 @@ $(document).ready(function () {
     // Click handler - same as taskbar start button
     $floatingStartButton.on('click', function () {
         console.log('Floating start button clicked');
-        if (currentView === 'desktop' || currentView === 'modern') {
-            openStartScreen();
-        } else if (currentView === 'start') {
-            closeStartScreen();
-        }
+        toggleStartSurface();
         // Hide the floating button after click
         $floatingStartButtonContainer.removeClass('visible');
     });
@@ -6907,6 +8506,7 @@ function openModernFlyout(flyoutName) {
     }
 
     console.log('Opening flyout:', flyoutName);
+    closeStartMenu({ forceDesktop: true, suppressRestore: true });
 
     // Close all popups and menus (except charms bar which we handle separately below)
     // Close classic flyouts
@@ -6955,7 +8555,7 @@ function updateSettingsFlyout() {
 
     // Get the current app name based on the current view
     let appName = 'Desktop';
-    if (currentView === 'start') {
+    if (currentView === 'start' || isStartMenuOpen()) {
         appName = 'Start';
     } else if (currentView === 'desktop') {
         appName = 'Desktop';
@@ -6968,7 +8568,7 @@ function updateSettingsFlyout() {
     $menuItems.empty();
 
     // Add Start Screen specific menu items
-    if (currentView === 'start') {
+    if (currentView === 'start' || isStartMenuOpen()) {
         const $personalizeItem = $(`
             <div class="settings-menu-item" data-action="personalize">
                 <span class="settings-menu-item-text">Personalize</span>
@@ -7204,6 +8804,15 @@ $(document).on('click', '.settings-control-item[data-control="brightness"]', fun
     e.preventDefault();
     e.stopPropagation();
     toggleSettingsSliderPopup('brightness');
+});
+
+$(document).on('click', '.settings-control-item[data-control="fullscreen"]', async function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const isFullscreen = await toggleShellFullscreen();
+    closeModernFlyout();
+    console.log('Settings fullscreen button clicked - fullscreen:', isFullscreen);
 });
 
 $(document).on('click', '.settings-control-item', function (e) {
@@ -7526,11 +9135,12 @@ function saveAccentColorToRegistry(color) {
 
 // Load the tiles toggle state from registry
 function loadTilesToggleState() {
-    const showMoreTiles = loadShowMoreTilesFromRegistry();
+    const showMoreTiles = isStartMenuEnabled() ? true : loadShowMoreTilesFromRegistry();
     const $toggleInput = $('#tiles-toggle-input');
     const $toggleLabel = $('#tiles-toggle-label');
 
     $toggleInput.prop('checked', showMoreTiles);
+    $toggleInput.prop('disabled', isStartMenuEnabled());
     $toggleLabel.text(showMoreTiles ? 'Yes' : 'No');
 }
 
@@ -7538,6 +9148,14 @@ function loadTilesToggleState() {
 $(document).on('change', '#tiles-toggle-input', function () {
     const isChecked = $(this).is(':checked');
     const $toggleLabel = $('#tiles-toggle-label');
+
+    if (isStartMenuEnabled() && !isChecked) {
+        $(this).prop('checked', true);
+        $toggleLabel.text('Yes');
+        saveShowMoreTilesToRegistry(true);
+        applyTileSize(true);
+        return;
+    }
 
     // Update label
     $toggleLabel.text(isChecked ? 'Yes' : 'No');
@@ -7570,6 +9188,10 @@ function applyTileSize(showMoreTiles) {
 
         // Regenerate tiles to load the correct scale images (scale-80 vs scale-100)
         renderPinnedTiles();
+
+        if (typeof renderStartMenuTiles === 'function') {
+            renderStartMenuTiles();
+        }
     });
 }
 
@@ -7604,11 +9226,11 @@ function calculateTileRows() {
     // Tile size based on mode
     let tileSize, gap;
     if (showMoreTiles) {
-        tileSize = 56.5;  // Compact mode tile height
-        gap = 7;          // Compact mode gap
+        tileSize = 56;  // Compact mode tile height
+        gap = 8;        // Compact mode gap
     } else {
-        tileSize = 70.5;  // Normal mode tile height
-        gap = 9;          // Normal mode gap
+        tileSize = 70;  // Normal mode tile height
+        gap = 10;       // Normal mode gap
     }
 
     // Calculate how many rows fit
@@ -8377,15 +9999,38 @@ function applyDesktopBackgroundPreference(enabled) {
 // ===== USER TILE =====
 $(document).ready(function () {
     // Helper function to position dropdown below a button
-    function positionDropdown($button, $dropdown) {
+    // align: 'right' (default), 'center', or 'left'
+    function positionDropdown($button, $dropdown, { center = false, align } = {}) {
         const buttonRect = $button[0].getBoundingClientRect();
         const dropdownWidth = $dropdown.outerWidth();
 
-        // Position dropdown below button, aligned to the right
+        // Resolve alignment (center flag kept for backwards compat)
+        const effectiveAlign = align || (center ? 'center' : 'right');
+
+        let left;
+        if (effectiveAlign === 'center') {
+            left = buttonRect.left + (buttonRect.width / 2) - (dropdownWidth / 2);
+        } else if (effectiveAlign === 'left') {
+            left = buttonRect.left;
+        } else {
+            left = buttonRect.right - dropdownWidth;
+        }
+
         $dropdown.css({
             top: buttonRect.bottom + 8 + 'px',
-            left: (buttonRect.right - dropdownWidth) + 'px'
+            left: left + 'px'
         });
+    }
+
+    // Helper to find the contextually correct dropdown for a button
+    function findDropdownForButton($button, dropdownClass) {
+        const inStartMenu = $button.closest('#start-menu').length > 0;
+        if (inStartMenu) {
+            // Use the start-menu-specific dropdown (sibling of #start-menu)
+            return $('.start-menu-user-dropdown, .start-menu-power-dropdown').filter('.' + dropdownClass);
+        }
+        // Use the start-screen dropdown (inside #start-screen)
+        return $('#start-screen .' + dropdownClass);
     }
 
     // Toggle user tile dropdown (but not when clicking on dropdown items)
@@ -8397,17 +10042,16 @@ $(document).ready(function () {
         e.stopPropagation();
 
         const $userTile = $(this);
-        const $dropdown = $('.user-tile-dropdown');
+        const $dropdown = findDropdownForButton($userTile, 'user-tile-dropdown');
         const isActive = $dropdown.hasClass('active');
 
-        // Close other dropdowns
-        $('.start-power-menu').removeClass('active');
+        // Close all dropdowns
+        $('.start-power-menu, .user-tile-dropdown').removeClass('active');
 
         // Toggle dropdown
-        if (isActive) {
-            $dropdown.removeClass('active');
-        } else {
-            positionDropdown($userTile, $dropdown);
+        if (!isActive) {
+            const inStartMenu = $userTile.closest('#start-menu').length > 0;
+            positionDropdown($userTile, $dropdown, { align: inStartMenu ? 'left' : 'right' });
             $dropdown.addClass('active');
         }
     });
@@ -8455,17 +10099,15 @@ $(document).ready(function () {
         e.stopPropagation();
 
         const $powerButton = $(this);
-        const $dropdown = $('.start-power-menu');
+        const $dropdown = findDropdownForButton($powerButton, 'start-power-menu');
         const isActive = $dropdown.hasClass('active');
 
-        // Close other dropdowns
-        $('.user-tile-dropdown').removeClass('active');
+        // Close all dropdowns
+        $('.start-power-menu, .user-tile-dropdown').removeClass('active');
 
         // Toggle dropdown
-        if (isActive) {
-            $dropdown.removeClass('active');
-        } else {
-            positionDropdown($powerButton, $dropdown);
+        if (!isActive) {
+            positionDropdown($powerButton, $dropdown, { center: true });
             $dropdown.addClass('active');
         }
     });
@@ -8488,21 +10130,7 @@ $(document).ready(function () {
         // Close dropdown
         $('.start-power-menu').removeClass('active');
 
-        // Use the same power handlers as the settings charm
-        switch (action) {
-            case 'sleep':
-                console.log('Putting system to sleep...');
-                sleepSystem();
-                break;
-            case 'shut-down':
-                console.log('Shutting down...');
-                shutDownSystem();
-                break;
-            case 'restart':
-                console.log('Restarting...');
-                restartSystem();
-                break;
-        }
+        handleSystemPowerAction(action, 'Start power menu');
     });
 
     // Search button handler
@@ -8595,6 +10223,9 @@ function showQuickLinksMenu() {
     // Close all other classic context menus
     hideDesktopContextMenu();
     hideTaskbarContextMenu();
+    closeStartMenu({ forceDesktop: true, suppressRestore: true });
+
+    $menu.find('[data-action="desktop"]').closest('.classic-context-menu-item').toggle(!isStartMenuEnabled());
 
     // Show the menu
     $menu.css('display', 'flex');
@@ -8760,30 +10391,15 @@ $(document).on('click', '.quick-links-menu-item', function (e) {
             break;
 
         case 'sleep':
-            // Sleep - show sleep overlay
-            if (typeof sleepSystem === 'function') {
-                sleepSystem();
-            }
-            break;
-
         case 'shut-down':
-            // Shut down - go to shutting down screen then boot
-            if (typeof shutDown === 'function') {
-                shutDown();
-            }
-            break;
-
         case 'restart':
-            // Restart - go to shutting down screen then boot
-            if (typeof restart === 'function') {
-                restart();
-            }
+            handleSystemPowerAction(action, 'Quick Links menu');
             break;
 
         case 'desktop':
             // Switch to desktop
-            if (currentView === 'start') {
-                closeStartScreen({ forceDesktop: true });
+            if (isStartSurfaceVisible()) {
+                closeStartSurface({ forceDesktop: true, suppressRestore: true });
             }
             break;
     }
@@ -8805,6 +10421,8 @@ function lockSystem() {
     const $loginScreen = views.login;
     const $startScreen = views.start;
     const $desktop = views.desktop;
+
+    hideStartMenuImmediately();
 
     // Save the current view so we can restore it after unlock
     viewBeforeLock = currentView;
@@ -8855,6 +10473,7 @@ function lockSystem() {
 // Sign out (show intermediary screen, close all apps, fade to black, then show lock screen)
 function signOut() {
     console.log('Signing out - showing intermediary screen...');
+    hideStartMenuImmediately();
 
     // Show intermediary screen with "Signing out" text
     showIntermediaryScreen('Signing out', function () {
@@ -9023,20 +10642,7 @@ $(document).ready(function () {
         $('.settings-power-menu').removeClass('active');
         $('.settings-control-item[data-control="power"]').removeClass('active');
 
-        switch (action) {
-            case 'sleep':
-                console.log('Putting system to sleep...');
-                sleepSystem();
-                break;
-            case 'shut-down':
-                console.log('Shutting down...');
-                shutDownSystem();
-                break;
-            case 'restart':
-                console.log('Restarting...');
-                restartSystem();
-                break;
-        }
+        handleSystemPowerAction(action, 'Settings power menu');
     });
 
     // Login screen power options menu item click handlers
@@ -9051,20 +10657,7 @@ $(document).ready(function () {
         $('.login-power-menu').removeClass('active');
         $('.login-power-button').removeClass('active');
 
-        switch (action) {
-            case 'sleep':
-                console.log('Putting system to sleep...');
-                sleepSystem();
-                break;
-            case 'shut-down':
-                console.log('Shutting down...');
-                shutDownSystem();
-                break;
-            case 'restart':
-                console.log('Restarting...');
-                restartSystem();
-                break;
-        }
+        handleSystemPowerAction(action, 'Login power menu');
     });
 });
 
@@ -9476,6 +11069,26 @@ function requestHostAppQuit() {
 
     electronIpc.send('shell:quit-app');
     return true;
+}
+
+function handleSystemPowerAction(action, sourceLabel = 'Power menu') {
+    switch (action) {
+        case 'sleep':
+            console.log(`${sourceLabel}: Putting system to sleep...`);
+            sleepSystem();
+            return true;
+        case 'shut-down':
+            console.log(`${sourceLabel}: Shutting down...`);
+            shutDownSystem();
+            return true;
+        case 'restart':
+            console.log(`${sourceLabel}: Restarting...`);
+            restartSystem();
+            return true;
+        default:
+            console.warn(`${sourceLabel}: Unsupported power action:`, action);
+            return false;
+    }
 }
 
 // Shut down system - show intermediary screen, fade to black, then quit app

@@ -56,6 +56,7 @@ class NotificationManager {
             title = 'Notification',
             description = '',
             appId = null,
+            sourceLabel = null,
             onClick = null,
             duration = 0,
             delay = 0,
@@ -70,6 +71,7 @@ class NotificationManager {
                     title,
                     description,
                     appId,
+                    sourceLabel,
                     onClick,
                     duration,
                     type
@@ -93,6 +95,7 @@ class NotificationManager {
             title = 'Notification',
             description = '',
             appId = null,
+            sourceLabel = null,
             onClick = null,
             duration = 0,
             type = 'info'
@@ -119,6 +122,7 @@ class NotificationManager {
         }
 
         const notificationId = `notification-${this.notificationIdCounter++}`;
+        const timestamp = Date.now();
 
         // Create notification element
         const notification = document.createElement('div');
@@ -214,6 +218,23 @@ class NotificationManager {
             }, duration);
 
             this.notifications.get(notificationId).timeout = timeout;
+        }
+
+        if (typeof document !== 'undefined') {
+            document.dispatchEvent(new CustomEvent('win8:notification-shown', {
+                detail: {
+                    id: notificationId,
+                    icon,
+                    title,
+                    description,
+                    type,
+                    appId,
+                    appIcon,
+                    sourceLabel,
+                    timestamp,
+                    onClick
+                }
+            }));
         }
 
         return notificationId;
@@ -352,6 +373,14 @@ class NotificationManager {
                 notification.element.parentNode.removeChild(notification.element);
             }
             this.notifications.delete(notificationId);
+
+            if (typeof document !== 'undefined') {
+                document.dispatchEvent(new CustomEvent('win8:notification-hidden', {
+                    detail: {
+                        id: notificationId
+                    }
+                }));
+            }
         }, 500);
     }
 

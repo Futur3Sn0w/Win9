@@ -43,7 +43,7 @@ body {
     color: #000;
     font-size: 12px;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    cursor: pointer;
+    cursor: default;
     border-radius: 0;
     transition: none;
 
@@ -91,7 +91,7 @@ body {
     color: #808080;
     font-size: 11px;
     transition: all 0.5s;
-    cursor: pointer;
+    cursor: default;
     padding: 0;
 }
 
@@ -166,7 +166,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    cursor: pointer;
+    cursor: default;
 }
 
 .explorer-breadcrumb:hover {
@@ -242,6 +242,10 @@ body {
     margin-bottom: 16px;
 }
 
+.explorer-sidebar-section--pinned {
+    margin-bottom: 8px;
+}
+
 .explorer-sidebar-header {
     padding: 6px 12px;
     font-size: 12px;
@@ -259,7 +263,7 @@ body {
     min-width: max-content;
     font-size: 12px;
     color: #000;
-    cursor: pointer;
+    cursor: default;
     gap: 8px;
     border: 1px solid transparent;
     margin: 0 4px;
@@ -321,14 +325,8 @@ body {
     padding-left: 28px;
 }
 
-/* Non-navigable items (no cursor pointer, no selection state) */
-.explorer-sidebar-item--non-navigable {
-    cursor: default;
-}
-
-.explorer-sidebar-item--non-navigable:not(.explorer-sidebar-item--expandable):hover {
-    background-color: transparent;
-    border-color: transparent;
+.explorer-sidebar-item--spaced {
+    margin-top: 12px;
 }
 
 .explorer-sidebar-item--non-navigable.active {
@@ -400,7 +398,7 @@ body {
     display: flex;
     align-items: center;
     gap: 6px;
-    cursor: pointer;
+    cursor: default;
     user-select: none;
     padding: 4px 6px;
     margin-bottom: 8px;
@@ -491,7 +489,7 @@ body {
     align-items: center;
     padding: 8px 6px;
     border: 1px solid transparent;
-    cursor: pointer;
+    cursor: default;
     position: relative;
     border-radius: 0;
     transition: none;
@@ -647,6 +645,7 @@ body {
 }
 
 /* This PC View */
+.explorer-home,
 .explorer-this-pc {
     max-width: none;
 }
@@ -663,6 +662,12 @@ body {
     text-align: center;
     color: #666;
     font-size: 14px;
+}
+
+.explorer-empty-message--inline {
+    padding: 6px 12px 16px;
+    text-align: left;
+    font-size: 12px;
 }
 
 .explorer-error-message {
@@ -709,7 +714,7 @@ body {
     justify-content: center;
     color: #666;
     font-size: 12px;
-    cursor: pointer;
+    cursor: default;
     padding: 0;
     border-radius: 0;
     transition: none;

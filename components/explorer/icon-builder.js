@@ -9,13 +9,15 @@
     }
 
     const DISPLAYABLE_IMAGE_EXTENSIONS = new Set(['png', 'jpg', 'jpeg', 'gif', 'bmp', 'webp', 'svg']);
-    const AVAILABLE_ICON_SIZES = [16, 20, 24, 32, 40, 48, 64, 96, 128, 256];
+    const AVAILABLE_ICON_SIZES = [16, 20, 24, 32, 40, 48, 64, 80, 96, 128, 256, 512, 768];
     const BASE_ICON_PATH = 'resources/images/icons/explorer/';
 
     const ICON_SIZE_AVAILABILITY = {
         'recycle_bin/empty': [16, 24, 32, 48, 256],
         'recycle_bin/full': [16, 24, 32, 48, 256],
+        'folder_home': [16, 20, 24, 32, 40, 48, 64, 80, 96, 768],
         'generic_folder': [16, 32, 48],
+        'homegroup': [16, 20, 24, 32, 40, 48, 64, 80, 96, 256, 512, 768],
         'image/png': [16, 32, 48],
         'image/jpg': [16, 32, 48],
         'video': [16, 32, 48],
@@ -28,7 +30,9 @@
     const ICON_DIRECTORY_BY_CATEGORY = {
         'recycle_bin/empty': 'recycle_bin/empty',
         'recycle_bin/full': 'recycle_bin/full',
+        'folder_home': 'folder_home',
         'generic_folder': 'generic_folder',
+        'homegroup': 'homegroup',
         'image/png': 'image/png',
         'image/jpg': 'image/jpg',
         'video': 'video',
@@ -124,6 +128,10 @@
 
         if (entry.type === 'recycle-bin') {
             return entry.recycleBinEmpty ? 'recycle_bin/empty' : 'recycle_bin/full';
+        }
+
+        if (typeof entry.iconCategory === 'string' && entry.iconCategory) {
+            return entry.iconCategory;
         }
 
         if (entry.type === 'folder') {

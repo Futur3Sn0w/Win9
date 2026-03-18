@@ -610,6 +610,27 @@ body:not(.charms-allowed) .modern-flyout {
     }
 }
 
+.settings-control-glyph {
+    font-family: 'Segoe UI Symbol', 'Segoe UI', sans-serif;
+    line-height: 1;
+}
+
+.settings-control-glyph--fullscreen::before {
+    content: '';
+    display: block;
+    width: 20px;
+    height: 20px;
+    background:
+        linear-gradient(#fff, #fff) left top / 8px 2px no-repeat,
+        linear-gradient(#fff, #fff) left top / 2px 8px no-repeat,
+        linear-gradient(#fff, #fff) right top / 8px 2px no-repeat,
+        linear-gradient(#fff, #fff) right top / 2px 8px no-repeat,
+        linear-gradient(#fff, #fff) left bottom / 8px 2px no-repeat,
+        linear-gradient(#fff, #fff) left bottom / 2px 8px no-repeat,
+        linear-gradient(#fff, #fff) right bottom / 8px 2px no-repeat,
+        linear-gradient(#fff, #fff) right bottom / 2px 8px no-repeat;
+}
+
 .settings-control-label {
     font-family: 'Segoe UI', sans-serif;
     font-size: 12px;

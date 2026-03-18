@@ -117,18 +117,6 @@ function Tile(element) {
         tile.style.transform = resetTransform;
 
         document.removeEventListener("mouseup", onMouseUp, false);
-
-        // Trigger click if it was a quick press (not a drag)
-        var timeDiff = Date.now() - clickStartTime;
-        var posDiff = Math.sqrt(
-            Math.pow(e.clientX - clickStartPos.x, 2) +
-            Math.pow(e.clientY - clickStartPos.y, 2)
-        );
-
-        if (timeDiff < 300 && posDiff < 10) {
-            // This was a click, not a drag - let it propagate
-            tile.click();
-        }
     };
 
     var onTouchEnd = function (e) {

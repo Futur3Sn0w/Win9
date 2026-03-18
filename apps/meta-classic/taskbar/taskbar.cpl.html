@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Taskbar Properties</title>
+    <title>Taskbar and Start Menu Properties</title>
     <link rel="stylesheet" href="taskbar.cpl.css">
     <link rel="stylesheet" href="../../../css/classic-windows.css">
     <link rel="stylesheet" href="../../../css/classic-controls.css">
@@ -17,6 +17,7 @@
         <div class="tab-header">
             <div class="tab-item active" data-tab="taskbar">Taskbar</div>
             <div class="tab-item" data-tab="navigation">Navigation</div>
+            <div class="tab-item" data-tab="start-menu">Start Menu</div>
         </div>
 
         <div class="tab-content">
@@ -98,6 +99,16 @@
                         <input type="checkbox" id="list-desktop-apps-first" disabled>
                         <label for="list-desktop-apps-first">List desktop apps first in the Apps view when it's sorted
                             by category</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-pane" id="start-menu-tab">
+                <div class="property-section bordered">
+                    <h3>Start Menu</h3>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="use-start-menu">
+                        <label for="use-start-menu">Use the Start menu instead of the Start screen</label>
                     </div>
                 </div>
             </div>
@@ -233,7 +244,8 @@
                 showStartOnCurrentDisplay: document.getElementById('show-start-on-active-display').checked,
                 showAppsViewOnStart: document.getElementById('show-apps-view').checked,
                 searchEverywhereFromApps: document.getElementById('search-everywhere').checked,
-                listDesktopAppsFirst: document.getElementById('list-desktop-apps-first').checked
+                listDesktopAppsFirst: document.getElementById('list-desktop-apps-first').checked,
+                useStartMenu: document.getElementById('use-start-menu').checked
             };
         }
 
@@ -282,7 +294,8 @@
                 showStartOnCurrentDisplay: false,
                 showAppsViewOnStart: false,
                 searchEverywhereFromApps: false,
-                listDesktopAppsFirst: false
+                listDesktopAppsFirst: false,
+                useStartMenu: false
             };
 
             function loadNavigationSettings() {
@@ -297,6 +310,7 @@
                     const showAppsViewOnSearch = registry.getValue(REGISTRY_PATHS.startPage, 'ShowAppsViewOnSearchClick', 0);
                     const showStartOnDisplay = registry.getValue(REGISTRY_PATHS.edgeUI, 'ShowStartOnCurrentDisplay', 0);
                     const listDesktopFirst = registry.getValue(REGISTRY_PATHS.startPage, 'ListDesktopAppsFirst', 0);
+                    const useStartMenu = registry.getValue(REGISTRY_PATHS.startPage, 'UseStartMenu', 0);
 
                     return {
                         charmsHotCornersEnabled: disableCharms === 0,
@@ -305,7 +319,8 @@
                         showStartOnCurrentDisplay: showStartOnDisplay === 1,
                         showAppsViewOnStart: makeAllAppsDefault === 1,
                         searchEverywhereFromApps: showAppsViewOnSearch === 1,
-                        listDesktopAppsFirst: listDesktopFirst === 1
+                        listDesktopAppsFirst: listDesktopFirst === 1,
+                        useStartMenu: useStartMenu === 1
                     };
                 } catch (error) {
                     console.error('Failed to load navigation settings from registry:', error);
@@ -394,6 +409,7 @@
             document.getElementById('show-apps-view').checked = navigationSettings.showAppsViewOnStart;
             document.getElementById('search-everywhere').checked = navigationSettings.searchEverywhereFromApps;
             document.getElementById('list-desktop-apps-first').checked = navigationSettings.listDesktopAppsFirst;
+            document.getElementById('use-start-menu').checked = navigationSettings.useStartMenu;
 
             initialSettingsSnapshot = getCurrentSettingsSnapshot();
             setApplyButtonDisabled(true);
@@ -432,6 +448,7 @@
             const showAppsView = document.getElementById('show-apps-view').checked;
             const searchEverywhere = document.getElementById('search-everywhere').checked;
             const listDesktopAppsFirst = document.getElementById('list-desktop-apps-first').checked;
+            const useStartMenu = document.getElementById('use-start-menu').checked;
 
             // Save taskbar settings to registry (StuckRects2)
             try {
@@ -487,6 +504,8 @@
                 registry.setValue(REGISTRY_PATHS.edgeUI, 'ShowStartOnCurrentDisplay', showStartOnActiveDisplay ? 1 : 0, RegistryType.REG_DWORD);
                 // listDesktopAppsFirst
                 registry.setValue(REGISTRY_PATHS.startPage, 'ListDesktopAppsFirst', listDesktopAppsFirst ? 1 : 0, RegistryType.REG_DWORD);
+                // useStartMenu
+                registry.setValue(REGISTRY_PATHS.startPage, 'UseStartMenu', useStartMenu ? 1 : 0, RegistryType.REG_DWORD);
             } catch (error) {
                 console.error('Failed to save navigation settings to registry:', error);
             }
@@ -510,7 +529,8 @@
                         showStartOnCurrentDisplay: showStartOnActiveDisplay,
                         showAppsViewOnStart: showAppsView,
                         searchEverywhereFromApps: searchEverywhere,
-                        listDesktopAppsFirst: listDesktopAppsFirst
+                        listDesktopAppsFirst: listDesktopAppsFirst,
+                        useStartMenu: useStartMenu
                     }
                 }
             }, '*');

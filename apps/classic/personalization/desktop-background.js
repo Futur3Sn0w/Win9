@@ -42,7 +42,55 @@
         return null;
     }
 
+    function resolveRegistryModule() {
+        const contexts = [window, window.parent, window.top];
+        for (const ctx of contexts) {
+            if (!ctx) {
+                continue;
+            }
+
+            if (ctx.RegistryAPI) {
+                return ctx.RegistryAPI;
+            }
+
+            if (ctx.getRegistry && ctx.RegistryType) {
+                return {
+                    getRegistry: ctx.getRegistry,
+                    RegistryType: ctx.RegistryType
+                };
+            }
+        }
+
+        if (typeof window.require === 'function') {
+            try {
+                return window.require('../../../registry/registry.js');
+            } catch (error) {
+                console.warn('[DesktopBackground] Could not require registry.js via window.require:', error);
+            }
+        }
+
+        if (typeof require === 'function') {
+            try {
+                return require('../../../registry/registry.js');
+            } catch (error) {
+                console.warn('[DesktopBackground] Could not require registry.js:', error);
+            }
+        }
+
+        return null;
+    }
+
     const ColorRegistry = resolveColorRegistry();
+    const RegistryModule = resolveRegistryModule();
+    const TASKBAR_ADVANCED_PATH = 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced';
+    const TASKBAR_THRESHOLD_FEATURES_ENABLED_VALUE_NAME = 'ThresholdFeaturesEnabled';
+    const TECHNICAL_PREVIEW_LOCATION = 'technical-preview';
+    const TECHNICAL_PREVIEW_OPTION_LABEL = 'Windows Technical Preview';
+    const TECHNICAL_PREVIEW_SECTION_NAME = 'Windows Technical Preview (2)';
+    const TECHNICAL_PREVIEW_WALLPAPERS = [
+        'Windows 11/img1.jpg',
+        'threshold.svg'
+    ];
 
     function isAccentAutomaticMode() {
         if (ColorRegistry && typeof ColorRegistry.isAccentAutomatic === 'function') {
@@ -109,6 +157,68 @@
         return 'resources/images/wallpapers/';
     }
 
+    function isThresholdTechnicalPreviewEnabled() {
+        if (!RegistryModule || typeof RegistryModule.getRegistry !== 'function') {
+            return true;
+        }
+
+        try {
+            const registry = RegistryModule.getRegistry();
+            return Number(
+                registry.getValue(TASKBAR_ADVANCED_PATH, TASKBAR_THRESHOLD_FEATURES_ENABLED_VALUE_NAME, 1)
+            ) !== 0;
+        } catch (error) {
+            console.warn('[DesktopBackground] Failed to read Threshold feature state:', error);
+            return true;
+        }
+    }
+
+    function getTechnicalPreviewOption() {
+        return elements.pictureLocation
+            ? elements.pictureLocation.querySelector(`option[value="${TECHNICAL_PREVIEW_LOCATION}"]`)
+            : null;
+    }
+
+    function syncTechnicalPreviewLocationAvailability(forceEnabled) {
+        if (!elements.pictureLocation) {
+            return;
+        }
+
+        const enabled = typeof forceEnabled === 'boolean'
+            ? forceEnabled
+            : isThresholdTechnicalPreviewEnabled();
+        const existingOption = getTechnicalPreviewOption();
+
+        if (enabled) {
+            if (!existingOption) {
+                const option = document.createElement('option');
+                option.value = TECHNICAL_PREVIEW_LOCATION;
+                option.textContent = TECHNICAL_PREVIEW_OPTION_LABEL;
+
+                const windowsOption = elements.pictureLocation.querySelector('option[value="windows"]');
+                if (windowsOption && windowsOption.nextSibling) {
+                    elements.pictureLocation.insertBefore(option, windowsOption.nextSibling);
+                } else if (windowsOption) {
+                    elements.pictureLocation.appendChild(option);
+                } else {
+                    elements.pictureLocation.insertBefore(option, elements.pictureLocation.firstChild);
+                }
+            }
+            return;
+        }
+
+        if (existingOption) {
+            existingOption.remove();
+        }
+
+        if (state.currentLocation === TECHNICAL_PREVIEW_LOCATION) {
+            state.currentLocation = 'windows';
+            state.currentFolderData = null;
+            elements.pictureLocation.value = state.currentLocation;
+            renderWallpapers();
+        }
+    }
+
     // DOM elements
     let elements = {};
 
@@ -170,6 +280,10 @@
 
         // Bind events
         bindEvents();
+
+        window.addEventListener('focus', () => {
+            syncTechnicalPreviewLocationAvailability();
+        });
 
         // Update UI
         updateUI();
@@ -301,6 +415,9 @@
                 const section = createWallpaperSection(sectionName, wallpaperCollections[sectionName], 'builtin');
                 elements.wallpapersScrollArea.appendChild(section);
             });
+        } else if (state.currentLocation === TECHNICAL_PREVIEW_LOCATION) {
+            const section = createWallpaperSection(TECHNICAL_PREVIEW_SECTION_NAME, TECHNICAL_PREVIEW_WALLPAPERS, 'builtin');
+            elements.wallpapersScrollArea.appendChild(section);
         } else if (state.currentLocation === 'pictures' || state.currentLocation.startsWith('custom-')) {
             // Render custom folder content
             if (state.currentFolderData) {
@@ -833,6 +950,9 @@
             // Show built-in Windows wallpapers
             state.currentFolderData = null;
             renderWallpapers();
+        } else if (location === TECHNICAL_PREVIEW_LOCATION) {
+            state.currentFolderData = null;
+            renderWallpapers();
         } else if (location === 'pictures') {
             // Load Pictures Library folder
             await loadPicturesLibrary();
@@ -944,6 +1064,8 @@
                 option.remove();
             }
         });
+
+        syncTechnicalPreviewLocationAvailability();
 
         // Add custom folders
         state.customFolders.forEach((folder, index) => {

@@ -342,8 +342,8 @@
 
 .signing-in-loader .circle {
     position: absolute;
-    width: 38px;
-    height: 38px;
+    width: 24px;
+    height: 24px;
     opacity: 0;
     transform: rotate(225deg);
     animation-iteration-count: infinite;
@@ -377,8 +377,8 @@
 }
 
 .signing-in-text {
-    font-size: 28px;
-    font-weight: 300;
+    font-size: 24px;
+    font-weight: 400;
     color: #fff;
     font-family: 'Segoe UI Light', 'Segoe UI', sans-serif;
 }

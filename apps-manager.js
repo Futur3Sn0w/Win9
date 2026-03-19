@@ -250,7 +250,7 @@ function getIconImage(app, desiredSize) {
     // If so, use generic_program icon as fallback (MIF icons don't apply here)
     if (app.type === 'classic' || app.type === 'meta_classic') {
         // Map desiredSize to closest available generic_program icon size
-        const availableSizes = [16, 24, 32, 48, 256];
+        const availableSizes = [16, 20, 24, 32, 40, 48, 64, 256];
         let closestSize = availableSizes[0];
         let smallestDiff = Math.abs(closestSize - desiredSize);
 

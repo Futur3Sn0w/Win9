@@ -10,15 +10,15 @@ const TileDrag = (function() {
     'use strict';
 
     let enabled = false;
-    let sortableInstance = null;
-    let tilesContainer = null;
+    let sortableInstances = new Map();
     let dragStartOrder = [];
     let layoutSyncFrame = null;
 
     // Configuration
     const CONFIG = {
-        containerSelector: '#pinned-tiles',
-        storageKey: 'tileOrder'
+        containerSelectors: ['#pinned-tiles', '#start-menu-tiles'],
+        storageKey: 'tileOrder',
+        orderGroup: 'start-screen'
     };
     const REORDER_ANIMATION = {
         duration: 220,
@@ -37,79 +37,85 @@ const TileDrag = (function() {
             return false;
         }
 
-        tilesContainer = document.querySelector(CONFIG.containerSelector);
+        destroy();
 
-        if (!tilesContainer) {
+        const tilesContainers = getTileContainers();
+        if (tilesContainers.length === 0) {
             console.warn('[TileDrag] Tiles container not found');
             return false;
         }
 
-        // Initialize Sortable
-        sortableInstance = Sortable.create(tilesContainer, {
-            animation: 250,                    // Animation speed in ms
-            easing: 'cubic-bezier(0.4, 0, 0.2, 1)', // Smooth easing
-            dataIdAttr: 'data-app',
-            ghostClass: 'tile-drag-ghost',     // Class for the drop placeholder
-            dragClass: 'tile-dragging',        // Class for the dragging item
-            chosenClass: 'tile-chosen',        // Class for the chosen item
-            forceFallback: true,
-            fallbackClass: 'tile-drag-fallback',
-            fallbackOnBody: true,
-            fallbackTolerance: 4,
-            swapThreshold: 0.65,               // Threshold for swapping items
+        tilesContainers.forEach(container => {
+            const sortableInstance = Sortable.create(container, {
+                animation: 250,                    // Animation speed in ms
+                easing: 'cubic-bezier(0.4, 0, 0.2, 1)', // Smooth easing
+                dataIdAttr: 'data-app',
+                ghostClass: 'tile-drag-ghost',     // Class for the drop placeholder
+                dragClass: 'tile-dragging',        // Class for the dragging item
+                chosenClass: 'tile-chosen',        // Class for the chosen item
+                forceFallback: true,
+                fallbackClass: 'tile-drag-fallback',
+                fallbackOnBody: true,
+                fallbackTolerance: 4,
+                swapThreshold: 0.65,               // Threshold for swapping items
 
-            // Dragging callbacks
-            onStart: function(evt) {
-                console.log('[TileDrag] Started dragging');
-                dragStartOrder = getCurrentOrder();
-                // Add body class to shrink other tiles
-                document.body.classList.add('tile-drag-active');
-            },
+                // Dragging callbacks
+                onStart: function() {
+                    console.log('[TileDrag] Started dragging');
+                    dragStartOrder = getCurrentOrder(container);
+                    // Add body class to shrink other tiles
+                    document.body.classList.add('tile-drag-active');
+                },
 
-            onChange: function() {
-                syncLiveLayout(getCurrentOrder());
-            },
+                onChange: function() {
+                    syncLiveLayout(getCurrentOrder(container));
+                },
 
-            onSort: function() {
-                syncLiveLayout(getCurrentOrder());
-            },
+                onSort: function() {
+                    syncLiveLayout(getCurrentOrder(container));
+                },
 
-            onEnd: function(evt) {
-                console.log('[TileDrag] Finished dragging');
-                // Remove body class
-                document.body.classList.remove('tile-drag-active');
+                onEnd: function() {
+                    console.log('[TileDrag] Finished dragging');
+                    // Remove body class
+                    document.body.classList.remove('tile-drag-active');
 
-                const newOrder = getCurrentOrder();
-                syncLiveLayout(newOrder);
+                    const newOrder = getCurrentOrder(container);
+                    syncLiveLayout(newOrder);
 
-                // Save new order if position changed
-                if (!ordersMatch(dragStartOrder, newOrder)) {
-                    saveOrder(newOrder);
-                    console.log('[TileDrag] New order:', newOrder);
+                    // Save new order if position changed
+                    if (!ordersMatch(dragStartOrder, newOrder)) {
+                        saveOrder(newOrder);
+                        console.log('[TileDrag] New order:', newOrder);
 
-                    requestAnimationFrame(() => {
-                        if (typeof renderPinnedTiles === 'function') {
-                            renderPinnedTiles();
-                        }
-                    });
+                        requestAnimationFrame(() => {
+                            if (typeof renderPinnedTiles === 'function') {
+                                renderPinnedTiles();
+                            }
+                            if (typeof renderStartMenuTiles === 'function') {
+                                renderStartMenuTiles();
+                            }
+                        });
+                    }
+
+                    dragStartOrder = [];
+                },
+
+                // Filter function - prevent dragging certain elements
+                filter: function(evt) {
+                    // Don't allow dragging if right-clicking
+                    if (evt.button === 2) {
+                        return true;
+                    }
+                    return false;
                 }
-
-                dragStartOrder = [];
-            },
-
-            // Filter function - prevent dragging certain elements
-            filter: function(evt, target) {
-                // Don't allow dragging if right-clicking
-                if (evt.button === 2) {
-                    return true;
-                }
-                return false;
-            }
+            });
+            sortableInstances.set(container, sortableInstance);
         });
 
-        enabled = true;
+        enabled = sortableInstances.size > 0;
         console.log('[TileDrag] Initialized successfully with Sortable.js');
-        return true;
+        return enabled;
     }
 
     /**
@@ -119,10 +125,8 @@ const TileDrag = (function() {
         console.log('[TileDrag] Destroying...');
         enabled = false;
 
-        if (sortableInstance) {
-            sortableInstance.destroy();
-            sortableInstance = null;
-        }
+        sortableInstances.forEach(sortableInstance => sortableInstance.destroy());
+        sortableInstances = new Map();
 
         if (layoutSyncFrame !== null) {
             cancelAnimationFrame(layoutSyncFrame);
@@ -131,16 +135,34 @@ const TileDrag = (function() {
 
         document.body.classList.remove('tile-drag-active');
         dragStartOrder = [];
-        tilesContainer = null;
         console.log('[TileDrag] Destroyed successfully');
+    }
+
+    function getTileContainers() {
+        const seen = new Set();
+        return CONFIG.containerSelectors
+            .map(selector => document.querySelector(selector))
+            .filter(container => {
+                if (!container || seen.has(container)) {
+                    return false;
+                }
+                seen.add(container);
+                return true;
+            });
+    }
+
+    function getPrimaryContainer() {
+        return document.querySelector('#pinned-tiles') || getTileContainers()[0] || null;
     }
 
     /**
      * Get current order of tiles (array of app IDs)
      */
-    function getCurrentOrder() {
+    function getCurrentOrder(container = null) {
+        const tilesContainer = container || getPrimaryContainer();
         if (!tilesContainer) return [];
 
+        const sortableInstance = sortableInstances.get(tilesContainer);
         if (sortableInstance && typeof sortableInstance.toArray === 'function') {
             const sortableOrder = sortableInstance.toArray().filter(id => id);
             if (sortableOrder.length > 0) {
@@ -155,7 +177,7 @@ const TileDrag = (function() {
     }
 
     function syncLiveLayout(order) {
-        if (!tilesContainer || !Array.isArray(order) || order.length === 0) {
+        if (sortableInstances.size === 0 || !Array.isArray(order) || order.length === 0) {
             return;
         }
 
@@ -165,11 +187,13 @@ const TileDrag = (function() {
 
         layoutSyncFrame = requestAnimationFrame(() => {
             layoutSyncFrame = null;
-            applyOrderLayout(order);
+            sortableInstances.forEach((_, container) => {
+                applyOrderLayout(order, container);
+            });
         });
     }
 
-    function applyOrderLayout(order) {
+    function applyOrderLayout(order, tilesContainer) {
         if (!tilesContainer ||
             !window.AppsManager ||
             typeof window.AppsManager.getAppById !== 'function' ||
@@ -178,7 +202,7 @@ const TileDrag = (function() {
         }
 
         const shouldAnimate = document.body.classList.contains('tile-drag-active');
-        const previousRects = shouldAnimate ? captureTileRects() : null;
+        const previousRects = shouldAnimate ? captureTileRects(tilesContainer) : null;
 
         const orderedApps = order
             .map(appId => window.AppsManager.getAppById(appId))
@@ -188,7 +212,10 @@ const TileDrag = (function() {
             return;
         }
 
-        const layout = window.calculateTileLayout(orderedApps);
+        const maxRows = getLayoutMaxRows(tilesContainer);
+        const layout = maxRows == null
+            ? window.calculateTileLayout(orderedApps)
+            : window.calculateTileLayout(orderedApps, maxRows);
         if (!layout || !Array.isArray(layout.tiles)) {
             return;
         }
@@ -213,6 +240,21 @@ const TileDrag = (function() {
         }
     }
 
+    function getLayoutMaxRows(tilesContainer) {
+        if (!tilesContainer || tilesContainer.id !== 'start-menu-tiles') {
+            return null;
+        }
+
+        if (typeof window.getStartMenuTileRowsForDrag === 'function') {
+            const resolvedRows = Number(window.getStartMenuTileRowsForDrag());
+            if (Number.isFinite(resolvedRows) && resolvedRows > 0) {
+                return resolvedRows;
+            }
+        }
+
+        return null;
+    }
+
     function ordersMatch(left, right) {
         if (!Array.isArray(left) || !Array.isArray(right) || left.length !== right.length) {
             return false;
@@ -227,7 +269,7 @@ const TileDrag = (function() {
         return true;
     }
 
-    function captureTileRects() {
+    function captureTileRects(tilesContainer) {
         const rects = new Map();
         const tiles = tilesContainer ? tilesContainer.querySelectorAll('.tiles__tile') : [];
 
@@ -312,7 +354,7 @@ const TileDrag = (function() {
 
         if (layoutRegistry && typeof layoutRegistry.saveTileOrder === 'function') {
             try {
-                layoutRegistry.saveTileOrder('start-screen', order);
+                layoutRegistry.saveTileOrder(CONFIG.orderGroup, order);
                 console.log('[TileDrag] Order saved to registry');
             } catch (error) {
                 console.error('[TileDrag] Failed to save order to registry:', error);
@@ -330,7 +372,7 @@ const TileDrag = (function() {
 
         if (layoutRegistry && typeof layoutRegistry.loadTileOrder === 'function') {
             try {
-                const registryOrder = layoutRegistry.loadTileOrder('start-screen');
+                const registryOrder = layoutRegistry.loadTileOrder(CONFIG.orderGroup);
                 if (Array.isArray(registryOrder) && registryOrder.length > 0) {
                     console.log('[TileDrag] Loaded order from registry:', registryOrder);
                     return registryOrder;
@@ -349,7 +391,7 @@ const TileDrag = (function() {
 
                     if (layoutRegistry && typeof layoutRegistry.saveTileOrder === 'function') {
                         try {
-                            layoutRegistry.saveTileOrder('start-screen', order);
+                            layoutRegistry.saveTileOrder(CONFIG.orderGroup, order);
                             console.log('[TileDrag] Migrated localStorage order to registry');
                         } catch (error) {
                             console.warn('[TileDrag] Failed to migrate order to registry:', error);
@@ -379,7 +421,7 @@ const TileDrag = (function() {
         const layoutRegistry = window.TileLayoutRegistry;
         if (layoutRegistry && typeof layoutRegistry.clearTileOrder === 'function') {
             try {
-                layoutRegistry.clearTileOrder('start-screen');
+                layoutRegistry.clearTileOrder(CONFIG.orderGroup);
             } catch (error) {
                 console.warn('[TileDrag] Failed to clear registry order:', error);
             }
@@ -435,16 +477,7 @@ const TileDrag = (function() {
 
         console.log('[TileDrag] Refreshing...');
 
-        // Destroy old instance
-        if (sortableInstance) {
-            sortableInstance.destroy();
-        }
-
-        // Reinitialize
-        tilesContainer = document.querySelector(CONFIG.containerSelector);
-        if (tilesContainer) {
-            init();
-        }
+        init();
     }
 
     // Public API

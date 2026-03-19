@@ -4,8 +4,20 @@
  * Uses 'node-wifi' package for WiFi signal strength
  */
 
+const path = require('path');
+const { execFile } = require('child_process');
+const { promisify } = require('util');
 const network = require('network');
 const wifi = require('node-wifi');
+
+const execFilePromise = promisify(execFile);
+const WINDOWS_POWERSHELL_PATH = path.join(
+    process.env.SystemRoot || 'C:\\Windows',
+    'System32',
+    'WindowsPowerShell',
+    'v1.0',
+    'powershell.exe'
+);
 
 class NetworkControl {
     constructor() {
@@ -31,11 +43,254 @@ class NetworkControl {
         }
     }
 
+    prefixLengthToNetmask(prefixLength) {
+        const parsedPrefix = Number(prefixLength);
+
+        if (!Number.isInteger(parsedPrefix) || parsedPrefix < 0 || parsedPrefix > 32) {
+            return null;
+        }
+
+        if (parsedPrefix === 0) {
+            return '0.0.0.0';
+        }
+
+        const mask = (0xffffffff << (32 - parsedPrefix)) >>> 0;
+        return [
+            (mask >>> 24) & 255,
+            (mask >>> 16) & 255,
+            (mask >>> 8) & 255,
+            mask & 255
+        ].join('.');
+    }
+
+    normalizeConnectionType(...values) {
+        const combined = values
+            .filter(Boolean)
+            .map(value => String(value).toLowerCase())
+            .join(' ');
+
+        if (/wi-?fi|wireless|wlan|802\.11|native 802\.11|airport/.test(combined)) {
+            return 'wifi';
+        }
+
+        if (/ethernet|802\.3|\blan\b|\bwired\b/.test(combined)) {
+            return 'ethernet';
+        }
+
+        return 'unknown';
+    }
+
+    async runWindowsPowerShell(script, timeoutMs = 7000) {
+        const { stdout } = await execFilePromise(
+            WINDOWS_POWERSHELL_PATH,
+            ['-NoLogo', '-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-Command', script],
+            {
+                windowsHide: true,
+                timeout: timeoutMs,
+                maxBuffer: 1024 * 1024
+            }
+        );
+
+        return (stdout || '').trim();
+    }
+
+    async runWindowsPowerShellJson(script, timeoutMs = 7000) {
+        const stdout = await this.runWindowsPowerShell(script, timeoutMs);
+        if (!stdout) {
+            return null;
+        }
+
+        return JSON.parse(stdout);
+    }
+
+    parseWindowsWifiInterfaces(stdout) {
+        if (!stdout) {
+            return [];
+        }
+
+        const interfaces = [];
+        let currentInterface = null;
+
+        const commitInterface = () => {
+            if (currentInterface && Object.keys(currentInterface).length > 0) {
+                interfaces.push(currentInterface);
+            }
+        };
+
+        for (const rawLine of stdout.split(/\r?\n/)) {
+            const line = rawLine.trimEnd();
+            const match = line.match(/^\s*([^:]+?)\s*:\s*(.*)$/);
+
+            if (!match) {
+                continue;
+            }
+
+            const key = match[1].trim().toLowerCase();
+            const value = match[2].trim();
+
+            if (key === 'name') {
+                commitInterface();
+                currentInterface = {};
+            }
+
+            if (!currentInterface) {
+                currentInterface = {};
+            }
+
+            currentInterface[key] = value;
+        }
+
+        commitInterface();
+        return interfaces;
+    }
+
+    async getWindowsWiFiDetails() {
+        try {
+            const { stdout } = await execFilePromise(
+                'netsh',
+                ['wlan', 'show', 'interfaces'],
+                {
+                    windowsHide: true,
+                    timeout: 7000,
+                    maxBuffer: 1024 * 1024
+                }
+            );
+
+            const interfaces = this.parseWindowsWifiInterfaces(stdout);
+            const activeInterface = interfaces.find(entry => (entry.state || '').toLowerCase() === 'connected');
+
+            if (!activeInterface) {
+                return null;
+            }
+
+            const signalQuality = parseFloat(String(activeInterface.signal || '').replace('%', '').trim());
+            const rssi = parseInt(activeInterface.rssi, 10);
+            const channel = parseInt(activeInterface.channel, 10);
+            const receiveRate = parseFloat(String(activeInterface['receive rate (mbps)'] || '').trim());
+            const transmitRate = parseFloat(String(activeInterface['transmit rate (mbps)'] || '').trim());
+
+            return {
+                iface: activeInterface.name || null,
+                ssid: activeInterface.ssid || null,
+                bssid: activeInterface['ap bssid'] || null,
+                mac: activeInterface['physical address'] || null,
+                channel: Number.isFinite(channel) ? channel : null,
+                frequency: null,
+                signal_level: Number.isFinite(rssi) ? rssi : null,
+                quality: Number.isFinite(signalQuality) ? signalQuality : null,
+                security: activeInterface.authentication || null,
+                security_flags: activeInterface.cipher || null,
+                mode: activeInterface['network type'] || null,
+                radio: activeInterface['radio type'] || null,
+                receive_rate_mbps: Number.isFinite(receiveRate) ? receiveRate : null,
+                transmit_rate_mbps: Number.isFinite(transmitRate) ? transmitRate : null
+            };
+        } catch (error) {
+            console.error('Failed to query Windows Wi-Fi details:', error);
+            return null;
+        }
+    }
+
+    async getWindowsNetworkStatus() {
+        const script = [
+            "$ErrorActionPreference = 'Stop'",
+            '$profiles = Get-NetConnectionProfile -ErrorAction Stop',
+            '$profile = $profiles | Sort-Object @{ Expression = { if ($_.IPv4Connectivity -eq "Internet" -or $_.IPv6Connectivity -eq "Internet") { 0 } else { 1 } } }, InterfaceIndex | Select-Object -First 1',
+            'if ($null -eq $profile) {',
+            "  [Console]::Out.Write((@{ connected = $false } | ConvertTo-Json -Compress))",
+            '  exit 0',
+            '}',
+            '$adapter = Get-NetAdapter -InterfaceIndex $profile.InterfaceIndex -ErrorAction SilentlyContinue',
+            '$ip = Get-NetIPAddress -InterfaceIndex $profile.InterfaceIndex -AddressFamily IPv4 -ErrorAction SilentlyContinue | Where-Object { $_.IPAddress -and $_.IPAddress -notlike "169.254*" } | Select-Object -First 1',
+            '$route = Get-NetRoute -InterfaceIndex $profile.InterfaceIndex -DestinationPrefix "0.0.0.0/0" -ErrorAction SilentlyContinue | Sort-Object RouteMetric | Select-Object -First 1',
+            '$result = @{',
+            '  connected = $true',
+            '  name = if ($adapter -and $adapter.Name) { $adapter.Name } else { $profile.InterfaceAlias }',
+            '  interfaceDescription = if ($adapter) { $adapter.InterfaceDescription } else { $null }',
+            '  mediaType = if ($adapter) { $adapter.MediaType } else { $null }',
+            '  physicalMediaType = if ($adapter) { $adapter.PhysicalMediaType } else { $null }',
+            '  adapterStatus = if ($adapter) { $adapter.Status } else { $null }',
+            '  ip_address = if ($ip) { $ip.IPAddress } else { $null }',
+            '  mac_address = if ($adapter -and $adapter.MacAddress) { $adapter.MacAddress } else { $null }',
+            '  gateway_ip = if ($route -and $route.NextHop) { $route.NextHop } else { $null }',
+            '  prefixLength = if ($ip) { $ip.PrefixLength } else { $null }',
+            '  profileName = $profile.Name',
+            '  interfaceAlias = $profile.InterfaceAlias',
+            '  interfaceIndex = $profile.InterfaceIndex',
+            '  networkCategory = [string]$profile.NetworkCategory',
+            '  ipv4Connectivity = [string]$profile.IPv4Connectivity',
+            '  ipv6Connectivity = [string]$profile.IPv6Connectivity',
+            '  hasInternet = ($profile.IPv4Connectivity -eq "Internet" -or $profile.IPv6Connectivity -eq "Internet")',
+            '  hasGateway = ($null -ne $route -and [string]::IsNullOrWhiteSpace($route.NextHop) -eq $false)',
+            '}',
+            '[Console]::Out.Write(($result | ConvertTo-Json -Compress))'
+        ].join('\n');
+
+        try {
+            const status = await this.runWindowsPowerShellJson(script, 8000);
+
+            if (!status || !status.connected) {
+                return {
+                    connected: false,
+                    type: 'none',
+                    name: null,
+                    ip_address: null,
+                    mac_address: null,
+                    gateway_ip: null,
+                    netmask: null,
+                    hasInternet: false,
+                    hasGateway: false
+                };
+            }
+
+            return {
+                connected: true,
+                type: this.normalizeConnectionType(
+                    status.name,
+                    status.interfaceDescription,
+                    status.mediaType,
+                    status.physicalMediaType
+                ),
+                name: status.name || status.interfaceAlias || null,
+                ip_address: status.ip_address || null,
+                mac_address: status.mac_address || null,
+                gateway_ip: status.gateway_ip || null,
+                netmask: this.prefixLengthToNetmask(status.prefixLength),
+                hasInternet: Boolean(status.hasInternet),
+                hasGateway: Boolean(status.hasGateway),
+                interfaceDescription: status.interfaceDescription || null,
+                mediaType: status.mediaType || null,
+                physicalMediaType: status.physicalMediaType || null,
+                networkCategory: status.networkCategory || null,
+                networkName: status.profileName || null,
+                ipv4Connectivity: status.ipv4Connectivity || null,
+                ipv6Connectivity: status.ipv6Connectivity || null
+            };
+        } catch (error) {
+            console.error('Failed to query Windows network status:', error);
+            return {
+                connected: false,
+                type: 'none',
+                name: null,
+                ip_address: null,
+                mac_address: null,
+                gateway_ip: null,
+                netmask: null,
+                hasInternet: false,
+                hasGateway: false
+            };
+        }
+    }
+
     /**
      * Get current network status
      * Returns a promise that resolves to network information
      */
     async getNetworkStatus() {
+        if (process.platform === 'win32') {
+            return this.getWindowsNetworkStatus();
+        }
+
         return new Promise((resolve) => {
             network.get_active_interface((err, activeInterface) => {
                 if (err || !activeInterface) {
@@ -87,6 +342,10 @@ class NetworkControl {
      * Get WiFi connection details including signal strength
      */
     async getWiFiDetails() {
+        if (process.platform === 'win32') {
+            return this.getWindowsWiFiDetails();
+        }
+
         if (!this.wifiInitialized) {
             return null;
         }
@@ -212,6 +471,29 @@ class NetworkControl {
                 hasGateway: false,
                 wifiDetails: null,
                 signalBars: 0
+            };
+        }
+
+        if (process.platform === 'win32') {
+            let wifiDetails = null;
+            let signalBars = status.type === 'wifi' ? 5 : 0;
+
+            if (status.type === 'wifi') {
+                wifiDetails = await this.getWiFiDetails().catch(() => null);
+
+                if (wifiDetails) {
+                    if (wifiDetails.signal_level !== null && wifiDetails.signal_level !== undefined) {
+                        signalBars = this.calculateSignalBars(wifiDetails.signal_level);
+                    } else if (wifiDetails.quality !== null && wifiDetails.quality !== undefined) {
+                        signalBars = this.calculateSignalBarsFromQuality(wifiDetails.quality);
+                    }
+                }
+            }
+
+            return {
+                ...status,
+                wifiDetails,
+                signalBars
             };
         }
 

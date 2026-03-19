@@ -171,9 +171,14 @@
     flex-shrink: 0;
     user-select: none;
     position: relative;
+    z-index: 3;
     box-sizing: border-box;
     padding-left: 12px;
     /* Active titlebar styles will be the default */
+
+    &.modern-desktop-window-titlebar {
+        padding-left: 5px;
+    }
 }
 
 .classic-window-title {
@@ -183,8 +188,8 @@
     text-align: center;
     gap: 6px;
     color: #000;
-    font-size: 16px;
-    font-weight: 300;
+    font-size: 14px;
+    font-weight: 400;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -203,6 +208,95 @@
     margin: 0 auto;
     padding-right: 16px;
     box-sizing: border-box;
+}
+
+.modern-desktop-window-title {
+    gap: 4px;
+}
+
+.modern-desktop-window-titlebar-trigger {
+    display: none;
+}
+
+.modern-desktop-window-menu-button {
+    pointer-events: auto;
+    width: 22px;
+    height: 22px;
+    margin-left: 2px;
+    margin-right: 2px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: #000;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 13px;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modern-desktop-window-menu-button:hover {
+    background: rgba(0, 0, 0, 0.1);
+}
+
+.modern-desktop-window-menu-button:active {
+    background: rgba(0, 0, 0, 0.16);
+}
+
+.modern-desktop-titlebar-menu {
+    position: absolute;
+    top: calc(100% + 3px);
+    left: 0;
+    min-width: 200px;
+    padding: 4px 2px;
+    background: #fff;
+    border: 1px solid #A0A0A0;
+    box-shadow: 4px 4px 5px rgba(0, 0, 0, 0.4);
+    display: none;
+    z-index: 200100;
+    pointer-events: auto;
+}
+
+.modern-desktop-titlebar-menu.active {
+    display: block;
+}
+
+.modern-desktop-titlebar-menu-item {
+    width: 100%;
+    height: 22px;
+    padding: 0 12px 2px 32px;
+    border: none;
+    background: transparent;
+    color: #000;
+    font-size: 12px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    text-align: left;
+    display: flex;
+    align-items: center;
+}
+
+.modern-desktop-titlebar-menu-item:hover {
+    background: #E5E5E5;
+}
+
+.modern-desktop-titlebar-menu-item-text {
+    flex: 1;
+    pointer-events: none;
+}
+
+.modern-desktop-window-icon {
+    width: 22px;
+    height: 22px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+}
+
+.modern-desktop-window-icon img {
+    width: 16px !important;
+    height: 16px !important;
 }
 
 .classic-window-icon {
@@ -247,6 +341,10 @@
     flex-shrink: 0;
     pointer-events: none;
     color: currentColor;
+}
+
+.classic-window-control-btn.close span {
+    transform: scale(0.9) translateY(-1px);
 }
 
 /* Fade-out transition for minimize and maximize buttons only */
@@ -358,6 +456,122 @@
     background: #fff;
     overflow: hidden;
     position: relative;
+    z-index: 1;
+}
+
+body.modern-window-styling-disabled .classic-app-container {
+    border: 1px solid #00000044;
+    box-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
+    padding: 6px;
+    padding-top: 0;
+    transition: none;
+}
+
+body.modern-window-styling-disabled .classic-app-container.inactive {
+    border-color: #D3D3D3;
+    box-shadow: none;
+}
+
+body.modern-window-styling-disabled .classic-window-titlebar {
+    padding-left: 2px;
+}
+
+body.modern-window-styling-disabled .classic-window-content {
+    border: 1px solid #00000044;
+    background: transparent;
+}
+
+.modern-desktop-app-container.metro-mode {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    border: none;
+    box-shadow: none;
+    z-index: 50000 !important;
+}
+
+.modern-desktop-app-container.metro-mode::after {
+    background: #000;
+    box-shadow: none;
+}
+
+.modern-desktop-app-container.metro-mode .modern-desktop-window-titlebar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 30px;
+    padding-left: 4px;
+    background: #000;
+    transform: translateY(-100%);
+    transition: transform 0.2s ease;
+    z-index: 50010;
+}
+
+.modern-desktop-app-container.metro-mode .modern-desktop-window-titlebar-trigger {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 5px;
+    display: block;
+    z-index: 50011;
+}
+
+.modern-desktop-app-container.metro-mode .modern-desktop-window-titlebar-trigger:hover~.modern-desktop-window-titlebar,
+.modern-desktop-app-container.metro-mode .modern-desktop-window-titlebar:hover {
+    transform: translateY(0);
+}
+
+.modern-desktop-app-container.metro-mode .classic-window-title,
+.modern-desktop-app-container.metro-mode .classic-window-control-btn,
+.modern-desktop-app-container.metro-mode .modern-desktop-window-menu-button {
+    color: #fff;
+}
+
+.modern-desktop-app-container.metro-mode .classic-window-controls {
+    height: 100%;
+    gap: 0;
+}
+
+.modern-desktop-app-container.metro-mode .classic-window-control-btn {
+    width: auto;
+    height: 100%;
+    aspect-ratio: 1 / 1;
+    color: #fff;
+}
+
+.modern-desktop-app-container.metro-mode .classic-window-control-btn.close {
+    width: auto;
+    background: transparent;
+}
+
+.modern-desktop-app-container.metro-mode .classic-window-control-btn.close:hover {
+    background: #e81123;
+}
+
+.modern-desktop-app-container.metro-mode .classic-window-control-btn.minimize:hover {
+    background: #3665b3;
+}
+
+.modern-desktop-app-container.metro-mode .modern-desktop-window-menu-button:hover,
+.modern-desktop-app-container.metro-mode .classic-window-control-btn:not(.close):not(.minimize):hover {
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.modern-desktop-app-container.metro-mode .modern-desktop-window-menu-button:active,
+.modern-desktop-app-container.metro-mode .classic-window-control-btn:not(.close):not(.minimize):active {
+    background: rgba(255, 255, 255, 0.18);
+}
+
+.modern-desktop-app-container.metro-mode .classic-window-control-btn.maximize,
+.modern-desktop-app-container.metro-mode .classic-window-resize-handle {
+    display: none;
+}
+
+.modern-desktop-app-container.metro-mode .classic-window-content {
+    border: none;
 }
 
 iframe.classic-window-iframe {

@@ -191,22 +191,26 @@
         const HOME_RECENT_FILE_LIMIT = 8;
         const DEFAULT_ICON_SIZES = [16, 20, 24, 32, 40, 48, 64, 80, 96, 128, 256, 512, 768];
         const ICON_SIZE_AVAILABILITY = {
+            'bat': [16, 32, 48, 256],
             'desktop': [16, 20, 24, 32, 40, 48, 64, 80, 96, 256, 512, 768],
-            'external_drive': [16, 32, 48, 256],
+            'dll': [16, 32, 48, 256],
+            'external_drive': [16, 20, 24, 32, 40, 48, 64, 80, 96, 256, 512, 768],
             'folder_documents': [16, 24, 32, 48, 256],
             'folder_downloads': [16, 24, 32, 48, 256],
             'folder_favorites': [16, 20, 24, 32, 40, 48, 64, 80, 96, 256, 512, 768],
             'folder_home': [16, 20, 24, 32, 40, 48, 64, 80, 96, 768],
             'folder_music': [16, 24, 32, 48, 64, 256],
             'folder_pictures': [16, 24, 32, 48, 256],
-            'folder_recent-places': [16, 24, 32, 48, 256],
+            'folder_recent-places': [16, 20, 24, 32, 40, 48, 64, 80, 96],
             'folder_videos': [16, 24, 32, 48, 256],
             'generic_file': [16, 32, 48, 256],
             'generic_folder': [16, 32, 48],
-            'generic_program': [16, 24, 32, 48, 256],
+            'generic_program': [16, 20, 24, 32, 40, 48, 64, 256],
             'homegroup': [16, 20, 24, 32, 40, 48, 64, 80, 96, 256, 512, 768],
             'image/jpg': [16, 32, 48],
             'image/png': [16, 32, 48],
+            'ini': [16, 32, 48, 256],
+            'iso': [16, 24, 32, 48, 256],
             'main_drive': [16, 24, 32, 48, 64, 96, 128],
             'music': [16, 32, 48],
             'network': [16, 20, 24, 32, 40, 48, 64, 80, 96, 256, 512, 768],
@@ -314,11 +318,17 @@
             pendingLaunchOptions = null;
             console.log('[File Explorer] Initialize with launchOptions:', launchOptions);
 
-            if (launchOptions.openFolderPath) {
-                console.log('[File Explorer] Opening folder:', launchOptions.openFolderPath);
+            const launchTarget = resolveLaunchTarget(launchOptions);
+            if (launchTarget?.type === 'this-pc') {
+                console.log('[File Explorer] Opening location: This PC');
+                currentLocation = THIS_PC_LOCATION;
+                currentPath = null;
+                pushHistoryEntry({ type: 'this-pc' });
+            } else if (launchTarget?.type === 'path') {
+                console.log('[File Explorer] Opening folder:', launchTarget.path);
                 currentLocation = 'path';
-                currentPath = launchOptions.openFolderPath;
-                pushHistoryEntry({ type: 'path', path: launchOptions.openFolderPath });
+                currentPath = launchTarget.path;
+                pushHistoryEntry({ type: 'path', path: launchTarget.path });
             } else {
                 currentLocation = HOME_LOCATION;
                 currentPath = null;
@@ -369,6 +379,46 @@
             }
         }
 
+        function resolveSpecialFolderPath(folderId) {
+            if (typeof folderId !== 'string' || !folderId) {
+                return null;
+            }
+
+            const folder = SPECIAL_FOLDER_DEFINITIONS.find(entry => entry.id === folderId);
+            if (!folder) {
+                return null;
+            }
+
+            return path.join(os.homedir(), ...folder.relativePath);
+        }
+
+        function resolveLaunchTarget(launchOptions) {
+            if (!launchOptions || typeof launchOptions !== 'object') {
+                return null;
+            }
+
+            if (launchOptions.openFolderPath) {
+                return {
+                    type: 'path',
+                    path: launchOptions.openFolderPath
+                };
+            }
+
+            if (launchOptions.openSpecialFolderId === THIS_PC_LOCATION) {
+                return { type: 'this-pc' };
+            }
+
+            const specialFolderPath = resolveSpecialFolderPath(launchOptions.openSpecialFolderId);
+            if (specialFolderPath) {
+                return {
+                    type: 'path',
+                    path: specialFolderPath
+                };
+            }
+
+            return null;
+        }
+
         async function drainPendingLaunchOptions() {
             if (!isInitialized || launchOptionsDrainInFlight || !pendingLaunchOptions) {
                 return;
@@ -389,18 +439,32 @@
         }
 
         async function handleLaunchOptions(launchOptions) {
-            if (!launchOptions?.openFolderPath) {
+            const launchTarget = resolveLaunchTarget(launchOptions);
+            if (!launchTarget) {
                 return;
             }
 
-            if (currentLocation === 'path' && currentPath && pathsMatch(currentPath, launchOptions.openFolderPath)) {
+            if (launchTarget.type === 'this-pc') {
+                if (currentLocation === THIS_PC_LOCATION) {
+                    return;
+                }
+
+                console.log('[File Explorer] Applying launch target: This PC');
+                pushHistoryEntry({ type: 'this-pc' });
+                currentLocation = THIS_PC_LOCATION;
+                currentPath = null;
+                await updateView();
                 return;
             }
 
-            console.log('[File Explorer] Applying launch folder:', launchOptions.openFolderPath);
-            pushHistoryEntry({ type: 'path', path: launchOptions.openFolderPath });
+            if (currentLocation === 'path' && currentPath && pathsMatch(currentPath, launchTarget.path)) {
+                return;
+            }
+
+            console.log('[File Explorer] Applying launch folder:', launchTarget.path);
+            pushHistoryEntry({ type: 'path', path: launchTarget.path });
             currentLocation = 'path';
-            currentPath = launchOptions.openFolderPath;
+            currentPath = launchTarget.path;
             await updateView();
         }
 
@@ -931,6 +995,50 @@
             updateTitlebar();
         }
 
+        function formatDriveCapacity(bytes) {
+            const units = [
+                { label: 'TB', size: 1024 ** 4 },
+                { label: 'GB', size: 1024 ** 3 },
+                { label: 'MB', size: 1024 ** 2 },
+                { label: 'KB', size: 1024 }
+            ];
+            const unit = units.find(({ size }) => bytes >= size) || units[units.length - 1];
+            const value = bytes / unit.size;
+            const fractionDigits = value >= 100 ? 0 : 1;
+
+            return `${value.toFixed(fractionDigits).replace(/\.0$/, '')} ${unit.label}`;
+        }
+
+        async function getDriveUsageStats(drivePath) {
+            if (typeof fs.statfs !== 'function') {
+                return null;
+            }
+
+            try {
+                const stats = await fs.statfs(drivePath);
+                const blockSize = Number(stats.bsize || stats.frsize || 0);
+                const totalBlocks = Number(stats.blocks || 0);
+                const freeBlocks = Number(stats.bavail ?? stats.bfree ?? 0);
+                const totalBytes = blockSize * totalBlocks;
+                const freeBytes = blockSize * freeBlocks;
+
+                if (!Number.isFinite(totalBytes) || totalBytes <= 0 || !Number.isFinite(freeBytes)) {
+                    return null;
+                }
+
+                const clampedFreeBytes = Math.max(0, Math.min(totalBytes, freeBytes));
+
+                return {
+                    totalBytes,
+                    freeBytes: clampedFreeBytes,
+                    usedPercent: Math.max(0, Math.min(100, ((totalBytes - clampedFreeBytes) / totalBytes) * 100)),
+                    usageText: `${formatDriveCapacity(clampedFreeBytes)} free of ${formatDriveCapacity(totalBytes)}`
+                };
+            } catch (error) {
+                return null;
+            }
+        }
+
         async function getAvailableDrives() {
             const drives = [];
 
@@ -940,7 +1048,8 @@
                 name: process.platform === 'win32' ? 'Local Disk (C:)' : 'Macintosh HD',
                 icon: 'main_drive',
                 path: process.platform === 'win32' ? 'C:\\' : '/',
-                isDrive: true
+                isDrive: true,
+                usage: await getDriveUsageStats(process.platform === 'win32' ? 'C:\\' : '/')
             };
             drives.push(mainDrive);
 
@@ -966,7 +1075,8 @@
                                     name: volume.name,
                                     icon: 'external_drive',
                                     path: volumePath,
-                                    isDrive: true
+                                    isDrive: true,
+                                    usage: await getDriveUsageStats(volumePath)
                                 });
                             } catch (error) {
                                 // Volume not accessible, skip it
@@ -989,7 +1099,8 @@
                             name: `Local Disk (${letter}:)`,
                             icon: 'external_drive',
                             path: drivePath,
-                            isDrive: true
+                            isDrive: true,
+                            usage: await getDriveUsageStats(drivePath)
                         });
                     } catch (error) {
                         // Drive doesn't exist or not accessible
@@ -1052,6 +1163,7 @@
 
             const drivesGrid = document.createElement('div');
             drivesGrid.className = `explorer-icon-grid explorer-icon-grid--${currentView}`;
+            drivesGrid.classList.add('explorer-icon-grid--drives');
 
             for (const drive of drives) {
                 const driveItem = await createIconItem(drive, 'drive');
@@ -1227,31 +1339,32 @@
             labelContainer.appendChild(labelFull);
 
             item.appendChild(icon);
-            item.appendChild(labelContainer);
-
-            // Add usage bar for drives
             if (entry.isDrive) {
-                try {
-                    // For demo purposes, using hardcoded values
-                    // In real implementation, would use disk usage APIs
-                    const usedPercent = Math.random() * 60 + 20; // 20-80%
+                item.classList.add('explorer-icon-item--drive');
 
+                const driveDetails = document.createElement('div');
+                driveDetails.className = 'explorer-drive-details';
+                driveDetails.appendChild(labelContainer);
+
+                if (entry.usage) {
                     const usageBar = document.createElement('div');
                     usageBar.className = 'explorer-drive-usage';
                     usageBar.innerHTML = `
                         <div class="explorer-drive-usage-bar">
-                            <div class="explorer-drive-usage-fill" style="width: ${usedPercent}%"></div>
+                            <div class="explorer-drive-usage-fill" style="width: ${entry.usage.usedPercent}%"></div>
                         </div>
                     `;
-                    item.appendChild(usageBar);
+                    driveDetails.appendChild(usageBar);
 
                     const usageText = document.createElement('div');
                     usageText.className = 'explorer-drive-usage-text';
-                    usageText.textContent = `${Math.round(100 - usedPercent)} GB free of 256 GB`;
-                    item.appendChild(usageText);
-                } catch (error) {
-                    console.error('Error getting drive usage:', error);
+                    usageText.textContent = entry.usage.usageText;
+                    driveDetails.appendChild(usageText);
                 }
+
+                item.appendChild(driveDetails);
+            } else {
+                item.appendChild(labelContainer);
             }
 
             // Selection handling
@@ -1548,6 +1661,11 @@
                 'jpeg': 'image/jpg',
                 'gif': 'image/jpg',
                 'bmp': 'image/jpg',
+                'bat': 'bat',
+                'cmd': 'bat',
+                'dll': 'dll',
+                'ini': 'ini',
+                'iso': 'iso',
                 'txt': 'text_document',
                 'rtf': 'rich_text_document',
                 'mp4': 'video',

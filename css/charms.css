@@ -178,12 +178,10 @@
     left: -50%;
     width: 50px;
     height: 200%;
-    background: linear-gradient(
-        to right,
-        transparent 0%,
-        rgba(255, 255, 255, 0.25) 50%,
-        transparent 100%
-    );
+    background: linear-gradient(to right,
+            transparent 0%,
+            rgba(255, 255, 255, 0.25) 50%,
+            transparent 100%);
     transform: translateX(-100%) rotate(15deg);
     animation: none;
     pointer-events: none;
@@ -198,7 +196,9 @@
     0% {
         transform: translateX(-100%) rotate(15deg);
     }
-    20%, 100% {
+
+    20%,
+    100% {
         transform: translateX(200%) rotate(15deg);
     }
 }
@@ -689,7 +689,6 @@ body:not(.charms-allowed) .modern-flyout {
     width: 180px;
     height: 32px;
     background: transparent;
-    cursor: pointer;
     outline: none;
     transform: rotate(-90deg);
     transform-origin: 50% 50%;

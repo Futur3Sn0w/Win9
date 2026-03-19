@@ -18,7 +18,7 @@
     <!-- BOOT SCREEN -->
     <div id="boot-screen">
         <div class="windows-logo">
-            <img src="resources/images/betta.svg" alt="Windows Logo">
+            <img id="boot-logo-image" src="resources/images/betta.svg" alt="Boot logo">
         </div>
         <div class="progress-ring">
             <div class="progress-ring__wrap">
@@ -398,11 +398,8 @@
             <div class="notification-center-panel-header">
                 <div class="notification-center-panel-title">Notifications</div>
                 <button class="notification-center-panel-clear" id="notification-center-clear" type="button">
-                    Clear all
-                </button>
-                <button class="notification-center-panel-close" id="notification-center-close" type="button"
-                    aria-label="Close notification center">
-                    &times;
+                    <span class="notification-center-panel-clear-label">Clear all</span>
+                    <span class="notification-center-panel-clear-icon" aria-hidden="true">&times;</span>
                 </button>
             </div>
             <div class="notification-center-panel-body" id="notification-center-panel-body"></div>

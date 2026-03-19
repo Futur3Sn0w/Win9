@@ -299,6 +299,10 @@ const STUCKRECTS2_PATH = 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Ex
 const TASKBAR_ADVANCED_PATH = 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced';
 const TASKBAR_SHOW_SEARCH_BUTTON_VALUE_NAME = 'ShowSearchButton';
 const TASKBAR_SHOW_TASK_VIEW_BUTTON_VALUE_NAME = 'ShowTaskViewButton';
+const TASKBAR_SHOW_NOTIFICATION_CENTER_ICON_VALUE_NAME = 'ShowNotificationCenterIcon';
+const TASKBAR_USE_MODERN_WINDOW_STYLING_VALUE_NAME = 'UseModernWindowStyling';
+const TASKBAR_THRESHOLD_FEATURES_ENABLED_VALUE_NAME = 'ThresholdFeaturesEnabled';
+const TASKBAR_OPEN_METRO_APPS_ON_DESKTOP_VALUE_NAME = 'OpenMetroAppsOnDesktop';
 const TASKBAR_SHELL_BUTTON_ICON_SIZES = [16, 20, 24, 32, 40, 48, 64, 96, 128];
 const TASKBAR_SHELL_BUTTON_RESOURCE_SCALE = 2;
 const NOTIFICATION_CENTER_ICON_SIZES = {
@@ -308,6 +312,15 @@ const NOTIFICATION_CENTER_ICON_SIZES = {
 };
 const NOTIFICATION_CENTER_RESOURCE_SCALE = 1;
 const NOTIFICATION_CENTER_MAX_ITEMS = 50;
+const NOTIFICATION_CENTER_DRAG_THRESHOLD = 8;
+const THRESHOLD_BOOT_LOGO_PATH = 'resources/images/betta.svg';
+const WINDOWS_BOOT_LOGO_BITMAPS = [
+    { width: 82, height: 72, path: 'resources/images/boot/82x72.bmp' },
+    { width: 102, height: 90, path: 'resources/images/boot/102x90.bmp' },
+    { width: 129, height: 115, path: 'resources/images/boot/129x115.bmp' },
+    { width: 242, height: 214, path: 'resources/images/boot/242x214.bmp' },
+    { width: 321, height: 284, path: 'resources/images/boot/321x284.bmp' }
+];
 // Navigation settings registry paths
 const REGISTRY_PATHS = {
     edgeUI: 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\ImmersiveShell\\EdgeUI',
@@ -328,10 +341,25 @@ let taskbarHeight = loadTaskbarHeightPreference();
 let taskbarUseSmallIcons = loadTaskbarSmallIconsPreference();
 let taskbarShowSearchButton = loadTaskbarSearchButtonPreference();
 let taskbarShowTaskViewButton = loadTaskbarTaskViewButtonPreference();
+let taskbarShowNotificationCenterIcon = loadTaskbarNotificationCenterIconPreference();
+let taskbarUseModernWindowStyling = loadModernWindowStylingPreference();
+let thresholdFeaturesEnabled = loadThresholdFeaturesEnabledPreference();
+let taskbarOpenMetroAppsOnDesktop = loadDesktopModernAppsPreference();
 let taskbarLocked = loadTaskbarLockedPreference();
 let notificationCenterQuietHoursEnabled = false;
 let notificationCenterUnreadCount = 0;
 let notificationCenterItems = [];
+let notificationCenterDragState = {
+    active: false,
+    pointerId: null,
+    startX: 0,
+    currentX: 0,
+    hasDragged: false,
+    itemId: null,
+    element: null,
+    dismissTimer: null,
+    suppressClickId: null
+};
 let lockScreenWallpaperState = getDefaultLockScreenWallpaperState();
 
 function normalizeDisplayZoomPercent(value, fallback = DISPLAY_DEFAULT_ZOOM_PERCENT) {
@@ -610,6 +638,8 @@ updateCharmsHotCornerAccessibility();
 setTaskbarSmallIcons(taskbarUseSmallIcons, { persist: false });
 setTaskbarSearchButtonVisible(taskbarShowSearchButton, { persist: false });
 setTaskbarTaskViewButtonVisible(taskbarShowTaskViewButton, { persist: false });
+setTaskbarNotificationCenterIconVisible(taskbarShowNotificationCenterIcon, { persist: false });
+setModernWindowStylingEnabled(taskbarUseModernWindowStyling, { persist: false });
 
 function loadNavigationSettingsIntoState() {
     try {
@@ -892,8 +922,69 @@ function persistTaskbarButtonVisibilityPreference(valueName, enabled) {
 }
 
 function updateTaskbarShellButtonsVisibility() {
-    $('.taskbar-search-button').toggleClass('is-hidden', !taskbarShowSearchButton);
-    $('.taskbar-task-view-button').toggleClass('is-hidden', !taskbarShowTaskViewButton);
+    $('.taskbar-search-button').toggleClass('is-hidden', !(thresholdFeaturesEnabled && taskbarShowSearchButton));
+    $('.taskbar-task-view-button').toggleClass('is-hidden', !(thresholdFeaturesEnabled && taskbarShowTaskViewButton));
+}
+
+function updateNotificationCenterVisibility() {
+    const $icon = $('#notification-center-icon');
+    if (!$icon.length) {
+        return;
+    }
+
+    $icon.toggleClass('is-hidden', !(thresholdFeaturesEnabled && taskbarShowNotificationCenterIcon));
+
+    if (!(thresholdFeaturesEnabled && taskbarShowNotificationCenterIcon)) {
+        hideNotificationCenterPanel();
+    }
+}
+
+function updateModernWindowStylingClass() {
+    if (typeof document === 'undefined' || !document.body) {
+        return;
+    }
+
+    document.body.classList.toggle('modern-window-styling-disabled', !(thresholdFeaturesEnabled && taskbarUseModernWindowStyling));
+}
+
+function selectBootLogoBitmap(targetWidth, targetHeight) {
+    const exactOrNextUp = WINDOWS_BOOT_LOGO_BITMAPS.find(asset => asset.width >= targetWidth && asset.height >= targetHeight);
+    if (exactOrNextUp) {
+        return exactOrNextUp;
+    }
+
+    return WINDOWS_BOOT_LOGO_BITMAPS[WINDOWS_BOOT_LOGO_BITMAPS.length - 1];
+}
+
+function updateBootLogo() {
+    const $bootLogo = $('#boot-logo-image');
+    if (!$bootLogo.length) {
+        return;
+    }
+
+    if (thresholdFeaturesEnabled) {
+        $bootLogo.attr('src', THRESHOLD_BOOT_LOGO_PATH).attr('alt', 'Threshold boot logo');
+        return;
+    }
+
+    const $logoContainer = $bootLogo.closest('.windows-logo');
+    const rect = $logoContainer.length ? $logoContainer[0].getBoundingClientRect() : null;
+    const scaleFactor = typeof window !== 'undefined'
+        ? Math.max(1, Number(window.devicePixelRatio) || 1)
+        : 1;
+    const targetWidth = Math.max(1, Math.ceil((rect?.width || 180) * scaleFactor));
+    const targetHeight = Math.max(1, Math.ceil((rect?.height || 180) * scaleFactor));
+    const selectedAsset = selectBootLogoBitmap(targetWidth, targetHeight);
+
+    $bootLogo.attr('src', selectedAsset.path).attr('alt', 'Windows logo');
+}
+
+function applyThresholdFeatureStates() {
+    updateTaskbarShellButtonsVisibility();
+    updateNotificationCenterVisibility();
+    updateModernWindowStylingClass();
+    applyStartMenuModePreference();
+    updateBootLogo();
 }
 
 function getTaskbarShellButtonAssetScaleFactor() {
@@ -1062,6 +1153,10 @@ function renderNotificationCenterPanel() {
         return;
     }
 
+    if (notificationCenterDragState.active || notificationCenterDragState.element) {
+        resetNotificationCenterDragState();
+    }
+
     const sections = [];
     const sectionMap = new Map();
 
@@ -1086,14 +1181,13 @@ function renderNotificationCenterPanel() {
             const descriptionHtml = item.description
                 ? `<div class="notification-center-item-description">${escapeNotificationCenterText(item.description)}</div>`
                 : '';
-
             return `
-                <div class="notification-center-item">
+                <div class="notification-center-item" data-notification-id="${escapeNotificationCenterText(item.id)}">
+                    <button class="notification-center-item-dismiss" type="button" aria-label="Dismiss notification">&times;</button>
                     <button
                         class="notification-center-item-button"
                         type="button"
                         data-notification-id="${escapeNotificationCenterText(item.id)}"
-                        ${item.onClick ? '' : 'disabled'}
                     >
                         <div class="notification-center-item-topline">
                             <div class="notification-center-item-title">${escapeNotificationCenterText(item.title)}</div>
@@ -1134,6 +1228,10 @@ function markNotificationCenterRead() {
 }
 
 function showNotificationCenterPanel() {
+    if (!(thresholdFeaturesEnabled && taskbarShowNotificationCenterIcon)) {
+        return;
+    }
+
     const $panel = $('#notification-center-panel');
     if (!$panel.length) {
         return;
@@ -1151,6 +1249,7 @@ function hideNotificationCenterPanel() {
         return;
     }
 
+    resetNotificationCenterDragState();
     $panel.removeClass('visible').attr('aria-hidden', 'true');
     $('#notification-center-icon').removeClass('active');
 }
@@ -1167,6 +1266,10 @@ function clearNotificationCenter() {
 }
 
 function toggleNotificationCenterPanel() {
+    if (!(thresholdFeaturesEnabled && taskbarShowNotificationCenterIcon)) {
+        return;
+    }
+
     if (isNotificationCenterPanelVisible()) {
         hideNotificationCenterPanel();
         return;
@@ -1200,6 +1303,117 @@ function addNotificationCenterItem(detail) {
 
     renderNotificationCenterPanel();
     updateNotificationCenterIcon();
+}
+
+function resetNotificationCenterDragState() {
+    if (notificationCenterDragState.dismissTimer) {
+        clearTimeout(notificationCenterDragState.dismissTimer);
+        notificationCenterDragState.dismissTimer = null;
+    }
+
+    if (notificationCenterDragState.element) {
+        notificationCenterDragState.element.classList.remove('notification-center-item--dragging');
+        notificationCenterDragState.element.style.transform = '';
+        notificationCenterDragState.element.style.opacity = '';
+    }
+
+    notificationCenterDragState.active = false;
+    notificationCenterDragState.pointerId = null;
+    notificationCenterDragState.startX = 0;
+    notificationCenterDragState.currentX = 0;
+    notificationCenterDragState.hasDragged = false;
+    notificationCenterDragState.itemId = null;
+    notificationCenterDragState.element = null;
+}
+
+function dismissNotificationCenterItem(notificationId, { hideToast = true } = {}) {
+    const nextItems = notificationCenterItems.filter(item => item.id !== notificationId);
+    if (nextItems.length === notificationCenterItems.length) {
+        return;
+    }
+
+    if (notificationCenterDragState.suppressClickId === notificationId) {
+        notificationCenterDragState.suppressClickId = null;
+    }
+
+    notificationCenterItems = nextItems;
+    notificationCenterUnreadCount = Math.min(notificationCenterUnreadCount, notificationCenterItems.length);
+    renderNotificationCenterPanel();
+    updateNotificationCenterIcon();
+
+    if (hideToast &&
+        window.notificationManager &&
+        window.notificationManager.notifications instanceof Map &&
+        window.notificationManager.notifications.has(notificationId) &&
+        typeof window.notificationManager.hide === 'function') {
+        window.notificationManager.hide(notificationId);
+    }
+}
+
+function beginNotificationCenterItemDrag(element, event) {
+    if (!element) {
+        return;
+    }
+
+    notificationCenterDragState.active = true;
+    notificationCenterDragState.pointerId = event.pointerId ?? 'mouse';
+    notificationCenterDragState.startX = event.clientX;
+    notificationCenterDragState.currentX = 0;
+    notificationCenterDragState.hasDragged = false;
+    notificationCenterDragState.itemId = element.getAttribute('data-notification-id');
+    notificationCenterDragState.element = element;
+}
+
+function updateNotificationCenterItemDrag(event) {
+    if (!notificationCenterDragState.active ||
+        (event.pointerId ?? 'mouse') !== notificationCenterDragState.pointerId ||
+        !notificationCenterDragState.element) {
+        return;
+    }
+
+    const deltaX = event.clientX - notificationCenterDragState.startX;
+    if (!notificationCenterDragState.hasDragged && deltaX > NOTIFICATION_CENTER_DRAG_THRESHOLD) {
+        notificationCenterDragState.hasDragged = true;
+        notificationCenterDragState.suppressClickId = notificationCenterDragState.itemId;
+        notificationCenterDragState.element.classList.add('notification-center-item--dragging');
+    }
+
+    if (!notificationCenterDragState.hasDragged) {
+        return;
+    }
+
+    notificationCenterDragState.currentX = Math.max(0, deltaX);
+    notificationCenterDragState.element.style.transform = `translateX(${notificationCenterDragState.currentX}px)`;
+    notificationCenterDragState.element.style.opacity = `${Math.max(0.35, 1 - (notificationCenterDragState.currentX / NOTIFICATION_CENTER_DISMISS_THRESHOLD) * 0.55)}`;
+
+    event.preventDefault();
+}
+
+function endNotificationCenterItemDrag(event) {
+    if (!notificationCenterDragState.active ||
+        (event.pointerId ?? 'mouse') !== notificationCenterDragState.pointerId ||
+        !notificationCenterDragState.element) {
+        return;
+    }
+
+    const {
+        currentX,
+        element,
+        itemId,
+        hasDragged
+    } = notificationCenterDragState;
+
+    if (hasDragged && currentX > NOTIFICATION_CENTER_DISMISS_THRESHOLD) {
+        element.style.transform = 'translateX(180px)';
+        element.style.opacity = '0';
+        notificationCenterDragState.dismissTimer = setTimeout(() => {
+            dismissNotificationCenterItem(itemId);
+            resetNotificationCenterDragState();
+        }, 140);
+        return;
+    }
+
+    resetNotificationCenterDragState();
 }
 
 function handleNotificationCenterItemClick(notificationId) {
@@ -1249,16 +1463,43 @@ function initNotificationCenter() {
         clearNotificationCenter();
     });
 
-    $(document).on('click', '#notification-center-close', function (e) {
+    $(document).on('click', '.notification-center-item-dismiss', function (e) {
         e.preventDefault();
         e.stopPropagation();
-        hideNotificationCenterPanel();
+        dismissNotificationCenterItem($(this).closest('.notification-center-item').attr('data-notification-id'));
     });
 
     $(document).on('click', '.notification-center-item-button[data-notification-id]', function (e) {
         e.preventDefault();
         e.stopPropagation();
-        handleNotificationCenterItemClick($(this).attr('data-notification-id'));
+
+        const notificationId = $(this).attr('data-notification-id');
+        if (notificationCenterDragState.suppressClickId === notificationId) {
+            notificationCenterDragState.suppressClickId = null;
+            return;
+        }
+
+        handleNotificationCenterItemClick(notificationId);
+    });
+
+    $(document).on('pointerdown', '.notification-center-item', function (e) {
+        if ($(e.target).closest('.notification-center-item-dismiss').length) {
+            return;
+        }
+
+        if (e.button !== undefined && e.button !== 0) {
+            return;
+        }
+
+        beginNotificationCenterItemDrag(this, e);
+    });
+
+    $(document).on('pointermove', function (e) {
+        updateNotificationCenterItemDrag(e);
+    });
+
+    $(document).on('pointerup pointercancel', function (e) {
+        endNotificationCenterItemDrag(e);
     });
 
     $(document).on('click', function (e) {
@@ -1288,6 +1529,7 @@ function initNotificationCenter() {
     };
 
     renderNotificationCenterPanel();
+    updateNotificationCenterVisibility();
     updateNotificationCenterIcon();
 }
 
@@ -1326,6 +1568,85 @@ function setTaskbarTaskViewButtonVisible(enabled, options = {}) {
 
     if (persist) {
         persistTaskbarButtonVisibilityPreference(TASKBAR_SHOW_TASK_VIEW_BUTTON_VALUE_NAME, normalized);
+    }
+
+    return changed;
+}
+
+function loadTaskbarNotificationCenterIconPreference() {
+    return loadTaskbarButtonVisibilityPreference(TASKBAR_SHOW_NOTIFICATION_CENTER_ICON_VALUE_NAME, true);
+}
+
+function setTaskbarNotificationCenterIconVisible(enabled, options = {}) {
+    const normalized = !!enabled;
+    const { persist = true } = options;
+    const changed = taskbarShowNotificationCenterIcon !== normalized;
+
+    taskbarShowNotificationCenterIcon = normalized;
+    updateNotificationCenterVisibility();
+
+    if (persist) {
+        persistTaskbarButtonVisibilityPreference(TASKBAR_SHOW_NOTIFICATION_CENTER_ICON_VALUE_NAME, normalized);
+    }
+
+    return changed;
+}
+
+function loadModernWindowStylingPreference() {
+    return loadTaskbarButtonVisibilityPreference(TASKBAR_USE_MODERN_WINDOW_STYLING_VALUE_NAME, true);
+}
+
+function setModernWindowStylingEnabled(enabled, options = {}) {
+    const normalized = !!enabled;
+    const { persist = true } = options;
+    const changed = taskbarUseModernWindowStyling !== normalized;
+
+    taskbarUseModernWindowStyling = normalized;
+    updateModernWindowStylingClass();
+
+    if (persist) {
+        persistTaskbarButtonVisibilityPreference(TASKBAR_USE_MODERN_WINDOW_STYLING_VALUE_NAME, normalized);
+    }
+
+    return changed;
+}
+
+function loadThresholdFeaturesEnabledPreference() {
+    return loadTaskbarButtonVisibilityPreference(TASKBAR_THRESHOLD_FEATURES_ENABLED_VALUE_NAME, true);
+}
+
+function loadDesktopModernAppsPreference() {
+    return loadTaskbarButtonVisibilityPreference(TASKBAR_OPEN_METRO_APPS_ON_DESKTOP_VALUE_NAME, false);
+}
+
+function setDesktopModernAppsEnabled(enabled, options = {}) {
+    const normalized = !!enabled;
+    const { persist = true } = options;
+    const changed = taskbarOpenMetroAppsOnDesktop !== normalized;
+
+    taskbarOpenMetroAppsOnDesktop = normalized;
+
+    if (persist) {
+        persistTaskbarButtonVisibilityPreference(TASKBAR_OPEN_METRO_APPS_ON_DESKTOP_VALUE_NAME, normalized);
+    }
+
+    return changed;
+}
+
+function areDesktopModernAppsEnabled() {
+    return thresholdFeaturesEnabled && taskbarOpenMetroAppsOnDesktop;
+}
+
+function setThresholdFeaturesEnabled(enabled, options = {}) {
+    const normalized = !!enabled;
+    const { persist = true } = options;
+    const changed = thresholdFeaturesEnabled !== normalized;
+
+    thresholdFeaturesEnabled = normalized;
+    applyThresholdFeatureStates();
+
+    if (persist) {
+        persistTaskbarButtonVisibilityPreference(TASKBAR_THRESHOLD_FEATURES_ENABLED_VALUE_NAME, normalized);
     }
 
     return changed;
@@ -1708,6 +2029,10 @@ $(document).ready(function () {
         start: $('#start-screen'),
         desktop: $('#desktop')
     };
+
+    applyThresholdFeatureStates();
+    $(window).on('resize.boot-logo', updateBootLogo);
+    window.addEventListener('win8-display-settings-changed', updateBootLogo);
 
     showView('boot');
 
@@ -2221,6 +2546,8 @@ function login() {
     setTimeout(function () {
         if (shouldOpenDesktop) {
             $desktop.addClass('visible');
+            $('body').addClass('charms-allowed');
+            updateTaskbarVisibility('desktop');
             return;
         }
 
@@ -2300,6 +2627,7 @@ const startMenuState = {
     pinnedIds: [],
     recentIds: [],
     allAppsOpen: false,
+    searchOpen: false,
     query: ''
 };
 let startMenuContextAppId = null;
@@ -2327,6 +2655,7 @@ function hideStartMenuImmediately() {
     $('body').removeClass('start-menu-open taskbar-peek');
     hideStartMenuItemContextMenu();
     startMenuState.query = '';
+    startMenuState.searchOpen = false;
     startMenuState.allAppsOpen = false;
 
     const searchInput = document.getElementById('start-menu-search-input');
@@ -2335,6 +2664,7 @@ function hideStartMenuImmediately() {
     }
 
     startReturnModernAppId = null;
+    updateStartMenuViewState();
     updateStartMenuToggleButton();
     updateStartButtonVisualState();
 }
@@ -2557,13 +2887,26 @@ function buildStartMenuEntryHtml(app, mode, { dense = false, subtitle = '' } = {
     `;
 }
 
+function updateStartMenuViewState() {
+    const $startMenu = $('#start-menu');
+    if (!$startMenu.length) {
+        return;
+    }
+
+    const isSearchOpen = Boolean(startMenuState.searchOpen);
+    const isAllAppsOpen = Boolean(startMenuState.allAppsOpen) && !isSearchOpen;
+
+    $startMenu.toggleClass('start-menu--search', isSearchOpen);
+    $startMenu.toggleClass('start-menu--all-apps', isAllAppsOpen);
+}
+
 function updateStartMenuToggleButton() {
     const $button = $('#start-menu-all-apps-toggle');
     if (!$button.length) {
         return;
     }
 
-    const showingAllApps = startMenuState.allAppsOpen && !startMenuState.query.trim();
+    const showingAllApps = startMenuState.allAppsOpen && !startMenuState.searchOpen;
     $button.find('.start-menu-all-apps-text').text(showingAllApps ? 'Back' : 'All apps');
     $button.find('.start-menu-all-apps-icon > span')
         .toggleClass('mif-arrow-right', !showingAllApps)
@@ -2592,20 +2935,22 @@ function renderStartMenuLeftPane() {
         return;
     }
 
+    const isSearchOpen = Boolean(startMenuState.searchOpen);
     const query = startMenuState.query.trim();
     const normalizedQuery = query.toLowerCase();
     let html = '';
 
-    if (normalizedQuery) {
+    if (isSearchOpen) {
         const results = getStartMenuSearchResults(normalizedQuery);
 
-        html += '<div class="start-menu-section-title">Results</div>';
         if (results.length > 0) {
             results.forEach(app => {
                 html += buildStartMenuEntryHtml(app, 'search', { dense: false });
             });
         } else {
-            html += '<div class="start-menu-empty-state">No matching apps.</div>';
+            html += normalizedQuery
+                ? '<div class="start-menu-empty-state">No matching apps.</div>'
+                : '<div class="start-menu-empty-state">Type to search apps.</div>';
         }
     } else if (startMenuState.allAppsOpen) {
         sortAppsForStartMenu(getStartMenuEligibleApps()).forEach(app => {
@@ -2633,6 +2978,7 @@ function renderStartMenuLeftPane() {
     }
 
     $list.html(html);
+    updateStartMenuViewState();
     updateStartMenuToggleButton();
 }
 
@@ -2776,13 +3122,24 @@ function renderStartMenuTiles() {
 
     setTimeout(() => {
         initializeTiles();
+
+        if (window.TileDrag && typeof window.TileDrag.refresh === 'function') {
+            window.TileDrag.refresh();
+        }
     }, 0);
 }
+
+function getStartMenuTileRowsForDrag() {
+    return resolveStartMenuTileRows(startMenuRowsManuallySized ? startMenuTileRows : null).rows;
+}
+
+window.getStartMenuTileRowsForDrag = getStartMenuTileRowsForDrag;
 
 function renderStartMenu() {
     updateStartMenuThemeColor();
     renderStartMenuLeftPane();
     renderStartMenuTiles();
+    updateStartMenuViewState();
     updateStartButtonVisualState();
 }
 
@@ -2884,12 +3241,14 @@ function closeStartMenu(options = {}) {
     $('body').removeClass('start-menu-open taskbar-peek');
 
     startMenuState.query = '';
+    startMenuState.searchOpen = false;
     const searchInput = document.getElementById('start-menu-search-input');
     if (searchInput) {
         searchInput.value = '';
     }
 
     startMenuState.allAppsOpen = false;
+    updateStartMenuViewState();
     updateStartMenuToggleButton();
     updateStartButtonVisualState();
 
@@ -2911,6 +3270,7 @@ function toggleStartMenuAllApps(forceState) {
         : !startMenuState.allAppsOpen;
 
     startMenuState.allAppsOpen = nextState;
+    startMenuState.searchOpen = false;
     startMenuState.query = '';
 
     const searchInput = document.getElementById('start-menu-search-input');
@@ -3176,7 +3536,14 @@ $(document).ready(async function () {
     });
 
     $('#start-menu-search-input').on('input', function () {
-        startMenuState.query = $(this).val() || '';
+        const nextQuery = $(this).val() || '';
+        startMenuState.query = nextQuery;
+
+        if (startMenuState.searchOpen || nextQuery.trim()) {
+            startMenuState.searchOpen = true;
+            startMenuState.allAppsOpen = false;
+        }
+
         renderStartMenuLeftPane();
     });
 
@@ -3566,9 +3933,26 @@ function launchApp(appOrId, $clickedTile, launchOptions = {}) {
         return;
     }
 
+    const targetAppId = typeof app.launchTargetAppId === 'string' && app.launchTargetAppId
+        ? app.launchTargetAppId
+        : appId;
+    const targetApp = targetAppId === appId
+        ? app
+        : AppsManager.getAppById(targetAppId);
+
+    if (!targetApp) {
+        console.error('Launch target app not found:', targetAppId, 'for app:', appId);
+        return;
+    }
+
+    const mergedLaunchOptions = {
+        ...(app.launchOptions || {}),
+        ...(launchOptions || {})
+    };
+
     // Prevent rapid duplicate launches from start screen (debounce at launch level)
     // This catches double-clicks on tiles before they queue up delayed opens
-    if (!launchOptions.fromTaskbar && $clickedTile && $clickedTile.length > 0) {
+    if (!mergedLaunchOptions.fromTaskbar && $clickedTile && $clickedTile.length > 0) {
         const now = Date.now();
         const lastLaunch = launchingApps.get(appId);
         if (lastLaunch && (now - lastLaunch) < 500) {
@@ -3578,48 +3962,50 @@ function launchApp(appOrId, $clickedTile, launchOptions = {}) {
         launchingApps.set(appId, now);
     }
 
-    console.log('Launching app:', appId, 'Type:', app.type);
+    console.log('Launching app:', appId, 'Target:', targetAppId, 'Type:', targetApp.type);
     recordStartMenuLaunch(appId);
 
     // Determine if we should show the flip animation (only for modern apps when tile was clicked)
-    let shouldAnimate = app.type === 'modern' && $clickedTile && $clickedTile.length > 0;
-    if (launchOptions.fromTaskbar) {
+    let shouldAnimate = targetApp.type === 'modern' && $clickedTile && $clickedTile.length > 0;
+    if (mergedLaunchOptions.fromTaskbar) {
         shouldAnimate = false;
     }
 
     // Clear tile-level debounce so openClassicApp's own debounce doesn't conflict
     launchingApps.delete(appId);
 
-    switch (app.type) {
+    switch (targetApp.type) {
         case 'meta':
             // Meta apps have special behavior (like Desktop tile)
-            if (appId === 'desktop') {
+            if (targetAppId === 'desktop') {
                 console.log('Showing desktop view');
                 transitionToDesktop();
             }
             break;
 
         case 'modern':
-            // Modern apps open in fullscreen with animation
-            console.log('Opening modern app:', appId);
-            if (shouldAnimate) {
-                showTileFlipAnimation(app, $clickedTile, () => {
-                    openModernApp(app, launchOptions);
-                });
+            if (areDesktopModernAppsEnabled()) {
+                console.log('Opening modern app on desktop:', targetAppId);
+                openModernAppOnDesktop(targetApp, mergedLaunchOptions);
             } else {
-                openModernApp(app, launchOptions);
+                // Modern apps open in fullscreen with animation
+                console.log('Opening modern app:', targetAppId);
+                if (shouldAnimate) {
+                    showTileFlipAnimation(app, $clickedTile, () => {
+                        openModernApp(targetApp, mergedLaunchOptions);
+                    });
+                } else {
+                    openModernApp(targetApp, mergedLaunchOptions);
+                }
             }
             break;
 
         case 'classic':
             // Classic apps open on the desktop
-            console.log('Opening classic app:', appId);
+            console.log('Opening classic app:', targetAppId);
 
             const openClassicAppWithTransition = () => {
-                // Check if any modern app is currently active
-                const hasActiveModernApp = AppsManager.getRunningApps().some(running =>
-                    running.app && running.app.type === 'modern' && AppsManager.getAppState(running.app.id) === 'active'
-                );
+                const hasActiveModernApp = hasActiveFullscreenModernApps();
 
                 // If on start screen OR a modern app is active, transition to desktop first
                 if (currentView !== 'desktop' || hasActiveModernApp) {
@@ -3635,15 +4021,15 @@ function launchApp(appOrId, $clickedTile, launchOptions = {}) {
 
                     // Wait for transition to complete before opening the app
                     setTimeout(() => {
-                        openClassicApp(app, launchOptions);
+                        openClassicApp(targetApp, mergedLaunchOptions);
                     }, 500);
                 } else {
-                    openClassicApp(app, launchOptions);
+                    openClassicApp(targetApp, mergedLaunchOptions);
                 }
             };
 
             // Classic apps should switch to desktop, not use flip animation
-            if ($clickedTile && $clickedTile.length > 0 && !launchOptions.fromTaskbar) {
+            if ($clickedTile && $clickedTile.length > 0 && !mergedLaunchOptions.fromTaskbar) {
                 // User clicked a tile on Start screen - transition to desktop first
                 openClassicAppWithTransition();
             } else {
@@ -3654,13 +4040,10 @@ function launchApp(appOrId, $clickedTile, launchOptions = {}) {
 
         case 'meta-classic':
             // Meta-classic apps open on desktop (like Taskbar Properties, Run dialog)
-            console.log('Opening meta-classic app:', appId);
+            console.log('Opening meta-classic app:', targetAppId);
 
             const openClassicWithTransition = () => {
-                // Check if any modern app is currently active
-                const hasActiveModernApp = AppsManager.getRunningApps().some(running =>
-                    running.app && running.app.type === 'modern' && AppsManager.getAppState(running.app.id) === 'active'
-                );
+                const hasActiveModernApp = hasActiveFullscreenModernApps();
 
                 // If on start screen OR a modern app is active, transition to desktop first
                 if (currentView !== 'desktop' || hasActiveModernApp) {
@@ -3676,10 +4059,10 @@ function launchApp(appOrId, $clickedTile, launchOptions = {}) {
 
                     // Wait for transition to complete before opening the app
                     setTimeout(() => {
-                        openClassicApp(app, launchOptions);
+                        openClassicApp(targetApp, mergedLaunchOptions);
                     }, 500);
                 } else {
-                    openClassicApp(app, launchOptions);
+                    openClassicApp(targetApp, mergedLaunchOptions);
                 }
             };
 
@@ -3691,7 +4074,7 @@ function launchApp(appOrId, $clickedTile, launchOptions = {}) {
             break;
 
         default:
-            console.log('Unknown app type:', app.type, 'for app:', appId);
+            console.log('Unknown app type:', targetApp.type, 'for app:', targetAppId);
             break;
     }
 }
@@ -3739,7 +4122,9 @@ function handleStoreAppUninstalled(appId) {
     if (AppsManager.isAppRunning(appId)) {
         const runningApp = AppsManager.getRunningApp(appId);
         if (runningApp && runningApp.app) {
-            if (runningApp.app.type === 'modern') {
+            if (isModernDesktopWindow(appId)) {
+                closeClassicApp(appId);
+            } else if (runningApp.app.type === 'modern') {
                 closeModernApp(appId);
             } else if (runningApp.app.type === 'classic') {
                 closeClassicApp(appId);
@@ -3751,6 +4136,88 @@ function handleStoreAppUninstalled(appId) {
     renderPinnedTiles();
     renderAllAppsList();
     AppsManager.updateTaskbar();
+}
+
+function getRunningWindowData(windowIdOrAppId) {
+    const isWindowId = windowIdOrAppId && windowIdOrAppId.includes('-') &&
+        windowIdOrAppId.split('-').length >= 3;
+
+    if (isWindowId) {
+        return AppsManager.getRunningWindow(windowIdOrAppId) || null;
+    }
+
+    const windows = AppsManager.getAppWindows(windowIdOrAppId);
+    return windows.length > 0 ? windows[0] : null;
+}
+
+function isFullscreenModernWindowData(windowData) {
+    return !!windowData?.$container?.hasClass('modern-app-container');
+}
+
+function isModernDesktopWindowData(windowData) {
+    return !!windowData?.$container?.hasClass('modern-desktop-app-container');
+}
+
+function isModernDesktopWindow(windowIdOrAppId) {
+    return isModernDesktopWindowData(getRunningWindowData(windowIdOrAppId));
+}
+
+function hasActiveFullscreenModernApps() {
+    return AppsManager.getRunningApps().some(running =>
+        isFullscreenModernWindowData(running) && running.state === 'active'
+    );
+}
+
+function getModernAppTitlebarIconModel(app, desiredSize = 16) {
+    const hasMifIcon = app.icon && app.icon.startsWith('mif-');
+    let titleIcon = null;
+    let plateClass = '';
+
+    if (hasMifIcon) {
+        titleIcon = AppsManager.getIconImage(app, desiredSize);
+        if (!titleIcon) {
+            plateClass = app.color ? `app-icon-plate--${app.color}` : '';
+        }
+    } else {
+        titleIcon = AppsManager.getAppListLogo(app);
+        plateClass = app.color ? `app-icon-plate--${app.color}` : '';
+    }
+
+    return {
+        hasMifIcon,
+        titleIcon,
+        plateClass
+    };
+}
+
+function openModernAppOnDesktop(app, launchOptions = {}) {
+    if (AppsManager.isAppRunning(app.id) && !isModernDesktopWindow(app.id)) {
+        restoreModernApp(app.id);
+        return;
+    }
+
+    const openWindow = () => {
+        const hasActiveFullscreenModernApp = hasActiveFullscreenModernApps();
+
+        if (currentView !== 'desktop' || hasActiveFullscreenModernApp) {
+            if (hasActiveFullscreenModernApp) {
+                hideAllActiveModernApps();
+            }
+
+            if (currentView !== 'desktop') {
+                transitionToDesktop();
+            }
+
+            setTimeout(() => {
+                openClassicApp(app, { ...launchOptions, modernDesktopMode: true });
+            }, 500);
+            return;
+        }
+
+        openClassicApp(app, { ...launchOptions, modernDesktopMode: true });
+    };
+
+    openWindow();
 }
 
 // Open a modern (fullscreen) app
@@ -3822,23 +4289,7 @@ function openModernApp(app, launchOptions = {}) {
     // Create titlebar
     const $titlebar = $('<div class="modern-app-titlebar"></div>');
 
-    // Check if app has MIF icon - determines fallback hierarchy
-    const hasMifIcon = app.icon && app.icon.startsWith('mif-');
-    let titleIcon = null;
-    let plateClass = '';
-
-    if (hasMifIcon) {
-        // Use iconImages if available, otherwise MIF icon
-        titleIcon = AppsManager.getIconImage(app, 16);
-        if (!titleIcon) {
-            // Add color plate for apps with MIF icons
-            plateClass = app.color ? `app-icon-plate--${app.color}` : '';
-        }
-    } else {
-        // Use logo.png for apps without MIF icons with color plate
-        titleIcon = AppsManager.getAppListLogo(app);
-        plateClass = app.color ? `app-icon-plate--${app.color}` : '';
-    }
+    const { hasMifIcon, titleIcon, plateClass } = getModernAppTitlebarIconModel(app, 16);
 
     // Add icon to titlebar (if not disabled)
     if (options.showIcon !== false && (titleIcon || app.icon)) {
@@ -4271,9 +4722,7 @@ function closeModernApp(appId) {
         AppsManager.unregisterRunningApp(appId);
 
         // Check if there are other active modern apps
-        const hasOtherActiveModernApps = AppsManager.getRunningApps().some(running =>
-            running.app && running.app.type === 'modern' && AppsManager.getAppState(running.app.id) === 'active'
-        );
+        const hasOtherActiveModernApps = hasActiveFullscreenModernApps();
 
         // If there are other active modern apps, don't change the view
         if (hasOtherActiveModernApps) {
@@ -4319,7 +4768,7 @@ function hideAllActiveModernApps(exceptAppId = null) {
         const appState = AppsManager.getAppState(appId);
 
         // Only hide modern apps that are currently active and not the exception
-        if (appType === 'modern' && appState === 'active' && appId !== exceptAppId) {
+        if (isFullscreenModernWindowData(runningApp) && appState === 'active' && appId !== exceptAppId) {
             const $container = runningApp.$container;
             $container.removeClass('active');
             AppsManager.setAppState(appId, 'minimized');
@@ -4501,9 +4950,10 @@ let explorerPreloadScheduled = false;
 
 function getClassicWindowOptions(app) {
     const windowOptions = app?.windowOptions || {};
+    const isModernDesktopApp = app?.type === 'modern';
     const defaultOptions = {
-        width: 600,
-        height: 500,
+        width: isModernDesktopApp ? 1024 : 600,
+        height: isModernDesktopApp ? 720 : 500,
         resizable: true,
         minimizable: true,
         maximizable: true,
@@ -4597,11 +5047,12 @@ function resetClassicWindowForFreshLaunch(windowData) {
     windowData.restoreAnimationOffsets = null;
 
     $container
-        .removeClass('maximized snapped snapped-left snapped-right minimizing restoring closing opening launch-deferred inactive')
+        .removeClass('maximized snapped snapped-left snapped-right minimizing restoring closing opening launch-deferred inactive metro-mode')
         .removeData('isSnapped')
         .removeData('snapZone')
         .removeData('preSnapState')
         .removeData('prevState')
+        .removeData('desktopModernPrevState')
         .removeData('pendingRestore')
         .removeData('pendingFreshLaunch')
         .css({
@@ -4626,7 +5077,7 @@ function resetClassicWindowForFreshLaunch(windowData) {
 }
 
 function isStartMenuEnabled() {
-    return !!navigationSettings.useStartMenu;
+    return thresholdFeaturesEnabled && !!navigationSettings.useStartMenu;
 }
 
 function isStartMenuOpen() {
@@ -4702,6 +5153,7 @@ function isDefaultExplorerLaunch(app, launchOptions = {}) {
     return !!(app &&
         app.id === 'explorer' &&
         !launchOptions.openFolderPath &&
+        !launchOptions.openSpecialFolderId &&
         !launchOptions.openFilePath &&
         !launchOptions.forceNewWindow);
 }
@@ -4809,10 +5261,246 @@ function recycleExplorerWindow(windowData) {
     console.log('Recycled File Explorer window into the background preload pool:', windowData.windowId);
 }
 
+function updateDesktopModernMetroModeBodyState() {
+    const hasVisibleMetroModeWindow = $('.modern-desktop-app-container.metro-mode:visible').length > 0;
+    $('body').toggleClass('desktop-modern-metro-mode', hasVisibleMetroModeWindow);
+}
+
+function getModernDesktopTitlebarMenuOverlay() {
+    let $menu = $('#modern-desktop-titlebar-menu-overlay');
+    if ($menu.length) {
+        return $menu;
+    }
+
+    $menu = $(`
+        <div id="modern-desktop-titlebar-menu-overlay" class="modern-desktop-titlebar-menu">
+            <button class="modern-desktop-titlebar-menu-item" type="button" data-action="toggle-metro-mode">
+                <span class="modern-desktop-titlebar-menu-item-text">Enter fullscreen</span>
+            </button>
+        </div>
+    `);
+
+    $menu.on('mousedown', function (e) {
+        e.stopPropagation();
+    });
+
+    $menu.on('click', '.modern-desktop-titlebar-menu-item', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const action = $(this).attr('data-action');
+        const windowId = $menu.attr('data-window-id');
+        if (action === 'toggle-metro-mode' && windowId) {
+            toggleModernDesktopMetroMode(windowId);
+        } else {
+            hideModernDesktopTitlebarMenu();
+        }
+    });
+
+    $('body').append($menu);
+    return $menu;
+}
+
+function getModernDesktopMenuSurfaceTargets($container) {
+    if (!$container?.length) {
+        return $();
+    }
+
+    return $container.find('iframe.classic-window-iframe, webview.classic-window-iframe');
+}
+
+function setModernDesktopMenuSurfaceInteractivity($container, enabled) {
+    const $targets = getModernDesktopMenuSurfaceTargets($container);
+    if (!$targets.length) {
+        return;
+    }
+
+    $targets.css('pointer-events', enabled ? 'auto' : 'none');
+}
+
+function updateModernDesktopMenuLabel($container) {
+    if (!$container?.length) {
+        return;
+    }
+
+    const $menu = getModernDesktopTitlebarMenuOverlay();
+    const inMetroMode = $container.hasClass('metro-mode');
+    const nextLabel = inMetroMode ? 'Exit fullscreen' : 'Enter fullscreen';
+    $menu.find('.modern-desktop-titlebar-menu-item[data-action="toggle-metro-mode"] .modern-desktop-titlebar-menu-item-text')
+        .text(nextLabel);
+}
+
+function hideModernDesktopTitlebarMenu() {
+    const $menu = $('#modern-desktop-titlebar-menu-overlay');
+    if (!$menu.length) {
+        return;
+    }
+
+    const windowId = $menu.attr('data-window-id');
+    if (windowId) {
+        const windowData = getRunningWindowData(windowId);
+        if (windowData?.$container?.length) {
+            setModernDesktopMenuSurfaceInteractivity(windowData.$container, true);
+            windowData.$container.find('.modern-desktop-window-menu-button').removeClass('active');
+        }
+    }
+
+    $menu.removeAttr('data-window-id').removeClass('active').css({
+        left: '',
+        top: ''
+    });
+}
+
+function showModernDesktopTitlebarMenu($container) {
+    if (!$container?.length) {
+        return;
+    }
+
+    const button = $container.find('.modern-desktop-window-menu-button')[0];
+    const titlebar = $container.find('.modern-desktop-window-titlebar')[0];
+    const windowId = $container.attr('data-window-id');
+    if (!button || !titlebar || !windowId) {
+        return;
+    }
+
+    const $menu = getModernDesktopTitlebarMenuOverlay();
+    const currentlyOpenForWindow = $menu.hasClass('active') && $menu.attr('data-window-id') === windowId;
+
+    hideModernDesktopTitlebarMenu();
+    if (currentlyOpenForWindow) {
+        return;
+    }
+
+    updateModernDesktopMenuLabel($container);
+    setModernDesktopMenuSurfaceInteractivity($container, false);
+
+    const buttonRect = button.getBoundingClientRect();
+    const titlebarRect = titlebar.getBoundingClientRect();
+    $menu.attr('data-window-id', windowId).css({
+        position: 'fixed',
+        left: `${titlebarRect.left}px`,
+        top: `${buttonRect.bottom + 3}px`
+    }).addClass('active');
+
+    const menuWidth = $menu.outerWidth();
+    const menuHeight = $menu.outerHeight();
+    const viewportWidth = $(window).width();
+    const viewportHeight = $(window).height();
+    let left = titlebarRect.left;
+    let top = buttonRect.bottom + 3;
+
+    if (left + menuWidth > viewportWidth - 10) {
+        left = Math.max(10, viewportWidth - menuWidth - 10);
+    }
+
+    if (top + menuHeight > viewportHeight - 10) {
+        top = Math.max(10, titlebarRect.bottom - menuHeight - 3);
+    }
+
+    $menu.css({
+        left: `${left}px`,
+        top: `${top}px`
+    });
+
+    $container.find('.modern-desktop-window-menu-button').addClass('active');
+}
+
+$(document).on('mousedown', function (e) {
+    const $menu = $('#modern-desktop-titlebar-menu-overlay');
+    if (!$menu.length || !$menu.hasClass('active')) {
+        return;
+    }
+
+    if ($(e.target).closest('#modern-desktop-titlebar-menu-overlay, .modern-desktop-window-menu-button').length) {
+        return;
+    }
+
+    hideModernDesktopTitlebarMenu();
+});
+
+function toggleModernDesktopMetroMode(windowIdOrAppId) {
+    const windowData = getRunningWindowData(windowIdOrAppId);
+    if (!isModernDesktopWindowData(windowData)) {
+        return;
+    }
+
+    const $container = windowData.$container;
+
+    if ($container.hasClass('metro-mode')) {
+        const previousState = $container.data('desktopModernPrevState') || {};
+
+        $container.removeClass('metro-mode');
+        $container.css({
+            left: previousState.left || '',
+            top: previousState.top || '',
+            width: previousState.width || '',
+            height: previousState.height || ''
+        });
+
+        if (previousState.isMaximized) {
+            $container.addClass('maximized');
+            setClassicWindowMaximizeButtonState($container, true);
+        } else {
+            setClassicWindowMaximizeButtonState($container, false);
+        }
+
+        if (previousState.isSnapped) {
+            $container.addClass('snapped');
+            if (previousState.snapZone === 'left') {
+                $container.addClass('snapped-left');
+            } else if (previousState.snapZone === 'right') {
+                $container.addClass('snapped-right');
+            }
+            $container.data('isSnapped', true);
+            $container.data('snapZone', previousState.snapZone);
+            if (previousState.preSnapState) {
+                $container.data('preSnapState', previousState.preSnapState);
+            }
+        } else {
+            $container.removeClass('snapped snapped-left snapped-right');
+            $container.removeData('isSnapped');
+            $container.removeData('snapZone');
+            $container.removeData('preSnapState');
+        }
+
+        if (previousState.prevState) {
+            $container.data('prevState', previousState.prevState);
+        } else {
+            $container.removeData('prevState');
+        }
+
+        $container.removeData('desktopModernPrevState');
+    } else {
+        $container.data('desktopModernPrevState', {
+            left: $container.css('left'),
+            top: $container.css('top'),
+            width: $container.css('width'),
+            height: $container.css('height'),
+            isMaximized: $container.hasClass('maximized'),
+            isSnapped: !!$container.data('isSnapped'),
+            snapZone: $container.data('snapZone') || null,
+            preSnapState: $container.data('preSnapState') || null,
+            prevState: $container.data('prevState') || null
+        });
+
+        $container.removeClass('maximized snapped snapped-left snapped-right');
+        $container.removeData('isSnapped');
+        $container.removeData('snapZone');
+        $container.removeData('preSnapState');
+        setClassicWindowMaximizeButtonState($container, false);
+        $container.addClass('metro-mode');
+    }
+
+    updateModernDesktopMenuLabel($container);
+    updateDesktopModernMetroModeBodyState();
+    hideModernDesktopTitlebarMenu();
+    focusClassicWindow(windowData.windowId);
+}
+
 // Open a classic app window
 function openClassicApp(app, launchOptions = {}) {
     if (!app.path) {
-        console.error('Classic app missing path:', app.id);
+        console.error('Desktop app missing path:', app.id);
         return;
     }
 
@@ -4824,11 +5512,16 @@ function openClassicApp(app, launchOptions = {}) {
     // Check if app supports multiple windows
     const allowMultipleWindows = app.allowMultipleWindows === true;
     const isBackgroundPreload = !!launchOptions.preloadInBackground;
+    const isModernDesktopApp = app.type === 'modern' && launchOptions.modernDesktopMode === true;
 
-    // If app doesn't support multiple windows and is already running, just focus it
+    // If app doesn't support multiple windows and is already running, restore or focus it
     if (!allowMultipleWindows && AppsManager.isAppRunning(app.id)) {
-        console.log('Classic app already running, focusing:', app.id);
-        focusClassicWindow(app.id);
+        console.log('Desktop app already running, restoring or focusing:', app.id);
+        if (AppsManager.getAppState(app.id) === 'minimized') {
+            restoreClassicWindow(app.id);
+        } else {
+            focusClassicWindow(app.id);
+        }
         return;
     }
 
@@ -4842,7 +5535,7 @@ function openClassicApp(app, launchOptions = {}) {
     }
     launchingApps.set(app.id, now);
 
-    console.log('Loading classic app from:', app.path, allowMultipleWindows ? '(multiple windows allowed)' : '');
+    console.log('Loading desktop app from:', app.path, allowMultipleWindows ? '(multiple windows allowed)' : '');
 
     // Get window options with defaults
     const options = getClassicWindowOptions(app);
@@ -4854,6 +5547,9 @@ function openClassicApp(app, launchOptions = {}) {
     const $container = $('<div class="classic-app-container"></div>');
     $container.attr('data-app-id', app.id);
     $container.data('classicWindowReady', !shouldDeferReveal);
+    if (isModernDesktopApp) {
+        $container.addClass('modern-desktop-app-container');
+    }
 
     if (isBackgroundPreload) {
         $container.addClass('inactive');
@@ -4872,15 +5568,52 @@ function openClassicApp(app, launchOptions = {}) {
     }
 
     // Create titlebar
+    let $titlebarTrigger = null;
     const $titlebar = $('<div class="classic-window-titlebar"></div>');
+    if (isModernDesktopApp) {
+        $titlebarTrigger = $('<div class="modern-desktop-window-titlebar-trigger"></div>');
+        $titlebar.addClass('modern-desktop-window-titlebar');
+    }
 
     // Create title section
     const $title = $('<div class="classic-window-title"></div>');
-    const classicTitleIcon = AppsManager.getIconImage(app, 16);
+    let classicTitleIcon = AppsManager.getIconImage(app, 16);
+    let titlePlateClass = '';
+    let $menuButton = null;
+    if (isModernDesktopApp) {
+        const modernIconModel = getModernAppTitlebarIconModel(app, 16);
+        classicTitleIcon = modernIconModel.titleIcon;
+        titlePlateClass = modernIconModel.plateClass;
+        $title.addClass('modern-desktop-window-title');
+
+        $menuButton = $(`
+            <button class="modern-desktop-window-menu-button" type="button" title="App options" aria-label="App options">
+                ...
+            </button>
+        `);
+
+        $menuButton.on('mousedown', function (e) {
+            e.stopPropagation();
+        });
+
+        $menuButton.on('click', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            showModernDesktopTitlebarMenu($container);
+        });
+    }
+
     if (options.showIcon !== false && (classicTitleIcon || app.icon)) {
         const $icon = $('<span class="classic-window-icon"></span>');
+        if (isModernDesktopApp) {
+            $icon.addClass('modern-desktop-window-icon');
+        }
+        if (titlePlateClass) {
+            $icon.addClass(titlePlateClass);
+        }
         if (classicTitleIcon) {
-            $icon.append(`<img src="${classicTitleIcon}" alt="">`);
+            const imageStyle = titlePlateClass ? 'style="object-fit: cover; width: 100%; height: 100%;"' : '';
+            $icon.append(`<img src="${classicTitleIcon}" alt="" ${imageStyle}>`);
         } else if (app.icon) {
             $icon.append(`<span class="${app.icon}"></span>`);
         }
@@ -4888,6 +5621,11 @@ function openClassicApp(app, launchOptions = {}) {
     } else {
         $title.addClass('no-icon');
     }
+
+    if (isModernDesktopApp) {
+        $title.append($menuButton);
+    }
+
     $title.append(`<span class="classic-window-name">${app.name}</span>`);
 
     // Create controls section
@@ -4945,6 +5683,10 @@ function openClassicApp(app, launchOptions = {}) {
     $controls.append($minimizeBtn);
     $controls.append($maximizeBtn);
     $controls.append($closeBtn);
+
+    if (isModernDesktopApp) {
+        updateModernDesktopMenuLabel($container);
+    }
 
     // Assemble titlebar
     $titlebar.append($title);
@@ -5165,6 +5907,9 @@ function openClassicApp(app, launchOptions = {}) {
     }
 
     // Assemble container
+    if ($titlebarTrigger) {
+        $container.append($titlebarTrigger);
+    }
     $container.append($titlebar);
     $container.append($content);
 
@@ -5390,6 +6135,11 @@ async function closeClassicApp(windowIdOrAppId) {
         return;
     }
 
+    const $modernDesktopMenu = $('#modern-desktop-titlebar-menu-overlay');
+    if (isModernDesktopWindowData(windowData) && $modernDesktopMenu.attr('data-window-id') === windowId) {
+        hideModernDesktopTitlebarMenu();
+    }
+
     if (shouldRecycleExplorerWindow(windowData)) {
         recycleExplorerWindow(windowData);
         return;
@@ -5433,6 +6183,8 @@ async function closeClassicApp(windowIdOrAppId) {
         if (activeClassicWindow === windowId) {
             activeClassicWindow = null;
         }
+
+        updateDesktopModernMetroModeBodyState();
     }, 150);
 }
 
@@ -5511,6 +6263,10 @@ function focusClassicWindow(windowIdOrAppId) {
     }
 
     if (!windowData) return;
+
+    if (!isModernDesktopWindowData(windowData)) {
+        hideModernDesktopTitlebarMenu();
+    }
 
     const $container = windowData.$container;
 
@@ -5666,6 +6422,10 @@ function minimizeClassicWindow(windowIdOrAppId) {
     if (!windowData) return;
 
     const $container = windowData.$container;
+    const $modernDesktopMenu = $('#modern-desktop-titlebar-menu-overlay');
+    if (isModernDesktopWindowData(windowData) && $modernDesktopMenu.attr('data-window-id') === windowId) {
+        hideModernDesktopTitlebarMenu();
+    }
     let restoreOffsets = null;
 
     // Get the taskbar icon position
@@ -5718,6 +6478,7 @@ function minimizeClassicWindow(windowIdOrAppId) {
 
         // Update window state
         AppsManager.setWindowState(windowId, 'minimized');
+        updateDesktopModernMetroModeBodyState();
 
         console.log('Classic window minimized:', windowId);
     }, 200); // Match the animation duration in CSS
@@ -5791,6 +6552,7 @@ function restoreClassicWindow(windowIdOrAppId) {
 
     // Show the window and add restoring animation
     $container.removeClass('launch-deferred').show().addClass('restoring');
+    updateDesktopModernMetroModeBodyState();
 
     // Wait for animation to complete
     setTimeout(function () {
@@ -5939,6 +6701,10 @@ function initClassicWindowDrag($container, $titlebar) {
 
     // Add double-click to maximize/restore
     $titlebar.on('dblclick', function (e) {
+        if ($container.hasClass('metro-mode')) {
+            return;
+        }
+
         // Don't maximize if clicking on buttons
         if ($(e.target).closest('.classic-window-control-btn').length) {
             return;
@@ -5952,6 +6718,10 @@ function initClassicWindowDrag($container, $titlebar) {
     });
 
     $titlebar.on('mousedown', function (e) {
+        if ($container.hasClass('metro-mode')) {
+            return;
+        }
+
         // Don't drag if clicking on buttons
         if ($(e.target).closest('.classic-window-control-btn').length) {
             return;
@@ -6323,6 +7093,10 @@ function initClassicWindowResize($container) {
     const $iframe = $container.find('.classic-window-iframe');
 
     $container.find('.classic-window-resize-handle').on('mousedown', function (e) {
+        if ($container.hasClass('metro-mode')) {
+            return;
+        }
+
         isResizing = true;
         resizeDirection = $(this).attr('class').split(' ')[1];
         startX = e.clientX;
@@ -6396,6 +7170,10 @@ function initClassicWindowResize($container) {
 function applyTaskbarSettings(settings) {
     console.log('Applying taskbar settings:', settings);
 
+    if (settings.thresholdFeaturesEnabled !== undefined) {
+        setThresholdFeaturesEnabled(settings.thresholdFeaturesEnabled);
+    }
+
     // Update taskbar lock state
     if (settings.locked !== undefined) {
         setTaskbarLocked(settings.locked);
@@ -6416,6 +7194,18 @@ function applyTaskbarSettings(settings) {
 
     if (settings.showTaskViewButton !== undefined) {
         setTaskbarTaskViewButtonVisible(settings.showTaskViewButton);
+    }
+
+    if (settings.showNotificationCenterIcon !== undefined) {
+        setTaskbarNotificationCenterIconVisible(settings.showNotificationCenterIcon);
+    }
+
+    if (settings.openMetroAppsOnDesktop !== undefined) {
+        setDesktopModernAppsEnabled(settings.openMetroAppsOnDesktop);
+    }
+
+    if (settings.useModernWindowStyling !== undefined) {
+        setModernWindowStylingEnabled(settings.useModernWindowStyling);
     }
 
     if (settings.taskbarButtons) {
@@ -6787,23 +7577,26 @@ $(document).ready(function () {
             // If app is already active, minimize it (only if minimizable)
             const windowOptions = app.windowOptions || {};
             const isMinimizable = windowOptions.minimizable !== false;
+            const usesDesktopWindowBehavior = isModernDesktopWindow(appId) ||
+                app.type === 'meta-classic' ||
+                app.type === 'classic';
 
             if (!isMinimizable) {
                 console.log('Cannot minimize app - minimize is disabled:', appId);
                 return;
             }
 
-            if (app.type === 'modern') {
-                minimizeModernApp(appId);
-            } else if (app.type === 'meta-classic' || app.type === 'classic') {
+            if (usesDesktopWindowBehavior) {
                 minimizeClassicWindow(appId);
+            } else if (app.type === 'modern') {
+                minimizeModernApp(appId);
             }
         } else if (appState === 'minimized') {
             // If app is minimized, restore it
-            if (app.type === 'modern') {
-                restoreModernApp(appId);
-            } else if (app.type === 'meta-classic' || app.type === 'classic') {
+            if (isModernDesktopWindow(appId) || app.type === 'meta-classic' || app.type === 'classic') {
                 restoreClassicWindow(appId);
+            } else if (app.type === 'modern') {
+                restoreModernApp(appId);
             }
         }
     });
@@ -7439,9 +8232,7 @@ function getActiveModernRunningApp() {
     }
 
     return AppsManager.getRunningApps().find(runningApp =>
-        runningApp.app &&
-        runningApp.app.type === 'modern' &&
-        AppsManager.getAppState(runningApp.app.id) === 'active'
+        isFullscreenModernWindowData(runningApp) && runningApp.state === 'active'
     ) || null;
 }
 
@@ -10502,6 +11293,8 @@ function signOut() {
             // Unregister the app
             AppsManager.unregisterRunningApp(appId);
         });
+
+        updateDesktopModernMetroModeBodyState();
 
         console.log('All apps closed. Fading to black...');
 

@@ -73,7 +73,8 @@ body.taskbar-autohide .taskbar {
 
 /* Hide taskbar hint completely on start screen and modern apps */
 body.taskbar-autohide.view-start .taskbar,
-body.taskbar-autohide.view-modern .taskbar {
+body.taskbar-autohide.view-modern .taskbar,
+body.desktop-modern-metro-mode .taskbar {
     transform: translateY(100%);
 }
 
@@ -309,6 +310,10 @@ body.start-menu-open .floating-start-button:hover {
 }
 
 .taskbar-shell-button.is-hidden {
+    display: none;
+}
+
+.system-icon.is-hidden {
     display: none;
 }
 
@@ -610,8 +615,7 @@ body.taskbar-small-icons .notification-center-icon {
     background: #fff;
     border: 1px solid #d5d5d5;
     box-shadow:
-        0 25px 70px rgba(0, 0, 0, 0.22),
-        0 6px 16px rgba(0, 0, 0, 0.2);
+        0 10px 40px rgba(0, 0, 0, 0.22);
     opacity: 0;
     pointer-events: none;
     transform: translateY(10px);
@@ -642,8 +646,7 @@ body.taskbar-small-icons .notification-center-icon {
     flex: 1;
 }
 
-.notification-center-panel-clear,
-.notification-center-panel-close {
+.notification-center-panel-clear {
     border: none;
     background: transparent;
     color: #8a8a8a;
@@ -652,20 +655,29 @@ body.taskbar-small-icons .notification-center-icon {
 }
 
 .notification-center-panel-clear {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
     font-size: 11px;
     text-transform: uppercase;
+    padding: 4px 6px;
+    border-radius: 2px;
 }
 
-.notification-center-panel-close {
-    width: 16px;
-    font-size: 25px;
-    line-height: 1;
-    margin-top: -4px;
-}
-
-.notification-center-panel-clear:hover,
-.notification-center-panel-close:hover {
+.notification-center-panel-clear:hover {
     color: #4b4b4b;
+    background: #f0f0f0;
+}
+
+.notification-center-panel-clear:active {
+    background: #e0e0e0;
+    color: #3b3b3b;
+}
+
+.notification-center-panel-clear-icon {
+    font-size: 14px;
+    line-height: 1;
+    margin-top: -1px;
 }
 
 .notification-center-panel-clear:disabled {
@@ -724,34 +736,78 @@ body.taskbar-small-icons .notification-center-icon {
 }
 
 .notification-center-item {
-    padding: 0 12px 12px;
+    position: relative;
+    padding: 0 0 8px;
     color: #111;
-}
-
-.notification-center-section--with-icon .notification-center-item {
-    padding-left: 44px;
+    touch-action: pan-y;
 }
 
 .notification-center-item-button {
     width: 100%;
     border: none;
     background: transparent;
-    padding: 0;
+    padding: 4px 34px 6px 12px;
     text-align: left;
     color: inherit;
     font: inherit;
+    display: block;
+    border-radius: 2px;
+    transition: background-color 0.14s ease, opacity 0.14s ease;
 }
 
-.notification-center-item-button:not(:disabled) {
-    cursor: pointer;
+.notification-center-item:hover .notification-center-item-button,
+.notification-center-item:focus-within .notification-center-item-button,
+.notification-center-item.notification-center-item--dragging .notification-center-item-button {
+    background: #f3f3f3;
 }
 
-.notification-center-item-button:not(:disabled):hover .notification-center-item-title {
-    text-decoration: underline;
+.notification-center-section--with-icon .notification-center-item-button {
+    padding-left: 44px;
 }
 
-.notification-center-item-button:disabled {
-    cursor: default;
+.notification-center-item.notification-center-item--dragging {
+    z-index: 1;
+}
+
+.notification-center-item.notification-center-item--dragging .notification-center-item-button {
+    transition: background-color 0.14s ease;
+}
+
+.notification-center-item-dismiss {
+    position: absolute;
+    top: 4px;
+    right: 8px;
+    width: 24px;
+    height: 24px;
+    border: none;
+    background: transparent;
+    color: #6d6d6d;
+    border-radius: 2px;
+    opacity: 0;
+    transform: translateX(6px);
+    pointer-events: none;
+    transition: opacity 0.14s ease, transform 0.14s ease, background-color 0.14s ease, color 0.14s ease;
+    z-index: 2;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .notification-center-item:hover .notification-center-item-dismiss,
+    .notification-center-item:focus-within .notification-center-item-dismiss,
+    .notification-center-item.notification-center-item--dragging .notification-center-item-dismiss {
+        opacity: 1;
+        transform: translateX(0);
+        pointer-events: auto;
+    }
+}
+
+.notification-center-item-dismiss:hover {
+    background: #e7e7e7;
+    color: #2f2f2f;
+}
+
+.notification-center-item-dismiss:active {
+    background: #d9d9d9;
+    color: #1f1f1f;
 }
 
 .notification-center-item-topline {
@@ -771,6 +827,15 @@ body.taskbar-small-icons .notification-center-icon {
     font-size: 11px;
     font-weight: 600;
     white-space: nowrap;
+    transition: transform 0.14s ease, opacity 0.14s ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .notification-center-item:hover .notification-center-item-time,
+    .notification-center-item:focus-within .notification-center-item-time {
+        transform: translateX(-18px);
+        opacity: 0.7;
+    }
 }
 
 .notification-center-item-description {
@@ -1109,10 +1174,9 @@ body.taskbar-small-icons .notification-center-icon {
 
     background: var(--ui-wall-color);
     box-sizing: border-box;
-    padding: 8px;
+    padding: 6px .5px .5px .5px;
     box-shadow:
-        0 0 3px rgba(0, 0, 0, 0.2),
-        inset 0 0 0 1px rgba(0, 0, 0, 0.2);
+        0 10px 40px rgba(0, 0, 0, 0.2);
 
     z-index: 200010;
 
@@ -1120,6 +1184,7 @@ body.taskbar-small-icons .notification-center-icon {
     opacity: 0;
     transform: translateY(20px);
     pointer-events: none;
+    overflow: hidden;
 
     /* Animation properties */
     transition: opacity 0.15s ease-out, transform 0.15s ease-out;
@@ -1289,6 +1354,10 @@ body.taskbar-small-icons .notification-center-icon {
 /* Show trigger when allowed (same conditions as charms bar) */
 body.charms-allowed .start-button-trigger.bottom-left {
     display: block;
+}
+
+body.desktop-modern-metro-mode .start-button-trigger.bottom-left {
+    display: none;
 }
 
 /* Hide trigger when taskbar is permanently visible (not autohidden) on desktop */

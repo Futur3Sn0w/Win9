@@ -17,7 +17,7 @@
         <div class="tab-header">
             <div class="tab-item active" data-tab="taskbar">Taskbar</div>
             <div class="tab-item" data-tab="navigation">Navigation</div>
-            <div class="tab-item" data-tab="start-menu">Start Menu</div>
+            <div class="tab-item" data-tab="start-menu">Threshold</div>
         </div>
 
         <div class="tab-content">
@@ -105,10 +105,46 @@
 
             <div class="tab-pane" id="start-menu-tab">
                 <div class="property-section bordered">
+                    <h3>Threshold</h3>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="threshold-features-enabled" checked>
+                        <label for="threshold-features-enabled">Use Threshold features</label>
+                    </div>
+                </div>
+
+                <div class="property-section bordered">
                     <h3>Start Menu</h3>
                     <div class="checkbox-item">
                         <input type="checkbox" id="use-start-menu">
                         <label for="use-start-menu">Use the Start menu instead of the Start screen</label>
+                    </div>
+                </div>
+
+                <div class="property-section bordered">
+                    <h3>Taskbar</h3>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="show-search-button" checked>
+                        <label for="show-search-button">Show search button</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="show-task-view-button" checked>
+                        <label for="show-task-view-button">Show Task View button</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="show-notification-center-icon" checked>
+                        <label for="show-notification-center-icon">Show Notifications icon</label>
+                    </div>
+                </div>
+
+                <div class="property-section bordered">
+                    <h3>Shell</h3>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="open-metro-apps-on-desktop">
+                        <label for="open-metro-apps-on-desktop">Windowed Metro apps</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="use-modern-window-styling" checked>
+                        <label for="use-modern-window-styling">Modern window visual style</label>
                     </div>
                 </div>
             </div>
@@ -141,21 +177,21 @@
                 }
             }
 
-                if (typeof window !== 'undefined' && typeof window.require === 'function') {
-                    try {
-                        return window.require('../../../registry/registry.js');
-                    } catch (error) {
-                        console.warn('[Taskbar Properties] Unable to load registry module via window.require:', error);
-                    }
+            if (typeof window !== 'undefined' && typeof window.require === 'function') {
+                try {
+                    return window.require('../../../registry/registry.js');
+                } catch (error) {
+                    console.warn('[Taskbar Properties] Unable to load registry module via window.require:', error);
                 }
+            }
 
-                if (typeof require === 'function') {
-                    try {
-                        return require('../../../registry/registry.js');
-                    } catch (error) {
-                        console.warn('[Taskbar Properties] Unable to load registry module via require:', error);
-                    }
+            if (typeof require === 'function') {
+                try {
+                    return require('../../../registry/registry.js');
+                } catch (error) {
+                    console.warn('[Taskbar Properties] Unable to load registry module via require:', error);
                 }
+            }
 
             return null;
         }
@@ -195,6 +231,12 @@
         }
         const STUCKRECTS2_PATH = 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\StuckRects2';
         const ADVANCED_PATH = 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced';
+        const TASKBAR_SHOW_SEARCH_BUTTON_VALUE_NAME = 'ShowSearchButton';
+        const TASKBAR_SHOW_TASK_VIEW_BUTTON_VALUE_NAME = 'ShowTaskViewButton';
+        const TASKBAR_SHOW_NOTIFICATION_CENTER_ICON_VALUE_NAME = 'ShowNotificationCenterIcon';
+        const TASKBAR_USE_MODERN_WINDOW_STYLING_VALUE_NAME = 'UseModernWindowStyling';
+        const TASKBAR_THRESHOLD_FEATURES_ENABLED_VALUE_NAME = 'ThresholdFeaturesEnabled';
+        const TASKBAR_OPEN_METRO_APPS_ON_DESKTOP_VALUE_NAME = 'OpenMetroAppsOnDesktop';
         // Navigation settings registry paths
         const REGISTRY_PATHS = {
             edgeUI: 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\ImmersiveShell\\EdgeUI',
@@ -231,6 +273,23 @@
         const CONTROL_SELECTOR = 'input[type="checkbox"], select';
         let initialSettingsSnapshot = null;
 
+        function updateThresholdControlAvailability() {
+            const thresholdFeaturesEnabled = document.getElementById('threshold-features-enabled').checked;
+            [
+                'use-start-menu',
+                'show-search-button',
+                'show-task-view-button',
+                'show-notification-center-icon',
+                'open-metro-apps-on-desktop',
+                'use-modern-window-styling'
+            ].forEach(id => {
+                const control = document.getElementById(id);
+                if (control) {
+                    control.disabled = !thresholdFeaturesEnabled;
+                }
+            });
+        }
+
         function getCurrentSettingsSnapshot() {
             return {
                 lockTaskbar: document.getElementById('lock-taskbar').checked,
@@ -245,7 +304,13 @@
                 showAppsViewOnStart: document.getElementById('show-apps-view').checked,
                 searchEverywhereFromApps: document.getElementById('search-everywhere').checked,
                 listDesktopAppsFirst: document.getElementById('list-desktop-apps-first').checked,
-                useStartMenu: document.getElementById('use-start-menu').checked
+                thresholdFeaturesEnabled: document.getElementById('threshold-features-enabled').checked,
+                useStartMenu: document.getElementById('use-start-menu').checked,
+                showSearchButton: document.getElementById('show-search-button').checked,
+                showTaskViewButton: document.getElementById('show-task-view-button').checked,
+                showNotificationCenterIcon: document.getElementById('show-notification-center-icon').checked,
+                openMetroAppsOnDesktop: document.getElementById('open-metro-apps-on-desktop').checked,
+                useModernWindowStyling: document.getElementById('use-modern-window-styling').checked
             };
         }
 
@@ -398,6 +463,25 @@
                         registry.setValue(ADVANCED_PATH, 'TaskbarGlomLevel', mapped, RegistryType.REG_DWORD);
                     }
                 }
+
+                document.getElementById('show-search-button').checked = Number(
+                    registry.getValue(ADVANCED_PATH, TASKBAR_SHOW_SEARCH_BUTTON_VALUE_NAME, 1)
+                ) !== 0;
+                document.getElementById('show-task-view-button').checked = Number(
+                    registry.getValue(ADVANCED_PATH, TASKBAR_SHOW_TASK_VIEW_BUTTON_VALUE_NAME, 1)
+                ) !== 0;
+                document.getElementById('show-notification-center-icon').checked = Number(
+                    registry.getValue(ADVANCED_PATH, TASKBAR_SHOW_NOTIFICATION_CENTER_ICON_VALUE_NAME, 1)
+                ) !== 0;
+                document.getElementById('open-metro-apps-on-desktop').checked = Number(
+                    registry.getValue(ADVANCED_PATH, TASKBAR_OPEN_METRO_APPS_ON_DESKTOP_VALUE_NAME, 0)
+                ) !== 0;
+                document.getElementById('use-modern-window-styling').checked = Number(
+                    registry.getValue(ADVANCED_PATH, TASKBAR_USE_MODERN_WINDOW_STYLING_VALUE_NAME, 1)
+                ) !== 0;
+                document.getElementById('threshold-features-enabled').checked = Number(
+                    registry.getValue(ADVANCED_PATH, TASKBAR_THRESHOLD_FEATURES_ENABLED_VALUE_NAME, 1)
+                ) !== 0;
             } catch (error) {
                 console.error('Failed to load advanced taskbar settings from registry:', error);
             }
@@ -410,6 +494,7 @@
             document.getElementById('search-everywhere').checked = navigationSettings.searchEverywhereFromApps;
             document.getElementById('list-desktop-apps-first').checked = navigationSettings.listDesktopAppsFirst;
             document.getElementById('use-start-menu').checked = navigationSettings.useStartMenu;
+            updateThresholdControlAvailability();
 
             initialSettingsSnapshot = getCurrentSettingsSnapshot();
             setApplyButtonDisabled(true);
@@ -417,6 +502,7 @@
             document.querySelectorAll(CONTROL_SELECTOR).forEach(control => {
                 control.addEventListener('change', refreshApplyButtonState);
             });
+            document.getElementById('threshold-features-enabled').addEventListener('change', updateThresholdControlAvailability);
         });
 
         // Apply button handler
@@ -448,7 +534,13 @@
             const showAppsView = document.getElementById('show-apps-view').checked;
             const searchEverywhere = document.getElementById('search-everywhere').checked;
             const listDesktopAppsFirst = document.getElementById('list-desktop-apps-first').checked;
+            const thresholdFeaturesEnabled = document.getElementById('threshold-features-enabled').checked;
             const useStartMenu = document.getElementById('use-start-menu').checked;
+            const showSearchButton = document.getElementById('show-search-button').checked;
+            const showTaskViewButton = document.getElementById('show-task-view-button').checked;
+            const showNotificationCenterIcon = document.getElementById('show-notification-center-icon').checked;
+            const openMetroAppsOnDesktop = document.getElementById('open-metro-apps-on-desktop').checked;
+            const useModernWindowStyling = document.getElementById('use-modern-window-styling').checked;
 
             // Save taskbar settings to registry (StuckRects2)
             try {
@@ -482,11 +574,20 @@
                 const encoded = encodeStuckRects2(taskbarSettings);
                 const encodedArray = Array.from(encoded);
                 registry.setValue(STUCKRECTS2_PATH, 'Settings', encodedArray, RegistryType.REG_BINARY);
+
+                registry.setValue(ADVANCED_PATH, 'TaskbarSmallIcons', smallIcons ? 1 : 0, RegistryType.REG_DWORD);
+                registry.setValue(ADVANCED_PATH, 'TaskbarGlomLevel', BUTTONS_TO_GLOM[taskbarButtons] ?? 0, RegistryType.REG_DWORD);
+                registry.setValue(ADVANCED_PATH, TASKBAR_SHOW_SEARCH_BUTTON_VALUE_NAME, showSearchButton ? 1 : 0, RegistryType.REG_DWORD);
+                registry.setValue(ADVANCED_PATH, TASKBAR_SHOW_TASK_VIEW_BUTTON_VALUE_NAME, showTaskViewButton ? 1 : 0, RegistryType.REG_DWORD);
+                registry.setValue(ADVANCED_PATH, TASKBAR_SHOW_NOTIFICATION_CENTER_ICON_VALUE_NAME, showNotificationCenterIcon ? 1 : 0, RegistryType.REG_DWORD);
+                registry.setValue(ADVANCED_PATH, TASKBAR_OPEN_METRO_APPS_ON_DESKTOP_VALUE_NAME, openMetroAppsOnDesktop ? 1 : 0, RegistryType.REG_DWORD);
+                registry.setValue(ADVANCED_PATH, TASKBAR_USE_MODERN_WINDOW_STYLING_VALUE_NAME, useModernWindowStyling ? 1 : 0, RegistryType.REG_DWORD);
+                registry.setValue(ADVANCED_PATH, TASKBAR_THRESHOLD_FEATURES_ENABLED_VALUE_NAME, thresholdFeaturesEnabled ? 1 : 0, RegistryType.REG_DWORD);
             } catch (error) {
                 console.error('Failed to save taskbar settings to registry:', error);
             }
 
-        // Save navigation settings to registry
+            // Save navigation settings to registry
             try {
                 const registry = getRegistry();
 
@@ -517,9 +618,15 @@
             window.parent.postMessage({
                 action: 'applyTaskbarSettings',
                 settings: {
+                    thresholdFeaturesEnabled: thresholdFeaturesEnabled,
                     locked: lockTaskbar,
                     autoHide: autoHide,
                     smallIcons: smallIcons,
+                    showSearchButton: showSearchButton,
+                    showTaskViewButton: showTaskViewButton,
+                    showNotificationCenterIcon: showNotificationCenterIcon,
+                    openMetroAppsOnDesktop: openMetroAppsOnDesktop,
+                    useModernWindowStyling: useModernWindowStyling,
                     location: location,
                     taskbarButtons: taskbarButtons,
                     navigation: {

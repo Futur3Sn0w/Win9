@@ -13,13 +13,18 @@
     const BASE_ICON_PATH = 'resources/images/icons/explorer/';
 
     const ICON_SIZE_AVAILABILITY = {
-        'recycle_bin/empty': [16, 24, 32, 48, 256],
-        'recycle_bin/full': [16, 24, 32, 48, 256],
+        'bat': [16, 32, 48, 256],
+        'dll': [16, 32, 48, 256],
+        'generic_program': [16, 20, 24, 32, 40, 48, 64, 256],
+        'recycle_bin/empty': [16, 20, 24, 32, 40, 48, 64, 80, 96, 128, 256],
+        'recycle_bin/full': [16, 20, 24, 32, 40, 48, 64, 80, 96, 128, 256],
         'folder_home': [16, 20, 24, 32, 40, 48, 64, 80, 96, 768],
         'generic_folder': [16, 32, 48],
         'homegroup': [16, 20, 24, 32, 40, 48, 64, 80, 96, 256, 512, 768],
         'image/png': [16, 32, 48],
         'image/jpg': [16, 32, 48],
+        'ini': [16, 32, 48, 256],
+        'iso': [16, 24, 32, 48, 256],
         'video': [16, 32, 48],
         'music': [16, 32, 48],
         'zip': [16, 32, 48],
@@ -28,6 +33,9 @@
     };
 
     const ICON_DIRECTORY_BY_CATEGORY = {
+        'bat': 'bat',
+        'dll': 'dll',
+        'generic_program': 'generic_program',
         'recycle_bin/empty': 'recycle_bin/empty',
         'recycle_bin/full': 'recycle_bin/full',
         'folder_home': 'folder_home',
@@ -35,6 +43,8 @@
         'homegroup': 'homegroup',
         'image/png': 'image/png',
         'image/jpg': 'image/jpg',
+        'ini': 'ini',
+        'iso': 'iso',
         'video': 'video',
         'music': 'music',
         'zip': 'zip',
@@ -88,15 +98,16 @@
     }
 
     function getDesiredIconResourceSize(displaySize = 48) {
-        if (displaySize <= 56) {
-            return 48;
-        }
+        const normalizedDisplaySize = Number(displaySize);
+        const targetSize = Number.isFinite(normalizedDisplaySize) && normalizedDisplaySize > 0
+            ? normalizedDisplaySize
+            : 48;
 
-        if (displaySize <= 84) {
-            return 64;
-        }
-
-        return 96;
+        // Favor the next icon resource size at or above the rendered size so desktop
+        // icons stay sharper on scaled displays instead of upscaling a smaller asset.
+        return AVAILABLE_ICON_SIZES.find(size => size >= targetSize)
+            || AVAILABLE_ICON_SIZES[AVAILABLE_ICON_SIZES.length - 1]
+            || 48;
     }
 
     function getAvailableSizes(iconCategory) {
@@ -162,6 +173,26 @@
 
         if (['zip', 'rar', '7z', 'tar', 'gz', 'bz2', 'xz'].includes(extension)) {
             return 'zip';
+        }
+
+        if (['exe', 'app'].includes(extension)) {
+            return 'generic_program';
+        }
+
+        if (['bat', 'cmd'].includes(extension)) {
+            return 'bat';
+        }
+
+        if (extension === 'dll') {
+            return 'dll';
+        }
+
+        if (extension === 'ini') {
+            return 'ini';
+        }
+
+        if (extension === 'iso') {
+            return 'iso';
         }
 
         if (extension === 'txt') {

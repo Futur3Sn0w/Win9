@@ -129,8 +129,13 @@
       "path": "apps/classic/control/control-panel.html",
       "iconImages": {
         "16": "apps/classic/control/icons/16.png",
-        "40": "apps/classic/control/icons/32.png",
-        "64": "apps/classic/control/icons/256.png"
+        "20": "apps/classic/control/icons/20.png",
+        "24": "apps/classic/control/icons/24.png",
+        "32": "apps/classic/control/icons/32.png",
+        "40": "apps/classic/control/icons/40.png",
+        "48": "apps/classic/control/icons/48.png",
+        "64": "apps/classic/control/icons/64.png",
+        "256": "apps/classic/control/icons/256.png"
       },
       "showInStart": true,
       "windowOptions": {
@@ -231,7 +236,11 @@
       "path": "apps/modern/calculator-modern/index.html",
       "showInStart": true,
       "familyId": "calculator",
-      "variant": "modern"
+      "variant": "modern",
+      "tileOptions": {
+        "allowWide": true,
+        "allowLarge": true
+      }
     },
     {
       "id": "notepad",
@@ -327,7 +336,7 @@
       "id": "explorer",
       "name": "File Explorer",
       "icon": "mif-folder-open",
-      "color": "teal",
+      "color": "orange",
       "size": "normal",
       "pinned": true,
       "pinnedToTaskbar": true,
@@ -364,6 +373,112 @@
         "explorer",
         "explorer.exe"
       ]
+    },
+    {
+      "id": "this-pc",
+      "name": "This PC",
+      "color": "blue",
+      "size": "normal",
+      "pinned": false,
+      "category": "system",
+      "type": "classic",
+      "path": "apps/classic/explorer/explorer.html",
+      "allowMultipleWindows": true,
+      "useWebview": true,
+      "iconImages": {
+        "16": "resources/images/icons/explorer/this_pc/16.png",
+        "20": "resources/images/icons/explorer/this_pc/20.png",
+        "24": "resources/images/icons/explorer/this_pc/24.png",
+        "32": "resources/images/icons/explorer/this_pc/32.png",
+        "40": "resources/images/icons/explorer/this_pc/40.png",
+        "48": "resources/images/icons/explorer/this_pc/48.png",
+        "64": "resources/images/icons/explorer/this_pc/64.png",
+        "80": "resources/images/icons/explorer/this_pc/80.png",
+        "96": "resources/images/icons/explorer/this_pc/96.png",
+        "256": "resources/images/icons/explorer/this_pc/256.png",
+        "512": "resources/images/icons/explorer/this_pc/512.png",
+        "768": "resources/images/icons/explorer/this_pc/768.png"
+      },
+      "showInStart": true,
+      "launchTargetAppId": "explorer",
+      "launchOptions": {
+        "openSpecialFolderId": "this-pc"
+      },
+      "windowOptions": {
+        "width": 1000,
+        "height": 650,
+        "resizable": true,
+        "minimizable": true,
+        "maximizable": true,
+        "alwaysOnTop": false,
+        "showInTaskbar": true
+      }
+    },
+    {
+      "id": "documents",
+      "name": "Documents",
+      "color": "grey",
+      "size": "normal",
+      "pinned": false,
+      "category": "system",
+      "type": "classic",
+      "path": "apps/classic/explorer/explorer.html",
+      "allowMultipleWindows": true,
+      "useWebview": true,
+      "iconImages": {
+        "16": "resources/images/icons/explorer/folder_documents/16.png",
+        "24": "resources/images/icons/explorer/folder_documents/24.png",
+        "32": "resources/images/icons/explorer/folder_documents/32.png",
+        "48": "resources/images/icons/explorer/folder_documents/48.png",
+        "256": "resources/images/icons/explorer/folder_documents/256.png"
+      },
+      "showInStart": true,
+      "launchTargetAppId": "explorer",
+      "launchOptions": {
+        "openSpecialFolderId": "documents"
+      },
+      "windowOptions": {
+        "width": 1000,
+        "height": 650,
+        "resizable": true,
+        "minimizable": true,
+        "maximizable": true,
+        "alwaysOnTop": false,
+        "showInTaskbar": true
+      }
+    },
+    {
+      "id": "pictures",
+      "name": "Pictures",
+      "color": "blue",
+      "size": "normal",
+      "pinned": false,
+      "category": "system",
+      "type": "classic",
+      "path": "apps/classic/explorer/explorer.html",
+      "allowMultipleWindows": true,
+      "useWebview": true,
+      "iconImages": {
+        "16": "resources/images/icons/explorer/folder_pictures/16.png",
+        "24": "resources/images/icons/explorer/folder_pictures/24.png",
+        "32": "resources/images/icons/explorer/folder_pictures/32.png",
+        "48": "resources/images/icons/explorer/folder_pictures/48.png",
+        "256": "resources/images/icons/explorer/folder_pictures/256.png"
+      },
+      "showInStart": true,
+      "launchTargetAppId": "explorer",
+      "launchOptions": {
+        "openSpecialFolderId": "pictures"
+      },
+      "windowOptions": {
+        "width": 1000,
+        "height": 650,
+        "resizable": true,
+        "minimizable": true,
+        "maximizable": true,
+        "alwaysOnTop": false,
+        "showInTaskbar": true
+      }
     }
   ]
 }

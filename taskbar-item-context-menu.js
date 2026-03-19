@@ -11,6 +11,25 @@
     let currentAppId = null;
     let currentAppData = null;
     let hideTimeoutId = null;
+    const TASKBAR_CONTEXT_ICON_SIZES = {
+        close: [16, 20, 24, 32],
+        pin: [16, 20, 24, 32, 40, 48, 64, 80, 96, 128, 256],
+        unpin: [16, 20, 24, 32, 40, 48, 64, 80, 96, 128, 256]
+    };
+
+    function getTaskbarContextIconPath(iconName, desiredSize = 16) {
+        const sizes = TASKBAR_CONTEXT_ICON_SIZES[iconName];
+        if (!Array.isArray(sizes) || sizes.length === 0) {
+            return `resources/images/icons/context menus/taskbar/${iconName}/16.png`;
+        }
+
+        const exactSizes = sizes.filter(size => size === desiredSize);
+        const largerSizes = sizes.filter(size => size > desiredSize);
+        const smallerSizes = sizes.filter(size => size < desiredSize).sort((left, right) => right - left);
+        const candidateSize = [...exactSizes, ...largerSizes, ...smallerSizes][0] || 16;
+
+        return `resources/images/icons/context menus/taskbar/${iconName}/${candidateSize}.png`;
+    }
 
     /**
      * Show the context menu for a taskbar item
@@ -156,8 +175,8 @@
             app.type !== 'meta' && app.type !== 'meta-classic';
         if (shouldShowPin) {
             const pinIconPath = isPinnedToTaskbar
-                ? 'resources/images/icons/context menus/taskbar/unpin/16.png'
-                : 'resources/images/icons/context menus/taskbar/pin/16.png';
+                ? getTaskbarContextIconPath('unpin', 16)
+                : getTaskbarContextIconPath('pin', 16);
             const pinText = isPinnedToTaskbar ? 'Unpin this program from taskbar' : 'Pin this program to taskbar';
             items.push(`
                 <button class="taskbar-item-context-menu-item" data-action="pin">
@@ -176,7 +195,7 @@
                 items.push(`
                     <button class="taskbar-item-context-menu-item" data-action="close-all">
                         <span class="taskbar-item-context-menu-item-icon">
-                            <img src="resources/images/icons/context menus/taskbar/close/16.png" alt="" style="width: 16px; height: 16px;" />
+                            <img src="${getTaskbarContextIconPath('close', 16)}" alt="" style="width: 16px; height: 16px;" />
                         </span>
                         <span class="taskbar-item-context-menu-item-text">Close all windows</span>
                     </button>
@@ -186,7 +205,7 @@
                 items.push(`
                     <button class="taskbar-item-context-menu-item" data-action="close">
                         <span class="taskbar-item-context-menu-item-icon">
-                            <img src="resources/images/icons/context menus/taskbar/close/16.png" alt="" style="width: 16px; height: 16px;" />
+                            <img src="${getTaskbarContextIconPath('close', 16)}" alt="" style="width: 16px; height: 16px;" />
                         </span>
                         <span class="taskbar-item-context-menu-item-text">Close window</span>
                     </button>

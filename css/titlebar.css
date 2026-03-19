@@ -8,7 +8,8 @@
     background: #1e1e1e;
     border-bottom: 1px solid #333;
     z-index: 999999;
-    display: none; /* Hidden by default, shown only on macOS */
+    display: none;
+    /* Hidden by default, shown only on macOS */
     user-select: none;
 }
 
@@ -19,7 +20,8 @@ body.platform-darwin .custom-titlebar {
 
 /* Adjust body padding when titlebar is visible */
 body.platform-darwin {
-    padding-top: 33px; /* 32px titlebar + 1px border */
+    padding-top: 33px;
+    /* 32px titlebar + 1px border */
 }
 
 /* Draggable region */
@@ -50,7 +52,8 @@ body.platform-darwin {
     font-size: 13px;
     font-weight: 400;
     opacity: 0.8;
-    margin-left: 70px; /* Space for macOS traffic lights */
+    margin-left: 70px;
+    /* Space for macOS traffic lights */
     -webkit-app-region: no-drag;
 }
 
@@ -70,7 +73,6 @@ body.platform-darwin {
     border: none;
     color: #ffffff;
     opacity: 0.7;
-    cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;

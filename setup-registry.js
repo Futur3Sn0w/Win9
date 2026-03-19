@@ -177,6 +177,34 @@ function seedTaskbarDefaults(registry) {
     Array.from(stuckRects),
     RegistryType.REG_BINARY
   );
+
+  registry.setValue(
+    'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced',
+    'ShowNotificationCenterIcon',
+    1,
+    RegistryType.REG_DWORD
+  );
+
+  registry.setValue(
+    'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced',
+    'UseModernWindowStyling',
+    1,
+    RegistryType.REG_DWORD
+  );
+
+  registry.setValue(
+    'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced',
+    'ThresholdFeaturesEnabled',
+    1,
+    RegistryType.REG_DWORD
+  );
+
+  registry.setValue(
+    'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced',
+    'OpenMetroAppsOnDesktop',
+    0,
+    RegistryType.REG_DWORD
+  );
 }
 
 function seedRegisteredOwner(registry, profile) {

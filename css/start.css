@@ -61,11 +61,32 @@
     padding: 5px 6px 6px 6px;
 }
 
+#start-menu.start-menu--all-apps .start-menu-top,
+#start-menu.start-menu--all-apps .start-menu-left>.start-menu-list-separator,
+#start-menu.start-menu--search .start-menu-top,
+#start-menu.start-menu--search .start-menu-left>.start-menu-list-separator {
+    display: none;
+}
+
+#start-menu.start-menu--search .start-menu-shell {
+    grid-template-columns: minmax(0, 1fr);
+}
+
+#start-menu.start-menu--search .start-menu-left {
+    grid-column: 1 / -1;
+    width: auto;
+    padding-right: 8px;
+}
+
 .start-menu-right {
     min-width: 0;
     overflow: auto;
     padding: 14px 16px 16px;
     background: transparent;
+}
+
+#start-menu.start-menu--search .start-menu-right {
+    display: none;
 }
 
 .start-menu-top {
@@ -117,6 +138,10 @@
     background: transparent;
     color: #fff;
     font-size: 16px;
+
+    & .mif-switch {
+        line-height: 1.5;
+    }
 }
 
 .start-menu-left-scroll {
@@ -131,6 +156,10 @@
     display: flex;
     flex-direction: column;
     gap: 2px;
+}
+
+#start-menu.start-menu--search .start-menu-left-list {
+    gap: 4px;
 }
 
 .start-menu-left-list.entering-all-apps {
@@ -169,9 +198,14 @@
     font: 12px 'Segoe UI', sans-serif;
 }
 
+#start-menu.start-menu--search .start-menu-entry,
+#start-menu.start-menu--search .start-menu-list-separator {
+    width: 100%;
+}
+
 .start-menu-entry--dense {
     grid-template-columns: 28px minmax(0, 1fr);
-    gap: 7px;
+    gap: 4px;
     padding-top: 2px;
     padding-bottom: 2px;
     height: 28px;
@@ -251,6 +285,10 @@
     gap: 8px;
 }
 
+#start-menu.start-menu--search .start-menu-bottom {
+    gap: 0;
+}
+
 .start-menu-all-apps-toggle {
     width: 254px;
     height: 36px;
@@ -264,6 +302,10 @@
     font: 12px 'Segoe UI', sans-serif;
 }
 
+#start-menu.start-menu--search .start-menu-all-apps-toggle {
+    display: none;
+}
+
 .start-menu-search {
     display: flex;
     align-items: center;
@@ -272,6 +314,10 @@
     background: rgba(255, 255, 255, 0.96);
     border: 1px solid rgba(0, 0, 0, 0.3);
     color: #222;
+}
+
+#start-menu.start-menu--search .start-menu-search {
+    width: 100%;
 }
 
 #start-menu-search-input {
@@ -1260,7 +1306,6 @@ body.tiles-compact .tiles {
     color: #fff;
     background: transparent;
     border: none;
-    cursor: pointer;
 
     &:hover,
     &.active {
@@ -1314,6 +1359,8 @@ body.tile-drag-active .tiles__tile,
 .tiles__tile.tile-chosen,
 .tiles__tile.tile-dragging {
     transition: none !important;
+    position: relative;
+    z-index: 100070;
 }
 
 /* The tile being dragged (Sortable.js adds sortable-drag class) */
@@ -1321,6 +1368,8 @@ body.tile-drag-active .tiles__tile,
     opacity: 0.8;
     transition: none !important;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    position: relative;
+    z-index: 100070;
 }
 
 /* Ghost placeholder (Sortable.js) - completely invisible but takes up space */
@@ -1335,6 +1384,7 @@ body.tile-drag-active .tiles__tile,
     transition: none !important;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
     pointer-events: none;
+    z-index: 100070 !important;
 }
 
 /* ===== TILE FLIP ANIMATION (App Launch) ===== */

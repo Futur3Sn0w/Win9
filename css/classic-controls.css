@@ -468,7 +468,6 @@ body.view-login #eject-icon-context-menu {
 .classic-command-bar-item {
     position: relative;
     padding: 4px 8px;
-    cursor: pointer;
     font-size: 11px;
 }
 

@@ -22,7 +22,18 @@ body {
     height: 83px;
 }
 
+.winver-logo-frame {
+    width: 294px;
+    height: 58px;
+    overflow: hidden;
+}
+
+.winver-window.is-threshold-enabled .winver-logo-frame {
+    width: 256px;
+}
+
 .winver-logo {
+    display: block;
     width: 294px;
     height: 58px;
 }
@@ -43,12 +54,16 @@ body {
     overflow-y: auto;
 }
 
-.winver-line {
-    /* margin: 0 0 8px 0; */
+.winver-line.ep {
+    margin-top: 60px;
+}
 
-    &.ep {
-        margin-top: 60px;
-    }
+.winver-evaluation-copy {
+    margin: 25px 0;
+}
+
+.winver-window.is-threshold-enabled .winver-line.ep {
+    margin-top: 0;
 }
 
 .winver-link {

@@ -2,7 +2,7 @@ body {
     margin: 0;
     padding: 0;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    font-size: 12pt;
+    font-size: 11px;
     background: #f0f0f0;
     color: #1a1a1a;
 }
@@ -57,7 +57,7 @@ body {
 
 .run-dialog-description {
     margin: 0;
-    font-size: 12px;
+    font-size: 11px;
     line-height: 1.5;
 }
 
@@ -68,7 +68,7 @@ body {
 }
 
 .run-dialog-label {
-    font-size: 12px;
+    font-size: 11px;
     color: #1a1a1a;
     margin-bottom: 6px;
 }
@@ -81,7 +81,7 @@ body {
 .run-dialog-input-group input {
     width: 320px;
     height: 23px;
-    font-size: 12px;
+    font-size: 11px;
     padding: 2px 5px 4px 5px;
     border: 1px solid #8f8f8f;
     outline: none;

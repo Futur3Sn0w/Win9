@@ -208,7 +208,8 @@
                         <span class="start-menu-all-apps-text">All apps</span>
                     </button>
                     <div class="start-menu-search">
-                        <input type="text" id="start-menu-search-input" placeholder="Search everywhere" autocomplete="off">
+                        <input type="text" id="start-menu-search-input" placeholder="Search everywhere"
+                            autocomplete="off">
                         <button class="start-menu-search-button" id="start-menu-search-button" title="Search">
                             <span class="mif-search"></span>
                         </button>
@@ -228,7 +229,8 @@
         <div class="modern-dropdown-item start-power-menu-item" data-action="restart">Restart</div>
     </div>
     <div class="modern-dropdown start-menu-user-dropdown user-tile-dropdown">
-        <div class="modern-dropdown-item user-tile-dropdown-item" data-action="change-picture">Change account picture</div>
+        <div class="modern-dropdown-item user-tile-dropdown-item" data-action="change-picture">Change account picture
+        </div>
         <div class="modern-dropdown-item user-tile-dropdown-item" data-action="lock">Lock</div>
         <div class="modern-dropdown-item user-tile-dropdown-item" data-action="sign-out">Sign out</div>
     </div>
@@ -241,6 +243,7 @@
         <div class="context-menu-item" data-action="pin-taskbar">
             <span class="context-menu-item-text">Pin to Taskbar</span>
         </div>
+        <div class="context-menu-separator" data-role="resize-separator"></div>
         <div class="context-menu-item context-menu-item-submenu" data-action="resize">
             <span class="context-menu-item-text">Resize</span>
             <span class="context-menu-item-arrow">▶</span>
@@ -266,14 +269,15 @@
     </div>
 
     <div id="start-menu-item-context-menu" class="context-menu">
+        <div class="context-menu-item" data-action="pin-start-tile">
+            <span class="context-menu-item-text">Pin to Start</span>
+        </div>
+        <div class="context-menu-separator"></div>
         <div class="context-menu-item" data-action="keep-in-list">
             <span class="context-menu-item-text">Keep in this list</span>
         </div>
         <div class="context-menu-item" data-action="remove-from-list">
             <span class="context-menu-item-text">Remove from this list</span>
-        </div>
-        <div class="context-menu-item" data-action="pin-start-tile">
-            <span class="context-menu-item-text">Pin to tiles</span>
         </div>
     </div>
 
@@ -283,13 +287,36 @@
     <!-- DESKTOP -->
     <div id="desktop">
         <div id="desktop-wallpaper"></div>
+        <div id="desktop-window-layer"></div>
         <div class="desktop-content">
             <!-- Desktop icons would go here -->
+        </div>
+        <div class="desktop-watermark" id="desktop-watermark" hidden aria-hidden="true">
+            <p class="desktop-watermark__line desktop-watermark__line--title" id="desktop-watermark-title">Windows
+                Technical Preview</p>
+            <p class="desktop-watermark__line desktop-watermark__line--build" id="desktop-watermark-build">Evaluation
+                copy. Build 9888</p>
+        </div>
+        <div class="task-view-placeholder" id="task-view-placeholder" aria-hidden="true">
+            <div class="task-view-window-grid" id="task-view-window-grid" aria-live="polite"></div>
+            <div class="task-view-desktop-bar">
+                <button class="task-view-add-desktop-button" type="button" aria-label="Add desktop">
+                    <span class="task-view-add-desktop-button__icon" aria-hidden="true">
+                        <span class="task-view-add-desktop-button__plus"></span>
+                    </span>
+                    <span class="task-view-add-desktop-button__label">Add desktop</span>
+                </button>
+            </div>
         </div>
     </div>
 
     <!-- TASKBAR (global, outside desktop) -->
     <div class="taskbar-trigger"></div>
+    <div class="taskbar-hover-preview-layer" id="taskbar-hover-preview-layer" aria-hidden="true">
+        <div class="taskbar-hover-preview-surface" id="taskbar-hover-preview-surface">
+            <div class="taskbar-hover-preview-track" id="taskbar-hover-preview-track" aria-live="polite"></div>
+        </div>
+    </div>
     <div class="taskbar">
         <button class="start-button">
             <span class="start-icon"></span>
@@ -298,7 +325,8 @@
             <img class="taskbar-shell-button-icon taskbar-shell-button-icon--search" data-icon-folder="search" alt=""
                 draggable="false">
         </button>
-        <button class="taskbar-shell-button taskbar-task-view-button" type="button" title="Task View" aria-label="Task View">
+        <button class="taskbar-shell-button taskbar-task-view-button" type="button" title="Task View"
+            aria-label="Task View">
             <img class="taskbar-shell-button-icon taskbar-shell-button-icon--task-view" data-icon-folder="task_view"
                 alt="" draggable="false">
         </button>
@@ -308,21 +336,30 @@
         </div>
 
         <div class="system-tray">
-            <div class="system-icon eject-icon" id="eject-icon" style="display: none;"
-                title="Safely Remove Hardware and Eject Media">
-                <img id="eject-icon-img" src="resources/images/tray/eject/taskbar.png" alt="Eject">
+            <div class="tray-cluster">
+                <button class="tray-overflow-toggle" id="tray-overflow-toggle" type="button"
+                    aria-label="Show hidden notification icons" aria-expanded="false">
+                    <img class="tray-overflow-toggle-icon" id="tray-overflow-toggle-icon"
+                        src="resources/images/tray/overflow/open/20.png" alt="" aria-hidden="true" draggable="false">
+                </button>
+                <div class="tray-visible-items" id="tray-visible-items">
+                    <div class="tray-drop-indicator" id="tray-visible-drop-indicator" aria-hidden="true"></div>
+                    <div class="system-icon tray-reorderable eject-icon" id="eject-icon" data-tray-item-id="eject"
+                        style="display: none;" title="Safely Remove Hardware and Eject Media">
+                        <img id="eject-icon-img" src="resources/images/tray/eject/taskbar.png" alt="Eject">
+                    </div>
+                    <div class="system-icon tray-reorderable volume-icon" id="volume-icon" data-tray-item-id="volume">
+                        <img id="volume-icon-img" src="resources/images/tray/volume/vol_3.png" alt="Volume">
+                    </div>
+                    <div class="system-icon tray-reorderable network-icon" id="network-icon" data-tray-item-id="network">
+                        <img id="network-icon-img" src="resources/images/tray/network/wireless_5.png" alt="Network">
+                    </div>
+                    <div class="system-icon tray-reorderable battery-icon" id="battery-icon" data-tray-item-id="battery">
+                        <div id="battery-icon-img"></div>
+                    </div>
+                </div>
             </div>
-            <div class="system-icon volume-icon" id="volume-icon">
-                <img id="volume-icon-img" src="resources/images/tray/volume/vol_3.png" alt="Volume">
-            </div>
-            <div class="system-icon network-icon" id="network-icon">
-                <img id="network-icon-img" src="resources/images/tray/network/wireless_5.png" alt="Network">
-            </div>
-            <div class="system-icon battery-icon" id="battery-icon">
-                <div id="battery-icon-img"></div>
-            </div>
-            <div class="system-icon notification-center-icon" id="notification-center-icon"
-                title="Notification center">
+            <div class="system-icon notification-center-icon" id="notification-center-icon" title="Notification center">
                 <img id="notification-center-icon-img" src="resources/images/taskbar/notif_center/none/34.png"
                     alt="Notification center">
             </div>
@@ -335,13 +372,20 @@
         <!-- VOLUME FLYOUT -->
         <div class="classic-flyout volume-flyout" id="volume-flyout">
             <div class="classic-flyout-content">
-                <div class="volume-icon-display">
-                    <span class="mif-volume-high" id="volume-flyout-icon"></span>
+                <div class="volume-flyout-modern-header">
+                    <span class="volume-flyout-device-name" id="volume-flyout-device-name">Speakers</span>
+                    <span class="volume-flyout-device-chevron" aria-hidden="true">&#8250;</span>
                 </div>
-                <div class="volume-slider-container">
-                    <input type="range" class="volume-slider" id="volume-slider" min="0" max="100" value="50"
-                        orient="vertical">
-                    <div class="volume-level-display" id="volume-level-display">50</div>
+                <div class="volume-flyout-body">
+                    <button type="button" class="volume-icon-display" id="volume-flyout-icon-button"
+                        aria-label="Mute or unmute volume">
+                        <span class="mif-volume-high" id="volume-flyout-icon"></span>
+                    </button>
+                    <div class="volume-slider-container">
+                        <input type="range" class="volume-slider" id="volume-slider" min="0" max="100" value="50"
+                            orient="vertical">
+                        <div class="volume-level-display" id="volume-level-display">50</div>
+                    </div>
                 </div>
                 <div class="mixer"><a href="">Mixer</a></div>
             </div>
@@ -350,6 +394,14 @@
         <!-- CLOCK FLYOUT -->
         <div class="classic-flyout clock-flyout" id="clock-flyout">
             <div class="classic-flyout-content">
+                <div class="clock-flyout-modern-shell">
+                    <div class="clock-flyout-modern-time" id="clock-flyout-modern-time" aria-live="polite">
+                        <span class="clock-flyout-modern-time-value" id="clock-flyout-modern-time-value"></span>
+                        <span class="clock-flyout-modern-time-period" id="clock-flyout-modern-time-period"></span>
+                    </div>
+                    <a href="#" class="clock-flyout-modern-link" id="clock-flyout-modern-link">Additional clocks</a>
+                    <div class="clock-flyout-modern-divider" aria-hidden="true"></div>
+                </div>
                 <div class="clock-flyout-date-header" id="clock-flyout-date-header">
                     <!-- e.g., Monday, October 13, 2025 -->
                 </div>
@@ -383,7 +435,7 @@
                     </div>
                 </div>
                 <div class="clock-flyout-footer">
-                    <a href="#" class="clock-settings-link">Change date and time settings...</a>
+                    <a href="#" class="clock-settings-link" id="clock-settings-link">Change date and time settings...</a>
                 </div>
             </div>
         </div>
@@ -391,6 +443,19 @@
         <!-- BATTERY FLYOUT -->
         <div class="classic-flyout battery-flyout" id="battery-flyout">
             <div class="classic-flyout-content">
+            </div>
+        </div>
+
+        <div class="tray-overflow-popup" id="tray-overflow-popup" aria-hidden="true">
+            <div class="tray-overflow-popup-shell">
+                <div class="tray-overflow-popup-plate" id="tray-overflow-dropzone">
+                    <div class="tray-overflow-items" id="tray-overflow-items">
+                        <div class="tray-drop-indicator" id="tray-overflow-drop-indicator" aria-hidden="true"></div>
+                    </div>
+                </div>
+                <div class="tray-overflow-footer">
+                    <button class="tray-overflow-customize" id="tray-overflow-customize" type="button">Customize...</button>
+                </div>
             </div>
         </div>
 
@@ -403,6 +468,23 @@
                 </button>
             </div>
             <div class="notification-center-panel-body" id="notification-center-panel-body"></div>
+        </div>
+
+        <div class="search-panel" id="search-panel" aria-hidden="true">
+            <div class="search-panel-results" id="search-panel-results" role="listbox" aria-label="Search results"></div>
+            <div class="search-panel-input-row">
+                <div class="search-panel-input-shell">
+                    <input type="text" id="search-panel-input" autocomplete="off" spellcheck="false"
+                        placeholder="Search apps, settings, and files">
+                    <button class="search-panel-submit" id="search-panel-submit" type="button" title="Search"
+                        aria-label="Search">
+                        <span class="mif-search" aria-hidden="true"></span>
+                    </button>
+                </div>
+            </div>
+            <div class="search-panel-splash" id="search-panel-splash" aria-hidden="true">
+                <div class="search-panel-splash-icon" id="search-panel-splash-icon"></div>
+            </div>
         </div>
 
         <!-- EJECT ICON CONTEXT MENU -->
@@ -641,8 +723,8 @@
                             <span class="settings-control-label">Volume</span>
                             <div class="settings-slider-popup" data-popup="volume" aria-hidden="true">
                                 <div class="settings-slider-track-wrapper">
-                                    <input type="range" min="0" max="100" value="50" step="1"
-                                        class="settings-slider" id="settings-volume-slider" aria-label="Adjust volume">
+                                    <input type="range" min="0" max="100" value="50" step="1" class="settings-slider"
+                                        id="settings-volume-slider" aria-label="Adjust volume">
                                 </div>
                             </div>
                         </div>
@@ -651,9 +733,8 @@
                             <span class="settings-control-label">Brightness</span>
                             <div class="settings-slider-popup" data-popup="brightness" aria-hidden="true">
                                 <div class="settings-slider-track-wrapper">
-                                    <input type="range" min="0" max="100" value="100" step="1"
-                                        class="settings-slider" id="settings-brightness-slider"
-                                        aria-label="Adjust screen brightness">
+                                    <input type="range" min="0" max="100" value="100" step="1" class="settings-slider"
+                                        id="settings-brightness-slider" aria-label="Adjust screen brightness">
                                 </div>
                             </div>
                         </div>
@@ -772,6 +853,11 @@
     <script src="components/explorer/file-associations.js"></script>
     <script src="components/explorer/icon-builder.js"></script>
     <script src="components/explorer/explorer-engine.js"></script>
+    <script src="components/shell/task-view.js"></script>
+    <script src="components/shell/taskbar-hover-preview.js"></script>
+    <script src="components/shell/tray-overflow.js"></script>
+    <script src="components/shell/host-wallpaper.js"></script>
+    <script src="components/shell/user-profile.js"></script>
     <script src="taskbar-item-context-menu.js"></script>
     <script src="taskbar-drag.js"></script>
     <script src="app.js"></script>

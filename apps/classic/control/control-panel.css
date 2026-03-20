@@ -93,7 +93,7 @@ body {
 }
 
 .cp-breadcrumbs {
-    font-size: 12px;
+    font-size: 11px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -124,7 +124,7 @@ body {
 
 /* 
 .cp-breadcrumb.active {
-    font-weight: 600;
+    font-weight: 500;
 } */
 
 .cp-breadcrumb-separator {
@@ -141,7 +141,7 @@ body {
     height: 22px;
     padding: 5px 22px 5px 8px;
     border: 1px solid rgb(217, 217, 217);
-    font-size: 12px;
+    font-size: 11px;
 }
 
 .cp-search-box input:focus {
@@ -253,7 +253,7 @@ body {
 .cp-category-title {
     margin: 0;
     font-size: 16px;
-    font-weight: 600;
+    font-weight: 500;
     color: #0078d7;
     transition: color 0.1s;
 }
@@ -304,7 +304,7 @@ body {
     margin-bottom: 2px;
     color: #0066cc;
     text-decoration: none;
-    font-size: 12px;
+    font-size: 11px;
     border-radius: 2px;
     transition: background 0.1s;
 }
@@ -315,7 +315,7 @@ body {
 }
 
 .cp-sidebar-link.active {
-    font-weight: 600;
+    font-weight: 500;
     color: #1e1e1e;
     background: #e8e8e8;
 }
@@ -366,7 +366,7 @@ body {
 .cp-category-section-title {
     margin: 0;
     font-size: 14px;
-    font-weight: 600;
+    font-weight: 500;
     color: #008a00;
     text-decoration: none;
 }
@@ -385,7 +385,7 @@ body {
 .cp-category-section-link {
     color: #0066cc;
     text-decoration: none;
-    font-size: 12px;
+    font-size: 11px;
     line-height: 1.6;
     display: inline-block;
 }
@@ -401,7 +401,7 @@ body {
 
 .cp-applet-section-title {
     font-size: 16px;
-    font-weight: 600;
+    font-weight: 500;
     color: #1e1e1e;
     margin: 0 0 16px 0;
 }
@@ -440,7 +440,7 @@ body {
 
 .cp-applet-link-description {
     margin: 4px 0 0 0;
-    font-size: 12px;
+    font-size: 11px;
     color: #666;
     line-height: 1.5;
 }
@@ -505,7 +505,7 @@ body {
 }
 
 .cp-icon-label {
-    font-size: 12px;
+    font-size: 11px;
     color: #1e1e1e;
     word-wrap: break-word;
 }

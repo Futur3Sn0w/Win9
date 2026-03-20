@@ -8,7 +8,7 @@
     --start-menu-medium-tile-size: calc((var(--start-menu-tile-cell) * 2) + var(--start-menu-tile-gap));
     --start-menu-wide-tile-width: calc((var(--start-menu-tile-cell) * 4) + (var(--start-menu-tile-gap) * 3));
     width: min(var(--start-menu-shell-width, 760px), calc(100vw - 32px));
-    height: min(var(--start-menu-shell-height, 690px), calc(100vh - var(--taskbar-height, 40px) - 16px));
+    height: min(var(--start-menu-shell-height, 674px), calc(100vh - var(--taskbar-height, 40px) - 16px));
     z-index: 100050;
     opacity: 0;
     pointer-events: none;
@@ -43,7 +43,7 @@
         position: absolute;
         top: 0;
         left: -2px;
-        width: calc(100%);
+        width: calc(100% + 1px);
         height: 100%;
         pointer-events: none;
         border: 1px solid rgba(0, 0, 0, 0.33);
@@ -57,8 +57,8 @@
     display: flex;
     flex-direction: column;
     background: transparent;
-    width: 266px;
-    padding: 5px 6px 6px 6px;
+    width: 268px;
+    padding: 7px;
 }
 
 #start-menu.start-menu--all-apps .start-menu-top,
@@ -81,7 +81,7 @@
 .start-menu-right {
     min-width: 0;
     overflow: auto;
-    padding: 14px 16px 16px;
+    padding: 7px;
     background: transparent;
 }
 
@@ -113,6 +113,7 @@
 .start-menu-power-button:hover,
 .start-menu-all-apps-toggle:hover,
 .start-menu-search-button:hover,
+.start-menu-entry--selected,
 .start-menu-entry:hover {
     background: rgba(255, 255, 255, 0.12);
 }
@@ -195,7 +196,36 @@
     gap: 0;
     padding: 2px 3px;
     text-align: left;
-    font: 12px 'Segoe UI', sans-serif;
+    font: 11px 'Segoe UI', sans-serif;
+}
+
+.start-menu-entry--drag-source {
+    opacity: 0.38;
+}
+
+.start-menu-entry--drag-insert-before {
+    box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.95);
+}
+
+.start-menu-entry--drag-insert-after {
+    box-shadow: inset 0 -2px 0 rgba(255, 255, 255, 0.95);
+}
+
+.start-menu-drag-helper {
+    position: fixed;
+    z-index: 100071;
+    pointer-events: none;
+    margin: 0;
+}
+
+.start-menu-drag-helper--list {
+    opacity: 0.92;
+    box-shadow: 0 14px 28px rgba(0, 0, 0, 0.3);
+}
+
+.start-menu-drag-helper--tile {
+    opacity: 0.92;
+    box-shadow: 0 14px 30px rgba(0, 0, 0, 0.36);
 }
 
 #start-menu.start-menu--search .start-menu-entry,
@@ -276,6 +306,10 @@
     padding-top: 20px;
 }
 
+.start-menu-empty-state--hidden {
+    display: none;
+}
+
 .start-menu-bottom {
     flex: 0 0 auto;
     margin-top: auto;
@@ -290,7 +324,7 @@
 }
 
 .start-menu-all-apps-toggle {
-    width: 254px;
+    width: 100%;
     height: 36px;
     border: none;
     background: transparent;
@@ -299,7 +333,7 @@
     align-items: center;
     gap: 8px;
     padding: 0 8px;
-    font: 12px 'Segoe UI', sans-serif;
+    font: 11px 'Segoe UI', sans-serif;
 }
 
 #start-menu.start-menu--search .start-menu-all-apps-toggle {
@@ -310,7 +344,7 @@
     display: flex;
     align-items: center;
     height: 36px;
-    width: 254px;
+    width: 100%;
     background: rgba(255, 255, 255, 0.96);
     border: 1px solid rgba(0, 0, 0, 0.3);
     color: #222;
@@ -327,7 +361,7 @@
     background: transparent;
     padding: 0 10px;
     color: inherit;
-    font: 12px 'Segoe UI', sans-serif;
+    font: 11px 'Segoe UI', sans-serif;
     outline: none;
 }
 
@@ -377,12 +411,13 @@
 
 .start-menu-resize-handle {
     position: absolute;
-    top: -3px;
+    top: -12px;
     left: 0;
     width: 100%;
-    height: 6px;
+    height: 20px;
     cursor: ns-resize;
     z-index: 2;
+    touch-action: none;
 }
 
 body.start-menu-resizing,
@@ -769,7 +804,7 @@ body.tiles-compact .tiles {
     position: absolute;
     left: 18px;
     bottom: 9px;
-    font-size: 13px;
+    font-size: 11px;
     font-weight: 400;
 }
 
@@ -1102,7 +1137,8 @@ body.tiles-compact .tiles {
     font-size: 15px;
 }
 
-/* ===== TILE CONTEXT MENU ===== */
+/* Legacy Start-only context menu styles moved to modern-ui.css.
+   ===== TILE CONTEXT MENU =====
 .context-menu {
     position: fixed;
     background: #fff;
@@ -1123,7 +1159,7 @@ body.tiles-compact .tiles {
     padding: 0 12px 2px 32px;
     height: 22px;
     color: #000;
-    font-size: 12px;
+    font-size: 11px;
 
     display: flex;
     align-items: center;
@@ -1134,6 +1170,12 @@ body.tiles-compact .tiles {
 
 .context-menu-item:hover {
     background: #E5E5E5;
+}
+
+.context-menu-separator {
+    height: 1px;
+    margin: 4px 2px;
+    background: #D8D8D8;
 }
 
 .context-menu-item-text {
@@ -1187,6 +1229,7 @@ body.tiles-compact .tiles {
 .context-menu-item-submenu:hover>.context-submenu {
     display: block;
 }
+*/
 
 /* ===== TILE TOOLTIP ===== */
 .tile-tooltip {
@@ -1196,7 +1239,7 @@ body.tiles-compact .tiles {
     color: rgb(120, 120, 120);
     padding: 8px 12px;
     font-size: 14px;
-    z-index: 1001;
+    z-index: 100051;
     pointer-events: none;
     opacity: 0;
     transition: opacity 0.15s ease;
@@ -1378,6 +1421,12 @@ body.tile-drag-active .tiles__tile,
     pointer-events: none;
 }
 
+.tiles__tile.start-menu-list-drag-preview-tile {
+    opacity: 0.28 !important;
+    pointer-events: none;
+    box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.6);
+}
+
 /* Fallback for browsers without HTML5 drag */
 .tiles__tile.tile-drag-fallback {
     opacity: 0.8;
@@ -1443,8 +1492,8 @@ body.tile-drag-active .tiles__tile,
 }
 
 .tile-flip-icon img {
-    width: 64px;
-    height: 64px;
+    width: 96px;
+    height: 96px;
     transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease-out;
     object-fit: contain;
 }

@@ -187,6 +187,13 @@ function seedTaskbarDefaults(registry) {
 
   registry.setValue(
     'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced',
+    'MTCUVC',
+    1,
+    RegistryType.REG_DWORD
+  );
+
+  registry.setValue(
+    'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced',
     'UseModernWindowStyling',
     1,
     RegistryType.REG_DWORD
@@ -203,6 +210,13 @@ function seedTaskbarDefaults(registry) {
     'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced',
     'OpenMetroAppsOnDesktop',
     0,
+    RegistryType.REG_DWORD
+  );
+
+  registry.setValue(
+    'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced',
+    'ShowDesktopWatermark',
+    1,
     RegistryType.REG_DWORD
   );
 }

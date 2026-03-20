@@ -46,13 +46,15 @@
         const TASKBAR_ADVANCED_PATH = 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced';
         const TASKBAR_THRESHOLD_FEATURES_ENABLED_VALUE_NAME = 'ThresholdFeaturesEnabled';
         const DEFAULT_WINVER_DETAILS = {
-            version: 'Version 6.3 (Build 9600)',
+            baseVersion: '6.3',
+            buildLabel: 'Build 9600',
             copyright: '\u00A9 2013 Microsoft Corporation. All rights reserved.',
             edition: 'The Windows 8.1 Pro operating system and its user interface are protected by trademark and other pending or existing intellectual property rights in the United States and other countries/regions.',
             evaluationCopy: ''
         };
         const THRESHOLD_WINVER_DETAILS = {
-            version: 'Version 6.4 (build 9888)',
+            baseVersion: '6.4',
+            buildLabel: 'build 9888',
             copyright: '\u00A9 2014 Microsoft Corporation. All rights reserved.',
             edition: 'The Windows Technical Preview operating system and its user interface are protected by trademark and other pending or existing intellectual property rights in the United States and other countries/regions.',
             evaluationCopy: 'Evaluation copy. Expires 06/15/15'
@@ -100,7 +102,39 @@
             return null;
         }
 
+        function resolveBuildInfoModule() {
+            const contexts = [window, window.parent, window.top];
+            for (const ctx of contexts) {
+                try {
+                    if (ctx?.BuildInfoAPI) {
+                        return ctx.BuildInfoAPI;
+                    }
+                } catch (error) {
+                    console.warn('[Winver] Unable to inspect build info context:', error);
+                }
+            }
+
+            if (typeof window !== 'undefined' && typeof window.require === 'function') {
+                try {
+                    return window.require('../../../components/shell/build-info.js');
+                } catch (error) {
+                    console.warn('[Winver] Unable to load build info module via window.require:', error);
+                }
+            }
+
+            if (typeof require === 'function') {
+                try {
+                    return require('../../../components/shell/build-info.js');
+                } catch (error) {
+                    console.warn('[Winver] Unable to load build info module via require:', error);
+                }
+            }
+
+            return null;
+        }
+
         const registryModule = resolveRegistryModule();
+        const buildInfoModule = resolveBuildInfoModule();
         const winverWindow = document.getElementById('winver-window');
         const versionLine = document.getElementById('winver-version');
         const copyrightLine = document.getElementById('winver-copyright');
@@ -124,6 +158,14 @@
             }
         }
 
+        function formatWinverVersion(baseVersion, buildLabel) {
+            if (buildInfoModule && typeof buildInfoModule.formatWinverVersionLabel === 'function') {
+                return buildInfoModule.formatWinverVersionLabel(baseVersion, buildLabel);
+            }
+
+            return `Version ${baseVersion} (${buildLabel})`;
+        }
+
         function applyWinverDetails(thresholdEnabled) {
             const details = thresholdEnabled ? THRESHOLD_WINVER_DETAILS : DEFAULT_WINVER_DETAILS;
 
@@ -132,7 +174,7 @@
             }
 
             if (versionLine) {
-                versionLine.textContent = details.version;
+                versionLine.textContent = formatWinverVersion(details.baseVersion, details.buildLabel);
             }
 
             if (copyrightLine) {

@@ -61,6 +61,11 @@
                             class="explorer-sidebar-icon" />
                         <span>Home</span>
                     </div>
+                    <div class="explorer-sidebar-item" data-location="recycle-bin">
+                        <img src="../../../resources/images/icons/explorer/recycle_bin/empty/16.png"
+                            class="explorer-sidebar-icon" id="recycleBinSidebarIcon" />
+                        <span>Recycle Bin</span>
+                    </div>
                 </div>
 
                 <div class="explorer-sidebar-section">
@@ -138,7 +143,8 @@
                             class="explorer-sidebar-icon" />
                         <span>Network</span>
                     </div>
-                    <div class="explorer-sidebar-item explorer-sidebar-item--non-navigable explorer-sidebar-item--spaced" data-location="homegroup">
+                    <div class="explorer-sidebar-item explorer-sidebar-item--non-navigable explorer-sidebar-item--spaced"
+                        data-location="homegroup">
                         <img src="../../../resources/images/icons/explorer/homegroup/16.png"
                             class="explorer-sidebar-icon" />
                         <span>Homegroup</span>
@@ -186,6 +192,7 @@
         const fs = require('fs').promises;
         const HOME_LOCATION = 'home';
         const THIS_PC_LOCATION = 'this-pc';
+        const RECYCLE_BIN_LOCATION = 'recycle-bin';
         const HOME_FAVORITE_LOCATIONS = ['desktop', 'downloads', 'videos'];
         const HOME_FREQUENT_LOCATIONS = ['desktop', 'documents', 'downloads', 'music', 'pictures', 'videos'];
         const HOME_RECENT_FILE_LIMIT = 8;
@@ -213,6 +220,8 @@
             'iso': [16, 24, 32, 48, 256],
             'main_drive': [16, 24, 32, 48, 64, 96, 128],
             'music': [16, 32, 48],
+            'recycle_bin/empty': [16, 20, 24, 32, 40, 48, 64, 80, 96, 128, 256],
+            'recycle_bin/full': [16, 20, 24, 32, 40, 48, 64, 80, 96, 128, 256],
             'network': [16, 20, 24, 32, 40, 48, 64, 80, 96, 256, 512, 768],
             'rich_text_document': [16, 24, 48],
             'text_document': [16, 32, 48],
@@ -256,7 +265,7 @@
                 });
 
                 // Helper function to send messages to parent
-                window.sendToParent = function(action, data) {
+                window.sendToParent = function (action, data) {
                     const messageData = {
                         action,
                         windowId,
@@ -270,7 +279,7 @@
             }
         } else {
             // Fallback for iframe context
-            window.sendToParent = function(action, data) {
+            window.sendToParent = function (action, data) {
                 window.parent.postMessage({
                     action,
                     windowId,
@@ -280,7 +289,7 @@
             };
 
             // Listen for postMessage
-            window.addEventListener('message', function(e) {
+            window.addEventListener('message', function (e) {
                 if (e.data.action === 'setWindowId') {
                     windowId = e.data.windowId;
                     console.log('Explorer window ID set:', windowId);
@@ -303,6 +312,15 @@
             ? { ...window.launchOptions }
             : null;
         let launchOptionsDrainInFlight = false;
+        let recycleBinState = {
+            available: false,
+            empty: true,
+            itemCount: 0
+        };
+        let recycleBinItemsSignature = '';
+        let recycleBinPollTimer = null;
+        let explorerContextMenu = null;
+        let explorerContextMenuDismissHandler = null;
         let dragSelectState = {
             active: false,
             originX: 0,
@@ -324,6 +342,11 @@
                 currentLocation = THIS_PC_LOCATION;
                 currentPath = null;
                 pushHistoryEntry({ type: 'this-pc' });
+            } else if (launchTarget?.type === RECYCLE_BIN_LOCATION) {
+                console.log('[File Explorer] Opening location: Recycle Bin');
+                currentLocation = RECYCLE_BIN_LOCATION;
+                currentPath = null;
+                pushHistoryEntry({ type: RECYCLE_BIN_LOCATION });
             } else if (launchTarget?.type === 'path') {
                 console.log('[File Explorer] Opening folder:', launchTarget.path);
                 currentLocation = 'path';
@@ -392,6 +415,76 @@
             return path.join(os.homedir(), ...folder.relativePath);
         }
 
+        function normalizeRecycleBinState(state) {
+            return {
+                available: Boolean(state?.available),
+                empty: Boolean(state?.empty ?? true),
+                itemCount: Number.isFinite(Number(state?.itemCount)) ? Number(state.itemCount) : 0
+            };
+        }
+
+        async function loadRecycleBinState() {
+            if (!ipcRenderer || typeof ipcRenderer.invoke !== 'function') {
+                return recycleBinState;
+            }
+
+            try {
+                const nextState = await ipcRenderer.invoke('trash:get-info');
+                recycleBinState = normalizeRecycleBinState(nextState);
+            } catch (error) {
+                console.warn('[File Explorer] Failed to load recycle bin state:', error);
+            }
+
+            return recycleBinState;
+        }
+
+        async function loadRecycleBinItems() {
+            if (!ipcRenderer || typeof ipcRenderer.invoke !== 'function') {
+                return [];
+            }
+
+            try {
+                const result = await ipcRenderer.invoke('trash:list-items');
+                const items = Array.isArray(result?.items)
+                    ? result.items
+                    : (result?.items ? [result.items] : []);
+
+                return items
+                    .map(item => ({
+                        id: item?.id || `${item?.name || 'recycle-item'}-${item?.deletedAt || ''}-${item?.originalPath || ''}`,
+                        name: item?.name || 'Unnamed item',
+                        path: typeof item?.path === 'string' ? item.path : null,
+                        originalPath: typeof item?.originalPath === 'string' ? item.originalPath : null,
+                        deletedAt: typeof item?.deletedAt === 'string' ? item.deletedAt : null,
+                        isDirectory: Boolean(item?.isDirectory),
+                        extension: typeof item?.extension === 'string' ? item.extension.toLowerCase() : ''
+                    }))
+                    .sort((left, right) => {
+                        const leftDeletedAt = left.deletedAt ? Date.parse(left.deletedAt) : 0;
+                        const rightDeletedAt = right.deletedAt ? Date.parse(right.deletedAt) : 0;
+
+                        if (leftDeletedAt !== rightDeletedAt) {
+                            return rightDeletedAt - leftDeletedAt;
+                        }
+
+                        return left.name.toLowerCase().localeCompare(right.name.toLowerCase());
+                    });
+            } catch (error) {
+                console.warn('[File Explorer] Failed to load recycle bin items:', error);
+                return [];
+            }
+        }
+
+        function getRecycleBinItemsSignature(items) {
+            return items.map(item => [
+                item.name,
+                item.originalPath || '',
+                item.deletedAt || '',
+                item.isDirectory ? 'dir' : 'file',
+                item.extension || ''
+            ].join('|')).join('||');
+        }
+
         function resolveLaunchTarget(launchOptions) {
             if (!launchOptions || typeof launchOptions !== 'object') {
                 return null;
@@ -406,6 +499,10 @@
 
             if (launchOptions.openSpecialFolderId === THIS_PC_LOCATION) {
                 return { type: 'this-pc' };
+            }
+
+            if (launchOptions.openSpecialFolderId === RECYCLE_BIN_LOCATION) {
+                return { type: RECYCLE_BIN_LOCATION };
             }
 
             const specialFolderPath = resolveSpecialFolderPath(launchOptions.openSpecialFolderId);
@@ -452,6 +549,19 @@
                 console.log('[File Explorer] Applying launch target: This PC');
                 pushHistoryEntry({ type: 'this-pc' });
                 currentLocation = THIS_PC_LOCATION;
+                currentPath = null;
+                await updateView();
+                return;
+            }
+
+            if (launchTarget.type === RECYCLE_BIN_LOCATION) {
+                if (currentLocation === RECYCLE_BIN_LOCATION) {
+                    return;
+                }
+
+                console.log('[File Explorer] Applying launch target: Recycle Bin');
+                pushHistoryEntry({ type: RECYCLE_BIN_LOCATION });
+                currentLocation = RECYCLE_BIN_LOCATION;
                 currentPath = null;
                 await updateView();
                 return;
@@ -512,6 +622,10 @@
 
             // Content area for drag selection
             document.getElementById('content').addEventListener('mousedown', handleContentMouseDown);
+            document.getElementById('content').addEventListener('contextmenu', handleContentContextMenu);
+            document.addEventListener('keydown', handleExplorerContextMenuKeydown);
+            window.addEventListener('blur', hideExplorerContextMenu);
+            window.addEventListener('focus', handleWindowFocusRefresh);
 
             // Initialize children container heights
             initializeChildrenHeights();
@@ -570,6 +684,11 @@
 
             if (location === THIS_PC_LOCATION) {
                 navigateToThisPC();
+                return;
+            }
+
+            if (location === RECYCLE_BIN_LOCATION) {
+                navigateToRecycleBin();
                 return;
             }
 
@@ -817,6 +936,10 @@
                 return 'this_pc';
             }
 
+            if (currentLocation === RECYCLE_BIN_LOCATION) {
+                return recycleBinState.empty ? 'recycle_bin/empty' : 'recycle_bin/full';
+            }
+
             const exactFolder = findSpecialFolderByPath(currentPath);
             if (exactFolder) {
                 return exactFolder.icon;
@@ -837,6 +960,10 @@
 
             if (currentLocation === THIS_PC_LOCATION) {
                 return 'This PC';
+            }
+
+            if (currentLocation === RECYCLE_BIN_LOCATION) {
+                return 'Recycle Bin';
             }
 
             const exactFolder = findSpecialFolderByPath(currentPath);
@@ -861,6 +988,10 @@
 
             if (currentLocation === THIS_PC_LOCATION) {
                 return THIS_PC_LOCATION;
+            }
+
+            if (currentLocation === RECYCLE_BIN_LOCATION) {
+                return RECYCLE_BIN_LOCATION;
             }
 
             const specialFolder = findContainingSpecialFolder(currentPath);
@@ -975,19 +1106,73 @@
             console.log('Command tab:', tab.dataset.tab);
         }
 
+        function updateRecycleBinSidebarIcon() {
+            const sidebarIcon = document.getElementById('recycleBinSidebarIcon');
+            if (!sidebarIcon) {
+                return;
+            }
+
+            const recycleIconKey = recycleBinState.empty ? 'recycle_bin/empty' : 'recycle_bin/full';
+            sidebarIcon.src = resolveIconPath(recycleIconKey, 16, 'recycle_bin/empty');
+        }
+
+        function syncRecycleBinPolling() {
+            if (currentLocation !== RECYCLE_BIN_LOCATION) {
+                if (recycleBinPollTimer) {
+                    clearInterval(recycleBinPollTimer);
+                    recycleBinPollTimer = null;
+                }
+                return;
+            }
+
+            if (recycleBinPollTimer) {
+                return;
+            }
+
+            recycleBinPollTimer = setInterval(() => {
+                void refreshVisibleRecycleBinIfNeeded();
+            }, 5000);
+        }
+
+        async function refreshVisibleRecycleBinIfNeeded() {
+            if (currentLocation !== RECYCLE_BIN_LOCATION) {
+                return;
+            }
+
+            const previousState = { ...recycleBinState };
+            const nextState = await loadRecycleBinState();
+            const nextItems = await loadRecycleBinItems();
+            const nextSignature = getRecycleBinItemsSignature(nextItems);
+
+            if (nextState.available !== previousState.available
+                || nextState.empty !== previousState.empty
+                || nextState.itemCount !== previousState.itemCount
+                || nextSignature !== recycleBinItemsSignature) {
+                recycleBinState = nextState;
+                recycleBinItemsSignature = nextSignature;
+                await updateView();
+            }
+        }
+
         async function updateView() {
             const content = document.getElementById('content');
+            hideExplorerContextMenu();
             content.innerHTML = '';
             clearSelection();
+            recycleBinState = await loadRecycleBinState();
 
             if (currentLocation === HOME_LOCATION) {
                 await renderHome();
             } else if (currentLocation === THIS_PC_LOCATION) {
                 await renderThisPC();
+            } else if (currentLocation === RECYCLE_BIN_LOCATION) {
+                await renderRecycleBinView();
             } else if (currentPath) {
                 await renderFolderView(currentPath);
             }
 
+            updateRecycleBinSidebarIcon();
+            syncRecycleBinPolling();
             syncSidebarActiveState();
             updateNavigationButtons();
             updateBreadcrumbs();
@@ -1302,7 +1487,12 @@
         async function createIconItem(entry, type = 'file') {
             const item = document.createElement('div');
             item.className = 'explorer-icon-item';
-            item.dataset.path = entry.path;
+            if (typeof entry.path === 'string' && entry.path) {
+                item.dataset.path = entry.path;
+            }
+            if (entry.id) {
+                item.dataset.entryId = entry.id;
+            }
             item.dataset.type = type;
 
             const iconSize = getIconSizeForView(currentView);
@@ -1311,7 +1501,7 @@
             icon.className = 'explorer-icon-item__icon';
 
             // Check if we should show a thumbnail
-            if (type === 'file' && isDisplayableMedia(entry.path)) {
+            if (type === 'file' && entry.path && isDisplayableMedia(entry.path)) {
                 const img = document.createElement('img');
                 img.src = `file://${entry.path}`;
                 img.className = 'explorer-icon-item__icon-image explorer-icon-item__icon-image--thumbnail';
@@ -1319,7 +1509,9 @@
                 icon.classList.add('explorer-icon-item__icon--thumbnail');
                 icon.appendChild(img);
             } else {
-                const fallbackIcon = type === 'folder' ? 'generic_folder' : (type === 'drive' ? 'main_drive' : 'generic_file');
+                const fallbackIcon = type === 'folder' || type === 'recycle-bin-folder'
+                    ? 'generic_folder'
+                    : (type === 'drive' ? 'main_drive' : 'generic_file');
                 const iconPath = resolveIconPath(entry.icon, iconSize, fallbackIcon);
                 icon.innerHTML = `<img src="${iconPath}" alt="${entry.name}" />`;
             }
@@ -1373,6 +1565,8 @@
                 e.stopPropagation();
                 if (type === 'folder' || type === 'drive') {
                     navigateToPath(entry.path);
+                } else if (type === 'recycle-bin-folder' || type === 'recycle-bin-item') {
+                    return;
                 } else {
                     openFile(entry.path);
                 }
@@ -1449,6 +1643,10 @@
         }
 
         function handleContentMouseDown(event) {
+            if (event.button !== 0) {
+                return;
+            }
+
             // Only handle clicks on the content area itself, not on items
             if (event.target.closest('.explorer-icon-item')) {
                 return;
@@ -1457,6 +1655,32 @@
             event.preventDefault();
             clearSelection();
             beginDragSelection(event);
+        }
+
+        function handleContentContextMenu(event) {
+            if (currentLocation !== RECYCLE_BIN_LOCATION) {
+                return;
+            }
+
+            if (event.target.closest('.explorer-icon-item')) {
+                return;
+            }
+
+            event.preventDefault();
+            clearSelection();
+            showRecycleBinContextMenu(event.clientX, event.clientY);
+        }
+
+        function handleExplorerContextMenuKeydown(event) {
+            if (event.key === 'Escape') {
+                hideExplorerContextMenu();
+            }
+        }
+
+        function handleWindowFocusRefresh() {
+            if (currentLocation === RECYCLE_BIN_LOCATION) {
+                void refreshVisibleRecycleBinIfNeeded();
+            }
         }
 
         function beginDragSelection(event) {
@@ -1643,7 +1867,7 @@
                 errorMessage.innerHTML = `
                     <div style="text-align: center; padding: 40px 20px;">
                         <div style="font-size: 48px; color: #999; margin-bottom: 16px;">⚠</div>
-                        <div style="font-size: 14px; color: #333; margin-bottom: 8px; font-weight: 600;">${message}</div>
+                        <div style="font-size: 14px; color: #333; margin-bottom: 8px; font-weight: 500;">${message}</div>
                         <div style="font-size: 12px; color: #666;">Error code: ${error.code || 'UNKNOWN'}</div>
                     </div>
                 `;
@@ -1652,6 +1876,164 @@
             }
 
             content.appendChild(container);
+        }
+
+        async function renderRecycleBinView() {
+            const content = document.getElementById('content');
+            const container = document.createElement('div');
+            container.className = 'explorer-folder-view explorer-folder-view--recycle-bin';
+
+            const items = await loadRecycleBinItems();
+            recycleBinItemsSignature = getRecycleBinItemsSignature(items);
+
+            if (items.length === 0) {
+                const emptyMessage = document.createElement('div');
+                emptyMessage.className = 'explorer-empty-message';
+                emptyMessage.textContent = recycleBinState.available
+                    ? 'The Recycle Bin is empty.'
+                    : 'Recycle Bin is unavailable on this host.';
+                container.appendChild(emptyMessage);
+                updateStatusBar(0);
+                content.appendChild(container);
+                return;
+            }
+
+            const grid = document.createElement('div');
+            grid.className = `explorer-icon-grid explorer-icon-grid--${currentView}`;
+
+            for (const recycleItem of items) {
+                const entryData = {
+                    id: recycleItem.id,
+                    name: recycleItem.name,
+                    path: recycleItem.path,
+                    icon: recycleItem.isDirectory ? 'generic_folder' : getIconTypeForExtension(recycleItem.extension),
+                    isDrive: false,
+                    originalPath: recycleItem.originalPath,
+                    deletedAt: recycleItem.deletedAt
+                };
+
+                const item = await createIconItem(
+                    entryData,
+                    recycleItem.isDirectory ? 'recycle-bin-folder' : 'recycle-bin-item'
+                );
+
+                grid.appendChild(item);
+            }
+
+            container.appendChild(grid);
+            content.appendChild(container);
+            updateStatusBar(items.length);
+        }
+
+        function hideExplorerContextMenu() {
+            if (explorerContextMenuDismissHandler) {
+                document.removeEventListener('mousedown', explorerContextMenuDismissHandler, true);
+                document.removeEventListener('contextmenu', explorerContextMenuDismissHandler, true);
+                explorerContextMenuDismissHandler = null;
+            }
+
+            if (explorerContextMenu && explorerContextMenu.parentNode) {
+                explorerContextMenu.parentNode.removeChild(explorerContextMenu);
+            }
+
+            explorerContextMenu = null;
+        }
+
+        function scheduleExplorerContextMenuDismiss() {
+            if (!explorerContextMenu) {
+                return;
+            }
+
+            explorerContextMenuDismissHandler = (event) => {
+                if (explorerContextMenu && !explorerContextMenu.contains(event.target)) {
+                    hideExplorerContextMenu();
+                }
+            };
+
+            requestAnimationFrame(() => {
+                if (!explorerContextMenuDismissHandler) {
+                    return;
+                }
+
+                document.addEventListener('mousedown', explorerContextMenuDismissHandler, true);
+                document.addEventListener('contextmenu', explorerContextMenuDismissHandler, true);
+            });
+        }
+
+        function showRecycleBinContextMenu(x, y) {
+            hideExplorerContextMenu();
+
+            const menu = document.createElement('div');
+            menu.className = 'classic-context-menu explorer-context-menu';
+            menu.style.position = 'fixed';
+            menu.style.left = `${x}px`;
+            menu.style.top = `${y}px`;
+            menu.style.zIndex = '5000';
+
+            const button = document.createElement('div');
+            button.className = 'classic-context-menu-item';
+            if (!recycleBinState.available) {
+                button.classList.add('is-disabled');
+            }
+            button.setAttribute('data-action', 'empty-recycle-bin');
+            const recycleBinIconKey = recycleBinState.empty ? 'recycle_bin/empty' : 'recycle_bin/full';
+            const recycleBinIconPath = resolveIconPath(recycleBinIconKey, 16, 'recycle_bin/empty');
+            button.innerHTML = `
+                <span class="classic-context-menu-item-icon"><img src="${recycleBinIconPath}" alt="" width="16" height="16"></span>
+                <span class="classic-context-menu-item-text">${process.platform === 'darwin' ? 'Empty Trash' : 'Empty Recycle Bin'}</span>
+            `;
+
+            if (recycleBinState.available) {
+                button.addEventListener('click', async (event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    hideExplorerContextMenu();
+                    await emptyRecycleBinFromExplorer();
+                });
+            } else {
+                button.addEventListener('click', (event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                });
+            }
+
+            menu.addEventListener('contextmenu', (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+            });
+
+            menu.appendChild(button);
+            document.body.appendChild(menu);
+
+            const menuWidth = menu.offsetWidth;
+            const menuHeight = menu.offsetHeight;
+            const viewportWidth = window.innerWidth;
+            const viewportHeight = window.innerHeight;
+
+            if (x + menuWidth > viewportWidth) {
+                menu.style.left = `${Math.max(8, viewportWidth - menuWidth - 8)}px`;
+            }
+
+            if (y + menuHeight > viewportHeight) {
+                menu.style.top = `${Math.max(8, viewportHeight - menuHeight - 8)}px`;
+            }
+
+            explorerContextMenu = menu;
+            scheduleExplorerContextMenuDismiss();
+        }
+
+        async function emptyRecycleBinFromExplorer() {
+            if (!ipcRenderer || typeof ipcRenderer.invoke !== 'function') {
+                return;
+            }
+
+            try {
+                await ipcRenderer.invoke('trash:empty');
+                recycleBinState = await loadRecycleBinState();
+                await updateView();
+            } catch (error) {
+                console.error('[File Explorer] Failed to empty recycle bin:', error);
+            }
         }
 
         function getIconTypeForExtension(extension) {
@@ -1704,6 +2086,13 @@
             updateView();
         }
 
+        function navigateToRecycleBin() {
+            pushHistoryEntry({ type: RECYCLE_BIN_LOCATION });
+            currentLocation = RECYCLE_BIN_LOCATION;
+            currentPath = null;
+            updateView();
+        }
+
         function pushHistoryEntry(entry) {
             if (historyIndex < navigationHistory.length - 1) {
                 navigationHistory = navigationHistory.slice(0, historyIndex + 1);
@@ -1728,6 +2117,12 @@
 
             if (historyItem.type === 'this-pc') {
                 currentLocation = THIS_PC_LOCATION;
+                currentPath = null;
+                return;
+            }
+
+            if (historyItem.type === RECYCLE_BIN_LOCATION) {
+                currentLocation = RECYCLE_BIN_LOCATION;
                 currentPath = null;
                 return;
             }
@@ -1760,6 +2155,10 @@
         }
 
         function navigateUp() {
+            if (currentLocation === RECYCLE_BIN_LOCATION) {
+                return;
+            }
+
             if (currentPath) {
                 const specialFolder = findSpecialFolderByPath(currentPath);
                 if (specialFolder) {
@@ -1784,7 +2183,9 @@
 
             backBtn.disabled = historyIndex <= 0;
             forwardBtn.disabled = historyIndex >= navigationHistory.length - 1;
-            upBtn.disabled = currentLocation === HOME_LOCATION || currentLocation === THIS_PC_LOCATION;
+            upBtn.disabled = currentLocation === HOME_LOCATION
+                || currentLocation === THIS_PC_LOCATION
+                || currentLocation === RECYCLE_BIN_LOCATION;
         }
 
         function updateBreadcrumbs() {
@@ -1796,6 +2197,8 @@
                 appendBreadcrumbSegment(breadcrumbs, { label: 'Home', active: true }, true);
             } else if (currentLocation === THIS_PC_LOCATION) {
                 appendBreadcrumbSegment(breadcrumbs, { label: 'This PC', active: true }, true);
+            } else if (currentLocation === RECYCLE_BIN_LOCATION) {
+                appendBreadcrumbSegment(breadcrumbs, { label: 'Recycle Bin', active: true }, true);
             } else if (currentPath) {
                 const segments = buildPathBreadcrumbs(currentPath);
                 segments.forEach((segment, index) => appendBreadcrumbSegment(breadcrumbs, segment, index === segments.length - 1));
@@ -1812,6 +2215,8 @@
                 searchInput.placeholder = 'Search Home';
             } else if (currentLocation === THIS_PC_LOCATION) {
                 searchInput.placeholder = 'Search This PC';
+            } else if (currentLocation === RECYCLE_BIN_LOCATION) {
+                searchInput.placeholder = 'Search Recycle Bin';
             } else if (currentPath) {
                 searchInput.placeholder = `Search ${getCurrentLocationLabel()}`;
             } else {

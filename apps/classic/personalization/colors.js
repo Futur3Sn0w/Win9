@@ -39,6 +39,20 @@
 
     const WallColorRegistry = resolveWallColorRegistry();
 
+    function applyWallColorVariables(color, targetWindow = window) {
+        if (!targetWindow || !targetWindow.document || !color) {
+            return;
+        }
+
+        if (typeof targetWindow.applyWallColorVariables === 'function') {
+            targetWindow.applyWallColorVariables(color, targetWindow.document);
+            return;
+        }
+
+        targetWindow.document.documentElement.style.setProperty('--ui-wall-color', color);
+        targetWindow.document.documentElement.style.setProperty('--ui-wall-text-contrast', '#ffffff');
+    }
+
     // Available colors (excluding automatic)
     const availableColors = [
         '#ABABAB',
@@ -291,12 +305,12 @@
             return;
         }
         // Set CSS variable in current document
-        document.documentElement.style.setProperty('--ui-wall-color', color);
+        applyWallColorVariables(color, window);
 
         // Try to set in parent window
         if (window.parent && window.parent !== window) {
             try {
-                window.parent.document.documentElement.style.setProperty('--ui-wall-color', color);
+                applyWallColorVariables(color, window.parent);
             } catch (e) {
                 console.warn('Could not set color in parent window:', e);
             }
@@ -305,7 +319,7 @@
         // Try to set in top window
         if (window.top && window.top !== window) {
             try {
-                window.top.document.documentElement.style.setProperty('--ui-wall-color', color);
+                applyWallColorVariables(color, window.top);
             } catch (e) {
                 console.warn('Could not set color in top window:', e);
             }

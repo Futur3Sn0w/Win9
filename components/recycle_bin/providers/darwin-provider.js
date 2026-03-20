@@ -108,6 +108,38 @@ class DarwinRecycleBinProvider {
         await trash(paths, { glob: false });
         return { success: true, count: paths.length };
     }
+
+    async listItems() {
+        try {
+            const dirents = await fs.promises.readdir(this.recycleBinPath, { withFileTypes: true });
+            const visibleEntries = dirents
+                .filter(entry => isMeaningfulRecycleEntry(entry.name))
+                .sort((left, right) => left.name.toLowerCase().localeCompare(right.name.toLowerCase()));
+
+            return Promise.all(visibleEntries.map(async entry => {
+                const targetPath = path.join(this.recycleBinPath, entry.name);
+                const stats = await fs.promises.stat(targetPath);
+                const extension = entry.isDirectory()
+                    ? ''
+                    : path.extname(entry.name).slice(1).toLowerCase();
+
+                return {
+                    id: targetPath,
+                    name: entry.name,
+                    path: targetPath,
+                    originalPath: null,
+                    deletedAt: stats.mtime.toISOString(),
+                    isDirectory: entry.isDirectory(),
+                    extension
+                };
+            }));
+        } catch (error) {
+            if (error.code === 'ENOENT' || error.code === 'EPERM' || error.code === 'EACCES') {
+                return [];
+            }
+            throw error;
+        }
+    }
 }
 
 module.exports = DarwinRecycleBinProvider;

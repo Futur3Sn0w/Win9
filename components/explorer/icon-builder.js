@@ -15,6 +15,7 @@
     const ICON_SIZE_AVAILABILITY = {
         'bat': [16, 32, 48, 256],
         'dll': [16, 32, 48, 256],
+        'generic_file': [16, 32, 48, 256],
         'generic_program': [16, 20, 24, 32, 40, 48, 64, 256],
         'recycle_bin/empty': [16, 20, 24, 32, 40, 48, 64, 80, 96, 128, 256],
         'recycle_bin/full': [16, 20, 24, 32, 40, 48, 64, 80, 96, 128, 256],
@@ -35,6 +36,7 @@
     const ICON_DIRECTORY_BY_CATEGORY = {
         'bat': 'bat',
         'dll': 'dll',
+        'generic_file': 'generic_file',
         'generic_program': 'generic_program',
         'recycle_bin/empty': 'recycle_bin/empty',
         'recycle_bin/full': 'recycle_bin/full',
@@ -149,8 +151,12 @@
             return 'generic_folder';
         }
 
-        if (entry.type !== 'file' || !entry.extension) {
+        if (entry.type !== 'file') {
             return null;
+        }
+
+        if (!entry.extension) {
+            return 'generic_file';
         }
 
         const extension = normalizeExtension(entry.extension);
@@ -203,7 +209,7 @@
             return 'rich_text_document';
         }
 
-        return null;
+        return 'generic_file';
     }
 
     function getIconSourceCandidates(entry, desiredSize = 48) {

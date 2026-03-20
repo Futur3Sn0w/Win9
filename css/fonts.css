@@ -1,85 +1,85 @@
 /* ===== FONTS ===== */
 @font-face {
     font-family: 'Segoe UI';
-    src: url(' ../resources/fonts/segoe/segoeuil.ttf') format('truetype');
+    src: url('../resources/fonts/segoe/segoeuil.ttf') format('truetype');
     font-weight: 200;
     font-style: normal;
 }
 
 @font-face {
     font-family: 'Segoe UI';
-    src: url(' ../resources/fonts/segoe/seguili.ttf') format('truetype');
+    src: url('../resources/fonts/segoe/seguili.ttf') format('truetype');
     font-weight: 200;
     font-style: italic;
 }
 
 @font-face {
     font-family: 'Segoe UI';
-    src: url(' ../resources/fonts/segoe/segoeuisl.ttf') format('truetype');
+    src: url('../resources/fonts/segoe/segoeuisl.ttf') format('truetype');
     font-weight: 300;
     font-style: normal;
 }
 
 @font-face {
     font-family: 'Segoe UI';
-    src: url(' ../resources/fonts/segoe/seguisli.ttf') format('truetype');
+    src: url('../resources/fonts/segoe/seguisli.ttf') format('truetype');
     font-weight: 300;
     font-style: italic;
 }
 
 @font-face {
     font-family: 'Segoe UI';
-    src: url(' ../resources/fonts/segoe/segoeui.ttf') format('truetype');
+    src: url('../resources/fonts/segoe/segoeui.ttf') format('truetype');
     font-weight: 400;
     font-style: normal;
 }
 
 @font-face {
     font-family: 'Segoe UI';
-    src: url(' ../resources/fonts/segoe/segoeuii.ttf') format('truetype');
+    src: url('../resources/fonts/segoe/segoeuii.ttf') format('truetype');
     font-weight: 400;
     font-style: italic;
 }
 
 @font-face {
     font-family: 'Segoe UI';
-    src: url(' ../resources/fonts/segoe/seguisb.ttf') format('truetype');
+    src: url('../resources/fonts/segoe/seguisb.ttf') format('truetype');
     font-weight: 500;
     font-style: normal;
 }
 
 @font-face {
     font-family: 'Segoe UI';
-    src: url(' ../resources/fonts/segoe/seguisbi.ttf') format('truetype');
+    src: url('../resources/fonts/segoe/seguisbi.ttf') format('truetype');
     font-weight: 500;
     font-style: italic;
 }
 
 @font-face {
     font-family: 'Segoe UI';
-    src: url(' ../resources/fonts/segoe/seguibl.ttf') format('truetype');
-    font-weight: 600;
+    src: url('../resources/fonts/segoe/segoeuib.ttf') format('truetype');
+    font-weight: 700;
     font-style: normal;
 }
 
 @font-face {
     font-family: 'Segoe UI';
-    src: url(' ../resources/fonts/segoe/seguibli.ttf') format('truetype');
-    font-weight: 600;
+    src: url('../resources/fonts/segoe/segoeuiz.ttf') format('truetype');
+    font-weight: 700;
     font-style: italic;
 }
 
 @font-face {
     font-family: 'Segoe UI';
-    src: url(' ../resources/fonts/segoe/seguibl.ttf') format('truetype');
-    font-weight: 700;
+    src: url('../resources/fonts/segoe/seguibl.ttf') format('truetype');
+    font-weight: 900;
     font-style: normal;
 }
 
 @font-face {
     font-family: 'Segoe UI';
-    src: url(' ../resources/fonts/segoe/seguibli.ttf') format('truetype');
-    font-weight: 700;
+    src: url('../resources/fonts/segoe/seguibli.ttf') format('truetype');
+    font-weight: 900;
     font-style: italic;
 }
 
@@ -95,10 +95,10 @@ span.metro-emoji {
 
 @font-face {
     font-family: 'Segoe UI Emoji';
-    src: url(' ../resources/fonts/segoe/seguiemj.ttf') format('truetype');
+    src: url('../resources/fonts/segoe/seguiemj.ttf') format('truetype');
 }
 
 @font-face {
     font-family: 'Segoe UI Symbol';
-    src: url(' ../resources/fonts/segoe/seguisym.ttf') format('truetype');
+    src: url('../resources/fonts/segoe/seguisym.ttf') format('truetype');
 }

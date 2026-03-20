@@ -230,7 +230,7 @@ class SystemDialog {
             // Remove opening class after animation completes
             setTimeout(() => {
                 dialog.classList.remove('opening');
-            }, 150);
+            }, 500);
 
             // Focus dialog for keyboard support
             setTimeout(() => {
@@ -277,6 +277,7 @@ class SystemDialog {
         dialog.style.left = '50%';
         dialog.style.top = '50%';
         dialog.style.transform = 'translate(-50%, -50%)';
+        this.updateDialogAnimationTransforms(dialog, dialog.style.transform);
         dialog.style.width = 'auto';
         dialog.style.minWidth = '320px';
         dialog.style.maxWidth = '500px';
@@ -387,7 +388,24 @@ class SystemDialog {
 
             // Remove from active dialogs
             this.activeDialogs.delete(dialogId);
-        }, 150); // Match animation duration
+        }, 250); // Match animation duration
+    }
+
+    updateDialogAnimationTransforms(dialog, baseTransform) {
+        const normalizedBaseTransform = baseTransform && baseTransform !== 'none'
+            ? baseTransform
+            : null;
+        const openFromTransform = normalizedBaseTransform
+            ? `${normalizedBaseTransform} scale(1.2)`
+            : 'scale(1.2)';
+        const steadyTransform = normalizedBaseTransform
+            ? `${normalizedBaseTransform} scale(1)`
+            : 'scale(1)';
+
+        dialog.style.setProperty('--classic-window-open-from-transform', openFromTransform);
+        dialog.style.setProperty('--classic-window-open-to-transform', steadyTransform);
+        dialog.style.setProperty('--classic-window-close-from-transform', steadyTransform);
+        dialog.style.setProperty('--classic-window-close-to-transform', steadyTransform);
     }
 
     /**
@@ -398,15 +416,25 @@ class SystemDialog {
         if (!titlebar) return;
 
         let isDragging = false;
+        let activePointerId = null;
         let startX, startY, startLeft, startTop;
 
-        const handleMouseDown = (e) => {
+        const handlePointerDown = (e) => {
+            if (e.pointerType === 'mouse' && e.button !== 0) {
+                return;
+            }
+
+            if (e.isPrimary === false) {
+                return;
+            }
+
             // Don't drag if clicking on buttons
             if (e.target.closest('.classic-window-control-btn')) {
                 return;
             }
 
             isDragging = true;
+            activePointerId = e.pointerId;
             startX = e.clientX;
             startY = e.clientY;
 
@@ -414,14 +442,22 @@ class SystemDialog {
             startLeft = rect.left;
             startTop = rect.top;
 
+            if (typeof titlebar.setPointerCapture === 'function') {
+                try {
+                    titlebar.setPointerCapture(e.pointerId);
+                } catch (error) {
+                    console.debug('[SystemDialog] Unable to capture drag pointer:', error);
+                }
+            }
+
             // Bring dialog to front
             this.focusDialog(dialog);
 
             e.preventDefault();
         };
 
-        const handleMouseMove = (e) => {
-            if (!isDragging) return;
+        const handlePointerMove = (e) => {
+            if (!isDragging || e.pointerId !== activePointerId) return;
 
             const deltaX = e.clientX - startX;
             const deltaY = e.clientY - startY;
@@ -432,20 +468,37 @@ class SystemDialog {
             dialog.style.left = `${newLeft}px`;
             dialog.style.top = `${newTop}px`;
             dialog.style.transform = 'none';
+            this.updateDialogAnimationTransforms(dialog, 'none');
         };
 
-        const handleMouseUp = () => {
+        const handlePointerUp = (e) => {
+            if (!isDragging || e.pointerId !== activePointerId) {
+                return;
+            }
+
+            if (typeof titlebar.releasePointerCapture === 'function') {
+                try {
+                    titlebar.releasePointerCapture(activePointerId);
+                } catch (error) {
+                    console.debug('[SystemDialog] Unable to release drag pointer:', error);
+                }
+            }
+
             isDragging = false;
+            activePointerId = null;
         };
 
-        titlebar.addEventListener('mousedown', handleMouseDown);
-        document.addEventListener('mousemove', handleMouseMove);
-        document.addEventListener('mouseup', handleMouseUp);
+        titlebar.addEventListener('pointerdown', handlePointerDown);
+        document.addEventListener('pointermove', handlePointerMove);
+        document.addEventListener('pointerup', handlePointerUp);
+        document.addEventListener('pointercancel', handlePointerUp);
 
         // Store cleanup function
         dialog._dragCleanup = () => {
-            document.removeEventListener('mousemove', handleMouseMove);
-            document.removeEventListener('mouseup', handleMouseUp);
+            titlebar.removeEventListener('pointerdown', handlePointerDown);
+            document.removeEventListener('pointermove', handlePointerMove);
+            document.removeEventListener('pointerup', handlePointerUp);
+            document.removeEventListener('pointercancel', handlePointerUp);
         };
     }
 
@@ -454,7 +507,11 @@ class SystemDialog {
      */
     initDialogFocus(dialog) {
         // Click on dialog to focus
-        dialog.addEventListener('mousedown', (e) => {
+        dialog.addEventListener('pointerdown', (e) => {
+            if (e.pointerType === 'mouse' && e.button !== 0) {
+                return;
+            }
+
             // Don't refocus if clicking inside (let buttons handle their own clicks)
             if (e.target.closest('.system-dialog-button')) {
                 return;

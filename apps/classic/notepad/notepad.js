@@ -4,12 +4,27 @@ const APP_ID = 'notepad';
 
 let ipcRenderer = null;
 let path = null;
+let fsPromises = null;
+let decodeTextBuffer = null;
 
 try {
     ({ ipcRenderer } = require('electron'));
     path = require('path');
+    fsPromises = require('fs').promises;
+    ({ decodeTextBuffer } = require('../../../components/explorer/file-openability.js'));
 } catch (error) {
-    console.warn('Electron APIs are not available in Notepad:', error);
+    if (typeof window !== 'undefined' && typeof window.require === 'function') {
+        try {
+            ({ ipcRenderer } = window.require('electron'));
+            path = window.require('path');
+            fsPromises = window.require('fs').promises;
+            ({ decodeTextBuffer } = window.require('../../../components/explorer/file-openability.js'));
+        } catch (nestedError) {
+            console.warn('Electron APIs are not available in Notepad:', nestedError);
+        }
+    } else {
+        console.warn('Electron APIs are not available in Notepad:', error);
+    }
 }
 
 let getRegistry = null;
@@ -49,8 +64,11 @@ class Notepad {
         this.anyMenuOpen = false;
         this.baseTitle = 'Notepad';
         this.windowId = null;
+        this.filePathHint = null;
         this.ipcRenderer = ipcRenderer;
         this.path = path;
+        this.fsPromises = fsPromises;
+        this.decodeTextBuffer = decodeTextBuffer;
         this.preferenceStore = this.getPreferenceStore();
         this.pendingLaunchFilePath = null;
         this.activeLaunchFilePath = null;
@@ -73,10 +91,45 @@ class Notepad {
         this.consumeInitialLaunchOptions();
     }
 
+    ensureHostAccess() {
+        const requireCandidates = [];
+
+        if (typeof require === 'function') {
+            requireCandidates.push(require);
+        }
+
+        if (typeof window !== 'undefined' && typeof window.require === 'function') {
+            requireCandidates.push(window.require.bind(window));
+        }
+
+        for (const requireFn of requireCandidates) {
+            try {
+                if (!this.ipcRenderer) {
+                    ({ ipcRenderer: this.ipcRenderer } = requireFn('electron'));
+                }
+
+                if (!this.path) {
+                    this.path = requireFn('path');
+                }
+
+                if (!this.fsPromises) {
+                    this.fsPromises = requireFn('fs').promises;
+                }
+
+                if (typeof this.decodeTextBuffer !== 'function') {
+                    ({ decodeTextBuffer: this.decodeTextBuffer } = requireFn('../../../components/explorer/file-openability.js'));
+                }
+            } catch (error) {
+                // Keep trying the next candidate.
+            }
+        }
+    }
+
     updateWindowTitle() {
         const showName = Boolean(this.isModified || this.currentFilePath || this.currentFile);
         const displayName = this.currentFile || DEFAULT_FILENAME;
-        const title = showName ? `${displayName} - ${this.baseTitle}` : this.baseTitle;
+        const dirtyPrefix = this.isModified ? '*' : '';
+        const title = showName ? `${dirtyPrefix}${displayName} - ${this.baseTitle}` : this.baseTitle;
         const titleElement = window.frameElement?.closest('.classic-app-container')?.querySelector('.classic-window-name');
 
         if (titleElement) {
@@ -298,6 +351,11 @@ class Notepad {
                 return;
             }
 
+            if (event.data?.action === 'openFileData' && event.data.fileData) {
+                this.loadOpenedFileFromLaunch(event.data.fileData);
+                return;
+            }
+
             if (event.data?.action === 'openFile' && event.data.filePath) {
                 this.queueLaunchFileOpen(event.data.filePath);
             }
@@ -315,6 +373,19 @@ class Notepad {
     }
 
     handleLaunchOptions(launchOptions) {
+        if (typeof launchOptions?.openFilePath === 'string' && launchOptions.openFilePath) {
+            this.filePathHint = launchOptions.openFilePath;
+        }
+
+        if (typeof launchOptions?.openFileData?.filePath === 'string' && launchOptions.openFileData.filePath) {
+            this.filePathHint = launchOptions.openFileData.filePath;
+        }
+
+        if (launchOptions?.openFileData) {
+            this.loadOpenedFileFromLaunch(launchOptions.openFileData);
+            return;
+        }
+
         if (launchOptions?.openFilePath) {
             this.queueLaunchFileOpen(launchOptions.openFilePath);
         }
@@ -324,6 +395,8 @@ class Notepad {
         if (!filePath) {
             return;
         }
+
+        this.filePathHint = filePath;
 
         if (filePath === this.pendingLaunchFilePath || filePath === this.activeLaunchFilePath) {
             return;
@@ -441,6 +514,8 @@ class Notepad {
     }
 
     async openFile() {
+        this.ensureHostAccess();
+
         const canProceed = await this.ensureCanReplaceCurrentDocument();
         if (!canProceed) {
             return;
@@ -470,7 +545,7 @@ class Notepad {
                 const reader = new FileReader();
                 reader.onload = (event) => {
                     this.applyOpenedFile({
-                        filePath: null,
+                        filePath: typeof file.path === 'string' ? file.path : null,
                         fileName: file.name,
                         content: event.target.result
                     });
@@ -483,7 +558,7 @@ class Notepad {
     }
 
     async loadFileFromLaunch(filePath) {
-        if (!filePath || !this.ipcRenderer) {
+        if (!filePath) {
             return false;
         }
 
@@ -493,7 +568,7 @@ class Notepad {
         }
 
         try {
-            const result = await this.ipcRenderer.invoke('notepad-open-file-path', filePath);
+            const result = await this.readFileFromPath(filePath);
             if (!result || result.canceled) {
                 if (result?.error) {
                     await this.showError('Unable to open the selected file.\n\n' + result.error);
@@ -509,9 +584,57 @@ class Notepad {
         }
     }
 
+    async loadOpenedFileFromLaunch(openedFile) {
+        if (!openedFile) {
+            return false;
+        }
+
+        if (typeof openedFile.filePath === 'string' && openedFile.filePath) {
+            this.filePathHint = openedFile.filePath;
+        }
+
+        const canProceed = await this.ensureCanReplaceCurrentDocument();
+        if (!canProceed) {
+            return false;
+        }
+
+        this.applyOpenedFile(openedFile);
+        return true;
+    }
+
+    async readFileFromPath(filePath) {
+        this.ensureHostAccess();
+
+        if (this.ipcRenderer?.invoke) {
+            return this.ipcRenderer.invoke('notepad-open-file-path', filePath);
+        }
+
+        if (this.fsPromises?.readFile && typeof this.decodeTextBuffer === 'function') {
+            const buffer = await this.fsPromises.readFile(filePath);
+            const decoded = this.decodeTextBuffer(buffer);
+
+            if (!decoded?.canOpen) {
+                throw new Error('This file is not in a text format that the simulated Notepad can open.');
+            }
+
+            return {
+                canceled: false,
+                filePath,
+                fileName: this.getDisplayName(filePath) || DEFAULT_FILENAME,
+                content: decoded.content,
+                encoding: decoded.encoding
+            };
+        }
+
+        throw new Error('File loading is unavailable in this environment.');
+    }
+
     applyOpenedFile(result) {
+        this.ensureHostAccess();
+        const resolvedFilePath = this.getWritableFilePath(result?.filePath || null);
         this.textarea.value = result?.content ?? '';
-        this.currentFilePath = result?.filePath || null;
+        this.currentFilePath = resolvedFilePath;
+        this.filePathHint = resolvedFilePath;
         this.currentFile = result?.fileName || this.getDisplayName(this.currentFilePath) || DEFAULT_FILENAME;
         this.isModified = false;
         this.updateStatusBar();
@@ -537,13 +660,22 @@ class Notepad {
     }
 
     async saveFile() {
-        if (this.ipcRenderer) {
-            return this.saveWithHostDialog(false);
+        this.ensureHostAccess();
+        const writableFilePath = this.getWritableFilePath();
+
+        if (writableFilePath) {
+            return this.saveToExistingFile(writableFilePath);
         }
+
+        if (this.ipcRenderer) {
+            return this.saveWithHostDialog(true);
+        }
+
         return this.saveWithBrowserDownload(false);
     }
 
     async saveFileAs() {
+        this.ensureHostAccess();
         if (this.ipcRenderer) {
             return this.saveWithHostDialog(true);
         }
@@ -552,10 +684,12 @@ class Notepad {
 
     async saveWithHostDialog(forceDialog) {
         try {
+            this.ensureHostAccess();
             const content = this.textarea.value;
+            const writableFilePath = this.getWritableFilePath();
 
-            if (forceDialog || !this.currentFilePath) {
-                const defaultPath = this.currentFilePath || this.currentFile || DEFAULT_FILENAME;
+            if (forceDialog || !writableFilePath) {
+                const defaultPath = writableFilePath || this.currentFile || DEFAULT_FILENAME;
                 const result = await this.ipcRenderer.invoke('notepad-save-file-as', {
                     defaultPath,
                     content
@@ -573,10 +707,11 @@ class Notepad {
                 }
 
                 this.currentFilePath = result.filePath || null;
+                this.filePathHint = this.currentFilePath;
                 this.currentFile = this.getDisplayName(this.currentFilePath) || this.currentFile || DEFAULT_FILENAME;
             } else {
                 const result = await this.ipcRenderer.invoke('notepad-save-file', {
-                    filePath: this.currentFilePath,
+                    filePath: writableFilePath,
                     content
                 });
 
@@ -586,8 +721,51 @@ class Notepad {
                     }
                     return false;
                 }
+
+                this.currentFilePath = result.filePath || writableFilePath;
+                this.filePathHint = this.currentFilePath;
+                this.currentFile = this.getDisplayName(this.currentFilePath) || this.currentFile || DEFAULT_FILENAME;
             }
 
+            this.isModified = false;
+            this.updateWindowTitle();
+            return true;
+        } catch (error) {
+            await this.showError('Unable to save the file.\n\n' + (error?.message || 'Unknown error.'));
+            return false;
+        }
+    }
+
+    async saveToExistingFile(filePath) {
+        try {
+            this.ensureHostAccess();
+            if (!filePath) {
+                return this.saveWithBrowserDownload(false);
+            }
+
+            if (this.ipcRenderer?.invoke) {
+                const result = await this.ipcRenderer.invoke('notepad-save-file', {
+                    filePath,
+                    content: this.textarea.value
+                });
+
+                if (!result || !result.success) {
+                    if (result?.error) {
+                        await this.showError('Unable to save the file.\n\n' + result.error);
+                    }
+                    return false;
+                }
+
+                this.currentFilePath = result.filePath || filePath;
+            } else if (this.fsPromises?.writeFile) {
+                await this.fsPromises.writeFile(filePath, this.textarea.value, 'utf8');
+                this.currentFilePath = filePath;
+            } else {
+                return this.saveWithBrowserDownload(false);
+            }
+
+            this.filePathHint = this.currentFilePath;
+            this.currentFile = this.getDisplayName(this.currentFilePath) || this.currentFile || DEFAULT_FILENAME;
             this.isModified = false;
             this.updateWindowTitle();
             return true;
@@ -629,6 +807,7 @@ class Notepad {
     }
 
     getDisplayName(filePath) {
+        this.ensureHostAccess();
         if (!filePath) {
             return null;
         }
@@ -639,6 +818,26 @@ class Notepad {
 
         const segments = filePath.split(/[\\/]/);
         return segments[segments.length - 1] || filePath;
+    }
+
+    getWritableFilePath(candidatePath = null) {
+        const pathCandidates = [
+            candidatePath,
+            this.currentFilePath,
+            this.filePathHint,
+            window.launchOptions?.openFilePath,
+            window.launchOptions?.openFileData?.filePath,
+            this.activeLaunchFilePath,
+            this.pendingLaunchFilePath
+        ];
+
+        for (const nextPath of pathCandidates) {
+            if (typeof nextPath === 'string' && nextPath) {
+                return nextPath;
+            }
+        }
+
+        return null;
     }
 
     async showError(message) {

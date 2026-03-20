@@ -26,6 +26,23 @@
 
     const WallColorRegistry = resolveWallColorRegistry();
 
+    function applyWallColor(color) {
+        const contexts = [window, window.parent, window.top];
+        for (const ctx of contexts) {
+            try {
+                if (ctx && typeof ctx.applyWallColorVariables === 'function' && ctx.document) {
+                    ctx.applyWallColorVariables(color, ctx.document);
+                    return;
+                }
+            } catch (error) {
+                console.warn('[RestoreColors] Could not apply wall color via shared helper:', error);
+            }
+        }
+
+        document.documentElement.style.setProperty('--ui-wall-color', color);
+        document.documentElement.style.setProperty('--ui-wall-text-contrast', '#ffffff');
+    }
+
     // Function to restore saved color
     function restoreSavedColor() {
         try {
@@ -36,7 +53,7 @@
 
             const settings = WallColorRegistry.loadControlPanelColor();
             if (settings.mode === 'custom' && settings.color) {
-                document.documentElement.style.setProperty('--ui-wall-color', settings.color);
+                applyWallColor(settings.color);
                 console.log('Restored saved control panel color:', settings.color);
             } else {
                 console.log('Control panel color set to automatic - wallpaper color will determine UI shade');

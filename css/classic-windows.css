@@ -55,17 +55,32 @@
     position: absolute;
     display: flex;
     flex-direction: column;
-
-    border: 1px solid color-mix(in srgb, var(--ui-wall-color, #0078d7) 58%, #000 42%);
-    box-shadow:
+    --classic-window-open-from-transform: scale(1.05);
+    --classic-window-open-to-transform: scale(1);
+    --classic-window-close-from-transform: scale(1);
+    --classic-window-close-to-transform: scale(0.95);
+    --classic-window-open-shadow-hidden:
+        0 25px 70px rgba(0, 0, 0, 0),
+        0 6px 16px rgba(0, 0, 0, 0);
+    --classic-window-open-shadow-soft:
+        0 25px 70px rgba(0, 0, 0, 0.12),
+        0 6px 16px rgba(0, 0, 0, 0.1);
+    --classic-window-open-shadow-visible:
         0 25px 70px rgba(0, 0, 0, 0.22),
         0 6px 16px rgba(0, 0, 0, 0.2);
+    --classic-window-inactive-shadow:
+        0 8px 18px rgba(0, 0, 0, 0.18),
+        0 2px 6px rgba(0, 0, 0, 0.1);
+
+    border: 1px solid color-mix(in srgb, var(--ui-wall-color, #0078d7) 58%, #000 42%);
+    box-shadow: var(--classic-window-open-shadow-visible);
 
     box-sizing: border-box;
     padding: 0;
     min-width: 200px;
     min-height: 100px;
     z-index: 1000;
+    transform-origin: center center;
     transition: box-shadow 0.16s ease, border-color 0.16s ease;
 
     &::after {
@@ -136,9 +151,7 @@
 
     &.inactive {
         border-color: color-mix(in srgb, #ebebeb 82%, #000 18%);
-        box-shadow:
-            0 8px 18px rgba(0, 0, 0, 0.18),
-            0 2px 6px rgba(0, 0, 0, 0.1);
+        box-shadow: var(--classic-window-inactive-shadow);
 
         &::after {
             background: #EBEBEB;
@@ -152,6 +165,21 @@
         & .classic-window-title {
             /* Dim the title text for inactive windows */
             color: #666;
+        }
+
+        & .classic-window-control-btn:not(.close),
+        & .modern-desktop-window-menu-button:not(.close) {
+            color: #666;
+        }
+
+        & .classic-window-control-btn.close,
+        & .modern-desktop-window-menu-button.close {
+            color: #ECECEC;
+        }
+
+        & .classic-window-content,
+        & .modern-window-content {
+            pointer-events: none !important;
         }
     }
 
@@ -170,6 +198,7 @@
     height: 28px;
     flex-shrink: 0;
     user-select: none;
+    touch-action: none;
     position: relative;
     z-index: 3;
     box-sizing: border-box;
@@ -187,7 +216,7 @@
     justify-content: center;
     text-align: center;
     gap: 6px;
-    color: #000;
+    color: var(--ui-wall-text-contrast, #ffffff);
     font-size: 14px;
     font-weight: 400;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -211,7 +240,9 @@
 }
 
 .modern-desktop-window-title {
-    gap: 4px;
+    gap: 0;
+    padding-left: 0.5px;
+    padding-right: 2px;
 }
 
 .modern-desktop-window-titlebar-trigger {
@@ -220,14 +251,14 @@
 
 .modern-desktop-window-menu-button {
     pointer-events: auto;
-    width: 22px;
-    height: 22px;
-    margin-left: 2px;
+    width: 28px;
+    height: 28px;
+    margin-left: 3px;
     margin-right: 2px;
     padding: 0;
     border: none;
     background: transparent;
-    color: #000;
+    color: var(--ui-wall-text-contrast, #ffffff);
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     font-size: 13px;
     line-height: 1;
@@ -237,52 +268,89 @@
 }
 
 .modern-desktop-window-menu-button:hover {
-    background: rgba(0, 0, 0, 0.1);
+    background: #3665B3;
+    color: white;
 }
 
 .modern-desktop-window-menu-button:active {
-    background: rgba(0, 0, 0, 0.16);
+    background: #3D6099;
+    color: white;
 }
 
 .modern-desktop-titlebar-menu {
-    position: absolute;
-    top: calc(100% + 3px);
-    left: 0;
-    min-width: 200px;
-    padding: 4px 2px;
-    background: #fff;
-    border: 1px solid #A0A0A0;
-    box-shadow: 4px 4px 5px rgba(0, 0, 0, 0.4);
-    display: none;
+    min-width: 177px;
     z-index: 200100;
-    pointer-events: auto;
-}
-
-.modern-desktop-titlebar-menu.active {
-    display: block;
 }
 
 .modern-desktop-titlebar-menu-item {
     width: 100%;
-    height: 22px;
-    padding: 0 12px 2px 32px;
     border: none;
     background: transparent;
-    color: #000;
-    font-size: 12px;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     text-align: left;
-    display: flex;
-    align-items: center;
 }
 
-.modern-desktop-titlebar-menu-item:hover {
-    background: #E5E5E5;
+.modern-desktop-titlebar-menu-icon--more::before,
+.modern-desktop-titlebar-menu-icon--play::before,
+.modern-desktop-titlebar-menu-icon--print::before,
+.modern-desktop-titlebar-menu-icon--fullscreen::before {
+    font-size: 13px;
 }
 
-.modern-desktop-titlebar-menu-item-text {
-    flex: 1;
-    pointer-events: none;
+.modern-desktop-titlebar-menu-icon--more::before {
+    content: '...';
+    letter-spacing: -1px;
+}
+
+.modern-desktop-titlebar-menu-icon--play::before {
+    content: '\25B6';
+}
+
+.modern-desktop-titlebar-menu-icon--print::before {
+    content: '\2399';
+}
+
+.modern-desktop-titlebar-menu-icon--fullscreen::before {
+    content: '\26F6';
+}
+
+.modern-desktop-titlebar-menu-icon--search::before,
+.modern-desktop-titlebar-menu-icon--share::before,
+.modern-desktop-titlebar-menu-icon--devices::before,
+.modern-desktop-titlebar-menu-icon--settings::before {
+    content: '';
+    width: 16px;
+    height: 16px;
+    background-color: currentColor;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    mask-position: center;
+    -webkit-mask-size: contain;
+    mask-size: contain;
+}
+
+.modern-desktop-titlebar-menu-icon--search::before {
+    -webkit-mask-image: url('../resources/images/icons/charms_search.png');
+    mask-image: url('../resources/images/icons/charms_search.png');
+}
+
+.modern-desktop-titlebar-menu-icon--share::before {
+    -webkit-mask-image: url('../resources/images/icons/charms_share.png');
+    mask-image: url('../resources/images/icons/charms_share.png');
+}
+
+.modern-desktop-titlebar-menu-icon--devices::before {
+    -webkit-mask-image: url('../resources/images/icons/charms_devices.png');
+    mask-image: url('../resources/images/icons/charms_devices.png');
+}
+
+.modern-desktop-titlebar-menu-icon--settings::before {
+    -webkit-mask-image: url('../resources/images/icons/charms_settings.png');
+    mask-image: url('../resources/images/icons/charms_settings.png');
+}
+
+.modern-desktop-titlebar-menu .context-menu-item.is-disabled .modern-desktop-titlebar-menu-icon {
+    opacity: 0.7;
 }
 
 .modern-desktop-window-icon {
@@ -321,7 +389,7 @@
 .classic-window-control-btn {
     width: 25px;
     height: 20px;
-    color: #000;
+    color: var(--ui-wall-text-contrast, #ffffff);
     border: none;
     border-radius: 0;
     background-color: transparent;
@@ -659,67 +727,111 @@ webview.classic-window-iframe {
 
 /* Animation for opening classic apps */
 .classic-app-container.opening {
-    animation: classicWindowOpen 0.15s ease forwards;
+    animation: classicWindowOpen 0.35s ease-out forwards;
 }
 
 @keyframes classicWindowOpen {
-    from {
+    0% {
         opacity: 0;
-        transform: scale(0.95);
+        transform: var(--classic-window-open-from-transform);
+        box-shadow: var(--classic-window-open-shadow-hidden);
     }
 
-    to {
+    40% {
         opacity: 1;
-        transform: scale(1);
+        box-shadow: var(--classic-window-open-shadow-hidden);
+    }
+
+    55% {
+        box-shadow: var(--classic-window-open-shadow-soft);
+    }
+
+    70% {
+        opacity: 1;
+        transform: var(--classic-window-open-to-transform);
+        box-shadow: var(--classic-window-open-shadow-visible);
+    }
+
+    100% {
+        opacity: 1;
+        transform: var(--classic-window-open-to-transform);
+        box-shadow: var(--classic-window-open-shadow-visible);
     }
 }
 
 /* Animation for closing classic apps */
 .classic-app-container.closing {
-    animation: classicWindowClose 0.15s ease forwards;
+    animation: classicWindowClose 0.25s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    pointer-events: none;
 }
 
 @keyframes classicWindowClose {
-    from {
+    0% {
         opacity: 1;
-        transform: scale(1);
+        transform: var(--classic-window-close-from-transform);
+        box-shadow: var(--classic-window-open-shadow-visible);
     }
 
-    to {
+    20% {
+        box-shadow: var(--classic-window-open-shadow-soft);
+    }
+
+    40% {
+        box-shadow: var(--classic-window-open-shadow-hidden);
+    }
+
+    100% {
         opacity: 0;
-        transform: scale(0.95);
+        transform: var(--classic-window-close-to-transform);
+        box-shadow: var(--classic-window-open-shadow-hidden);
     }
 }
 
 /* Animation for minimizing classic windows */
 .classic-app-container.minimizing {
-    animation: classicWindowMinimize 0.2s ease forwards;
+    animation: classicWindowMinimize 0.3s ease-out forwards;
 }
 
 @keyframes classicWindowMinimize {
-    from {
+    0% {
         transform: translate(0, 0) scale(1);
         opacity: 1;
     }
 
-    to {
-        transform: translate(var(--minimize-x, 0), var(--minimize-y, 0)) scale(0.1);
+    30% {
+        opacity: 0.28;
+    }
+
+    62% {
+        opacity: 0;
+    }
+
+    100% {
+        transform: translate(var(--minimize-x, 0), var(--minimize-y, 0)) scale(0.16);
         opacity: 0;
     }
 }
 
 /* Animation for restoring classic windows */
 .classic-app-container.restoring {
-    animation: classicWindowRestore 0.2s ease forwards;
+    animation: classicWindowRestore 0.3s ease-out forwards;
 }
 
 @keyframes classicWindowRestore {
-    from {
-        transform: translate(var(--restore-x, 0), var(--restore-y, 0)) scale(0.1);
+    0% {
+        transform: translate(var(--restore-x, 0), var(--restore-y, 0)) scale(0.16);
         opacity: 0;
     }
 
-    to {
+    33% {
+        opacity: 0;
+    }
+
+    68% {
+        opacity: 1;
+    }
+
+    100% {
         transform: translate(0, 0) scale(1);
         opacity: 1;
     }

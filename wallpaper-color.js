@@ -75,6 +75,71 @@ function setAccentColorHexSafe(hexColor) {
     }
 }
 
+function parseColorChannels(color) {
+    if (typeof color !== 'string') {
+        return null;
+    }
+
+    const hexMatch = color.match(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i);
+    if (hexMatch) {
+        let hex = hexMatch[1];
+        if (hex.length === 3) {
+            hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
+        }
+
+        return {
+            r: parseInt(hex.substring(0, 2), 16),
+            g: parseInt(hex.substring(2, 4), 16),
+            b: parseInt(hex.substring(4, 6), 16)
+        };
+    }
+
+    const rgbaMatch = color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/i);
+    if (rgbaMatch) {
+        return {
+            r: parseInt(rgbaMatch[1], 10),
+            g: parseInt(rgbaMatch[2], 10),
+            b: parseInt(rgbaMatch[3], 10)
+        };
+    }
+
+    return null;
+}
+
+function getRelativeLuminance(r, g, b) {
+    const rsRGB = r / 255;
+    const gsRGB = g / 255;
+    const bsRGB = b / 255;
+
+    const rLinear = rsRGB <= 0.03928 ? rsRGB / 12.92 : Math.pow((rsRGB + 0.055) / 1.055, 2.4);
+    const gLinear = gsRGB <= 0.03928 ? gsRGB / 12.92 : Math.pow((gsRGB + 0.055) / 1.055, 2.4);
+    const bLinear = bsRGB <= 0.03928 ? bsRGB / 12.92 : Math.pow((bsRGB + 0.055) / 1.055, 2.4);
+
+    return 0.2126 * rLinear + 0.7152 * gLinear + 0.0722 * bLinear;
+}
+
+function getWallTextContrastColor(color) {
+    const channels = parseColorChannels(color);
+    if (!channels) {
+        return '#ffffff';
+    }
+
+    return getRelativeLuminance(channels.r, channels.g, channels.b) > 0.5
+        ? '#000000'
+        : '#ffffff';
+}
+
+function applyWallColorVariables(color, targetDocument = document) {
+    if (!targetDocument || !targetDocument.documentElement || !color) {
+        return;
+    }
+
+    targetDocument.documentElement.style.setProperty('--ui-wall-color', color);
+    targetDocument.documentElement.style.setProperty('--ui-wall-text-contrast', getWallTextContrastColor(color));
+}
+
+window.applyWallColorVariables = applyWallColorVariables;
+
 class WallpaperColorExtractor {
     constructor() {
         this.wallpaperPath = null;
@@ -236,7 +301,7 @@ class WallpaperColorExtractor {
      */
     setCSSVariable(color) {
         const colorString = this.rgbToString(color);
-        document.documentElement.style.setProperty('--ui-wall-color', colorString);
+        applyWallColorVariables(colorString);
         console.log('Wallpaper dominant color set:', colorString);
     }
 

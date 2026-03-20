@@ -104,6 +104,51 @@ class WindowsRecycleBinProvider {
         return { success: true, count: paths.length };
     }
 
+    async listItems() {
+        const script = [
+            "$ErrorActionPreference = 'Stop'",
+            '$shell = New-Object -ComObject Shell.Application',
+            '$folder = $shell.Namespace(10)',
+            '$items = @()',
+            'if ($null -ne $folder) {',
+            '  foreach ($item in $folder.Items()) {',
+            '    $name = [string]$item.Name',
+            '    $isFolder = $false',
+            '    try { $isFolder = [bool]$item.IsFolder } catch {}',
+            '    $deletedFrom = $null',
+            "    try { $deletedFrom = [string]$item.ExtendedProperty('System.Recycle.DeletedFrom') } catch {}",
+            '    if ([string]::IsNullOrWhiteSpace($deletedFrom)) {',
+            "      try { $deletedFrom = [string]$item.ExtendedProperty('System.ItemFolderPathDisplay') } catch {}",
+            '    }',
+            '    $dateDeleted = $null',
+            "    try { $rawDeleted = $item.ExtendedProperty('System.DateDeleted'); if ($null -ne $rawDeleted) { $dateDeleted = [string]$rawDeleted } } catch {}",
+            "    $resolvedOriginalPath = if ([string]::IsNullOrWhiteSpace($deletedFrom)) { $null } else { $deletedFrom }",
+            "    $extension = if ($isFolder) { '' } else { [System.IO.Path]::GetExtension($name).TrimStart('.').ToLowerInvariant() }",
+            '    $items += [pscustomobject]@{',
+            '      id = [string]([guid]::NewGuid())',
+            '      name = $name',
+            '      path = $null',
+            '      originalPath = $resolvedOriginalPath',
+            '      deletedAt = $dateDeleted',
+            '      isDirectory = $isFolder',
+            '      extension = $extension',
+            '    }',
+            '  }',
+            '}',
+            "[Console]::Out.Write((@{ items = @($items) } | ConvertTo-Json -Compress -Depth 4))"
+        ].join('\n');
+
+        try {
+            const result = await this.runPowerShellJson(script, { timeoutMs: 15000 });
+            return Array.isArray(result.items)
+                ? result.items
+                : (result.items ? [result.items] : []);
+        } catch (error) {
+            console.warn('RecycleBin: Failed to list Windows recycle bin items.', error);
+            return [];
+        }
+    }
+
     runPowerShell(script, options = {}) {
         const {
             timeoutMs = 7000

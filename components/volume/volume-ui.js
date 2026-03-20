@@ -32,13 +32,47 @@
     const $volumeIconImg = $('#volume-icon-img');
     const $volumeSlider = $('#volume-slider');
     const $volumeLevelDisplay = $('#volume-level-display');
+    const $volumeFlyoutIconButton = $('#volume-flyout-icon-button');
     const $volumeFlyoutIcon = $('#volume-flyout-icon');
 
     const FLYOUT_VERTICAL_SPACING = 12;
     const FLYOUT_SCREEN_MARGIN = 8;
     const FLYOUT_RIGHT_SCREEN_MARGIN = 10;
-    const DEFAULT_FLYOUT_WIDTH = 84;
-    const DEFAULT_FLYOUT_HEIGHT = 305;
+    const CLASSIC_FLYOUT_WIDTH = 84;
+    const CLASSIC_FLYOUT_HEIGHT = 305;
+    const MODERN_FLYOUT_WIDTH = 220;
+    const MODERN_FLYOUT_HEIGHT = 72;
+    const THRESHOLD_POPUP_CLOSE_ANIMATION_MS = 220;
+    let closeTimer = null;
+
+    function isModernVolumeFlyoutEnabled() {
+        return !!document.body && document.body.classList.contains('taskbar-modern-volume-popup-enabled');
+    }
+
+    function updateFlyoutVariantState() {
+        $volumeFlyout.toggleClass('modern-volume-flyout', isModernVolumeFlyoutEnabled());
+    }
+
+    function clearCloseTimer() {
+        if (closeTimer) {
+            clearTimeout(closeTimer);
+            closeTimer = null;
+        }
+    }
+
+    function updateSliderVisualState(volume) {
+        if (!$volumeSlider.length) {
+            return;
+        }
+
+        if (isModernVolumeFlyoutEnabled()) {
+            const clamped = Math.max(0, Math.min(100, Number(volume) || 0));
+            $volumeSlider.css('background', `linear-gradient(to right, var(--ui-accent) 0%, var(--ui-accent) ${clamped}%, #414141 ${clamped}%, #414141 100%)`);
+            return;
+        }
+
+        $volumeSlider.css('background', '');
+    }
 
     /**
      * Get volume icon path based on volume and mute state
@@ -80,6 +114,7 @@
     function updateVolumeUI(volume, muted) {
         currentVolume = Math.max(0, Math.min(100, parseInt(volume, 10) || 0));
         currentMuted = muted;
+        updateFlyoutVariantState();
 
         const iconPath = getVolumeIconPath(currentVolume, muted);
         const iconClass = getVolumeIconClass(currentVolume, muted);
@@ -100,6 +135,7 @@
         $volumeSlider.val(currentVolume);
         $volumeLevelDisplay.text(currentVolume);
         isUpdatingFromSystem = false;
+        updateSliderVisualState(currentVolume);
 
         const settingsSlider = document.getElementById('settings-volume-slider');
         if (settingsSlider && Number(settingsSlider.value) !== currentVolume) {
@@ -184,8 +220,10 @@
         }
 
         const flyoutRect = flyoutElement.getBoundingClientRect();
-        const flyoutWidth = flyoutRect.width || $volumeFlyout.outerWidth() || DEFAULT_FLYOUT_WIDTH;
-        const flyoutHeight = flyoutRect.height || $volumeFlyout.outerHeight() || DEFAULT_FLYOUT_HEIGHT;
+        const fallbackWidth = isModernVolumeFlyoutEnabled() ? MODERN_FLYOUT_WIDTH : CLASSIC_FLYOUT_WIDTH;
+        const fallbackHeight = isModernVolumeFlyoutEnabled() ? MODERN_FLYOUT_HEIGHT : CLASSIC_FLYOUT_HEIGHT;
+        const flyoutWidth = flyoutRect.width || $volumeFlyout.outerWidth() || fallbackWidth;
+        const flyoutHeight = flyoutRect.height || $volumeFlyout.outerHeight() || fallbackHeight;
 
         const centeredLeft = iconRect.left + (iconRect.width / 2) - (flyoutWidth / 2);
 
@@ -329,8 +367,11 @@
             window.closeAllTaskbarPopupsAndMenus();
         }
 
+        updateFlyoutVariantState();
+        updateSliderVisualState(currentVolume);
+        clearCloseTimer();
         positionVolumeFlyout({ forceMeasure: true });
-        $volumeFlyout.addClass('visible');
+        $volumeFlyout.removeClass('closing').addClass('visible');
         $volumeIcon.addClass('active');
         positionVolumeFlyout();
     }
@@ -339,8 +380,33 @@
      * Hide volume flyout
      */
     function hideVolumeFlyout() {
-        $volumeFlyout.removeClass('visible');
+        clearCloseTimer();
+
+        if (!$volumeFlyout.hasClass('visible') && !$volumeFlyout.hasClass('closing')) {
+            $volumeIcon.removeClass('active');
+            return;
+        }
+
+        if (isModernVolumeFlyoutEnabled()) {
+            $volumeFlyout.removeClass('visible').addClass('closing');
+            closeTimer = setTimeout(() => {
+                $volumeFlyout.removeClass('closing');
+                closeTimer = null;
+            }, THRESHOLD_POPUP_CLOSE_ANIMATION_MS);
+        } else {
+            $volumeFlyout.removeClass('visible');
+        }
+
         $volumeIcon.removeClass('active');
+    }
+
+    function refreshFlyoutLayout() {
+        updateFlyoutVariantState();
+        updateSliderVisualState(currentVolume);
+
+        if ($volumeFlyout.hasClass('visible')) {
+            positionVolumeFlyout();
+        }
     }
 
     /**
@@ -372,6 +438,7 @@
 
             const volume = parseInt($(this).val());
             $volumeLevelDisplay.text(volume);
+            updateSliderVisualState(volume);
 
             // Update icons immediately for visual feedback
             const iconPath = getVolumeIconPath(volume, currentMuted);
@@ -400,7 +467,7 @@
         });
 
         // Event: Click volume icon in flyout to toggle mute
-        $volumeFlyoutIcon.on('click', function (e) {
+        $volumeFlyoutIconButton.on('click', function (e) {
             e.stopPropagation();
             toggleMute();
         });
@@ -445,6 +512,7 @@
         toggleMute,
         startPolling,
         stopPolling,
-        hideFlyout: hideVolumeFlyout
+        hideFlyout: hideVolumeFlyout,
+        refreshFlyoutLayout
     };
 })();

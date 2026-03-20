@@ -74,7 +74,7 @@ body {
 
 .section-title {
     font-size: 13px;
-    font-weight: 600;
+    font-weight: 500;
     color: #000;
     margin-bottom: 16px;
     padding-bottom: 4px;
@@ -148,7 +148,7 @@ body {
 }
 
 .theme-name {
-    font-size: 12px;
+    font-size: 11px;
     color: #000;
     text-align: center;
     max-width: 130px;
@@ -335,7 +335,7 @@ body {
 
 .see-also-title {
     font-size: 13px;
-    font-weight: 600;
+    font-weight: 500;
     color: #000;
     margin-bottom: 16px;
 }
@@ -478,7 +478,7 @@ body {
 .action-link {
     color: #0066cc;
     text-decoration: none;
-    font-size: 12px;
+    font-size: 11px;
     margin-bottom: 4px;
 }
 
@@ -501,7 +501,7 @@ body {
 .bottom-link {
     color: #0066cc;
     text-decoration: none;
-    font-size: 12px;
+    font-size: 11px;
 }
 
 .bottom-link:hover {

@@ -134,6 +134,14 @@
                         <input type="checkbox" id="show-notification-center-icon" checked>
                         <label for="show-notification-center-icon">Show Notifications icon</label>
                     </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="use-modern-clock-popup" checked>
+                        <label for="use-modern-clock-popup">Use modern clock popup</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="use-modern-volume-popup" checked>
+                        <label for="use-modern-volume-popup">Use modern volume popup</label>
+                    </div>
                 </div>
 
                 <div class="property-section bordered">
@@ -145,6 +153,10 @@
                     <div class="checkbox-item">
                         <input type="checkbox" id="use-modern-window-styling" checked>
                         <label for="use-modern-window-styling">Modern window visual style</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="show-desktop-watermark" checked>
+                        <label for="show-desktop-watermark">Desktop watermark</label>
                     </div>
                 </div>
             </div>
@@ -234,9 +246,12 @@
         const TASKBAR_SHOW_SEARCH_BUTTON_VALUE_NAME = 'ShowSearchButton';
         const TASKBAR_SHOW_TASK_VIEW_BUTTON_VALUE_NAME = 'ShowTaskViewButton';
         const TASKBAR_SHOW_NOTIFICATION_CENTER_ICON_VALUE_NAME = 'ShowNotificationCenterIcon';
+        const TASKBAR_MODERN_CLOCK_POPUP_VALUE_NAME = 'UseModernClockPopup';
+        const TASKBAR_MODERN_VOLUME_POPUP_VALUE_NAME = 'MTCUVC';
         const TASKBAR_USE_MODERN_WINDOW_STYLING_VALUE_NAME = 'UseModernWindowStyling';
         const TASKBAR_THRESHOLD_FEATURES_ENABLED_VALUE_NAME = 'ThresholdFeaturesEnabled';
         const TASKBAR_OPEN_METRO_APPS_ON_DESKTOP_VALUE_NAME = 'OpenMetroAppsOnDesktop';
+        const TASKBAR_DESKTOP_WATERMARK_VALUE_NAME = 'ShowDesktopWatermark';
         // Navigation settings registry paths
         const REGISTRY_PATHS = {
             edgeUI: 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\ImmersiveShell\\EdgeUI',
@@ -280,8 +295,11 @@
                 'show-search-button',
                 'show-task-view-button',
                 'show-notification-center-icon',
+                'use-modern-clock-popup',
+                'use-modern-volume-popup',
                 'open-metro-apps-on-desktop',
-                'use-modern-window-styling'
+                'use-modern-window-styling',
+                'show-desktop-watermark'
             ].forEach(id => {
                 const control = document.getElementById(id);
                 if (control) {
@@ -309,8 +327,11 @@
                 showSearchButton: document.getElementById('show-search-button').checked,
                 showTaskViewButton: document.getElementById('show-task-view-button').checked,
                 showNotificationCenterIcon: document.getElementById('show-notification-center-icon').checked,
+                useModernClockPopup: document.getElementById('use-modern-clock-popup').checked,
+                useModernVolumePopup: document.getElementById('use-modern-volume-popup').checked,
                 openMetroAppsOnDesktop: document.getElementById('open-metro-apps-on-desktop').checked,
-                useModernWindowStyling: document.getElementById('use-modern-window-styling').checked
+                useModernWindowStyling: document.getElementById('use-modern-window-styling').checked,
+                showDesktopWatermark: document.getElementById('show-desktop-watermark').checked
             };
         }
 
@@ -473,11 +494,20 @@
                 document.getElementById('show-notification-center-icon').checked = Number(
                     registry.getValue(ADVANCED_PATH, TASKBAR_SHOW_NOTIFICATION_CENTER_ICON_VALUE_NAME, 1)
                 ) !== 0;
+                document.getElementById('use-modern-clock-popup').checked = Number(
+                    registry.getValue(ADVANCED_PATH, TASKBAR_MODERN_CLOCK_POPUP_VALUE_NAME, 1)
+                ) !== 0;
+                document.getElementById('use-modern-volume-popup').checked = Number(
+                    registry.getValue(ADVANCED_PATH, TASKBAR_MODERN_VOLUME_POPUP_VALUE_NAME, 1)
+                ) !== 0;
                 document.getElementById('open-metro-apps-on-desktop').checked = Number(
                     registry.getValue(ADVANCED_PATH, TASKBAR_OPEN_METRO_APPS_ON_DESKTOP_VALUE_NAME, 0)
                 ) !== 0;
                 document.getElementById('use-modern-window-styling').checked = Number(
                     registry.getValue(ADVANCED_PATH, TASKBAR_USE_MODERN_WINDOW_STYLING_VALUE_NAME, 1)
+                ) !== 0;
+                document.getElementById('show-desktop-watermark').checked = Number(
+                    registry.getValue(ADVANCED_PATH, TASKBAR_DESKTOP_WATERMARK_VALUE_NAME, 1)
                 ) !== 0;
                 document.getElementById('threshold-features-enabled').checked = Number(
                     registry.getValue(ADVANCED_PATH, TASKBAR_THRESHOLD_FEATURES_ENABLED_VALUE_NAME, 1)
@@ -539,8 +569,11 @@
             const showSearchButton = document.getElementById('show-search-button').checked;
             const showTaskViewButton = document.getElementById('show-task-view-button').checked;
             const showNotificationCenterIcon = document.getElementById('show-notification-center-icon').checked;
+            const useModernClockPopup = document.getElementById('use-modern-clock-popup').checked;
+            const useModernVolumePopup = document.getElementById('use-modern-volume-popup').checked;
             const openMetroAppsOnDesktop = document.getElementById('open-metro-apps-on-desktop').checked;
             const useModernWindowStyling = document.getElementById('use-modern-window-styling').checked;
+            const showDesktopWatermark = document.getElementById('show-desktop-watermark').checked;
 
             // Save taskbar settings to registry (StuckRects2)
             try {
@@ -580,8 +613,11 @@
                 registry.setValue(ADVANCED_PATH, TASKBAR_SHOW_SEARCH_BUTTON_VALUE_NAME, showSearchButton ? 1 : 0, RegistryType.REG_DWORD);
                 registry.setValue(ADVANCED_PATH, TASKBAR_SHOW_TASK_VIEW_BUTTON_VALUE_NAME, showTaskViewButton ? 1 : 0, RegistryType.REG_DWORD);
                 registry.setValue(ADVANCED_PATH, TASKBAR_SHOW_NOTIFICATION_CENTER_ICON_VALUE_NAME, showNotificationCenterIcon ? 1 : 0, RegistryType.REG_DWORD);
+                registry.setValue(ADVANCED_PATH, TASKBAR_MODERN_CLOCK_POPUP_VALUE_NAME, useModernClockPopup ? 1 : 0, RegistryType.REG_DWORD);
+                registry.setValue(ADVANCED_PATH, TASKBAR_MODERN_VOLUME_POPUP_VALUE_NAME, useModernVolumePopup ? 1 : 0, RegistryType.REG_DWORD);
                 registry.setValue(ADVANCED_PATH, TASKBAR_OPEN_METRO_APPS_ON_DESKTOP_VALUE_NAME, openMetroAppsOnDesktop ? 1 : 0, RegistryType.REG_DWORD);
                 registry.setValue(ADVANCED_PATH, TASKBAR_USE_MODERN_WINDOW_STYLING_VALUE_NAME, useModernWindowStyling ? 1 : 0, RegistryType.REG_DWORD);
+                registry.setValue(ADVANCED_PATH, TASKBAR_DESKTOP_WATERMARK_VALUE_NAME, showDesktopWatermark ? 1 : 0, RegistryType.REG_DWORD);
                 registry.setValue(ADVANCED_PATH, TASKBAR_THRESHOLD_FEATURES_ENABLED_VALUE_NAME, thresholdFeaturesEnabled ? 1 : 0, RegistryType.REG_DWORD);
             } catch (error) {
                 console.error('Failed to save taskbar settings to registry:', error);
@@ -625,7 +661,10 @@
                     showSearchButton: showSearchButton,
                     showTaskViewButton: showTaskViewButton,
                     showNotificationCenterIcon: showNotificationCenterIcon,
+                    useModernClockPopup: useModernClockPopup,
+                    useModernVolumePopup: useModernVolumePopup,
                     openMetroAppsOnDesktop: openMetroAppsOnDesktop,
+                    showDesktopWatermark: showDesktopWatermark,
                     useModernWindowStyling: useModernWindowStyling,
                     location: location,
                     taskbarButtons: taskbarButtons,

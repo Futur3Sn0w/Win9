@@ -46,7 +46,7 @@ body {
     align-items: center;
     justify-content: center;
     font-size: 54px;
-    font-weight: 600;
+    font-weight: 500;
     color: rgba(255, 255, 255, 0.96);
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
     background: rgba(14, 52, 108, 0.55);
@@ -101,7 +101,7 @@ body {
     align-items: center;
     justify-content: center;
     font-size: 28px;
-    font-weight: 600;
+    font-weight: 500;
     color: #ffffff;
     background: rgba(60, 72, 145, 0.4);
     z-index: 1;
@@ -165,7 +165,7 @@ body {
 .sr-current-summary {
     margin-top: 10px;
     min-height: 16px;
-    font-size: 12px;
+    font-size: 11px;
     color: #4a4a4a;
 }
 
@@ -188,7 +188,7 @@ body {
 .sr-status {
     min-height: 20px;
     margin-top: 12px;
-    font-size: 12px;
+    font-size: 11px;
     color: #555555;
 }
 
@@ -201,7 +201,7 @@ body {
     border: 0;
     background: none;
     font: inherit;
-    font-size: 12px;
+    font-size: 11px;
     color: #0b61d8;
     cursor: pointer;
 }

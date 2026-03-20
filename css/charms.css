@@ -633,7 +633,7 @@ body:not(.charms-allowed) .modern-flyout {
 
 .settings-control-label {
     font-family: 'Segoe UI', sans-serif;
-    font-size: 12px;
+    font-size: 11px;
     color: #fff;
     text-align: center;
 }
@@ -1145,7 +1145,7 @@ body:not(.charms-allowed) .modern-flyout {
 .tiles-toggle-label {
     font-family: 'Segoe UI', sans-serif;
     font-size: 15px;
-    font-weight: 600;
+    font-weight: 500;
     color: #222;
     min-width: 30px;
     text-align: right;

@@ -34,6 +34,9 @@ function createProvider() {
         },
         async moveItems(paths) {
             throw new Error(`Moving items to trash is not supported on ${process.platform}.`);
+        },
+        async listItems() {
+            return [];
         }
     };
 }
@@ -137,6 +140,14 @@ class RecycleBinService {
         return result;
     }
 
+    async listItems() {
+        if (typeof this.provider.listItems !== 'function') {
+            return [];
+        }
+
+        return this.provider.listItems();
+    }
+
     startMonitoring() {
         if (this.monitorTimer) {
             return;
@@ -191,6 +202,12 @@ function setupRecycleBinHandlers() {
 
     ipcMain.handle('trash:move-items', async (event, paths) => {
         return service.moveItemsToTrash(paths);
+    });
+
+    ipcMain.handle('trash:list-items', async () => {
+        return {
+            items: await service.listItems()
+        };
     });
 
     service.startMonitoring();

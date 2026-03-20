@@ -5,6 +5,8 @@
 
 const STORE_DIRECTORY_PATH = 'apps/modern/msstore/msstoredirectory.json';
 const { pathToFileURL: appsManagerPathToFileURL } = require('url');
+const RECYCLE_BIN_APP_ID = 'recycle-bin';
+const RECYCLE_BIN_ICON_SIZES = [16, 20, 24, 32, 40, 48, 64, 80, 96, 128, 256];
 
 function toAssetUrl(path) {
     if (!path || typeof path !== 'string') {
@@ -28,6 +30,34 @@ function toAssetUrl(path) {
 }
 
 let appsData = null;
+
+function buildRecycleBinIconImages(isEmpty) {
+    const iconVariant = isEmpty ? 'empty' : 'full';
+    const iconImages = {};
+
+    RECYCLE_BIN_ICON_SIZES.forEach(size => {
+        iconImages[String(size)] = `resources/images/icons/explorer/recycle_bin/${iconVariant}/${size}.png`;
+    });
+
+    return iconImages;
+}
+
+function applyRecycleBinAppState(state) {
+    const app = getAppById(RECYCLE_BIN_APP_ID);
+    if (!app) {
+        return false;
+    }
+
+    const isEmpty = Boolean(state?.empty ?? true);
+    const hasExistingIcons = app.iconImages && Object.keys(app.iconImages).length > 0;
+    if (app.recycleBinEmpty === isEmpty && hasExistingIcons) {
+        return false;
+    }
+
+    app.recycleBinEmpty = isEmpty;
+    app.iconImages = buildRecycleBinIconImages(isEmpty);
+    return true;
+}
 
 // Load apps from JSON file
 async function loadApps() {
@@ -273,6 +303,15 @@ function getIconImage(app, desiredSize) {
 function getTileImage(app, tileSize) {
     if (!app) return null;
 
+    if (app.tileImages && typeof app.tileImages === 'object') {
+        const explicitImage = app.tileImages[tileSize] ||
+            app.tileImages.default ||
+            app.tileImages.medium;
+        if (explicitImage) {
+            return explicitImage;
+        }
+    }
+
     // Determine if we're in compact mode
     const isCompact = document.body.classList.contains('tiles-compact');
     const scale = isCompact ? '80' : '100';
@@ -315,6 +354,10 @@ function getTileImage(app, tileSize) {
 function getAppListLogo(app) {
     if (!app) return null;
 
+    if (app.logoImage) {
+        return app.logoImage;
+    }
+
     // Construct the path based on app type and ID
     let basePath;
     if (app.type === 'modern') {
@@ -332,6 +375,10 @@ function getAppListLogo(app) {
 // Returns the largest size in order: large -> wide -> small (medium)
 function getTileLargeSplash(app) {
     if (!app) return null;
+
+    if (app.splashImage) {
+        return app.splashImage;
+    }
 
     // Determine if we're in compact mode
     const isCompact = document.body.classList.contains('tiles-compact');
@@ -359,6 +406,29 @@ function getTileLargeSplash(app) {
         // Default to medium size (tilesmall) as it should always be available
         return `${basePath}/tilesmall.scale-${scale}.png`;
     }
+}
+
+// Get the guaranteed medium tile image for splash screens and animations
+function getTileMediumSplash(app) {
+    if (!app) return null;
+
+    if (app.splashImage) {
+        return app.splashImage;
+    }
+
+    const isCompact = document.body.classList.contains('tiles-compact');
+    const scale = isCompact ? '80' : '100';
+
+    let basePath;
+    if (app.type === 'modern') {
+        basePath = `apps/modern/${app.id}/resources`;
+    } else if (app.type === 'meta-classic' || app.type === 'meta') {
+        basePath = `apps/meta-classic/${app.id}/resources`;
+    } else {
+        basePath = `apps/${app.id}/resources`;
+    }
+
+    return `${basePath}/tilesmall.scale-${scale}.png`;
 }
 
 // Get all apps
@@ -442,6 +512,22 @@ function togglePin(appId) {
         app.pinned = !app.pinned;
         savePinnedApps();
     }
+}
+
+function setPinState(appId, pinned) {
+    const app = getAppById(appId);
+    if (!app) {
+        return null;
+    }
+
+    const normalizedPinned = !!pinned;
+    if (app.pinned === normalizedPinned) {
+        return app.pinned;
+    }
+
+    app.pinned = normalizedPinned;
+    savePinnedApps();
+    return app.pinned;
 }
 
 function toggleTaskbarPin(appId) {
@@ -781,6 +867,27 @@ function removeTileImage(appId) {
 // Window tracking - supports multiple windows per app
 let runningWindows = new Map(); // Map of windowId -> { windowId, appId, app, $container, state, launchOrigin }
 let appWindows = new Map(); // Map of appId -> Set of windowIds
+let runningWindowSequence = 0;
+
+function emitRunningWindowsChanged(reason, windowData = null, extraDetail = {}) {
+    if (typeof document === 'undefined') {
+        return;
+    }
+
+    document.dispatchEvent(new CustomEvent('win8:running-windows-changed', {
+        detail: {
+            reason,
+            windowId: windowData?.windowId || extraDetail.windowId || null,
+            appId: windowData?.appId || extraDetail.appId || null,
+            state: windowData?.state || extraDetail.state || null,
+            ...extraDetail
+        }
+    }));
+}
+
+function getRunningWindowsSnapshot() {
+    return Array.from(runningWindows.values());
+}
 
 // Generate a unique window ID
 function generateWindowId(appId) {
@@ -799,7 +906,8 @@ function registerRunningWindow(appId, app, $container, launchOrigin = 'desktop')
         app: app,
         $container: $container,
         state: 'active',
-        launchOrigin: launchOrigin
+        launchOrigin: launchOrigin,
+        sequence: ++runningWindowSequence
     });
 
     // Track this window under the app
@@ -810,6 +918,7 @@ function registerRunningWindow(appId, app, $container, launchOrigin = 'desktop')
 
     console.log('Window registered:', windowId, 'for app:', appId, 'from', launchOrigin);
     updateTaskbar();
+    emitRunningWindowsChanged('register', runningWindows.get(windowId));
 
     return windowId;
 }
@@ -832,6 +941,7 @@ function unregisterRunningWindow(windowId) {
 
         console.log('Window unregistered:', windowId, 'for app:', appId);
         updateTaskbar();
+        emitRunningWindowsChanged('unregister', windowData);
     }
 }
 
@@ -856,6 +966,56 @@ function getVisibleAppWindows(appId) {
     return getAppWindows(appId).filter(windowData => !isBackgroundWindow(windowData));
 }
 
+function getWindowZIndex(windowData) {
+    const element = windowData?.$container?.[0];
+    if (!element) {
+        return 0;
+    }
+
+    return Number.parseInt(window.getComputedStyle(element).zIndex, 10) || 0;
+}
+
+function isWindowMinimized(windowData) {
+    if (!windowData) {
+        return true;
+    }
+
+    if (windowData.state === 'minimized') {
+        return true;
+    }
+
+    const element = windowData?.$container?.[0];
+    if (!element) {
+        return true;
+    }
+
+    return window.getComputedStyle(element).display === 'none';
+}
+
+function compareWindowsByShellPriority(left, right) {
+    const activeDelta = Number(right?.state === 'active') - Number(left?.state === 'active');
+    if (activeDelta !== 0) {
+        return activeDelta;
+    }
+
+    const minimizedDelta = Number(isWindowMinimized(left)) - Number(isWindowMinimized(right));
+    if (minimizedDelta !== 0) {
+        return minimizedDelta;
+    }
+
+    const zIndexDelta = getWindowZIndex(right) - getWindowZIndex(left);
+    if (zIndexDelta !== 0) {
+        return zIndexDelta;
+    }
+
+    return Number(right?.sequence || 0) - Number(left?.sequence || 0);
+}
+
+function getPrimaryAppWindow(appId) {
+    const windows = getVisibleAppWindows(appId).slice().sort(compareWindowsByShellPriority);
+    return windows[0] || null;
+}
+
 // Get all window IDs for a specific app
 function getAppWindowIds(appId) {
     return appWindows.get(appId) ? Array.from(appWindows.get(appId)) : [];
@@ -878,7 +1038,17 @@ function setWindowState(windowId, state) {
         windowData.state = state;
         console.log('Window state changed:', windowId, state);
         updateTaskbar();
+        emitRunningWindowsChanged('state', windowData);
     }
+}
+
+function notifyRunningWindowUpdated(windowId, extraDetail = {}) {
+    const windowData = runningWindows.get(windowId);
+    if (!windowData) {
+        return;
+    }
+
+    emitRunningWindowsChanged('metadata', windowData, extraDetail);
 }
 
 // Get window state
@@ -923,15 +1093,15 @@ function unregisterRunningApp(appId) {
 
 // Get running app data (backward compatible - returns first window)
 function getRunningApp(appId) {
-    const windows = getVisibleAppWindows(appId);
-    if (windows.length === 0) return null;
+    const primaryWindow = getPrimaryAppWindow(appId);
+    if (!primaryWindow) return null;
 
     // Return data in old format
     return {
-        app: windows[0].app,
-        $container: windows[0].$container,
-        state: windows[0].state,
-        launchOrigin: windows[0].launchOrigin
+        app: primaryWindow.app,
+        $container: primaryWindow.$container,
+        state: primaryWindow.state,
+        launchOrigin: primaryWindow.launchOrigin
     };
 }
 
@@ -943,8 +1113,8 @@ function setAppState(appId, state) {
 
 // Get app state (backward compatible - returns first window's state)
 function getAppState(appId) {
-    const windows = getVisibleAppWindows(appId);
-    return windows.length > 0 ? windows[0].state : null;
+    const primaryWindow = getPrimaryAppWindow(appId);
+    return primaryWindow ? primaryWindow.state : null;
 }
 
 // Track current taskbar apps for animation
@@ -1156,11 +1326,15 @@ function updateTaskbar() {
 
                 // Check if app has MIF icon class - this determines the fallback hierarchy
                 const hasMifIcon = app.icon && app.icon.startsWith('mif-');
+                const modernLogo = app.type === 'modern' ? getAppListLogo(app) : null;
 
                 let iconHTML;
                 let plateClass = '';
 
-                if (hasMifIcon) {
+                if (modernLogo) {
+                    plateClass = app.color ? `taskbar-icon-plate--${app.color}` : '';
+                    iconHTML = `<img src="${modernLogo}" alt="" style="object-fit: contain; width: 100%; height: 100%;">`;
+                } else if (hasMifIcon) {
                     // App has MIF icon - use icon font or iconImages as fallback
                     const iconImage = getIconImage(app, 40);
                     if (iconImage) {
@@ -1271,7 +1445,10 @@ window.AppsManager = {
     getTileImage,
     getAppListLogo,
     getTileLargeSplash,
+    getTileMediumSplash,
+    applyRecycleBinAppState,
     togglePin,
+    setPinState,
     toggleTaskbarPin,
     setTileSize,
     setTileImage,
@@ -1290,12 +1467,15 @@ window.AppsManager = {
     registerRunningWindow,
     unregisterRunningWindow,
     getRunningWindow,
+    getRunningWindowsSnapshot,
     getAppWindows,
     getVisibleAppWindows,
+    getPrimaryAppWindow,
     getAppWindowIds,
     getAppWindowCount,
     setWindowState,
     getWindowState,
+    notifyRunningWindowUpdated,
     generateWindowId,
     saveTaskbarPins,
     updateTaskbar

@@ -25,6 +25,23 @@
       "path": "apps/modern/settings/index.html"
     },
     {
+      "id": "search",
+      "name": "Search",
+      "icon": "mif-search",
+      "color": "purple",
+      "size": "normal",
+      "pinned": false,
+      "category": "system",
+      "type": "modern",
+      "path": "apps/modern/search/index.html",
+      "showInStart": false,
+      "logoImage": "apps/modern/search/resources/logo.png",
+      "splashImage": "apps/modern/search/resources/logo.scale-180.png",
+      "runCommands": [
+        "search"
+      ]
+    },
+    {
       "id": "taskbar-properties",
       "name": "Taskbar and Start Menu properties",
       "icon": "mif-wrench",
@@ -236,7 +253,41 @@
       "path": "apps/modern/calculator-modern/index.html",
       "showInStart": true,
       "familyId": "calculator",
-      "variant": "modern",
+      "variant": "modern"
+    },
+    {
+      "id": "music",
+      "name": "Music",
+      "color": "red",
+      "size": "wide",
+      "pinned": true,
+      "category": "music",
+      "type": "modern",
+      "path": "apps/modern/music/index.html",
+      "loadDirect": true,
+      "showInStart": true,
+      "tileOptions": {
+        "allowWide": true,
+        "allowLarge": true
+      }
+    },
+    {
+      "id": "youtube",
+      "name": "YouTube",
+      "icon": "mif-play",
+      "color": "red",
+      "size": "normal",
+      "pinned": false,
+      "category": "video",
+      "type": "modern",
+      "path": "apps/modern/youtube/index.html",
+      "loadDirect": true,
+      "logoImage": "apps/modern/youtube/resources/logo.png",
+      "splashImage": "apps/modern/youtube/resources/logo.png",
+      "windowOptions": {
+        "minimizable": true,
+        "showIcon": true
+      },
       "tileOptions": {
         "allowWide": true,
         "allowLarge": true
@@ -436,6 +487,45 @@
       "launchTargetAppId": "explorer",
       "launchOptions": {
         "openSpecialFolderId": "documents"
+      },
+      "windowOptions": {
+        "width": 1000,
+        "height": 650,
+        "resizable": true,
+        "minimizable": true,
+        "maximizable": true,
+        "alwaysOnTop": false,
+        "showInTaskbar": true
+      }
+    },
+    {
+      "id": "recycle-bin",
+      "name": "Recycle Bin",
+      "color": "blue",
+      "size": "normal",
+      "pinned": false,
+      "category": "system",
+      "type": "meta-classic",
+      "path": "apps/classic/explorer/explorer.html",
+      "allowMultipleWindows": true,
+      "useWebview": true,
+      "iconImages": {
+        "16": "resources/images/icons/explorer/recycle_bin/empty/16.png",
+        "20": "resources/images/icons/explorer/recycle_bin/empty/20.png",
+        "24": "resources/images/icons/explorer/recycle_bin/empty/24.png",
+        "32": "resources/images/icons/explorer/recycle_bin/empty/32.png",
+        "40": "resources/images/icons/explorer/recycle_bin/empty/40.png",
+        "48": "resources/images/icons/explorer/recycle_bin/empty/48.png",
+        "64": "resources/images/icons/explorer/recycle_bin/empty/64.png",
+        "80": "resources/images/icons/explorer/recycle_bin/empty/80.png",
+        "96": "resources/images/icons/explorer/recycle_bin/empty/96.png",
+        "128": "resources/images/icons/explorer/recycle_bin/empty/128.png",
+        "256": "resources/images/icons/explorer/recycle_bin/empty/256.png"
+      },
+      "showInStart": false,
+      "launchTargetAppId": "explorer",
+      "launchOptions": {
+        "openSpecialFolderId": "recycle-bin"
       },
       "windowOptions": {
         "width": 1000,

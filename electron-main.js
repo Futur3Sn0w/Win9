@@ -6,9 +6,15 @@ const batteryControl = require('./components/battery/battery-control');
 const USBMonitor = require('./components/device_connectivity/usb-monitor');
 const { setupRecycleBinHandlers } = require('./components/recycle_bin');
 const { decodeTextBuffer } = require('./components/explorer/file-openability');
+const { spawn } = require('child_process');
+const crypto = require('crypto');
 const fs = require('fs/promises');
 const path = require('path');
+const { pathToFileURL } = require('url');
+const ffmpegInstaller = require('@ffmpeg-installer/ffmpeg');
 const { applyDefaultRegistryState } = require('./setup-registry');
+const { getHostUserProfile } = require('./components/shell/host-user-profile');
+const { getHostWallpaper } = require('./components/shell/host-wallpaper-source');
 
 // Initialize electron-store
 // This will be used as the new storage backend, replacing localStorage
@@ -30,6 +36,41 @@ let resetInProgress = false;
 const RESET_FLAG = '--reset-setup';
 const SKIP_SETUP_FLAG = '--skip-setup';
 const SKIP_BOOT_FLAG = '--skip-boot';
+
+const MUSIC_FILE_EXTENSIONS = new Set([
+  '.aac',
+  '.flac',
+  '.m4a',
+  '.mp3',
+  '.oga',
+  '.ogg',
+  '.opus',
+  '.wav',
+  '.webm'
+]);
+
+const MUSIC_ART_EXTENSIONS = new Set([
+  '.bmp',
+  '.gif',
+  '.jpeg',
+  '.jpg',
+  '.png',
+  '.webp'
+]);
+
+const MUSIC_ART_BASENAMES = new Set([
+  'album',
+  'albumart',
+  'album_art',
+  'album art',
+  'artwork',
+  'cover',
+  'folder',
+  'front'
+]);
+
+const MUSIC_TRANSCODE_EXTENSION = '.mp3';
+const musicTranscodeJobs = new Map();
 
 const resetModeEnabled = process.argv.includes(RESET_FLAG);
 const skipBootSequenceEnabled = process.argv.includes(SKIP_BOOT_FLAG);
@@ -57,6 +98,323 @@ function clearSetupData() {
   store.set('setup.completed', false);
   store.delete('setup.initialized');
   console.log('[Setup] Setup state cleared');
+}
+
+function toIsoDate(value) {
+  if (!(value instanceof Date) || Number.isNaN(value.valueOf())) {
+    return null;
+  }
+
+  return value.toISOString();
+}
+
+function isSupportedMusicFile(fileName) {
+  return MUSIC_FILE_EXTENSIONS.has(path.extname(fileName).toLowerCase());
+}
+
+function isAlbumArtCandidate(fileName) {
+  const extension = path.extname(fileName).toLowerCase();
+  if (!MUSIC_ART_EXTENSIONS.has(extension)) {
+    return false;
+  }
+
+  const baseName = path.basename(fileName, extension).toLowerCase();
+  return MUSIC_ART_BASENAMES.has(baseName);
+}
+
+function normalizeMusicLabel(value, fallback) {
+  if (typeof value !== 'string') {
+    return fallback;
+  }
+
+  const cleaned = value.replace(/[_]+/g, ' ').replace(/\s+/g, ' ').trim();
+  return cleaned || fallback;
+}
+
+function inferMusicTrackMetadata(rootPath, directoryPath, fileName) {
+  const extension = path.extname(fileName);
+  const rawName = path.basename(fileName, extension);
+  const relativeDirectory = path.relative(rootPath, directoryPath);
+  const directoryParts = relativeDirectory
+    .split(path.sep)
+    .map(part => part.trim())
+    .filter(Boolean);
+
+  let artist = directoryParts[0] || 'Unknown artist';
+  let album = directoryParts[1] || (directoryParts[0] || 'Singles');
+  let title = rawName;
+  let trackNumber = null;
+
+  const numberedTrackMatch = title.match(/^(\d{1,2})[\s._-]+(.+)$/);
+  if (numberedTrackMatch) {
+    trackNumber = Number.parseInt(numberedTrackMatch[1], 10);
+    title = numberedTrackMatch[2].trim();
+  }
+
+  const artistTitleMatch = title.match(/^(.+?)\s-\s(.+)$/);
+  if (artistTitleMatch) {
+    if (!directoryParts[0]) {
+      artist = artistTitleMatch[1].trim();
+    }
+    title = artistTitleMatch[2].trim();
+  }
+
+  return {
+    artist: normalizeMusicLabel(artist, 'Unknown artist'),
+    album: normalizeMusicLabel(album, 'Singles'),
+    title: normalizeMusicLabel(title, 'Unknown track'),
+    trackNumber: Number.isFinite(trackNumber) ? trackNumber : null
+  };
+}
+
+function compareMusicTracks(left, right) {
+  const artistCompare = left.artist.localeCompare(right.artist, undefined, { sensitivity: 'base' });
+  if (artistCompare !== 0) {
+    return artistCompare;
+  }
+
+  const albumCompare = left.album.localeCompare(right.album, undefined, { sensitivity: 'base' });
+  if (albumCompare !== 0) {
+    return albumCompare;
+  }
+
+  const trackNumberCompare = (left.trackNumber ?? Number.MAX_SAFE_INTEGER) - (right.trackNumber ?? Number.MAX_SAFE_INTEGER);
+  if (trackNumberCompare !== 0) {
+    return trackNumberCompare;
+  }
+
+  return left.title.localeCompare(right.title, undefined, { sensitivity: 'base' });
+}
+
+async function fileExists(targetPath) {
+  try {
+    await fs.access(targetPath);
+    return true;
+  } catch (_error) {
+    return false;
+  }
+}
+
+function getMusicTranscodeCacheDir() {
+  return path.join(app.getPath('userData'), 'cache', 'music-transcodes');
+}
+
+function buildMusicTranscodeKey(filePath, stats) {
+  const hash = crypto.createHash('sha1');
+  hash.update(filePath);
+  hash.update('\0');
+  hash.update(String(stats.size));
+  hash.update('\0');
+  hash.update(String(stats.mtimeMs));
+  return hash.digest('hex');
+}
+
+async function ensureTranscodedPlaybackSource(sourcePath) {
+  const sourceStats = await fs.stat(sourcePath);
+  const cacheDir = getMusicTranscodeCacheDir();
+  await fs.mkdir(cacheDir, { recursive: true });
+
+  const cacheKey = buildMusicTranscodeKey(sourcePath, sourceStats);
+  const outputPath = path.join(cacheDir, `${cacheKey}${MUSIC_TRANSCODE_EXTENSION}`);
+  const tempOutputPath = `${outputPath}.tmp`;
+
+  if (await fileExists(outputPath)) {
+    return {
+      transcoded: true,
+      path: outputPath,
+      fileUrl: pathToFileURL(outputPath).href,
+      cacheKey
+    };
+  }
+
+  if (musicTranscodeJobs.has(cacheKey)) {
+    return musicTranscodeJobs.get(cacheKey);
+  }
+
+  const transcodePromise = new Promise((resolve, reject) => {
+    const ffmpegPath = ffmpegInstaller?.path;
+    if (!ffmpegPath) {
+      reject(new Error('FFmpeg binary is unavailable.'));
+      return;
+    }
+
+    const ffmpegArgs = [
+      '-y',
+      '-v', 'error',
+      '-i', sourcePath,
+      '-vn',
+      '-codec:a', 'libmp3lame',
+      '-q:a', '3',
+      tempOutputPath
+    ];
+
+    const ffmpegProcess = spawn(ffmpegPath, ffmpegArgs, {
+      windowsHide: true
+    });
+
+    let stderr = '';
+
+    ffmpegProcess.stderr.on('data', (data) => {
+      stderr += data.toString();
+    });
+
+    ffmpegProcess.on('error', (error) => {
+      reject(error);
+    });
+
+    ffmpegProcess.on('close', async (code) => {
+      if (code !== 0) {
+        await fs.rm(tempOutputPath, { force: true }).catch(() => {});
+        reject(new Error(stderr.trim() || `FFmpeg exited with code ${code}.`));
+        return;
+      }
+
+      try {
+        await fs.rename(tempOutputPath, outputPath);
+        resolve({
+          transcoded: true,
+          path: outputPath,
+          fileUrl: pathToFileURL(outputPath).href,
+          cacheKey
+        });
+      } catch (error) {
+        await fs.rm(tempOutputPath, { force: true }).catch(() => {});
+        reject(error);
+      }
+    });
+  }).finally(() => {
+    musicTranscodeJobs.delete(cacheKey);
+  });
+
+  musicTranscodeJobs.set(cacheKey, transcodePromise);
+  return transcodePromise;
+}
+
+async function scanMusicLibrary(folderPath) {
+  const tracks = [];
+
+  async function walkDirectory(currentPath) {
+    let entries;
+    try {
+      entries = await fs.readdir(currentPath, { withFileTypes: true });
+    } catch (error) {
+      console.warn('[Music Library] Skipping unreadable directory:', currentPath, error.message);
+      return;
+    }
+
+    const albumArtEntry = entries.find(entry => entry.isFile() && isAlbumArtCandidate(entry.name));
+    const albumArtPath = albumArtEntry ? path.join(currentPath, albumArtEntry.name) : null;
+    const albumArtUrl = albumArtPath ? pathToFileURL(albumArtPath).href : null;
+
+    for (const entry of entries) {
+      const fullPath = path.join(currentPath, entry.name);
+
+      if (entry.isDirectory()) {
+        await walkDirectory(fullPath);
+        continue;
+      }
+
+      if (!entry.isFile() || !isSupportedMusicFile(entry.name)) {
+        continue;
+      }
+
+      const fileStats = await fs.stat(fullPath).catch(() => null);
+      const inferredMetadata = inferMusicTrackMetadata(folderPath, currentPath, entry.name);
+
+      tracks.push({
+        id: fullPath,
+        path: fullPath,
+        fileUrl: pathToFileURL(fullPath).href,
+        relativePath: path.relative(folderPath, fullPath),
+        extension: path.extname(entry.name).toLowerCase(),
+        albumArtPath,
+        albumArtUrl,
+        addedAt: toIsoDate(fileStats?.birthtime),
+        modifiedAt: toIsoDate(fileStats?.mtime),
+        ...inferredMetadata
+      });
+    }
+  }
+
+  await walkDirectory(folderPath);
+
+  const sortedTracks = tracks.sort(compareMusicTracks);
+  const albumMap = new Map();
+  const artistMap = new Map();
+
+  sortedTracks.forEach(track => {
+    const artistKey = track.artist.toLowerCase();
+    const albumKey = `${track.artist.toLowerCase()}::${track.album.toLowerCase()}`;
+
+    if (!artistMap.has(artistKey)) {
+      artistMap.set(artistKey, {
+        id: artistKey,
+        name: track.artist,
+        albumCount: 0,
+        trackCount: 0,
+        albumArtUrl: track.albumArtUrl || null
+      });
+    }
+
+    const artistEntry = artistMap.get(artistKey);
+    artistEntry.trackCount += 1;
+    if (!artistEntry.albumArtUrl && track.albumArtUrl) {
+      artistEntry.albumArtUrl = track.albumArtUrl;
+    }
+
+    if (!albumMap.has(albumKey)) {
+      albumMap.set(albumKey, {
+        id: albumKey,
+        artist: track.artist,
+        title: track.album,
+        trackCount: 0,
+        albumArtUrl: track.albumArtUrl || null,
+        addedAt: track.addedAt,
+        modifiedAt: track.modifiedAt,
+        tracks: []
+      });
+      artistEntry.albumCount += 1;
+    }
+
+    const albumEntry = albumMap.get(albumKey);
+    albumEntry.trackCount += 1;
+    albumEntry.tracks.push(track);
+    if (!albumEntry.albumArtUrl && track.albumArtUrl) {
+      albumEntry.albumArtUrl = track.albumArtUrl;
+    }
+    if (!albumEntry.addedAt || (track.addedAt && track.addedAt < albumEntry.addedAt)) {
+      albumEntry.addedAt = track.addedAt;
+    }
+    if (!albumEntry.modifiedAt || (track.modifiedAt && track.modifiedAt > albumEntry.modifiedAt)) {
+      albumEntry.modifiedAt = track.modifiedAt;
+    }
+  });
+
+  const albums = Array.from(albumMap.values())
+    .sort((left, right) => {
+      const leftDate = left.addedAt || '';
+      const rightDate = right.addedAt || '';
+      if (leftDate && rightDate && leftDate !== rightDate) {
+        return rightDate.localeCompare(leftDate);
+      }
+
+      return left.title.localeCompare(right.title, undefined, { sensitivity: 'base' });
+    });
+
+  const artists = Array.from(artistMap.values())
+    .sort((left, right) => left.name.localeCompare(right.name, undefined, { sensitivity: 'base' }));
+
+  return {
+    folderPath,
+    folderName: path.basename(folderPath) || 'Music Library',
+    trackCount: sortedTracks.length,
+    albumCount: albums.length,
+    artistCount: artists.length,
+    tracks: sortedTracks,
+    albums,
+    artists,
+    scannedAt: new Date().toISOString()
+  };
 }
 
 function launchSetupFlow() {
@@ -379,6 +737,69 @@ ipcMain.on('toggle-simple-fullscreen', (_event, shouldBeFullscreen) => {
   }
 });
 
+ipcMain.handle('shell:capture-window-preview', async (_event, payload = {}) => {
+  if (!mainWindow || mainWindow.isDestroyed()) {
+    return null;
+  }
+
+  const x = Math.max(0, Math.round(Number(payload.x) || 0));
+  const y = Math.max(0, Math.round(Number(payload.y) || 0));
+  const width = Math.max(0, Math.round(Number(payload.width) || 0));
+  const height = Math.max(0, Math.round(Number(payload.height) || 0));
+  const maxWidth = Math.max(1, Math.round(Number(payload.maxWidth) || 520));
+
+  if (width < 2 || height < 2) {
+    return null;
+  }
+
+  try {
+    let image = await mainWindow.webContents.capturePage({ x, y, width, height });
+    if (!image || image.isEmpty()) {
+      return null;
+    }
+
+    if (image.getSize().width > maxWidth) {
+      image = image.resize({ width: maxWidth });
+    }
+
+    return image.toDataURL();
+  } catch (error) {
+    console.warn('[TaskView] Failed to capture window preview:', error);
+    return null;
+  }
+});
+
+ipcMain.handle('shell:get-host-user-profile', async () => {
+  try {
+    return await getHostUserProfile();
+  } catch (error) {
+    console.error('[ShellUserProfile] Failed to load host user profile:', error);
+    return {
+      username: 'User',
+      displayName: 'User',
+      imageDataUrl: null,
+      hasHostImage: false,
+      sourcePlatform: process.platform
+    };
+  }
+});
+
+ipcMain.handle('shell:get-host-wallpaper', async (_event, options = {}) => {
+  try {
+    return await getHostWallpaper({
+      refresh: Boolean(options && options.refresh)
+    });
+  } catch (error) {
+    console.error('[ShellHostWallpaper] Failed to load host wallpaper:', error);
+    return {
+      wallpaperPath: '',
+      hasHostWallpaper: false,
+      sourceKind: '',
+      sourcePlatform: process.platform
+    };
+  }
+});
+
 // ===== Notepad File Operations =====
 
 async function readNotepadFile(filePath) {
@@ -396,6 +817,7 @@ async function readNotepadFile(filePath) {
   return {
     canceled: false,
     filePath,
+    fileName: path.basename(filePath),
     content: decoded.content,
     encoding: decoded.encoding
   };
@@ -852,7 +1274,6 @@ ipcMain.on('eject-drive', async (event, devicePath) => {
 
   try {
     // Attempt to eject the drive using platform-specific commands
-    const { spawn } = require('child_process');
     let ejectCommand;
     let ejectArgs = [];
 
@@ -1041,5 +1462,98 @@ ipcMain.handle('desktop-background-read-folder', async (event, folderPath) => {
   } catch (error) {
     console.error('Failed to read folder:', error);
     return { success: false, error: error.message, images: [], subfolders: [] };
+  }
+});
+
+// ===== MUSIC LIBRARY ACCESS =====
+
+ipcMain.handle('music-library-get-default-folder', async () => {
+  try {
+    const folderPath = app.getPath('music');
+    return {
+      success: true,
+      folderPath,
+      folderName: path.basename(folderPath) || 'Music Library'
+    };
+  } catch (error) {
+    console.error('[Music Library] Failed to resolve Music folder:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('music-library-select-folder', async () => {
+  try {
+    const { canceled, filePaths } = await dialog.showOpenDialog({
+      properties: ['openDirectory'],
+      title: 'Select Music Library'
+    });
+
+    if (canceled || !filePaths || filePaths.length === 0) {
+      return { canceled: true };
+    }
+
+    const folderPath = filePaths[0];
+    return {
+      canceled: false,
+      folderPath,
+      folderName: path.basename(folderPath) || 'Music Library'
+    };
+  } catch (error) {
+    console.error('[Music Library] Failed to select folder:', error);
+    return { canceled: true, error: error.message };
+  }
+});
+
+ipcMain.handle('music-library-scan-folder', async (_event, requestedFolderPath) => {
+  try {
+    const folderPath = typeof requestedFolderPath === 'string' && requestedFolderPath.trim()
+      ? requestedFolderPath
+      : app.getPath('music');
+
+    const library = await scanMusicLibrary(folderPath);
+    return {
+      success: true,
+      folderPath,
+      folderName: path.basename(folderPath) || 'Music Library',
+      library
+    };
+  } catch (error) {
+    console.error('[Music Library] Failed to scan folder:', error);
+    return {
+      success: false,
+      error: error.message,
+      library: {
+        folderPath: requestedFolderPath || null,
+        folderName: 'Music Library',
+        trackCount: 0,
+        albumCount: 0,
+        artistCount: 0,
+        tracks: [],
+        albums: [],
+        artists: [],
+        scannedAt: new Date().toISOString()
+      }
+    };
+  }
+});
+
+ipcMain.handle('music-library-resolve-playback-source', async (_event, track = {}) => {
+  try {
+    const sourcePath = typeof track.path === 'string' ? track.path : '';
+    if (!sourcePath) {
+      throw new Error('Track path is required.');
+    }
+
+    const playbackSource = await ensureTranscodedPlaybackSource(sourcePath);
+    return {
+      success: true,
+      playbackSource
+    };
+  } catch (error) {
+    console.error('[Music Library] Failed to resolve playback source:', error);
+    return {
+      success: false,
+      error: error.message
+    };
   }
 });

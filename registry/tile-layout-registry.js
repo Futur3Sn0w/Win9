@@ -41,6 +41,8 @@ const TILE_ORDER_PATH = 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Imm
 const TASKBAR_PATH = 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Taskband\\PinnedApplications';
 const TASKBAR_LIST_VALUE = 'List';
 const TASKBAR_ORDER_VALUE = 'Order';
+const TASKBAR_TRAY_ORDER_VALUE = 'TrayOrder';
+const TASKBAR_TRAY_OVERFLOW_COUNT_VALUE = 'TrayOverflowCount';
 const START_MENU_PATH = 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\StartPage';
 const START_MENU_PINS_VALUE = 'StartMenuPinnedApps';
 const START_MENU_RECENTS_VALUE = 'StartMenuRecentApps';
@@ -338,6 +340,68 @@ function saveTaskbarOrder(order) {
   return normalized;
 }
 
+function loadTrayOrder() {
+  const registry = getRegistrySafe();
+  if (!registry) {
+    return [];
+  }
+  const value = registry.getValue(TASKBAR_PATH, TASKBAR_TRAY_ORDER_VALUE, []);
+  if (Array.isArray(value)) {
+    return value.filter(Boolean);
+  }
+  return ensureArray(value).filter(Boolean);
+}
+
+function saveTrayOrder(order) {
+  const registry = getRegistrySafe();
+  if (!registry) {
+    return [];
+  }
+  const normalized = Array.isArray(order) ? order.filter(Boolean) : [];
+
+  registry.setValue(
+    TASKBAR_PATH,
+    TASKBAR_TRAY_ORDER_VALUE,
+    normalized,
+    REG_MULTI_SZ
+  );
+
+  return normalized;
+}
+
+function loadTrayOverflowCount() {
+  const registry = getRegistrySafe();
+  if (!registry) {
+    return 0;
+  }
+
+  const value = Number(registry.getValue(TASKBAR_PATH, TASKBAR_TRAY_OVERFLOW_COUNT_VALUE, 0));
+  if (!Number.isFinite(value) || value < 0) {
+    return 0;
+  }
+
+  return Math.round(value);
+}
+
+function saveTrayOverflowCount(count) {
+  const registry = getRegistrySafe();
+  if (!registry) {
+    return 0;
+  }
+
+  const normalized = Number(count);
+  const savedValue = Number.isFinite(normalized) && normalized > 0 ? Math.round(normalized) : 0;
+
+  registry.setValue(
+    TASKBAR_PATH,
+    TASKBAR_TRAY_OVERFLOW_COUNT_VALUE,
+    savedValue,
+    REG_DWORD
+  );
+
+  return savedValue;
+}
+
 function saveTileOrder(groupId, order) {
   const registry = getRegistrySafe();
   if (!registry) {
@@ -387,7 +451,11 @@ const api = {
   loadStartMenuTileRows,
   saveStartMenuTileRows,
   loadTaskbarOrder,
-  saveTaskbarOrder
+  saveTaskbarOrder,
+  loadTrayOrder,
+  saveTrayOrder,
+  loadTrayOverflowCount,
+  saveTrayOverflowCount
 };
 
 if (typeof module !== 'undefined' && module.exports) {

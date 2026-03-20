@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search</title>
+    <style>
+        :root {
+            --search-purple: #643ebf;
+            --search-border: #d8d8d8;
+            --search-text: #1a1a1a;
+            --search-subtle: #666;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: "Segoe UI", sans-serif;
+            color: var(--search-text);
+            background: #fff;
+        }
+
+        .search-app-shell {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .search-app-header {
+            padding: 34px 42px 28px;
+            border-bottom: 1px solid #ececec;
+        }
+
+        .search-app-kicker {
+            color: var(--search-purple);
+            font-size: 18px;
+            font-weight: 300;
+            margin-bottom: 16px;
+        }
+
+        .search-app-querybar {
+            width: min(520px, 100%);
+            display: flex;
+            align-items: stretch;
+            border: 2px solid var(--search-purple);
+            min-height: 42px;
+        }
+
+        .search-app-querybar input {
+            flex: 1;
+            min-width: 0;
+            border: none;
+            background: transparent;
+            color: inherit;
+            font: inherit;
+            font-size: 18px;
+            padding: 0 14px;
+        }
+
+        .search-app-querybar input:focus {
+            outline: none;
+        }
+
+        .search-app-querybar button {
+            border: none;
+            background: var(--search-purple);
+            color: #fff;
+            font: inherit;
+            font-size: 14px;
+            padding: 0 18px;
+            flex-shrink: 0;
+        }
+
+        .search-app-main {
+            flex: 1;
+            display: grid;
+            place-items: center;
+            padding: 48px 42px;
+        }
+
+        .search-app-placeholder {
+            width: min(640px, 100%);
+        }
+
+        .search-app-placeholder h1 {
+            margin: 0 0 12px;
+            font-size: 48px;
+            font-weight: 300;
+            letter-spacing: -1.4px;
+        }
+
+        .search-app-status {
+            margin: 0 0 28px;
+            color: var(--search-subtle);
+            font-size: 18px;
+            line-height: 1.45;
+        }
+
+        .search-app-note {
+            border-left: 4px solid var(--search-purple);
+            padding: 14px 18px;
+            background: #f5f2ff;
+            font-size: 15px;
+            line-height: 1.55;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="search-app-shell">
+        <header class="search-app-header">
+            <div class="search-app-kicker">Search</div>
+            <div class="search-app-querybar">
+                <input type="text" id="search-app-query" placeholder="Search">
+                <button type="button" id="search-app-submit">Search</button>
+            </div>
+        </header>
+        <main class="search-app-main">
+            <section class="search-app-placeholder">
+                <h1>Search</h1>
+                <p class="search-app-status" id="search-app-status">More results will appear here.</p>
+                <div class="search-app-note">
+                    This is the first scaffold for the expanded Search app. The desktop popup can now launch into a
+                    dedicated Search surface, and you can drop tile assets into
+                    <code>apps/modern/search/resources/</code> when you are ready.
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        const SEARCH_STORAGE_KEY = 'win8-search-last-query';
+        const searchInput = document.getElementById('search-app-query');
+        const searchStatus = document.getElementById('search-app-status');
+        const searchSubmit = document.getElementById('search-app-submit');
+
+        function normalizeQuery(value) {
+            return String(value || '').trim();
+        }
+
+        function applyQuery(rawValue) {
+            const query = normalizeQuery(rawValue);
+            searchInput.value = query;
+            searchStatus.textContent = query
+                ? `Showing more results for "${query}".`
+                : 'More results will appear here.';
+        }
+
+        function storeQuery(rawValue) {
+            const query = normalizeQuery(rawValue);
+            try {
+                localStorage.setItem(SEARCH_STORAGE_KEY, query);
+            } catch (error) {
+                console.warn('[Search app] Failed to persist query:', error);
+            }
+            applyQuery(query);
+        }
+
+        searchInput.addEventListener('input', function () {
+            storeQuery(this.value);
+        });
+
+        searchInput.addEventListener('keydown', function (event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                storeQuery(searchInput.value);
+            }
+        });
+
+        searchSubmit.addEventListener('click', function () {
+            storeQuery(searchInput.value);
+        });
+
+        window.addEventListener('storage', function (event) {
+            if (event.key === SEARCH_STORAGE_KEY) {
+                applyQuery(event.newValue || '');
+            }
+        });
+
+        window.addEventListener('message', function (event) {
+            if (!event.data || event.data.action !== 'updateSearchQuery') {
+                return;
+            }
+
+            applyQuery(event.data.query || '');
+        });
+
+        applyQuery(localStorage.getItem(SEARCH_STORAGE_KEY) || '');
+    </script>
+</body>
+
+</html>

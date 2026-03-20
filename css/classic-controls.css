@@ -16,7 +16,7 @@
 
     user-select: none;
     color: #000;
-    font-size: 12px;
+    font-size: 11px;
 }
 
 .tab-item:hover {
@@ -82,7 +82,7 @@
 
 .checkbox-item label {
     user-select: none;
-    font-size: 12px;
+    font-size: 11px;
     color: #000;
     padding: 0;
 }
@@ -96,7 +96,7 @@
 
 .select-item label {
     margin-right: auto;
-    font-size: 12px;
+    font-size: 11px;
     color: #000;
 }
 
@@ -131,7 +131,7 @@
     border-radius: 0;
     transition: 1s;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    font-size: 12px;
+    font-size: 11px;
     padding: 0 14px;
     padding-bottom: 1px;
     color: #000;
@@ -173,7 +173,7 @@
     border-radius: 0;
     transition: 1s;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    font-size: 12px;
+    font-size: 11px;
     padding-bottom: 1px;
     color: #000;
 
@@ -348,7 +348,7 @@ body.view-login #eject-icon-context-menu {
     justify-content: flex-start;
     gap: 8px;
 
-    font-size: 12px;
+    font-size: 11px;
 
     position: relative;
     z-index: 2;

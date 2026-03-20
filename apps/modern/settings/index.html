@@ -227,6 +227,61 @@
             color: #666;
         }
 
+        .settings-account-summary {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin: -8px 0 36px;
+        }
+
+        .settings-account-summary-avatar {
+            width: 84px;
+            height: 84px;
+            border-radius: 50%;
+            object-fit: cover;
+            background: #d7d7d7;
+            flex-shrink: 0;
+        }
+
+        .settings-account-summary-name {
+            font-size: 30px;
+            font-weight: 300;
+            color: var(--ui-accent);
+            line-height: 1.15;
+        }
+
+        .settings-account-summary-username {
+            margin-top: 6px;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .settings-account-picture-preview {
+            width: 172px;
+            height: 172px;
+            padding: 12px;
+            background: #f3f3f3;
+            border: 1px solid #e1e1e1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .settings-account-picture-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            background: #d7d7d7;
+        }
+
+        .settings-account-note {
+            max-width: 460px;
+            font-size: 14px;
+            line-height: 1.5;
+            color: #666;
+            margin: -8px 0 30px;
+        }
+
         .settings-toggle {
             width: 44px;
             height: 24px;
@@ -513,6 +568,8 @@
                         console.log('[Settings] Set CSS variable --' + key + ':', value);
                     }
                 }
+            } else if (event.data.action === 'openSettingsCategory') {
+                handleSettingsNavigationRequest(event.data.categoryId, event.data.itemId || null);
             }
         });
 
@@ -522,6 +579,8 @@
 
         // Settings data will be loaded from JSON file
         let settingsData = {};
+        let pendingNavigationRequest = null;
+        const DEFAULT_SHELL_USER_IMAGE = new URL('../../../resources/images/user.png', window.location.href).href;
 
         const registryAPI = (function () {
             const contexts = [window, window.parent, window.top];
@@ -532,6 +591,116 @@
             }
             return null;
         })();
+
+        const shellUserProfileAPI = (function () {
+            const contexts = [window, window.parent, window.top];
+            for (const ctx of contexts) {
+                if (ctx && ctx.ShellUserProfile) {
+                    return ctx.ShellUserProfile;
+                }
+            }
+            return null;
+        })();
+
+        let shellUserProfile = {
+            username: 'User',
+            displayName: 'User',
+            imageUrl: DEFAULT_SHELL_USER_IMAGE
+        };
+
+        function escapeHtml(value) {
+            return String(value || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function normalizeShellUserProfile(profile) {
+            const username = typeof profile?.username === 'string' && profile.username.trim()
+                ? profile.username.trim()
+                : 'User';
+            const displayName = typeof profile?.displayName === 'string' && profile.displayName.trim()
+                ? profile.displayName.trim()
+                : username;
+            const imageUrl = typeof profile?.imageUrl === 'string' && profile.imageUrl.trim()
+                ? profile.imageUrl.trim()
+                : DEFAULT_SHELL_USER_IMAGE;
+
+            return {
+                username,
+                displayName,
+                imageUrl
+            };
+        }
+
+        function getAccountPictureTileMarkup() {
+            return `
+                <div class="active-scale-effect personalize-tile user" id="tile-account-picture">
+                    <img src="${escapeHtml(shellUserProfile.imageUrl)}" alt="${escapeHtml(shellUserProfile.displayName)}"
+                        style="object-fit: contain; background: #3a3a3a;">
+                    <div class="personalize-tile-label">Account picture</div>
+                </div>
+            `;
+        }
+
+        function renderAccountsProfileSummary() {
+            return `
+                <div class="settings-account-summary">
+                    <img src="${escapeHtml(shellUserProfile.imageUrl)}" alt="${escapeHtml(shellUserProfile.displayName)}" class="settings-account-summary-avatar">
+                    <div>
+                        <div class="settings-account-summary-name" data-shell-user-profile-name="display">${escapeHtml(shellUserProfile.displayName)}</div>
+                        <div class="settings-account-summary-username" data-shell-user-profile-name="username">${escapeHtml(shellUserProfile.username)}</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderAccountsPicturePreview() {
+            return `
+                <div class="settings-account-picture-preview">
+                    <img src="${escapeHtml(shellUserProfile.imageUrl)}" alt="${escapeHtml(shellUserProfile.displayName)}">
+                </div>
+            `;
+        }
+
+        function applyShellUserProfile(target = document) {
+            if (!target || typeof target.querySelectorAll !== 'function') {
+                return;
+            }
+
+            target.querySelectorAll('#tile-account-picture img, .settings-account-summary-avatar, .settings-account-picture-preview img')
+                .forEach((node) => {
+                    node.src = shellUserProfile.imageUrl;
+                    node.alt = shellUserProfile.displayName;
+                });
+
+            target.querySelectorAll('[data-shell-user-profile-name="display"]').forEach((node) => {
+                node.textContent = shellUserProfile.displayName;
+            });
+
+            target.querySelectorAll('[data-shell-user-profile-name="username"]').forEach((node) => {
+                node.textContent = shellUserProfile.username;
+            });
+        }
+
+        async function loadShellUserProfile() {
+            try {
+                const profile = shellUserProfileAPI && typeof shellUserProfileAPI.loadProfile === 'function'
+                    ? await shellUserProfileAPI.loadProfile()
+                    : shellUserProfileAPI && typeof shellUserProfileAPI.getProfile === 'function'
+                        ? shellUserProfileAPI.getProfile()
+                        : null;
+                shellUserProfile = normalizeShellUserProfile(profile);
+            } catch (error) {
+                console.warn('[Settings] Failed to load shell user profile:', error);
+                shellUserProfile = normalizeShellUserProfile(null);
+            }
+
+            applyShellUserProfile(document);
+            return shellUserProfile;
+        }
 
         const DEFAULT_LOCK_SCREEN_STATE = registryAPI && typeof registryAPI.getDefaultLockScreenWallpaperState === 'function'
             ? registryAPI.getDefaultLockScreenWallpaperState()
@@ -628,11 +797,7 @@
                         <img src="${lockTileSrc}" alt="Lock screen">
                         <div class="personalize-tile-label">Lock screen</div>
                     </div>
-                    <div class="active-scale-effect personalize-tile user" id="tile-account-picture">
-                        <img src="../../../resources/images/user.png" alt="Account picture"
-                            style="object-fit: contain; background: #3a3a3a;">
-                        <div class="personalize-tile-label">Account picture</div>
-                    </div>
+                    ${getAccountPictureTileMarkup()}
                     <div class="active-scale-effect personalize-tile picpass">
                         <img src="../../../resources/images/wallpapers/img101.png" alt="Picture password">
                         <div class="personalize-tile-label">Picture password</div>
@@ -650,6 +815,9 @@
             .then(data => {
                 settingsData = data;
                 console.log('[Settings] Loaded settings data:', settingsData);
+                if (pendingNavigationRequest) {
+                    handleSettingsNavigationRequest(pendingNavigationRequest.categoryId, pendingNavigationRequest.itemId);
+                }
             })
             .catch(error => {
                 console.error('[Settings] Error loading settings data:', error);
@@ -757,11 +925,24 @@
 
             // Render each section
             itemData.sections.forEach(section => {
-                html += '<div class="settings-content-title">' + section.title + '</div>';
+                const isAccountsProfilePage = categoryId === 'accounts' && itemId === 'your-account';
+                const isProfileNameSection = isAccountsProfilePage && section.title === 'MS_ACCTNAME';
+                const sectionTitle = isProfileNameSection ? shellUserProfile.displayName : section.title;
+                const titleAttribute = isProfileNameSection ? ' data-shell-user-profile-name="display"' : '';
+
+                html += '<div class="settings-content-title"' + titleAttribute + '>' + escapeHtml(sectionTitle) + '</div>';
 
                 // Special handling for lock screen preview section
                 if (categoryId === 'pc-and-devices' && itemId === 'lock-screen' && section.title === 'Lock screen preview') {
                     html += renderLockScreenPreview();
+                }
+
+                if (isProfileNameSection) {
+                    html += renderAccountsProfileSummary();
+                } else if (isAccountsProfilePage && section.title === 'Account picture') {
+                    html += renderAccountsPicturePreview();
+                } else if (isAccountsProfilePage && section.title === 'Create an account picture') {
+                    html += '<div class="settings-account-note">The simulator is using the current host account name and picture for a more personalized shell.</div>';
                 }
 
                 // Render settings in this section
@@ -807,6 +988,8 @@
                 }
             }
 
+            applyShellUserProfile(document);
+
             // Setup handlers if this is the lock screen page
             if (categoryId === 'pc-and-devices' && itemId === 'lock-screen') {
                 setupLockScreenHandlers();
@@ -838,6 +1021,29 @@
                         }
                     }
                 }, 100);
+            }
+        }
+
+        function handleSettingsNavigationRequest(categoryId, itemId) {
+            if (!categoryId) {
+                return;
+            }
+
+            if (!settingsData || Object.keys(settingsData).length === 0) {
+                pendingNavigationRequest = { categoryId, itemId };
+                return;
+            }
+
+            pendingNavigationRequest = null;
+
+            if (itemId) {
+                navigateToSubmenuItem(categoryId, itemId);
+                return;
+            }
+
+            const categoryLink = document.querySelector(`.settings-category[data-category="${categoryId}"]`);
+            if (categoryLink) {
+                categoryLink.click();
             }
         }
 
@@ -876,6 +1082,8 @@
                 setupPersonalizeTileHandlers();
             });
         });
+
+        loadShellUserProfile();
 
         // Handle back button
         backBtn.addEventListener('click', function () {
@@ -926,6 +1134,7 @@
             wrapper.className = 'settings-content-wrapper';
             wrapper.innerHTML = getPersonalizeContent();
             settingsContent.appendChild(wrapper);
+            applyShellUserProfile(document);
 
             // Animate content in
             requestAnimationFrame(() => {

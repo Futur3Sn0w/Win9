@@ -144,7 +144,7 @@
         const windowCount = AppsManager.getAppWindowCount ? AppsManager.getAppWindowCount(app.id) : 0;
         const hasMultipleWindows = windowCount > 1;
 
-        // Item 1: Activate app (with app icon and name)
+        // Item 1: App name action (new instance when supported, otherwise focus/restore)
         // Use 16px icon if available, otherwise fall back to MIF icon
         const icon16 = AppsManager.getIconImage ? AppsManager.getIconImage(app, 16) : null;
         let iconHTML;
@@ -164,7 +164,7 @@
         }
 
         items.push(`
-            <button class="taskbar-item-context-menu-item" data-action="activate">
+            <button class="taskbar-item-context-menu-item" data-action="launch-or-focus">
                 ${iconHTML}
                 <span class="taskbar-item-context-menu-item-text">${app.name}</span>
             </button>
@@ -256,9 +256,9 @@
         console.log('[CONTEXT MENU] Executing action:', action);
 
         switch (action) {
-            case 'activate':
-                console.log('[CONTEXT MENU] Calling activateApp()');
-                activateApp();
+            case 'launch-or-focus':
+                console.log('[CONTEXT MENU] Calling launchOrFocusApp()');
+                launchOrFocusApp();
                 break;
             case 'pin':
                 console.log('[CONTEXT MENU] Calling togglePinToTaskbar()');
@@ -281,38 +281,19 @@
     }
 
     /**
-     * Activate the app (same as left-clicking the taskbar icon)
+     * Open a new window when supported; otherwise restore/focus the existing one.
      */
-    function activateApp() {
-        console.log('[CONTEXT MENU] activateApp() called for:', currentAppId);
+    function launchOrFocusApp() {
+        console.log('[CONTEXT MENU] launchOrFocusApp() called for:', currentAppId);
 
-        const isRunning = AppsManager.isAppRunning(currentAppId);
-        const appState = AppsManager.getAppState(currentAppId);
+        if (typeof window.launchOrFocusTaskbarApp === 'function') {
+            window.launchOrFocusTaskbarApp(currentAppData);
+            return;
+        }
 
-        console.log('[CONTEXT MENU] isRunning:', isRunning, 'appState:', appState);
-
-        if (!isRunning || appState === null) {
-            // App is not running - launch it fresh
-            console.log('[CONTEXT MENU] App not running, launching fresh...');
-            if (window.launchApp) {
-                window.launchApp(currentAppData, null, { fromTaskbar: true });
-            }
-        } else if (appState === 'active') {
-            // App is already active - minimize it
-            console.log('[CONTEXT MENU] App is active, minimizing...');
-            if (currentAppData.type === 'modern' && window.minimizeModernApp) {
-                window.minimizeModernApp(currentAppId);
-            } else if (window.minimizeClassicWindow) {
-                window.minimizeClassicWindow(currentAppId);
-            }
-        } else if (appState === 'minimized') {
-            // App is minimized - restore it
-            console.log('[CONTEXT MENU] App is minimized, restoring...');
-            if (currentAppData.type === 'modern' && window.restoreModernApp) {
-                window.restoreModernApp(currentAppId);
-            } else if (window.restoreClassicWindow) {
-                window.restoreClassicWindow(currentAppId);
-            }
+        console.warn('[CONTEXT MENU] window.launchOrFocusTaskbarApp() is unavailable, falling back to launchApp()');
+        if (window.launchApp) {
+            window.launchApp(currentAppData, null, { fromTaskbar: true });
         }
     }
 

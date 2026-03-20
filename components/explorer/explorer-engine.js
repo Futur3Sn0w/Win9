@@ -93,6 +93,7 @@ const ExplorerEngine = (() => {
 
     const DEFAULT_SETTINGS = {
         iconSize: 'small',
+        sortBy: 'name',
         snapToGrid: true,
         arrangeIcons: false,
         showIcons: true,
@@ -303,7 +304,8 @@ const ExplorerEngine = (() => {
                             grid: loaded?.iconPositions?.grid || {},
                             free: loaded?.iconPositions?.free || {}
                         },
-                        iconOrder: Array.isArray(loaded?.iconOrder) ? loaded.iconOrder.slice() : []
+                        iconOrder: Array.isArray(loaded?.iconOrder) ? loaded.iconOrder.slice() : [],
+                        sortBy: normalizeDesktopSortKey(loaded?.sortBy)
                     };
                     return;
                 }
@@ -319,6 +321,7 @@ const ExplorerEngine = (() => {
         const registryApi = getExplorerRegistryApi();
         const data = {
             iconSize: settings.iconSize,
+            sortBy: normalizeDesktopSortKey(settings.sortBy),
             snapToGrid: !!settings.snapToGrid,
             arrangeIcons: !!settings.arrangeIcons,
             showIcons: !!settings.showIcons,
@@ -343,10 +346,23 @@ const ExplorerEngine = (() => {
     function getSettingsSnapshot() {
         return {
             iconSize: settings.iconSize,
+            sortBy: normalizeDesktopSortKey(settings.sortBy),
             snapToGrid: settings.snapToGrid,
             arrangeIcons: settings.arrangeIcons,
             showIcons: settings.showIcons
         };
+    }
+
+    function normalizeDesktopSortKey(sortKey) {
+        switch (sortKey) {
+            case 'size':
+            case 'date-modified':
+            case 'type':
+                return sortKey;
+            case 'name':
+            default:
+                return 'name';
+        }
     }
 
     function resolveSizePreset(sizeKey) {
@@ -458,24 +474,110 @@ const ExplorerEngine = (() => {
 
         try {
             const dirents = await fsp.readdir(desktopPath, { withFileTypes: true });
-            return dirents
+            const entries = await Promise.all(dirents
                 .filter(dirent => !dirent.name.startsWith('.'))
-                .map(dirent => {
+                .map(async dirent => {
                     const isDirectory = dirent.isDirectory();
                     const entryPath = path.join(desktopPath, dirent.name);
                     const extension = !isDirectory ? path.extname(dirent.name).slice(1).toLowerCase() : '';
+                    let stats = null;
+
+                    try {
+                        stats = await fsp.stat(entryPath);
+                    } catch (error) {
+                        console.warn('ExplorerEngine: Failed to read desktop entry metadata.', entryPath, error);
+                    }
+
                     return {
                         name: dirent.name,
                         path: entryPath,
                         type: isDirectory ? 'folder' : 'file',
-                        extension
+                        extension,
+                        size: isDirectory ? 0 : (stats?.size || 0),
+                        modifiedTime: stats?.mtimeMs || 0,
+                        typeLabel: getDesktopEntryTypeLabel({
+                            type: isDirectory ? 'folder' : 'file',
+                            extension
+                        })
                     };
-                })
-                .sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
+                }));
+
+            return entries.sort((a, b) => compareDesktopEntries(a, b));
         } catch (error) {
             console.error('ExplorerEngine: Failed to read desktop directory.', error);
             return [];
         }
+    }
+
+    function compareDesktopEntries(leftEntry, rightEntry, options = {}) {
+        const { foldersFirst = true, sortBy = settings.sortBy } = options;
+
+        const leftType = leftEntry?.type || 'file';
+        const rightType = rightEntry?.type || 'file';
+        const normalizedSortBy = normalizeDesktopSortKey(sortBy);
+
+        const typePriority = foldersFirst
+            ? {
+                'recycle-bin': 0,
+                folder: 1,
+                file: 2
+            }
+            : {
+                'recycle-bin': 0,
+                folder: 1,
+                file: 1
+            };
+
+        const leftPriority = typePriority[leftType] ?? 3;
+        const rightPriority = typePriority[rightType] ?? 3;
+
+        if (leftPriority !== rightPriority) {
+            return leftPriority - rightPriority;
+        }
+
+        switch (normalizedSortBy) {
+            case 'size': {
+                const sizeDelta = Number(rightEntry?.size || 0) - Number(leftEntry?.size || 0);
+                if (sizeDelta !== 0) {
+                    return sizeDelta;
+                }
+                break;
+            }
+            case 'date-modified': {
+                const modifiedDelta = Number(rightEntry?.modifiedTime || 0) - Number(leftEntry?.modifiedTime || 0);
+                if (modifiedDelta !== 0) {
+                    return modifiedDelta;
+                }
+                break;
+            }
+            case 'type': {
+                const typeLabelDelta = (leftEntry?.typeLabel || '').localeCompare(rightEntry?.typeLabel || '', undefined, { sensitivity: 'base' });
+                if (typeLabelDelta !== 0) {
+                    return typeLabelDelta;
+                }
+                break;
+            }
+            default:
+                break;
+        }
+
+        return (leftEntry?.name || '').localeCompare(rightEntry?.name || '', undefined, { sensitivity: 'base' });
+    }
+
+    function getDesktopEntryTypeLabel(entry) {
+        if (entry?.type === 'recycle-bin') {
+            return 'Recycle Bin';
+        }
+
+        if (entry?.type === 'folder') {
+            return 'File folder';
+        }
+
+        if (entry?.extension) {
+            return `${entry.extension.toUpperCase()} File`;
+        }
+
+        return 'File';
     }
 
     function buildRecycleEntry() {
@@ -484,6 +586,9 @@ const ExplorerEngine = (() => {
             path: recycleBinState.path,
             type: 'recycle-bin',
             extension: '',
+            size: 0,
+            modifiedTime: 0,
+            typeLabel: 'Recycle Bin',
             recycleBinEmpty: recycleBinState.empty
         };
     }
@@ -1116,8 +1221,30 @@ const ExplorerEngine = (() => {
             itemMap.set(item.dataset.itemKey, item);
         });
 
-        const order = [];
         settings.iconOrder = settings.iconOrder.filter(key => itemMap.has(key));
+        const existingItems = settings.iconOrder
+            .map(key => itemMap.get(key))
+            .filter(Boolean);
+
+        const sortBy = normalizeDesktopSortKey(settings.sortBy);
+        const isCanonicalSortedOrder = isCanonicalDesktopOrder(existingItems, { foldersFirst: true, sortBy });
+        const isLegacyCanonicalOrder = isCanonicalDesktopOrder(existingItems, { foldersFirst: false, sortBy: 'name' });
+        const isLegacyFolderFirstNameOrder = isCanonicalDesktopOrder(existingItems, { foldersFirst: true, sortBy: 'name' });
+
+        if (settings.iconOrder.length === 0 || isCanonicalSortedOrder || isLegacyCanonicalOrder || isLegacyFolderFirstNameOrder) {
+            const sortedItems = items
+                .slice()
+                .sort((leftItem, rightItem) => compareDesktopItems(leftItem, rightItem, { sortBy }));
+
+            settings.iconOrder = sortedItems
+                .map(item => item.dataset.itemKey)
+                .filter(Boolean);
+
+            return sortedItems;
+        }
+
+        const order = [];
+        const orderedKeys = new Set(settings.iconOrder);
 
         settings.iconOrder.forEach(key => {
             const item = itemMap.get(key);
@@ -1128,13 +1255,49 @@ const ExplorerEngine = (() => {
 
         items.forEach(item => {
             const key = item.dataset.itemKey;
-            if (!settings.iconOrder.includes(key)) {
+            if (!orderedKeys.has(key)) {
                 settings.iconOrder.push(key);
+                orderedKeys.add(key);
                 order.push(item);
             }
         });
 
         return order;
+    }
+
+    function compareDesktopItems(leftItem, rightItem, options = {}) {
+        return compareDesktopEntries(itemEntryMap.get(leftItem), itemEntryMap.get(rightItem), options);
+    }
+
+    function isCanonicalDesktopOrder(items, options = {}) {
+        if (!Array.isArray(items) || items.length <= 1) {
+            return true;
+        }
+
+        const actualOrder = items.map(item => item.dataset.itemKey);
+        const expectedOrder = items
+            .slice()
+            .sort((leftItem, rightItem) => compareDesktopItems(leftItem, rightItem, options))
+            .map(item => item.dataset.itemKey);
+
+        return actualOrder.every((key, index) => key === expectedOrder[index]);
+    }
+
+    function setDesktopSort(sortBy) {
+        settings.sortBy = normalizeDesktopSortKey(sortBy);
+        settings.snapToGrid = true;
+        settings.arrangeIcons = true;
+
+        if (gridElement) {
+            const items = Array.from(gridElement.querySelectorAll('.desktop-item'));
+            settings.iconOrder = items
+                .slice()
+                .sort((leftItem, rightItem) => compareDesktopItems(leftItem, rightItem, { sortBy: settings.sortBy }))
+                .map(item => item.dataset.itemKey)
+                .filter(Boolean);
+        }
+
+        layoutIcons({ persist: true });
     }
 
     function pruneLayoutState(items) {
@@ -1486,6 +1649,21 @@ const ExplorerEngine = (() => {
         return desktopPath;
     }
 
+    function getRecycleBinContextMenuIconPath() {
+        const variant = recycleBinState.empty ? 'empty' : 'full';
+        return `resources/images/icons/explorer/recycle_bin/${variant}/16.png`;
+    }
+
+    function refreshRecycleBinPinnedSurfaces() {
+        if (typeof window.renderPinnedTiles === 'function') {
+            window.renderPinnedTiles();
+        }
+
+        if (typeof window.renderStartMenuTiles === 'function') {
+            window.renderStartMenuTiles();
+        }
+    }
+
     async function showItemContextMenu(item, entry, pageX, pageY) {
         hideItemContextMenu();
 
@@ -1505,17 +1683,39 @@ const ExplorerEngine = (() => {
         if (entry.type === 'recycle-bin') {
             const emptyLabel = process.platform === 'darwin' ? 'Empty Trash' : 'Empty Recycle Bin';
             const recycleBinAvailable = Boolean(recycleBinState.available);
+            const recycleBinApp = window.AppsManager && typeof window.AppsManager.getAppById === 'function'
+                ? window.AppsManager.getAppById('recycle-bin')
+                : null;
+            const toggleStartLabel = recycleBinApp?.pinned
+                ? 'Unpin from Start'
+                : 'Pin to Start';
 
             menuItems = [
                 {
                     type: 'action',
                     action: 'empty-recycle-bin',
                     label: emptyLabel,
-                    icon: 'mif-bin',
+                    icon: getRecycleBinContextMenuIconPath(),
+                    iconType: 'image',
                     disabled: !recycleBinAvailable,
                     handler: async () => {
                         await emptyRecycleBin();
                         await refreshDesktop();
+                    }
+                },
+                { type: 'separator' },
+                {
+                    type: 'action',
+                    action: 'toggle-recycle-bin-start',
+                    label: toggleStartLabel,
+                    disabled: !recycleBinApp,
+                    handler: () => {
+                        if (!window.AppsManager || typeof window.AppsManager.togglePin !== 'function') {
+                            return;
+                        }
+
+                        window.AppsManager.togglePin('recycle-bin');
+                        refreshRecycleBinPinnedSurfaces();
                     }
                 }
             ];
@@ -1526,14 +1726,21 @@ const ExplorerEngine = (() => {
             const canRecycle = copyTargets.length > 0;
             const canCopy = copyTargets.length > 0;
             const canPaste = Boolean(pasteTarget);
-            const recycleLabel = process.platform === 'darwin' ? 'Move to Trash' : 'Move to Recycle Bin';
 
             menuItems = [
-                { type: 'action', action: 'rename', label: 'Rename', icon: 'mif-pencil', disabled: !canRename, handler: () => handleRenameEntry(entry, item) },
-                { type: 'action', action: 'recycle', label: recycleLabel, icon: 'mif-bin', disabled: !canRecycle, handler: () => moveSelectionToRecycle(entry) },
+                { type: 'action', action: 'rename', label: 'Rename', disabled: !canRename, handler: () => handleRenameEntry(entry, item) },
+                {
+                    type: 'action',
+                    action: 'recycle',
+                    label: 'Delete',
+                    icon: getRecycleBinContextMenuIconPath(),
+                    iconType: 'image',
+                    disabled: !canRecycle,
+                    handler: () => moveSelectionToRecycle(entry)
+                },
                 { type: 'separator' },
-                { type: 'action', action: 'copy', label: 'Copy', icon: 'mif-copy', disabled: !canCopy, handler: () => handleCopySelection(entry) },
-                { type: 'action', action: 'paste', label: 'Paste', icon: 'mif-paste', disabled: !canPaste, handler: () => handlePasteInto(entry) }
+                { type: 'action', action: 'copy', label: 'Copy', disabled: !canCopy, handler: () => handleCopySelection(entry) },
+                { type: 'action', action: 'paste', label: 'Paste', disabled: !canPaste, handler: () => handlePasteInto(entry) }
             ];
         }
 
@@ -1559,12 +1766,22 @@ const ExplorerEngine = (() => {
             const iconWrapper = document.createElement('span');
             iconWrapper.className = 'classic-context-menu-item-icon';
 
-            const iconSpan = document.createElement('span');
             if (itemConfig.icon) {
-                iconSpan.className = itemConfig.icon;
+                if (itemConfig.iconType === 'image') {
+                    const iconImage = document.createElement('img');
+                    iconImage.src = itemConfig.icon;
+                    iconImage.alt = '';
+                    iconImage.width = 16;
+                    iconImage.height = 16;
+                    iconWrapper.appendChild(iconImage);
+                } else {
+                    const iconSpan = document.createElement('span');
+                    iconSpan.className = itemConfig.icon;
+                    iconWrapper.appendChild(iconSpan);
+                }
+            } else {
+                iconWrapper.appendChild(document.createElement('span'));
             }
-
-            iconWrapper.appendChild(iconSpan);
 
             const textSpan = document.createElement('span');
             textSpan.className = 'classic-context-menu-item-text';
@@ -1606,17 +1823,28 @@ const ExplorerEngine = (() => {
         menu.style.zIndex = '1000';
         desktopRoot.appendChild(menu);
 
+        const viewportPadding = 10;
+        const cursorGap = 6;
         const menuWidth = menu.offsetWidth;
         const menuHeight = menu.offsetHeight;
         const windowWidth = window.innerWidth;
         const windowHeight = window.innerHeight;
+        const maxLeft = Math.max(viewportPadding, windowWidth - menuWidth - viewportPadding);
+        const maxTop = Math.max(viewportPadding, windowHeight - menuHeight - viewportPadding);
+        const availableBelow = windowHeight - pageY - cursorGap - viewportPadding;
+        const availableAbove = pageY - cursorGap - viewportPadding;
 
-        if (pageX + menuWidth > windowWidth) {
-            menu.style.left = `${Math.max(10, windowWidth - menuWidth - 10)}px`;
+        let left = Math.min(Math.max(pageX, viewportPadding), maxLeft);
+        let top = pageY + cursorGap;
+
+        if (menuHeight > availableBelow && availableAbove > availableBelow) {
+            top = pageY - menuHeight - cursorGap;
         }
-        if (pageY + menuHeight > windowHeight) {
-            menu.style.top = `${Math.max(10, windowHeight - menuHeight - 10)}px`;
-        }
+
+        top = Math.min(Math.max(top, viewportPadding), maxTop);
+
+        menu.style.left = `${left}px`;
+        menu.style.top = `${top}px`;
 
         itemContextMenu = menu;
 
@@ -2147,7 +2375,11 @@ const ExplorerEngine = (() => {
 
     async function openRecycleBin() {
         try {
-            if (electronIpcRenderer && typeof electronIpcRenderer.invoke === 'function') {
+            if (typeof window.launchApp === 'function') {
+                window.launchApp('explorer', null, {
+                    openSpecialFolderId: 'recycle-bin'
+                });
+            } else if (electronIpcRenderer && typeof electronIpcRenderer.invoke === 'function') {
                 await electronIpcRenderer.invoke('trash:open');
             } else if (recycleBinState.path && electronShell && typeof electronShell.openPath === 'function') {
                 const result = await electronShell.openPath(recycleBinState.path);
@@ -2315,11 +2547,14 @@ const ExplorerEngine = (() => {
     return {
         initializeDesktop,
         refreshDesktop,
+        readDesktopEntries,
         createNewFolder,
         createNewTextDocument,
+        openEntryPath,
         openRecycleBin,
         clearSelection,
         setIconSize,
+        setDesktopSort,
         toggleSnapToGrid,
         toggleArrangeIcons,
         toggleShowIcons,

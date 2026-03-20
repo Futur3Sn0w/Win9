@@ -462,6 +462,15 @@ const TileDrag = (function() {
         return orderedApps;
     }
 
+    function previewOrder(order, container = null) {
+        const targetContainer = container || getPrimaryContainer();
+        if (!targetContainer || !Array.isArray(order) || order.length === 0) {
+            return;
+        }
+
+        applyOrderLayout(order, targetContainer);
+    }
+
     /**
      * Check if drag-and-drop is enabled
      */
@@ -487,6 +496,7 @@ const TileDrag = (function() {
         refresh,
         isEnabled,
         applySavedOrder,
+        previewOrder,
         loadOrder,
         saveOrder,
         clearOrder,

@@ -9,9 +9,26 @@
     const FLYOUT_VERTICAL_SPACING = 12;
     const FLYOUT_SCREEN_MARGIN = 8;
     const FLYOUT_RIGHT_SCREEN_MARGIN = 10;
+    const THRESHOLD_POPUP_CLOSE_ANIMATION_MS = 220;
 
     // Track all registered flyouts
     const flyouts = new Map();
+
+    function isModernClockFlyout($flyout) {
+        return Boolean(
+            $flyout &&
+            $flyout.is('#clock-flyout') &&
+            document.body &&
+            document.body.classList.contains('taskbar-modern-clock-popup-enabled')
+        );
+    }
+
+    function clearCloseTimer(flyoutData) {
+        if (flyoutData && flyoutData.closeTimer) {
+            clearTimeout(flyoutData.closeTimer);
+            flyoutData.closeTimer = null;
+        }
+    }
 
     /**
      * Register a flyout with its trigger element
@@ -30,7 +47,8 @@
         flyouts.set(flyoutSelector, {
             $flyout,
             $trigger,
-            isVisible: false
+            isVisible: false,
+            closeTimer: null
         });
 
         // Setup click handler for trigger
@@ -76,6 +94,20 @@
 
         if (!triggerElement || !flyoutElement) {
             resetFlyoutPosition($flyout);
+            return;
+        }
+
+        if (
+            flyoutSelector === '#clock-flyout' &&
+            document.body &&
+            document.body.classList.contains('taskbar-modern-clock-popup-enabled')
+        ) {
+            $flyout.css({
+                left: 'auto',
+                top: 'auto',
+                bottom: 'var(--taskbar-reserved-height, var(--taskbar-height, 40px))',
+                right: '6px'
+            });
             return;
         }
 
@@ -170,8 +202,9 @@
         disableIframePointerEvents();
 
         // Position and show this flyout
+        clearCloseTimer(flyoutData);
         positionFlyout(flyoutSelector, { forceMeasure: true });
-        $flyout.addClass('visible');
+        $flyout.removeClass('closing').addClass('visible');
         $trigger.addClass('active');
         positionFlyout(flyoutSelector);
 
@@ -190,7 +223,17 @@
 
         const { $flyout, $trigger } = flyoutData;
 
-        $flyout.removeClass('visible');
+        clearCloseTimer(flyoutData);
+
+        if (isModernClockFlyout($flyout)) {
+            $flyout.removeClass('visible').addClass('closing');
+            flyoutData.closeTimer = setTimeout(() => {
+                $flyout.removeClass('closing');
+                flyoutData.closeTimer = null;
+            }, THRESHOLD_POPUP_CLOSE_ANIMATION_MS);
+        } else {
+            $flyout.removeClass('visible');
+        }
         $trigger.removeClass('active');
 
         flyoutData.isVisible = false;
@@ -287,6 +330,7 @@
     // Export public API
     window.ClassicFlyoutManager = {
         register: registerFlyout,
+        position: positionFlyout,
         show: showFlyout,
         hide: hideFlyout,
         toggle: toggleFlyout,

@@ -105,6 +105,19 @@ function getFileExtension(filePath) {
     return filePath.substring(lastDotIndex).toLowerCase();
 }
 
+function getFileName(filePath) {
+    if (!filePath) {
+        return '';
+    }
+
+    if (pathModule && typeof pathModule.basename === 'function') {
+        return pathModule.basename(filePath);
+    }
+
+    const segments = filePath.split(/[\\/]/);
+    return segments[segments.length - 1] || filePath;
+}
+
 async function resolveItemType(targetPath, itemType) {
     if (itemType === 'folder' || itemType === 'file') {
         return itemType;
@@ -322,6 +335,40 @@ async function canOpenInternally(filePath) {
     return compatibleAppIds.length > 0;
 }
 
+async function buildInternalLaunchOptions(appId, filePath) {
+    const launchOptions = {
+        openFilePath: filePath
+    };
+
+    if (appId !== 'notepad') {
+        return launchOptions;
+    }
+
+    if (!fsPromises?.readFile || typeof fileOpenability?.decodeTextBuffer !== 'function') {
+        return launchOptions;
+    }
+
+    try {
+        const buffer = await fsPromises.readFile(filePath);
+        const decoded = fileOpenability.decodeTextBuffer(buffer);
+
+        if (!decoded?.canOpen) {
+            return launchOptions;
+        }
+
+        launchOptions.openFileData = {
+            filePath,
+            fileName: getFileName(filePath),
+            content: decoded.content,
+            encoding: decoded.encoding
+        };
+    } catch (error) {
+        console.warn('FileAssociations: Failed to preload text file for Notepad launch.', filePath, error);
+    }
+
+    return launchOptions;
+}
+
 async function openFileInternally(filePath, resolvedAppId = null) {
     const appId = resolvedAppId || getAppForFile(filePath);
     if (!appId) {
@@ -337,9 +384,8 @@ async function openFileInternally(filePath, resolvedAppId = null) {
 
     try {
         if (typeof window.launchApp === 'function') {
-            window.launchApp(app, null, {
-                openFilePath: filePath
-            });
+            const launchOptions = await buildInternalLaunchOptions(appId, filePath);
+            window.launchApp(app, null, launchOptions);
             return true;
         }
 

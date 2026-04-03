@@ -88,7 +88,8 @@
     const TECHNICAL_PREVIEW_OPTION_LABEL = 'Windows Technical Preview';
     const TECHNICAL_PREVIEW_SECTION_NAME = 'Windows Technical Preview (2)';
     const TECHNICAL_PREVIEW_WALLPAPERS = [
-        'Windows 11/img1.jpg',
+        'Windows/img1.jpg',
+        'Windows/img6.jpg',
         'threshold.svg'
     ];
 

@@ -1,186 +1,307 @@
 /**
  * Taskbar Drag and Drop
- * Enables reordering of taskbar items via drag and drop
- * Only pinned app positions are saved; running apps always appear at the end
+ * Enables pointer-based reordering of taskbar items and
+ * upward drag-to-reveal for the taskbar app menu.
  */
 
 (function () {
     'use strict';
 
-    let draggedElement = null;
-    let draggedAppId = null;
-    let dragStartX = 0;
-    let dragStartY = 0;
-    let isDragging = false;
-    let originalIndex = -1;
-    let targetIndex = -1;
-    let allItems = [];
+    const AXIS_LOCK_BIAS_PX = 4;
+    const CLICK_SUPPRESSION_MS = 400;
+    const DEFAULT_ITEM_STRIDE_PX = 62;
+    const HORIZONTAL_DRAG_THRESHOLD_PX = {
+        mouse: 6,
+        pen: 9,
+        touch: 12
+    };
+    const MENU_DRAG_THRESHOLD_PX = {
+        mouse: 12,
+        pen: 14,
+        touch: 18
+    };
+    const MENU_REVEAL_DISTANCE_PX = {
+        mouse: 72,
+        pen: 80,
+        touch: 92
+    };
+    const MENU_COMMIT_PROGRESS = 0.45;
 
-    // Minimum distance to start dragging (prevents accidental drags on clicks)
-    const DRAG_THRESHOLD = 1;
+    let dragState = createEmptyDragState();
+    let suppressedClick = {
+        appId: null,
+        until: 0
+    };
+
+    function createEmptyDragState() {
+        return {
+            sourceEl: null,
+            appId: null,
+            pointerId: null,
+            pointerType: 'mouse',
+            startX: 0,
+            startY: 0,
+            lastX: 0,
+            lastY: 0,
+            isReordering: false,
+            isMenuGesture: false,
+            menuProgress: 0,
+            originalIndex: -1,
+            targetIndex: -1,
+            allItems: []
+        };
+    }
+
+    function normalizePointerType(pointerType) {
+        if (pointerType === 'touch' || pointerType === 'pen') {
+            return pointerType;
+        }
+
+        return 'mouse';
+    }
+
+    function getThreshold(map, pointerType) {
+        return map[normalizePointerType(pointerType)] ?? map.mouse;
+    }
+
+    function clamp(value, min, max) {
+        return Math.min(Math.max(value, min), max);
+    }
+
+    function matchesActivePointer(event) {
+        if (!dragState.sourceEl) {
+            return false;
+        }
+
+        if (dragState.pointerId === null || dragState.pointerId === undefined) {
+            return true;
+        }
+
+        return (event.pointerId ?? null) === dragState.pointerId;
+    }
+
+    function suppressNextClick(appId) {
+        suppressedClick = {
+            appId,
+            until: Date.now() + CLICK_SUPPRESSION_MS
+        };
+    }
+
+    function getTaskbarItemStride() {
+        if (!dragState.sourceEl) {
+            return DEFAULT_ITEM_STRIDE_PX;
+        }
+
+        const taskbarApps = document.querySelector('.taskbar-apps');
+        if (!taskbarApps) {
+            return DEFAULT_ITEM_STRIDE_PX;
+        }
+
+        const width = dragState.sourceEl.getBoundingClientRect().width || 60;
+        const computedStyle = window.getComputedStyle(taskbarApps);
+        const gap = Number.parseFloat(computedStyle.columnGap || computedStyle.gap || '0');
+
+        return Math.round(width + (Number.isFinite(gap) ? gap : 2));
+    }
+
+    function releasePointerCapture() {
+        if (!dragState.sourceEl || dragState.pointerId === null || dragState.pointerId === undefined) {
+            return;
+        }
+
+        if (typeof dragState.sourceEl.releasePointerCapture !== 'function') {
+            return;
+        }
+
+        try {
+            dragState.sourceEl.releasePointerCapture(dragState.pointerId);
+        } catch (error) {
+            console.debug('[TASKBAR DRAG] Unable to release pointer capture:', error);
+        }
+    }
+
+    function resetState() {
+        releasePointerCapture();
+        dragState = createEmptyDragState();
+    }
 
     /**
-     * Initialize drag and drop for taskbar items
+     * Initialize drag and gesture support for taskbar items
      */
     function init() {
-        console.log('[TASKBAR DRAG] Initializing taskbar drag and drop');
+        console.log('[TASKBAR DRAG] Initializing taskbar drag and menu gestures');
 
         const $taskbarApps = $('.taskbar-apps');
 
-        // Use event delegation for dynamically added taskbar items
-        $taskbarApps.on('mousedown', '.taskbar-app', handleMouseDown);
-        $(document).on('mousemove', handleMouseMove);
-        $(document).on('mouseup', handleMouseUp);
+        $taskbarApps.off('.taskbardrag');
+        $(document).off('.taskbardrag');
+
+        $taskbarApps.on('pointerdown.taskbardrag', '.taskbar-app', handlePointerDown);
+        $(document).on('pointermove.taskbardrag', handlePointerMove);
+        $(document).on('pointerup.taskbardrag pointercancel.taskbardrag', handlePointerEnd);
 
         console.log('[TASKBAR DRAG] Event handlers registered');
     }
 
     /**
-     * Handle mouse down on taskbar item
+     * Handle pointer down on taskbar item
      */
-    function handleMouseDown(e) {
-        // Only left mouse button
-        if (e.button !== 0) return;
+    function handlePointerDown(event) {
+        if (dragState.sourceEl) {
+            return;
+        }
 
-        // Don't interfere with right-click context menu
-        if (e.button === 2) return;
+        const pointerType = normalizePointerType(event.pointerType);
+        if (pointerType === 'mouse' && event.button !== 0) {
+            return;
+        }
 
-        const $target = $(e.currentTarget);
-        draggedElement = $target[0];
-        draggedAppId = $target.attr('data-app-id');
-        dragStartX = e.clientX;
-        dragStartY = e.clientY;
-        isDragging = false; // Not dragging yet, waiting for threshold
+        const sourceEl = event.currentTarget;
+        dragState.sourceEl = sourceEl;
+        dragState.appId = $(sourceEl).attr('data-app-id');
+        dragState.pointerId = event.pointerId ?? null;
+        dragState.pointerType = pointerType;
+        dragState.startX = event.clientX;
+        dragState.startY = event.clientY;
+        dragState.lastX = event.clientX;
+        dragState.lastY = event.clientY;
 
-        // Store original index
-        originalIndex = $target.index();
-
-        // Prevent text selection during drag
-        e.preventDefault();
+        if (typeof sourceEl.setPointerCapture === 'function' && dragState.pointerId !== null) {
+            try {
+                sourceEl.setPointerCapture(dragState.pointerId);
+            } catch (error) {
+                console.debug('[TASKBAR DRAG] Unable to capture pointer:', error);
+            }
+        }
     }
 
     /**
-     * Handle mouse move for dragging
+     * Handle pointer move for dragging / menu reveal
      */
-    function handleMouseMove(e) {
-        if (!draggedElement) return;
-
-        const deltaX = Math.abs(e.clientX - dragStartX);
-        const deltaY = Math.abs(e.clientY - dragStartY);
-
-        // Check if we've moved beyond the threshold
-        if (!isDragging && (deltaX > DRAG_THRESHOLD || deltaY > DRAG_THRESHOLD)) {
-            // Only allow horizontal dragging (check that horizontal movement is greater)
-            if (deltaX < deltaY) {
-                // More vertical than horizontal - cancel drag
-                cancelDrag();
-                return;
-            }
-
-            // Start dragging
-            startDrag();
+    function handlePointerMove(event) {
+        if (!matchesActivePointer(event)) {
+            return;
         }
 
-        if (!isDragging) return;
+        dragState.lastX = event.clientX;
+        dragState.lastY = event.clientY;
 
-        // Update dragged element position (horizontal only)
-        const offsetX = e.clientX - dragStartX;
-        $(draggedElement).css({
-            transform: `translateX(${offsetX}px)`,
-            pointerEvents: 'none'
-        });
+        const deltaX = event.clientX - dragState.startX;
+        const deltaY = event.clientY - dragState.startY;
+        const absDeltaX = Math.abs(deltaX);
+        const upwardDistance = Math.max(0, dragState.startY - event.clientY);
 
-        // Calculate where the dragged item should be inserted based on cursor position
-        const draggedRect = draggedElement.getBoundingClientRect();
-        const draggedCenterX = draggedRect.left + draggedRect.width / 2;
+        if (dragState.isReordering) {
+            updateReorderPosition(event.clientX);
+            event.preventDefault();
+            return;
+        }
 
-        // Determine target index based on cursor position
-        let newTargetIndex = originalIndex;
+        if (dragState.isMenuGesture) {
+            updateMenuGesture(upwardDistance);
+            event.preventDefault();
+            return;
+        }
 
-        for (let i = 0; i < allItems.length; i++) {
-            if (allItems[i] === draggedElement) continue;
+        const horizontalThreshold = getThreshold(HORIZONTAL_DRAG_THRESHOLD_PX, dragState.pointerType);
+        const menuThreshold = getThreshold(MENU_DRAG_THRESHOLD_PX, dragState.pointerType);
 
-            const itemRect = allItems[i].getBoundingClientRect();
-            const itemCenterX = itemRect.left + itemRect.width / 2;
+        const shouldStartReorder =
+            absDeltaX >= horizontalThreshold &&
+            absDeltaX > Math.abs(deltaY) + AXIS_LOCK_BIAS_PX;
+        const shouldStartMenuGesture =
+            upwardDistance >= menuThreshold &&
+            upwardDistance > absDeltaX + AXIS_LOCK_BIAS_PX &&
+            canUseMenuGesture();
 
-            if (draggedCenterX < itemCenterX) {
-                newTargetIndex = i;
-                break;
+        if (shouldStartReorder) {
+            startReorder();
+            updateReorderPosition(event.clientX);
+            event.preventDefault();
+            return;
+        }
+
+        if (shouldStartMenuGesture) {
+            startMenuGesture();
+            updateMenuGesture(upwardDistance);
+            event.preventDefault();
+        }
+    }
+
+    /**
+     * Handle pointer end to complete the active gesture
+     */
+    function handlePointerEnd(event) {
+        if (!matchesActivePointer(event)) {
+            return;
+        }
+
+        const appId = dragState.appId;
+        const wasReordering = dragState.isReordering;
+        const wasMenuGesture = dragState.isMenuGesture;
+        const isCancelled = event.type === 'pointercancel';
+
+        if (wasReordering) {
+            if (isCancelled) {
+                cancelReorder();
             } else {
-                newTargetIndex = i + 1;
+                completeReorder();
             }
+        } else if (wasMenuGesture) {
+            finishMenuGesture(isCancelled);
         }
 
-        // Clamp to valid range
-        newTargetIndex = Math.max(0, Math.min(allItems.length - 1, newTargetIndex));
-
-        // Only update transforms if target index changed
-        if (newTargetIndex !== targetIndex) {
-            targetIndex = newTargetIndex;
-            updateItemTransforms();
+        if (wasReordering || wasMenuGesture) {
+            suppressNextClick(appId);
         }
+
+        resetState();
     }
 
-    /**
-     * Handle mouse up to complete drag
-     */
-    function handleMouseUp(e) {
-        if (!draggedElement) return;
-
-        if (isDragging) {
-            completeDrag();
-        }
-
-        // Reset drag state
-        draggedElement = null;
-        draggedAppId = null;
-        isDragging = false;
+    function canUseMenuGesture() {
+        return Boolean(
+            window.TaskbarItemContextMenu &&
+            typeof window.TaskbarItemContextMenu.showContextMenu === 'function' &&
+            typeof window.TaskbarItemContextMenu.setRevealProgress === 'function'
+        );
     }
 
-    /**
-     * Start the drag operation
-     */
-    function startDrag() {
-        isDragging = true;
-        targetIndex = originalIndex;
+    function startReorder() {
+        dragState.isReordering = true;
+        dragState.originalIndex = $(dragState.sourceEl).index();
+        dragState.targetIndex = dragState.originalIndex;
+        dragState.allItems = $('.taskbar-apps').find('.taskbar-app').get();
 
-        // Get all taskbar items
-        const $taskbarApps = $('.taskbar-apps');
-        allItems = $taskbarApps.find('.taskbar-app').get();
+        if (typeof window.closeAllTaskbarPopupsAndMenus === 'function') {
+            window.closeAllTaskbarPopupsAndMenus();
+        }
 
-        // Add dragging class for styling
-        $(draggedElement).addClass('taskbar-app-dragging');
-
-        // Add body class to prevent other interactions
+        $(dragState.sourceEl).addClass('taskbar-app-dragging');
         $('body').addClass('taskbar-dragging');
 
-        console.log('[TASKBAR DRAG] Started dragging:', draggedAppId);
+        console.log('[TASKBAR DRAG] Started reordering:', dragState.appId);
     }
 
     /**
      * Update transforms of all items to create sliding effect
      */
     function updateItemTransforms() {
-        const itemWidth = 62; // 60px width + 2px gap
+        const itemStride = getTaskbarItemStride();
 
-        allItems.forEach((item, currentIndex) => {
-            if (item === draggedElement) {
-                // Don't transform the dragged element
+        dragState.allItems.forEach((item, currentIndex) => {
+            if (item === dragState.sourceEl) {
                 return;
             }
 
             let offset = 0;
 
-            // Determine if this item should shift
-            if (targetIndex > originalIndex) {
-                // Dragging forward - items between original and target shift left
-                if (currentIndex > originalIndex && currentIndex <= targetIndex) {
-                    offset = -itemWidth;
+            if (dragState.targetIndex > dragState.originalIndex) {
+                if (currentIndex > dragState.originalIndex && currentIndex <= dragState.targetIndex) {
+                    offset = -itemStride;
                 }
-            } else if (targetIndex < originalIndex) {
-                // Dragging backward - items between target and original shift right
-                if (currentIndex >= targetIndex && currentIndex < originalIndex) {
-                    offset = itemWidth;
+            } else if (dragState.targetIndex < dragState.originalIndex) {
+                if (currentIndex >= dragState.targetIndex && currentIndex < dragState.originalIndex) {
+                    offset = itemStride;
                 }
             }
 
@@ -188,108 +309,160 @@
         });
     }
 
+    function updateReorderPosition(clientX) {
+        const offsetX = clientX - dragState.startX;
+        $(dragState.sourceEl).css({
+            transform: `translateX(${offsetX}px)`,
+            pointerEvents: 'none'
+        });
+
+        const draggedRect = dragState.sourceEl.getBoundingClientRect();
+        const draggedCenterX = draggedRect.left + draggedRect.width / 2;
+
+        let newTargetIndex = dragState.originalIndex;
+
+        for (let i = 0; i < dragState.allItems.length; i++) {
+            const item = dragState.allItems[i];
+            if (item === dragState.sourceEl) {
+                continue;
+            }
+
+            const itemRect = item.getBoundingClientRect();
+            const itemCenterX = itemRect.left + itemRect.width / 2;
+
+            if (draggedCenterX < itemCenterX) {
+                newTargetIndex = i;
+                break;
+            }
+
+            newTargetIndex = i + 1;
+        }
+
+        newTargetIndex = clamp(newTargetIndex, 0, dragState.allItems.length - 1);
+
+        if (newTargetIndex !== dragState.targetIndex) {
+            dragState.targetIndex = newTargetIndex;
+            updateItemTransforms();
+        }
+    }
+
+    function startMenuGesture() {
+        dragState.isMenuGesture = true;
+        dragState.menuProgress = 0;
+
+        $('body').addClass('taskbar-menu-gesturing');
+        window.TaskbarItemContextMenu.showContextMenu(dragState.appId, $(dragState.sourceEl), {
+            gestureControlled: true,
+            revealProgress: 0
+        });
+    }
+
+    function updateMenuGesture(upwardDistance) {
+        if (!dragState.isMenuGesture) {
+            return;
+        }
+
+        const revealDistance = getThreshold(MENU_REVEAL_DISTANCE_PX, dragState.pointerType);
+        const progress = clamp(upwardDistance / revealDistance, 0, 1);
+
+        dragState.menuProgress = progress;
+        window.TaskbarItemContextMenu.setRevealProgress(progress);
+    }
+
     /**
      * Complete the drag operation
      */
-    function completeDrag() {
+    function completeReorder() {
         const $taskbarApps = $('.taskbar-apps');
 
-        // Disable transitions on non-dragged items so they don't animate when we clear transforms
-        allItems.forEach(item => {
-            if (item !== draggedElement) {
+        dragState.allItems.forEach(item => {
+            if (item !== dragState.sourceEl) {
                 $(item).css('transition', 'none');
             }
         });
 
-        // Clear all transforms from other items (they snap instantly to final position)
-        allItems.forEach(item => {
-            if (item !== draggedElement) {
+        dragState.allItems.forEach(item => {
+            if (item !== dragState.sourceEl) {
                 $(item).css('transform', '');
             }
         });
 
-        // Force reflow to apply the transform clear
-        if (allItems.length > 0) {
-            allItems[0].offsetHeight;
+        if (dragState.allItems.length > 0) {
+            dragState.allItems[0].offsetHeight;
         }
 
-        // Re-enable transitions on non-dragged items
-        allItems.forEach(item => {
-            if (item !== draggedElement) {
+        dragState.allItems.forEach(item => {
+            if (item !== dragState.sourceEl) {
                 $(item).css('transition', '');
             }
         });
 
-        // Reset dragged element styles (this one can animate smoothly)
-        $(draggedElement).css({
+        $(dragState.sourceEl).css({
             transform: '',
             pointerEvents: ''
         });
-        $(draggedElement).removeClass('taskbar-app-dragging');
+        $(dragState.sourceEl).removeClass('taskbar-app-dragging');
 
-        // Only reorder if position changed
-        if (targetIndex !== originalIndex) {
-            // Move dragged element to new position in the DOM
-            $(draggedElement).detach();
+        if (dragState.targetIndex !== dragState.originalIndex) {
+            $(dragState.sourceEl).detach();
 
             const $items = $taskbarApps.find('.taskbar-app');
 
-            if (targetIndex === 0) {
-                $taskbarApps.prepend(draggedElement);
-            } else if (targetIndex >= $items.length) {
-                $taskbarApps.append(draggedElement);
+            if (dragState.targetIndex === 0) {
+                $taskbarApps.prepend(dragState.sourceEl);
+            } else if (dragState.targetIndex >= $items.length) {
+                $taskbarApps.append(dragState.sourceEl);
             } else {
-                // Insert before the item at targetIndex
-                // Account for the fact that we removed the dragged element
-                const adjustedIndex = targetIndex > originalIndex ? targetIndex - 1 : targetIndex;
-                $items.eq(adjustedIndex).before(draggedElement);
+                const adjustedIndex = dragState.targetIndex > dragState.originalIndex
+                    ? dragState.targetIndex - 1
+                    : dragState.targetIndex;
+                $items.eq(adjustedIndex).before(dragState.sourceEl);
             }
 
-            console.log('[TASKBAR DRAG] Completed drag. Original index:', originalIndex, 'New index:', targetIndex);
+            console.log(
+                '[TASKBAR DRAG] Completed reorder. Original index:',
+                dragState.originalIndex,
+                'New index:',
+                dragState.targetIndex
+            );
 
-            // Save the new order (only for pinned apps)
             saveTaskbarOrder();
         } else {
-            console.log('[TASKBAR DRAG] Drag cancelled - no position change');
+            console.log('[TASKBAR DRAG] Reorder ended with no position change');
         }
 
-        // Remove body class
         $('body').removeClass('taskbar-dragging');
-
-        // Reset state
-        originalIndex = -1;
-        targetIndex = -1;
-        allItems = [];
     }
 
     /**
      * Cancel the drag operation
      */
-    function cancelDrag() {
-        if (isDragging) {
-            // Clear all transforms from other items
-            allItems.forEach(item => {
+    function cancelReorder() {
+        if (dragState.isReordering) {
+            dragState.allItems.forEach(item => {
                 $(item).css('transform', '');
             });
 
-            // Reset dragged element styles
-            $(draggedElement).css({
+            $(dragState.sourceEl).css({
                 transform: '',
                 pointerEvents: ''
             });
-            $(draggedElement).removeClass('taskbar-app-dragging');
+            $(dragState.sourceEl).removeClass('taskbar-app-dragging');
 
-            // Remove body class
             $('body').removeClass('taskbar-dragging');
         }
+    }
 
-        // Reset drag state
-        draggedElement = null;
-        draggedAppId = null;
-        isDragging = false;
-        originalIndex = -1;
-        targetIndex = -1;
-        allItems = [];
+    function finishMenuGesture(cancelled) {
+        const shouldCommit = !cancelled && dragState.menuProgress >= MENU_COMMIT_PROGRESS;
+
+        if (shouldCommit) {
+            window.TaskbarItemContextMenu.commitGestureMenu();
+        } else {
+            window.TaskbarItemContextMenu.hideContextMenu({ immediate: true });
+        }
+
+        $('body').removeClass('taskbar-menu-gesturing');
     }
 
     /**
@@ -417,6 +590,21 @@
     window.TaskbarDrag = {
         applySavedOrder,
         loadTaskbarOrder,
-        saveTaskbarOrder
+        saveTaskbarOrder,
+        consumePendingTaskbarClick(appId) {
+            const isSuppressed =
+                suppressedClick.appId === appId &&
+                suppressedClick.until > Date.now();
+
+            if (isSuppressed) {
+                suppressedClick = {
+                    appId: null,
+                    until: 0
+                };
+                return true;
+            }
+
+            return false;
+        }
     };
 })();

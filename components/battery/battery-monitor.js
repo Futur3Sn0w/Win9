@@ -5,19 +5,32 @@
 
 // const { ipcRenderer } = require('electron');
 
+const BATTERY_ICON_SIZES = [16, 24, 32];
+const BATTERY_BASE_RENDER_SIZE = 16;
+const BATTERY_SPRITE_FRAME_COUNT = 44;
+const BATTERY_FRAME_MAP = {
+    unpluggedLevels: [0, 1, 2, 3, 4, 5, 6, 7, 8],
+    warning: 18,
+    error: 19,
+    chargingEmpty: 20,
+    noBattery: 30,
+    pluggedNoBattery: 31,
+    chargingLevels: [33, 34, 35, 36, 37, 38, 39, 40, 41]
+};
+
 class BatteryMonitor {
     constructor() {
         this.iconElement = null;
         this.containerElement = null;
+        this.baseRenderSize = BATTERY_BASE_RENDER_SIZE;
+        this.displaySettingsState = null;
+        this.handleViewportChange = this.handleViewportChange.bind(this);
+        this.handleDisplaySettingsChange = this.handleDisplaySettingsChange.bind(this);
         this.currentStatus = {
             level: 1.0,
             charging: false,
             batteryPresent: true
         };
-
-        // Sprite sheet configuration - each frame is 16x16px
-        this.spriteFrameWidth = 16;
-        this.spriteFrameHeight = 16;
 
         this.init();
     }
@@ -46,8 +59,11 @@ class BatteryMonitor {
             return;
         }
 
+        this.baseRenderSize = this.measureIconRenderSize();
+
         // Set up IPC listener for battery status changes
         this.setupIPCListeners();
+        this.setupViewportListeners();
 
         // Set up Web Battery API monitoring (more accurate than powerMonitor)
         const batteryAPIAvailable = await this.setupBatteryAPI();
@@ -64,6 +80,21 @@ class BatteryMonitor {
             this.currentStatus = status;
             this.updateBatteryIcon();
         });
+    }
+
+    setupViewportListeners() {
+        window.addEventListener('resize', this.handleViewportChange);
+        window.addEventListener('load', this.handleViewportChange, { once: true });
+        window.addEventListener('win8-display-settings-changed', this.handleDisplaySettingsChange);
+    }
+
+    handleViewportChange() {
+        this.updateBatteryIcon();
+    }
+
+    handleDisplaySettingsChange(event) {
+        this.displaySettingsState = event?.detail?.state || null;
+        this.updateBatteryIcon();
     }
 
     /**
@@ -85,6 +116,14 @@ class BatteryMonitor {
                         chargingTime: battery.chargingTime,
                         dischargingTime: battery.dischargingTime
                     };
+
+                    console.log('[BatteryMonitor] Battery API update:', {
+                        level: battery.level,
+                        charging: battery.charging,
+                        chargingTime: battery.chargingTime,
+                        dischargingTime: battery.dischargingTime
+                    });
+
                     this.updateBatteryIcon();
                 };
 
@@ -128,30 +167,21 @@ class BatteryMonitor {
 
     /**
      * Calculate which sprite frame to display based on battery state
-     * Returns the frame index (0-32) based on the 33-frame sprite sheet
-     *
-     * Frame layout (33 frames total, 0-32):
-     * 0-8:   Unplugged states (10%, 20%, 30%, 40%, 50%, 60%, 70%, 80%, 90%/100%)
-     * 9:     Warning badge (yellow triangle)
-     * 10:    Error badge (red X)
-     * 11:    Plugged in 0-9%
-     * 12-20: Fill states (unused - 9 frames)
-     * 21:    Plugged in no battery
-     * 22:    Plugged in unknown battery state
-     * 23:    Plugged in no battery (duplicate)
-     * 24-32: Plugged in states (10%, 20%, 30%, 40%, 50%, 60%, 70%, 80%, 90%/100%)
+     * Returns a tentative frame index based on the new 44-frame battery strip.
+     * This maps the clearly identifiable families and leaves the ambiguous leaf-only
+     * frames unused until the atlas is fully documented.
      */
     getBatteryFrameIndex() {
         const { level, charging, batteryPresent } = this.currentStatus;
 
         // Error state - battery status unavailable
         if (level === null || level === undefined) {
-            return 10; // Red X error badge
+            return BATTERY_FRAME_MAP.error;
         }
 
         // No battery present
         if (!batteryPresent) {
-            return charging ? 21 : 21; // Plugged in without battery
+            return charging ? BATTERY_FRAME_MAP.pluggedNoBattery : BATTERY_FRAME_MAP.noBattery;
         }
 
         // Convert level (0.0-1.0) to percentage
@@ -163,9 +193,9 @@ class BatteryMonitor {
         if (percentage <= 5) {
             // Very low battery
             if (charging) {
-                return 11; // Charging at 0-9%
+                return BATTERY_FRAME_MAP.chargingEmpty;
             } else {
-                return 9; // Warning badge for critically low battery
+                return BATTERY_FRAME_MAP.warning;
             }
         } else if (percentage <= 15) {
             levelIndex = 0; // 10%
@@ -189,12 +219,63 @@ class BatteryMonitor {
 
         // Return appropriate frame based on charging state
         if (charging) {
-            // Frames 24-32 for charging states
-            return 24 + levelIndex;
-        } else {
-            // Frames 0-8 for unplugged states
-            return levelIndex;
+            return BATTERY_FRAME_MAP.chargingLevels[levelIndex];
         }
+
+        return BATTERY_FRAME_MAP.unpluggedLevels[levelIndex];
+    }
+
+    measureIconRenderSize() {
+        if (!this.iconElement) {
+            return BATTERY_BASE_RENDER_SIZE;
+        }
+
+        const computedStyle = window.getComputedStyle(this.iconElement);
+        const width = parseFloat(computedStyle.width) || 0;
+        const height = parseFloat(computedStyle.height) || 0;
+
+        return Math.max(width, height, BATTERY_BASE_RENDER_SIZE);
+    }
+
+    getBaseRenderSize() {
+        return Math.max(this.baseRenderSize || 0, BATTERY_BASE_RENDER_SIZE);
+    }
+
+    getIconAssetScaleFactor() {
+        if (typeof window.getTaskbarShellButtonAssetScaleFactor === 'function') {
+            const scaleFactor = Number(window.getTaskbarShellButtonAssetScaleFactor());
+            if (Number.isFinite(scaleFactor) && scaleFactor > 0) {
+                return scaleFactor;
+            }
+        }
+
+        const displayScale = Number(this.displaySettingsState?.display?.scaleFactor) || 0;
+        const zoomScale = Number(this.displaySettingsState?.zoomFactor) || 0;
+        if (displayScale > 0 && zoomScale > 0) {
+            return Math.max(1, displayScale * zoomScale);
+        }
+
+        return Math.max(1, Number(window.devicePixelRatio) || 1);
+    }
+
+    selectSpriteSheetSize(targetSize) {
+        let bestSize = BATTERY_ICON_SIZES[0];
+        let bestDistance = Math.abs(targetSize - bestSize);
+
+        for (const size of BATTERY_ICON_SIZES) {
+            const distance = Math.abs(targetSize - size);
+            if (distance < bestDistance) {
+                bestSize = size;
+                bestDistance = distance;
+                continue;
+            }
+
+            if (distance === bestDistance && size < bestSize) {
+                bestSize = size;
+            }
+        }
+
+        return bestSize;
     }
 
     /**
@@ -206,23 +287,30 @@ class BatteryMonitor {
         }
 
         const frameIndex = this.getBatteryFrameIndex();
+        const scaleFactor = this.getIconAssetScaleFactor();
+        const targetAssetSize = Math.max(1, Math.ceil(this.getBaseRenderSize() * scaleFactor));
+        const spriteSheetSize = this.selectSpriteSheetSize(targetAssetSize);
+        const renderSize = this.getBaseRenderSize();
+        const backgroundOffsetX = frameIndex * -renderSize;
+        const backgroundWidth = renderSize * BATTERY_SPRITE_FRAME_COUNT;
 
-        // Calculate the horizontal offset for the sprite
-        // Each frame is 16px wide, so offset = frameIndex * -16px
-        // Shift left by 1px to prevent right-side cutoff
-        const xOffset = (frameIndex * -this.spriteFrameWidth);
-
-        // Apply the sprite sheet as background with proper positioning
-        this.iconElement.style.width = `${this.spriteFrameWidth}px`;
-        this.iconElement.style.height = `${this.spriteFrameHeight}px`;
-        this.iconElement.style.background = `url('resources/images/tray/battery/battery.png') ${xOffset}px 0`;
-        this.iconElement.style.imageRendering = 'pixelated';
+        // Scale the higher-resolution strip into the logical tray icon box.
+        this.iconElement.style.width = `${renderSize}px`;
+        this.iconElement.style.height = `${renderSize}px`;
+        this.iconElement.style.backgroundImage = `url('resources/images/tray/battery/${spriteSheetSize}.png')`;
+        this.iconElement.style.backgroundPosition = `${backgroundOffsetX}px 0`;
+        this.iconElement.style.backgroundRepeat = 'no-repeat';
+        this.iconElement.style.backgroundSize = `${backgroundWidth}px ${renderSize}px`;
+        this.iconElement.style.imageRendering = 'auto';
 
         // Log for debugging
         this.logBatteryStatus(frameIndex);
 
         // Update tooltip
         this.updateTooltip();
+
+        // Update popup if visible
+        this.updateBatteryPopup();
     }
 
     /**
@@ -324,15 +412,27 @@ class BatteryMonitor {
     }
 
     /**
+     * Update the battery popup display if available
+     */
+    updateBatteryPopup() {
+        if (window.BatteryPopup && window.batteryPopupInstance) {
+            window.batteryPopupInstance.updateDisplay(this.currentStatus);
+        }
+    }
+
+    /**
      * Cleanup when page unloads
      */
     async cleanup() {
+        window.removeEventListener('resize', this.handleViewportChange);
+        window.removeEventListener('win8-display-settings-changed', this.handleDisplaySettingsChange);
         await ipcRenderer.invoke('stop-battery-monitoring');
     }
 }
 
 // Initialize the battery monitor when the script loads
 const batteryMonitor = new BatteryMonitor();
+window.batteryMonitor = batteryMonitor;
 
 // Cleanup on window unload
 window.addEventListener('beforeunload', () => {

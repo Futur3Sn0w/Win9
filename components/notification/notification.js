@@ -28,19 +28,28 @@ class NotificationManager {
     }
 
     updateContainerPosition() {
-        // Get taskbar height dynamically
         const taskbar = document.querySelector('.taskbar');
-        if (taskbar) {
+        const useBottomStack = typeof thresholdFeaturesEnabled !== 'undefined'
+            && thresholdFeaturesEnabled
+            && typeof taskbarShowNotificationCenterIcon !== 'undefined'
+            && taskbarShowNotificationCenterIcon;
+
+        this.container.classList.toggle('bottom-stack', useBottomStack);
+
+        if (useBottomStack && taskbar) {
             const taskbarHeight = taskbar.offsetHeight;
-            const bottomOffset = taskbarHeight + 10; // 10px padding above taskbar
-            this.container.style.bottom = `${bottomOffset}px`;
+            this.container.style.bottom = `${taskbarHeight + 10}px`;
+            this.container.style.top = '';
+        } else {
+            this.container.style.bottom = '';
+            this.container.style.top = '';
         }
     }
 
     /**
      * Show a notification
      * @param {Object} options - Notification options
-     * @param {string} options.icon - Icon path or class (e.g., 'mif-usb' or path to image)
+     * @param {string} options.icon - Icon path or class (e.g., 'mif-usb', 'sui-search', or path to image)
      * @param {string} options.title - Notification title
      * @param {string} options.description - Notification description
      * @param {string} options.appId - App ID to automatically get icon/color (optional)
@@ -52,7 +61,7 @@ class NotificationManager {
      */
     show(options) {
         const {
-            icon = 'mif-notifications',
+            icon = 'sui-notifications',
             title = 'Notification',
             description = '',
             appId = null,
@@ -91,14 +100,15 @@ class NotificationManager {
      */
     showImmediate(options) {
         const {
-            icon = 'mif-notifications',
+            icon = 'sui-notifications',
             title = 'Notification',
             description = '',
             appId = null,
             sourceLabel = null,
             onClick = null,
             duration = 0,
-            type = 'info'
+            type = 'info',
+            iconContainerColor = null
         } = options;
 
         // Get app data if appId is provided
@@ -136,7 +146,7 @@ class NotificationManager {
         }
 
         // Determine if icon is a class or image path
-        const isIconClass = icon.startsWith('mif-') || icon.startsWith('icon-');
+        const isIconClass = icon.startsWith('mif-') || icon.startsWith('sui-') || icon.startsWith('icon-');
         const iconHTML = isIconClass
             ? `<span class="notification-icon ${icon}"></span>`
             : `<img src="${icon}" class="notification-icon-image" alt="Notification icon">`;
@@ -146,11 +156,14 @@ class NotificationManager {
             ? `<img src="${appIcon}" class="notification-app-icon" alt="App icon">`
             : '';
 
+        const iconContainerBg = iconContainerColor || tileColor;
+        const iconContainerStyle = iconContainerBg ? ` style="background: ${iconContainerBg}"` : '';
+
         notification.innerHTML = `
             <button class="notification-close" aria-label="Close notification">✕</button>
             ${appIconHTML}
             <div class="notification-content">
-                <div class="notification-icon-container">
+                <div class="notification-icon-container"${iconContainerStyle}>
                     ${iconHTML}
                 </div>
                 <div class="notification-text">

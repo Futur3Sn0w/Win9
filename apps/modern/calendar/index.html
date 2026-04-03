@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calendar</title>
+    <link rel="stylesheet" href="../../../css/fonts.css">
+    <link rel="stylesheet" href="./calendar.css">
+</head>
+<body>
+    <div id="calendar-app" class="calendar-app">
+        <div id="calendar-splash" class="calendar-splash" aria-hidden="true">
+            <img src="apps/modern/calendar/resources/splash.png" alt="" class="calendar-splash__image" draggable="false">
+            <div class="calendar-splash__ring"></div>
+        </div>
+
+        <div id="navBar" class="calendar-navBar" role="tablist" aria-label="Calendar views">
+            <button class="calendar-navButton" type="button" data-view="agenda" role="tab" aria-selected="false">
+                <span class="calendar-navButton__icon" aria-hidden="true">&#xE199;</span>
+                <span class="calendar-navButton__label">What's next</span>
+            </button>
+            <button class="calendar-navButton" type="button" data-view="day" role="tab" aria-selected="false">
+                <span class="calendar-navButton__icon" aria-hidden="true">&#xE161;</span>
+                <span class="calendar-navButton__label">Day</span>
+            </button>
+            <button class="calendar-navButton" type="button" data-view="workweek" role="tab" aria-selected="false">
+                <span class="calendar-navButton__icon" aria-hidden="true">&#xE186;</span>
+                <span class="calendar-navButton__label">Work week</span>
+            </button>
+            <button class="calendar-navButton" type="button" data-view="week" role="tab" aria-selected="false">
+                <span class="calendar-navButton__icon" aria-hidden="true">&#xE162;</span>
+                <span class="calendar-navButton__label">Week</span>
+            </button>
+            <button class="calendar-navButton is-active" type="button" data-view="month" role="tab" aria-selected="true">
+                <span class="calendar-navButton__icon" aria-hidden="true">&#xE163;</span>
+                <span class="calendar-navButton__label">Month</span>
+            </button>
+            <div class="calendar-navBar__spacer"></div>
+        </div>
+
+        <div class="calendar-shell">
+            <header class="calendar-header">
+                <button id="calendar-iterator-prev" class="calendar-iterator calendar-iterator--prev" type="button" aria-label="Previous range">
+                    <span aria-hidden="true">&#xE0E2;</span>
+                </button>
+                <button id="calendar-date-anchor" class="calendar-dateAnchor" type="button">
+                    <span id="calendar-date-label" class="calendar-dateAnchor__text"></span>
+                    <span class="calendar-dateAnchor__chevron" aria-hidden="true">&#xE09D;</span>
+                </button>
+                <button id="calendar-iterator-next" class="calendar-iterator calendar-iterator--next" type="button" aria-label="Next range">
+                    <span aria-hidden="true">&#xE0E3;</span>
+                </button>
+                <div id="calendar-selection-summary" class="calendar-selection-summary"></div>
+            </header>
+
+            <div id="calendar-date-flyout" class="calendar-date-flyout" hidden>
+                <div class="calendar-date-flyout__title">Jump to date</div>
+                <input id="calendar-date-input" class="calendar-date-flyout__input" type="date">
+                <div class="calendar-date-flyout__actions">
+                    <button id="calendar-date-today" class="calendar-date-flyout__button" type="button">Today</button>
+                    <button id="calendar-date-close" class="calendar-date-flyout__button" type="button">Close</button>
+                </div>
+            </div>
+
+            <div id="calendar-month-headers" class="calendar-month-headers"></div>
+
+            <main class="calendar-stage">
+                <section id="calendar-month-view" class="calendar-view is-active" data-view="month">
+                    <div id="calendar-month-timeline" class="calendar-month-timeline">
+                        <div id="calendar-month-strip" class="calendar-month-strip"></div>
+                    </div>
+                </section>
+
+                <section id="calendar-week-view" class="calendar-view" data-view="week">
+                    <div id="calendar-week-grid" class="calendar-week-grid calendar-timeline-host">
+                        <div id="calendar-week-strip" class="calendar-timeline-strip"></div>
+                    </div>
+                </section>
+
+                <section id="calendar-workweek-view" class="calendar-view" data-view="workweek">
+                    <div id="calendar-workweek-grid" class="calendar-week-grid calendar-week-grid--workweek calendar-timeline-host">
+                        <div id="calendar-workweek-strip" class="calendar-timeline-strip"></div>
+                    </div>
+                </section>
+
+                <section id="calendar-day-view" class="calendar-view" data-view="day">
+                    <div id="calendar-day-timeline" class="calendar-day-timeline calendar-timeline-host">
+                        <div id="calendar-day-strip" class="calendar-timeline-strip"></div>
+                    </div>
+                </section>
+
+                <section id="calendar-agenda-view" class="calendar-view calendar-agenda-view" data-view="agenda">
+                    <div class="calendar-agenda-background"></div>
+                    <div class="calendar-agenda-overlay"></div>
+                    <div class="calendar-agenda-shell">
+                        <div class="calendar-agenda-hero">
+                            <button id="calendar-agenda-date" class="calendar-agenda-date" type="button"></button>
+                            <div id="calendar-agenda-all-day" class="calendar-agenda-all-day"></div>
+                        </div>
+                        <div id="calendar-agenda-timeline" class="calendar-agenda-timeline"></div>
+                    </div>
+                </section>
+            </main>
+        </div>
+
+        <div id="calendar-toast" class="calendar-toast" hidden></div>
+
+        <div id="calendar-event-flyout" class="calendar-event-flyout" hidden>
+            <div id="calendar-event-flyout-calendar" class="calendar-event-flyout__calendar"></div>
+            <div id="calendar-event-flyout-title" class="calendar-event-flyout__title"></div>
+            <div id="calendar-event-flyout-time" class="calendar-event-flyout__time"></div>
+            <div id="calendar-event-flyout-location" class="calendar-event-flyout__location"></div>
+            <div class="calendar-event-flyout__actions">
+                <button id="calendar-event-flyout-open" class="calendar-event-flyout__button" type="button">Open</button>
+                <button id="calendar-event-flyout-day" class="calendar-event-flyout__button" type="button">Go to day</button>
+                <button id="calendar-event-flyout-delete" class="calendar-event-flyout__button" type="button">Delete</button>
+                <button id="calendar-event-flyout-close" class="calendar-event-flyout__button" type="button">Close</button>
+            </div>
+        </div>
+
+        <div id="calendar-context-menu" class="calendar-context-menu" hidden>
+            <div id="calendar-context-menu-title" class="calendar-context-menu__title"></div>
+            <div id="calendar-context-menu-actions" class="calendar-context-menu__actions"></div>
+        </div>
+
+        <div id="calendar-delete-confirm" class="calendar-delete-confirm" hidden>
+            <div class="calendar-delete-confirm__title">Delete this event?</div>
+            <div id="calendar-delete-confirm-copy" class="calendar-delete-confirm__copy"></div>
+            <div class="calendar-delete-confirm__actions">
+                <button id="calendar-delete-confirm-cancel" class="calendar-event-flyout__button" type="button">Cancel</button>
+                <button id="calendar-delete-confirm-delete" class="calendar-event-flyout__button" type="button">Delete</button>
+            </div>
+        </div>
+
+        <div id="calendar-quick-event" class="calendar-quick-event quickEvent" hidden>
+            <div class="surface">
+                <div class="qe-glyph"><div id="calendar-quick-event-glyph" class="glyphInner"></div></div>
+                <div id="calendar-quick-event-calendar-trigger" class="dropdownHolder">
+                    <button id="calendar-quick-event-calendar-button" class="calendar-quick-event__calendarButton" type="button" aria-label="Choose calendar">
+                        <span class="calendar-quick-event__calendarChevron" aria-hidden="true">&#xE099;</span>
+                    </button>
+                </div>
+                <div class="textContainer">
+                    <div id="calendar-quick-event-subject-hint" class="calendar-quick-event__hint">Event title</div>
+                    <input id="calendar-quick-event-subject" class="qe-subject" type="text" maxlength="255" aria-label="Event title">
+                    <div id="calendar-quick-event-location-hint" class="calendar-quick-event__hint calendar-quick-event__hint--location">Location</div>
+                    <input id="calendar-quick-event-location" class="qe-location" type="text" maxlength="255" aria-label="Location">
+                    <div id="calendar-quick-event-meta" class="calendar-quick-event__meta"></div>
+                </div>
+                <button id="calendar-quick-event-close" class="qec-close-button calendar-quick-event__close" type="button" aria-label="Close quick event">×</button>
+            </div>
+            <div class="calendar-quick-event__actions">
+                <button id="calendar-quick-event-cancel" class="calendar-event-flyout__button" type="button">Cancel</button>
+                <button id="calendar-quick-event-create" class="calendar-event-flyout__button" type="button">Create</button>
+            </div>
+        </div>
+
+        <div id="calendar-quick-event-calendar-menu" class="calendar-quick-event-calendar-menu" hidden></div>
+    </div>
+    <script src="./calendar.js"></script>
+</body>
+</html>

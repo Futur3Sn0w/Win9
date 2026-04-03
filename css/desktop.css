@@ -18,6 +18,25 @@
     pointer-events: none;
 }
 
+#desktop-wallpaper::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(7, 14, 24, 0);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 180ms ease, background-color 180ms ease;
+}
+
+body.continuum-tablet-start-home #desktop-wallpaper::after {
+    background: rgba(7, 14, 24, 0.22);
+    opacity: 1;
+}
+
+body.continuum-tablet-start-home.continuum-tablet-start-home-shaded #desktop-wallpaper::after {
+    background: rgba(7, 14, 24, 0.36);
+}
+
 /* ===== DESKTOP ===== */
 #desktop {
     position: fixed;
@@ -59,6 +78,35 @@
     pointer-events: auto;
 }
 
+.desktop-modern-task-view-edge-trigger {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 32px;
+    height: 100%;
+    z-index: 200001;
+    display: none;
+    pointer-events: none;
+    touch-action: none;
+}
+
+body.touch-capable.desktop-modern-metro-mode.task-view-touch-enabled .desktop-modern-task-view-edge-trigger {
+    display: block;
+    pointer-events: all;
+}
+
+body.view-boot .desktop-modern-task-view-edge-trigger,
+body.view-lock .desktop-modern-task-view-edge-trigger,
+body.view-login .desktop-modern-task-view-edge-trigger {
+    z-index: 1;
+    pointer-events: none;
+}
+
+/* Virtual desktop: hide windows not on the active desktop */
+.classic-app-container.vd-hidden {
+    display: none !important;
+}
+
 .task-view-placeholder {
     position: absolute;
     top: 0;
@@ -70,6 +118,73 @@
     pointer-events: none;
     background: rgba(0, 0, 0, 0);
     transition: opacity 0.14s ease-out, background-color 0.14s ease-out;
+}
+
+.snap-assist-placeholder {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: var(--taskbar-reserved-height, var(--taskbar-height, 40px));
+    z-index: 604;
+    opacity: 0;
+    pointer-events: none !important;
+    transition: opacity 0.14s ease-out;
+}
+
+.snap-assist-region {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 50%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.2);
+    opacity: 0;
+    overflow: hidden;
+    pointer-events: none !important;
+    transition: transform 0.16s ease-out, opacity 0.14s ease-out;
+}
+
+.snap-assist-placeholder[data-side="left"] .snap-assist-region {
+    left: 0;
+    transform: translateX(-18px);
+}
+
+.snap-assist-placeholder[data-side="right"] .snap-assist-region {
+    right: 0;
+    transform: translateX(18px);
+}
+
+.snap-assist-placeholder[data-side="top-left"] .snap-assist-region {
+    left: 0;
+    top: 0;
+    width: 50%;
+    height: 50%;
+    transform: translate(-18px, -18px);
+}
+
+.snap-assist-placeholder[data-side="top-right"] .snap-assist-region {
+    right: 0;
+    top: 0;
+    width: 50%;
+    height: 50%;
+    transform: translate(18px, -18px);
+}
+
+.snap-assist-placeholder[data-side="bottom-left"] .snap-assist-region {
+    left: 0;
+    bottom: 0;
+    width: 50%;
+    height: 50%;
+    transform: translate(-18px, 18px);
+}
+
+.snap-assist-placeholder[data-side="bottom-right"] .snap-assist-region {
+    right: 0;
+    bottom: 0;
+    width: 50%;
+    height: 50%;
+    transform: translate(18px, 18px);
 }
 
 .task-view-window-grid {
@@ -243,11 +358,13 @@
     left: 0;
     right: 0;
     bottom: 0;
-    height: 80px;
+    min-height: 80px;
     background: #1d1d1d;
     display: flex;
     align-items: center;
     justify-content: center;
+    gap: 12px;
+    padding: 10px 20px;
     opacity: 0;
     transform: translateY(15px);
     transition: transform 0.18s ease-out, opacity 0.12s ease-out;
@@ -266,6 +383,21 @@
     font: inherit;
     text-decoration: none;
     transition: background-color 0.12s ease-out, border-color 0.12s ease-out;
+}
+
+/* When desktop cards are showing, restyle the add button as a card-sized box */
+.task-view-desktop-cards:not(:empty)~.task-view-add-desktop-button {
+    width: 200px;
+    aspect-ratio: 16 / 9;
+    min-height: unset;
+    padding: 0;
+    border: 2px solid rgba(255, 255, 255, 0.25);
+    border-radius: 2px;
+    flex-direction: column;
+}
+
+.task-view-desktop-cards:not(:empty)~.task-view-add-desktop-button .task-view-add-desktop-button__label {
+    display: none;
 }
 
 .task-view-add-desktop-button:hover {
@@ -322,6 +454,105 @@
     white-space: nowrap;
 }
 
+/* ── Desktop cards (virtual desktops) ─────────────────────────── */
+
+@keyframes desktop-card-enter {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.task-view-desktop-cards {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.task-view-desktop-card {
+    position: relative;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transition: transform 0.15s ease-out;
+}
+
+.task-view-desktop-card--entering {
+    animation: desktop-card-enter 0.2s ease-out both;
+}
+
+.task-view-desktop-card:hover {
+    transform: scale(1.04);
+}
+
+.task-view-desktop-card__thumbnail {
+    position: relative;
+    width: 200px;
+    aspect-ratio: 16 / 9;
+    border-radius: 2px;
+    border: 2px solid rgba(255, 255, 255, 0.25);
+    background-color: #222;
+    overflow: hidden;
+    transition: border-color 0.15s ease-out;
+}
+
+.task-view-desktop-card--active .task-view-desktop-card__thumbnail {
+    border-color: rgba(255, 255, 255, 0.7);
+}
+
+.task-view-desktop-card--highlighted .task-view-desktop-card__thumbnail {
+    border-color: rgba(255, 255, 255, 0.9);
+}
+
+.task-view-desktop-card__thumbnail * {
+    pointer-events: none;
+}
+
+.task-view-desktop-card__mini-window {
+    position: absolute;
+    background: rgba(255, 255, 255, 0.35);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    border-radius: 1px;
+}
+
+/* Close button: hidden until card is hovered */
+.task-view-desktop-card__close {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 20px;
+    height: 20px;
+    background: #e81123;
+    border: none;
+    border-radius: 2px;
+    color: #fff;
+    font-size: 14px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.12s ease-out;
+    z-index: 2;
+}
+
+.task-view-desktop-card:hover .task-view-desktop-card__close {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.task-view-desktop-card__close:hover {
+    background: #f1707a;
+}
+
 body.task-view-open #desktop-window-layer {
     opacity: 0;
     pointer-events: none;
@@ -335,13 +566,57 @@ body.task-view-open .task-view-placeholder {
     bottom: var(--taskbar-height, 40px);
 }
 
-body.task-view-open .task-view-window-grid {
+body.task-view-open .task-view-window-grid:not(.snap-assist-window-grid) {
     pointer-events: auto;
 }
 
 body.task-view-open .task-view-desktop-bar {
     opacity: 1;
     transform: translateY(0);
+}
+
+.snap-assist-window-grid {
+    top: 28px;
+    left: 28px;
+    right: 28px;
+    bottom: 28px;
+    display: flex;
+    flex-wrap: wrap;
+    align-content: center;
+    justify-content: center;
+    gap: 28px;
+    overflow-y: auto;
+    padding: 8px;
+}
+
+.snap-assist-window-card .task-view-window-card__header {
+    padding-right: 0;
+}
+
+body.snap-assist-open .snap-assist-placeholder {
+    opacity: 1;
+    pointer-events: auto;
+    bottom: var(--taskbar-height, 40px);
+}
+
+body.snap-assist-open .snap-assist-region {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+body.snap-assist-open .desktop-grid {
+    opacity: 0;
+    pointer-events: none;
+}
+
+body.snap-assist-open #desktop-window-layer>.classic-app-container {
+    transition: transform 0.16s ease-out, opacity 0.14s ease-out, box-shadow 0.16s ease, border-color 0.16s ease;
+}
+
+body.snap-assist-open #desktop-window-layer>.classic-app-container:not(.snap-assist-anchor) {
+    opacity: 0;
+    pointer-events: none;
+    transform: scale(0.972);
 }
 
 .desktop-watermark {
@@ -377,9 +652,10 @@ body.task-view-open .task-view-desktop-bar {
     height: 100%;
     padding: 0;
     margin: 0;
+    transition: opacity 0.12s ease-out;
     --desktop-item-width: 96px;
     --desktop-icon-size: 56px;
-    --desktop-label-font-size: 11px;
+    --desktop-label-font-size: var(--system-font-size);
     --desktop-grid-column-gap: 28px;
     --desktop-grid-row-gap: 28px;
 }
@@ -391,7 +667,7 @@ body.task-view-open .task-view-desktop-bar {
 .desktop-grid--size-small {
     --desktop-item-width: 96px;
     --desktop-icon-size: 56px;
-    --desktop-label-font-size: 11px;
+    --desktop-label-font-size: var(--system-font-size);
     --desktop-grid-column-gap: 28px;
     --desktop-grid-row-gap: 28px;
 }
@@ -399,7 +675,7 @@ body.task-view-open .task-view-desktop-bar {
 .desktop-grid--size-medium {
     --desktop-item-width: 116px;
     --desktop-icon-size: 68px;
-    --desktop-label-font-size: 11px;
+    --desktop-label-font-size: var(--system-font-size);
     --desktop-grid-column-gap: 32px;
     --desktop-grid-row-gap: 32px;
 }
@@ -407,7 +683,7 @@ body.task-view-open .task-view-desktop-bar {
 .desktop-grid--size-large {
     --desktop-item-width: 134px;
     --desktop-icon-size: 84px;
-    --desktop-label-font-size: 11px;
+    --desktop-label-font-size: var(--system-font-size);
     --desktop-grid-column-gap: 38px;
     --desktop-grid-row-gap: 36px;
 }
@@ -492,6 +768,21 @@ body.task-view-open .task-view-desktop-bar {
     user-select: none;
 }
 
+.desktop-item__icon-shortcut-badge {
+    position: absolute;
+    left: -2px;
+    bottom: -2px;
+    width: calc(var(--desktop-icon-size) * 0.34);
+    height: calc(var(--desktop-icon-size) * 0.34);
+    min-width: 12px;
+    min-height: 12px;
+    object-fit: contain;
+    pointer-events: none;
+    user-select: none;
+    z-index: 2;
+    filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.45));
+}
+
 .desktop-item__icon:has(.desktop-item__icon-image) {
     background-color: transparent;
     box-shadow: none;
@@ -534,7 +825,7 @@ body.task-view-open .task-view-desktop-bar {
 .desktop-item__label {
     width: 100%;
     text-align: center;
-    font-size: 11px;
+    font-size: var(--system-font-size);
     line-height: 1.2;
     word-break: break-word;
     text-shadow: 0 1px 3px #000000;
@@ -572,7 +863,7 @@ body.task-view-open .task-view-desktop-bar {
     border: 1px solid #000000;
     border-radius: 0;
     color: #000000;
-    font-size: 11px;
+    font-size: var(--system-font-size);
     line-height: 1.2;
     padding: 2px 4px;
     text-align: left;

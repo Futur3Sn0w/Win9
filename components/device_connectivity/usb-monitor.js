@@ -48,9 +48,13 @@ class USBMonitor {
         console.log('[Drive Monitor] Drive monitoring stopped');
     }
 
+    hasMountpoints(drive) {
+        return Array.isArray(drive?.mountpoints) && drive.mountpoints.length > 0;
+    }
+
     shouldExcludeDrive(drive) {
         // Exclude drives mounted in /private/ directory (Xcode temp drives)
-        if (drive.mountpoints && drive.mountpoints.length > 0) {
+        if (this.hasMountpoints(drive)) {
             for (const mp of drive.mountpoints) {
                 if (mp.path && mp.path.startsWith('/private/')) {
                     console.log('[Drive Monitor] Excluding Xcode temp drive:', mp.path);
@@ -75,6 +79,70 @@ class USBMonitor {
         return false;
     }
 
+    isExternalRemovableDrive(drive) {
+        if (!drive || drive.isSystem || drive.isVirtual) {
+            return false;
+        }
+
+        const busType = typeof drive.busType === 'string' ? drive.busType.toUpperCase() : '';
+        const enumerator = typeof drive.enumerator === 'string' ? drive.enumerator.toUpperCase() : '';
+
+        if (drive.isUSB || busType === 'USB' || drive.isUAS) {
+            return true;
+        }
+
+        if (drive.isCard || busType === 'SD' || busType === 'MMC') {
+            return true;
+        }
+
+        if (drive.isRemovable && enumerator !== 'IDE' && enumerator !== 'SCSI') {
+            return true;
+        }
+
+        return drive.isRemovable && this.hasMountpoints(drive);
+    }
+
+    getDriveType(drive) {
+        const busType = typeof drive?.busType === 'string' ? drive.busType.toUpperCase() : '';
+
+        if (drive?.isUSB || busType === 'USB' || drive?.isUAS) {
+            return 'USB Drive';
+        }
+
+        if (drive?.isCard || busType === 'SD' || busType === 'MMC') {
+            return 'Memory Card';
+        }
+
+        if (drive?.isRemovable) {
+            return 'Removable Drive';
+        }
+
+        return 'Drive';
+    }
+
+    buildDrivePayload(drive, suppressNotification = false) {
+        const devicePath = drive.device || drive.devicePath;
+
+        return {
+            name: this.getDriveName(drive),
+            description: `${this.getDriveType(drive)} - ${this.formatSize(drive.size)}`,
+            icon: this.getDriveIcon(drive),
+            device: devicePath,
+            devicePath,
+            mountpoints: drive.mountpoints || [],
+            busType: drive.busType || '',
+            enumerator: drive.enumerator || '',
+            isUSB: Boolean(drive.isUSB),
+            isRemovable: Boolean(drive.isRemovable),
+            isCard: Boolean(drive.isCard),
+            isUAS: Boolean(drive.isUAS),
+            isSystem: Boolean(drive.isSystem),
+            isVirtual: Boolean(drive.isVirtual),
+            trayEligible: this.isExternalRemovableDrive(drive),
+            suppressNotification
+        };
+    }
+
     async updateDriveList() {
         try {
             const drives = await drivelist.list();
@@ -84,7 +152,7 @@ class USBMonitor {
             // Build map of current drives (all drives, mounted or not)
             drives.forEach(drive => {
                 const devicePath = drive.device || drive.devicePath;
-                const hasMountpoints = drive.mountpoints && drive.mountpoints.length > 0;
+                const hasMountpoints = this.hasMountpoints(drive);
 
                 // Filter out Xcode temporary drives
                 if (this.shouldExcludeDrive(drive)) {
@@ -107,7 +175,7 @@ class USBMonitor {
                 } else {
                     // Drive existed before - check if it was previously unmounted
                     const previousDrive = this.previousDrives.get(devicePath);
-                    const previouslyHadMountpoints = previousDrive.mountpoints && previousDrive.mountpoints.length > 0;
+                    const previouslyHadMountpoints = this.hasMountpoints(previousDrive);
 
                     if (!previouslyHadMountpoints) {
                         // Drive was unmounted but now has mountpoints again (rare case)
@@ -123,14 +191,13 @@ class USBMonitor {
 
             // Detect drives that became unavailable (either ejected or physically removed)
             this.previousDrives.forEach((previousDrive, devicePath) => {
-                const previouslyHadMountpoints = previousDrive.mountpoints && previousDrive.mountpoints.length > 0;
+                const previouslyHadMountpoints = this.hasMountpoints(previousDrive);
 
                 // Only care about drives that were previously mounted/usable
                 if (!previouslyHadMountpoints) {
                     return;
                 }
 
-                const stillExists = currentDrives.has(devicePath);
                 const stillMounted = currentMountedDrives.has(devicePath);
 
                 // Drive was ejected (unmounted) OR physically removed
@@ -155,14 +222,7 @@ class USBMonitor {
         // console.log('  - Removable:', drive.isRemovable ? 'Yes' : 'No');
         // console.log('  - System:', drive.isSystem ? 'Yes' : 'No');
 
-        let driveType = 'Drive';
-        if (drive.isUSB) {
-            driveType = 'USB Drive';
-        } else if (drive.isRemovable) {
-            driveType = 'Removable Drive';
-        }
-
-        if (drive.mountpoints && drive.mountpoints.length > 0) {
+        if (this.hasMountpoints(drive)) {
             drive.mountpoints.forEach(mp => {
                 console.log(`    * ${mp.path}${mp.label ? ' (' + mp.label + ')' : ''}`);
             });
@@ -170,48 +230,14 @@ class USBMonitor {
 
         // Send notification to renderer process
         if (this.mainWindow && !this.mainWindow.isDestroyed()) {
-            const driveName = this.getDriveName(drive);
-            const driveIcon = this.getDriveIcon(drive);
-
-            this.mainWindow.webContents.send('drive-connected', {
-                name: driveName,
-                description: `${driveType} • ${this.formatSize(drive.size)}`,
-                icon: driveIcon,
-                device: drive.device || drive.devicePath,
-                devicePath: drive.device || drive.devicePath,
-                mountpoints: drive.mountpoints || [],
-                isUSB: drive.isUSB,
-                isRemovable: drive.isRemovable,
-                isSystem: drive.isSystem,
-                suppressNotification: suppressNotification // Flag to suppress UI notification
-            });
+            this.mainWindow.webContents.send('drive-connected', this.buildDrivePayload(drive, suppressNotification));
         }
     }
 
     onDriveDisconnected(drive) {
-
-        let driveType = 'Drive';
-        if (drive.isUSB) {
-            driveType = 'USB Drive';
-        } else if (drive.isRemovable) {
-            driveType = 'Removable Drive';
-        }
-
         // Send notification to renderer process
         if (this.mainWindow && !this.mainWindow.isDestroyed()) {
-            const driveName = this.getDriveName(drive);
-            const driveIcon = this.getDriveIcon(drive);
-
-            this.mainWindow.webContents.send('drive-disconnected', {
-                name: driveName,
-                description: `${driveType} • ${this.formatSize(drive.size)}`,
-                icon: driveIcon,
-                device: drive.device || drive.devicePath,
-                devicePath: drive.device || drive.devicePath,
-                isUSB: drive.isUSB,
-                isRemovable: drive.isRemovable,
-                isSystem: drive.isSystem
-            });
+            this.mainWindow.webContents.send('drive-disconnected', this.buildDrivePayload(drive));
         }
     }
 
@@ -229,11 +255,12 @@ class USBMonitor {
 
     getDriveName(drive) {
         // Try to get a friendly name from mountpoint label
-        if (drive.mountpoints && drive.mountpoints.length > 0) {
+        if (this.hasMountpoints(drive)) {
             const labeledMount = drive.mountpoints.find(mp => mp.label);
             if (labeledMount && labeledMount.label) {
                 return labeledMount.label;
             }
+
             // Return first mountpoint path if no label
             if (drive.mountpoints[0].path) {
                 return drive.mountpoints[0].path;
@@ -246,17 +273,25 @@ class USBMonitor {
 
     getDriveIcon(drive) {
         // Determine icon based on drive type
-        if (drive.isUSB) {
-            return 'mif-usb';
-        } else if (drive.isRemovable) {
-            // Could be SD card, removable HDD, etc.
-            if (drive.description && drive.description.toLowerCase().includes('sd')) {
-                return 'mif-sd-card';
-            }
-            return 'mif-drive';
-        } else {
-            return 'mif-drive';
+        const busType = typeof drive?.busType === 'string' ? drive.busType.toLowerCase() : '';
+
+        if (drive.isUSB || busType === 'usb' || drive.isUAS) {
+            return 'sui-usb';
         }
+
+        if (drive.isCard || busType === 'sd' || busType === 'mmc') {
+            return 'sui-sd-card';
+        }
+
+        if (drive.isRemovable) {
+            if (drive.description && drive.description.toLowerCase().includes('sd')) {
+                return 'sui-sd-card';
+            }
+
+            return 'sui-drive';
+        }
+
+        return 'sui-drive';
     }
 
     async getDrives() {
@@ -267,6 +302,10 @@ class USBMonitor {
             console.error('[Drive Monitor] Error getting drives:', error);
             return [];
         }
+    }
+
+    async getDevices() {
+        return this.getDrives();
     }
 }
 

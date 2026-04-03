@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alarms</title>
+    <link rel="stylesheet" href="../../../css/fonts.css">
+    <link rel="stylesheet" href="./alarms.css">
+</head>
+
+<body>
+    <div id="alarms-app" class="alarms-app">
+        <header class="alarms-shell">
+            <div class="alarms-shell__heading">
+                <h1 id="alarms-page-title" class="alarms-shell__title">Alarm</h1>
+            </div>
+
+            <div class="alarms-shell__controls">
+                <nav class="alarms-tabs" aria-label="Alarms navigation" role="tablist">
+                    <button type="button" class="alarms-tab is-active" data-tab="alarm" role="tab" aria-selected="true">Alarm</button>
+                    <button type="button" class="alarms-tab" data-tab="timer" role="tab" aria-selected="false">Timer</button>
+                    <button type="button" class="alarms-tab" data-tab="stopwatch" role="tab" aria-selected="false">Stopwatch</button>
+                </nav>
+
+                <button id="alarms-add-button" class="alarms-command" type="button" aria-label="Add alarm">
+                    <span class="alarms-command__icon" aria-hidden="true">
+                        <svg viewBox="0 0 32 32">
+                            <path d="M16 6v20M6 16h20"></path>
+                        </svg>
+                    </span>
+                    <span id="alarms-command-label" class="alarms-command__label">Add alarm</span>
+                </button>
+            </div>
+        </header>
+
+        <main class="alarms-main">
+            <section class="alarms-view is-active" data-view="alarm" aria-label="Alarms">
+                <div class="alarms-section-meta">
+                    <span class="alarms-section-meta__label">Alarm Collection</span>
+                    <span id="alarm-count" class="alarms-section-meta__value"></span>
+                </div>
+                <div id="alarm-grid" class="alarm-grid"></div>
+            </section>
+
+            <section class="alarms-view" data-view="timer" aria-label="Timers">
+                <div class="alarms-section-meta">
+                    <span class="alarms-section-meta__label">Timer Collection</span>
+                    <span id="timer-count" class="alarms-section-meta__value"></span>
+                </div>
+                <div id="timer-grid" class="timer-grid"></div>
+            </section>
+
+            <section class="alarms-view alarms-view--stopwatch" data-view="stopwatch" aria-label="Stopwatch">
+                <div class="alarms-section-meta alarms-section-meta--stopwatch">
+                    <span class="alarms-section-meta__label">Laps / Splits</span>
+                    <span id="stopwatch-status" class="alarms-section-meta__value"></span>
+                </div>
+
+                <div class="stopwatch-layout">
+                    <section class="stopwatch-stage" aria-label="Stopwatch controls">
+                        <div id="stopwatch-ring" class="stopwatch-ring">
+                            <button id="stopwatch-toggle" class="alarms-circle-button alarms-circle-button--center" type="button" aria-label="Start stopwatch">
+                                <svg viewBox="0 0 32 32" aria-hidden="true">
+                                    <path class="icon-play" d="M12 9.5 24 16 12 22.5z"></path>
+                                    <path class="icon-pause" d="M11 9h4v14h-4zM17 9h4v14h-4z"></path>
+                                </svg>
+                            </button>
+                        </div>
+
+                        <div id="stopwatch-display" class="stopwatch-display">00:00:00.00</div>
+
+                        <div class="stopwatch-actions">
+                            <button id="stopwatch-lap" class="alarms-circle-button alarms-circle-button--small" type="button" aria-label="Record lap">
+                                <svg viewBox="0 0 32 32" aria-hidden="true">
+                                    <path d="M10 6h12v4h-4v4.8l4.6 4.6-2.2 2.2-4.4-4.4L11.6 21l-2.2-2.2L14 14.2V10h-4z"></path>
+                                </svg>
+                            </button>
+                            <span class="stopwatch-actions__label">Lap</span>
+                        </div>
+                    </section>
+
+                    <section class="stopwatch-panel" aria-label="Laps and splits">
+                        <div class="stopwatch-columns">
+                            <span>Lap</span>
+                            <span>Laps</span>
+                            <span>Splits</span>
+                        </div>
+                        <div id="stopwatch-laps" class="stopwatch-laps"></div>
+                    </section>
+                </div>
+            </section>
+        </main>
+
+        <section id="alarm-editor" class="alarm-editor" hidden aria-hidden="true">
+            <header class="alarm-editor__header">
+                <div class="alarm-editor__heading">
+                    <div id="editor-subheading" class="alarm-editor__subheading">Set time</div>
+                    <h2 id="editor-heading" class="alarm-editor__title">Alarm</h2>
+                </div>
+
+                <div id="editor-warning" class="alarm-editor__warning">
+                    <span>Notifications will only show if the PC is awake.</span>
+                    <button id="editor-warning-dismiss" type="button" aria-label="Dismiss warning">&times;</button>
+                </div>
+
+                <div class="alarm-editor__actions">
+                    <button id="editor-delete" class="alarms-circle-button" type="button" aria-label="Delete alarm">
+                        <svg viewBox="0 0 32 32" aria-hidden="true">
+                            <path d="M11 11h10M13 11V9h6v2M12 13v10M16 13v10M20 13v10M10 11l1 12h10l1-12"></path>
+                        </svg>
+                    </button>
+                    <button id="editor-save" class="alarms-circle-button" type="button" aria-label="Save alarm">
+                        <svg viewBox="0 0 32 32" aria-hidden="true">
+                            <path d="M9 8h12l2 2v14H9zM12 8v6h8M12 24v-7h8v7"></path>
+                        </svg>
+                    </button>
+                    <button id="editor-cancel" class="alarms-circle-button" type="button" aria-label="Close editor">
+                        <svg viewBox="0 0 32 32" aria-hidden="true">
+                            <path d="M10 10 22 22M22 10 10 22"></path>
+                        </svg>
+                    </button>
+                </div>
+            </header>
+
+            <div class="alarm-editor__layout">
+                <section class="alarm-editor__dial-panel">
+                    <label class="alarm-editor__field">
+                        <span class="alarm-editor__field-label">Alarm name</span>
+                        <input id="editor-title" class="alarm-editor__title-input" type="text" maxlength="32" placeholder="Alarm">
+                    </label>
+
+                    <div id="editor-ring" class="editor-ring">
+                        <button id="editor-hour-handle" class="editor-ring__handle" type="button" aria-hidden="true" tabindex="-1"></button>
+                        <button id="editor-minute-handle" class="editor-ring__handle editor-ring__handle--secondary" type="button" aria-hidden="true" tabindex="-1"></button>
+                        <div class="editor-ring__center">
+                            <div id="editor-time" class="editor-ring__time">7:04</div>
+                        </div>
+                    </div>
+
+                    <div class="editor-ampm" role="group" aria-label="AM or PM">
+                        <button id="editor-am" class="editor-ampm__button is-active" type="button">A.M.</button>
+                        <button id="editor-pm" class="editor-ampm__button" type="button">P.M.</button>
+                    </div>
+
+                    <div class="editor-time-inputs">
+                        <label>
+                            <span>Hour</span>
+                            <input id="editor-hour" type="number" min="1" max="12" step="1">
+                        </label>
+                        <label>
+                            <span>Minute</span>
+                            <input id="editor-minute" type="number" min="0" max="59" step="1">
+                        </label>
+                    </div>
+                </section>
+
+                <section class="alarm-editor__options">
+                    <div class="alarm-editor__option-block">
+                        <div class="alarm-editor__option-label">Occurrence</div>
+                        <div class="editor-occurrence">
+                            <button id="editor-occurrence-once" class="editor-choice" type="button">Once</button>
+                            <button id="editor-occurrence-repeat" class="editor-choice is-active" type="button">Repeats</button>
+                        </div>
+                    </div>
+
+                    <div class="alarm-editor__option-block">
+                        <div class="alarm-editor__option-label">Repeats</div>
+                        <div id="editor-days" class="editor-days"></div>
+                    </div>
+                </section>
+
+                <section class="alarm-editor__sound-panel">
+                    <div class="alarm-editor__option-block">
+                        <label class="alarm-editor__option-label" for="editor-sound">Sound</label>
+                        <select id="editor-sound" class="editor-sound"></select>
+                    </div>
+                </section>
+            </div>
+        </section>
+    </div>
+
+    <script src="./alarms.js"></script>
+</body>
+
+</html>

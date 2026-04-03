@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Xbox Music</title>
+    <link rel="stylesheet" href="xbox-music.css">
+</head>
+<body>
+    <div id="xbox-music-app" class="app-container">
+        <!-- Main Content Area -->
+        <div style="display: flex; flex-direction: column; flex: 1; min-height: 0;">
+
+            <!-- Header with Xbox Branding -->
+            <div class="main-header">
+                <div class="xbox-branding">
+                    <div class="xbox-logo">X</div>
+                    <div class="xbox-title">xbox music</div>
+                </div>
+            </div>
+
+            <!-- Hub Navigation -->
+            <div class="hub-navigation">
+                <div class="hub-nav-item active" data-page="collection">collection</div>
+                <div class="hub-nav-item" data-page="explore">explore</div>
+                <div class="hub-nav-item" data-page="radio">radio</div>
+                <div class="hub-nav-item" data-page="nowplaying">now playing</div>
+            </div>
+
+            <!-- Content Pages -->
+            <div class="content-area">
+                <!-- Collection Page -->
+                <div class="hub-page active" id="page-collection">
+                    <div class="collection-tabs">
+                        <div class="collection-tab active" data-tab="albums">Albums</div>
+                        <div class="collection-tab" data-tab="artists">Artists</div>
+                        <div class="collection-tab" data-tab="songs">Songs</div>
+                    </div>
+                    <div id="collection-content"></div>
+
+                    <!-- Album Detail Overlay -->
+                    <div class="album-detail-overlay" id="album-detail-overlay"></div>
+                </div>
+
+                <!-- Explore Page -->
+                <div class="hub-page" id="page-explore">
+                    <div class="section-header">Featured</div>
+                    <div id="explore-content"></div>
+                </div>
+
+                <!-- Radio Page -->
+                <div class="hub-page" id="page-radio">
+                    <div class="section-header">Radio</div>
+                    <div id="radio-content"></div>
+                </div>
+
+                <!-- Now Playing Page -->
+                <div class="hub-page" id="page-nowplaying">
+                    <div class="empty-collection">
+                        <div class="empty-icon">&#9835;</div>
+                        <div class="empty-title">Nothing playing</div>
+                        <div class="empty-subtitle">Select a song from your collection to start listening</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Transport Controls Bar -->
+        <div class="transport-bar" id="transport-bar">
+            <!-- Left: Current Track Info -->
+            <div class="transport-left">
+                <div class="transport-art">
+                    <div class="generic-art">
+                        <span class="music-icon">&#9835;</span>
+                    </div>
+                </div>
+                <div class="transport-meta">
+                    <div class="transport-song">-</div>
+                    <div class="transport-artist">-</div>
+                </div>
+            </div>
+
+            <!-- Center: Controls + Seek -->
+            <div class="transport-center">
+                <div class="transport-buttons">
+                    <button class="transport-btn" id="btn-shuffle" onclick="XboxMusic.toggleShuffle()" title="Shuffle">&#128256;</button>
+                    <button class="transport-btn" onclick="XboxMusic.skipPrev()" title="Previous">&#9198;</button>
+                    <button class="transport-btn play-pause" id="btn-play-pause" onclick="XboxMusic.togglePlayPause()" title="Play/Pause">&#9654;</button>
+                    <button class="transport-btn" onclick="XboxMusic.skipNext()" title="Next">&#9197;</button>
+                    <button class="transport-btn" id="btn-repeat" onclick="XboxMusic.toggleRepeat()" title="Repeat">&#128257;</button>
+                </div>
+                <div class="seek-bar-container">
+                    <span class="seek-time" id="seek-position">0:00</span>
+                    <div class="seek-bar" id="seek-bar">
+                        <div class="seek-bar-fill" id="seek-bar-fill"></div>
+                    </div>
+                    <span class="seek-time" id="seek-duration">0:00</span>
+                </div>
+            </div>
+
+            <!-- Right: Volume -->
+            <div class="transport-right">
+                <div class="volume-container">
+                    <button class="transport-btn" title="Volume">&#128266;</button>
+                    <div class="volume-bar">
+                        <div class="volume-bar-fill"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Hidden audio element for playback -->
+        <audio id="xbm-audio" preload="auto"></audio>
+    </div>
+
+    <script src="xbox-music.js"></script>
+</body>
+</html>

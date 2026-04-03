@@ -1,0 +1,2994 @@
+/* Shell-side Chrome window styling for hosted titlebar tabs. */
+
+@keyframes chromeHostSpin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes chromeBookmarkReveal {
+    from {
+        opacity: 0;
+        transform: translateY(2px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.classic-app-container--custom-titlebar-chrome .classic-window-titlebar {
+    height: 35px;
+    align-items: stretch;
+    justify-content: flex-start;
+    padding-left: 0;
+    overflow: visible;
+    background: transparent;
+}
+
+.classic-app-container--custom-titlebar-chrome .classic-window-titlebar-app-region {
+    align-items: flex-end;
+    padding-top: 5px;
+    min-width: 0;
+    overflow-x: visible;
+    overflow-y: visible;
+}
+
+.classic-app-container--custom-titlebar-chrome.maximized .classic-window-titlebar {
+    height: 26px;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-tabstrip,
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-tabstrip *,
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-top-chrome button,
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-top-chrome input {
+    -webkit-app-region: no-drag;
+}
+
+.classic-app-container--custom-titlebar-chrome .classic-window-controls {
+    position: relative;
+    z-index: 6;
+    margin-left: 8px;
+}
+
+.classic-app-container--custom-titlebar-chrome .classic-window-content {
+    border-top: none;
+    z-index: 4;
+    border-radius: 3px 3px 0 0;
+}
+
+.classic-app-container--custom-titlebar-chrome.maximized .classic-window-content {
+    border-top: none !important;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-top-chrome {
+    position: absolute;
+    top: 0;
+    right: -1px;
+    left: -1px;
+    z-index: 2;
+    pointer-events: auto;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-drag-layer {
+    position: absolute;
+    inset: 0;
+    z-index: 7;
+    pointer-events: none;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-top-chrome .chrome-frame {
+    position: relative;
+    flex: 0 0 auto;
+    background: transparent;
+    border-bottom: none;
+    box-shadow: none;
+    overflow: hidden;
+    isolation: isolate;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-top-chrome .chrome-frame::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background-color: #dfdfdf;
+    background-image: url("./assets/chrome43/theme_toolbar_default.png");
+    background-repeat: repeat-x;
+    background-position: left -35px;
+    -webkit-mask-image:
+        url("./assets/chrome43/content_top_left_corner_mask.png"),
+        linear-gradient(#000 0 0),
+        url("./assets/chrome43/content_top_right_corner_mask.png");
+    -webkit-mask-repeat: no-repeat, repeat-x, no-repeat;
+    -webkit-mask-position: left top, 6px 0, right top;
+    -webkit-mask-size: 6px 37px, calc(100% - 12px) 100%, 6px 38px;
+    mask-image:
+        url("./assets/chrome43/content_top_left_corner_mask.png"),
+        linear-gradient(#000 0 0),
+        url("./assets/chrome43/content_top_right_corner_mask.png");
+    mask-repeat: no-repeat, repeat-x, no-repeat;
+    mask-position: left top, 6px 0, right top;
+    mask-size: 6px 37px, calc(100% - 12px) 100%, 6px 38px;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-top-spacer {
+    flex: 0 0 auto;
+    height: 0;
+    min-height: 0;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-top-chrome .chrome-toolbar {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    gap: 0;
+    min-height: 35px;
+    margin-top: -1px;
+    padding: 3px 2px 3px 3px;
+    border-top: none;
+    border-bottom: 1px solid #b8c1cb;
+    background: transparent;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-top-chrome .chrome-nav-buttons {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    flex: 0 0 auto;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-top-chrome .chrome-nav-button,
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-top-chrome .chrome-menu-button,
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-top-chrome .chrome-star-button {
+    display: grid;
+    place-items: center;
+    width: 29px;
+    height: 29px;
+    padding: 0;
+    border: 1px solid transparent;
+    background: transparent;
+    color: #56636f;
+    font-size: 0;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-top-chrome .chrome-nav-button,
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-top-chrome .chrome-star-button {
+    border-radius: 14px;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-top-chrome .chrome-nav-button span,
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-top-chrome .chrome-star-button span,
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-top-chrome .chrome-menu-glyph {
+    display: none;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-top-chrome .chrome-nav-button:disabled {
+    opacity: 0.42;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-top-chrome .chrome-nav-button::before,
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-top-chrome .chrome-star-button::before {
+    content: "";
+    width: 29px;
+    height: 29px;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 29px 29px;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-top-chrome .chrome-back-button::before,
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-top-chrome #backButton::before {
+    background-image: url("./assets/chrome43/browser_back_normal.png");
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-top-chrome #backButton:hover:not(:disabled)::before {
+    background-image: url("./assets/chrome43/browser_back_hover.png");
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-top-chrome #backButton:active:not(:disabled)::before {
+    background-image: url("./assets/chrome43/browser_back_pressed.png");
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-top-chrome #backButton:disabled::before {
+    background-image: url("./assets/chrome43/browser_back_disabled.png");
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-top-chrome #forwardButton::before {
+    background-image: url("./assets/chrome43/browser_forward_normal.png");
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-top-chrome #forwardButton:hover:not(:disabled)::before {
+    background-image: url("./assets/chrome43/browser_forward_hover.png");
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-top-chrome #forwardButton:active:not(:disabled)::before {
+    background-image: url("./assets/chrome43/browser_forward_pressed.png");
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-top-chrome #forwardButton:disabled::before {
+    background-image: url("./assets/chrome43/browser_forward_disabled.png");
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-top-chrome #refreshButton::before {
+    background-image: url("./assets/chrome43/browser_reload_normal.png");
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-top-chrome #refreshButton:hover::before {
+    background-image: url("./assets/chrome43/browser_reload_hover.png");
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-top-chrome #refreshButton:active::before {
+    background-image: url("./assets/chrome43/browser_reload_pressed.png");
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-top-chrome #homeButton {
+    margin-right: 3px;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-top-chrome #homeButton[hidden] {
+    display: none !important;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-top-chrome #homeButton::before {
+    background-image: url("./assets/chrome43/browser_home_normal.png");
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-top-chrome #homeButton:hover::before {
+    background-image: url("./assets/chrome43/browser_home_hover.png");
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-top-chrome #homeButton:active::before {
+    background-image: url("./assets/chrome43/browser_home_pressed.png");
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-top-chrome .chrome-toolbar-actions {
+    flex: 0 0 auto;
+    width: 0;
+    min-height: 28px;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-top-chrome .chrome-menu-glyph {
+    display: block;
+    width: 17px;
+    height: 15px;
+    background: url("./assets/chrome43/browser_tools_bar.png") repeat-y center top / 17px 5px;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-top-chrome .chrome-menu-glyph span {
+    display: none;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-top-chrome .chrome-menu-button:hover {
+    border-color: transparent;
+    background: url("./assets/chrome43/browser_toolbar_bezel_hover.png") no-repeat center / 29px 29px;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-top-chrome .chrome-menu-button:active {
+    background: url("./assets/chrome43/browser_toolbar_bezel_pressed.png") no-repeat center / 29px 29px;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-menu {
+    position: absolute;
+    width: 255px;
+    padding: 4px 0;
+    border: 1px solid #b6b6b6;
+    background: #ffffff;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.7),
+        0 2px 7px rgba(0, 0, 0, 0.22);
+    font: 12px "Segoe UI", Tahoma, sans-serif;
+    color: #202428;
+    pointer-events: auto;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-menu-group {
+    padding: 2px 0;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-omnibox-popup {
+    position: absolute;
+    min-height: 29px;
+    box-sizing: border-box;
+    pointer-events: auto;
+    font: 12px "Segoe UI", Tahoma, sans-serif;
+    color: #000000;
+    background-color: #ffffff;
+    background-image:
+        url("./assets/chrome43/omnibox_popup_border_and_shadow_top_left.png"),
+        url("./assets/chrome43/omnibox_popup_border_and_shadow_top.png"),
+        url("./assets/chrome43/omnibox_popup_border_and_shadow_top_right.png"),
+        url("./assets/chrome43/omnibox_popup_border_and_shadow_left.png"),
+        url("./assets/chrome43/omnibox_popup_border_and_shadow_right.png"),
+        url("./assets/chrome43/omnibox_popup_border_and_shadow_bottom_left.png"),
+        url("./assets/chrome43/omnibox_popup_border_and_shadow_bottom.png"),
+        url("./assets/chrome43/omnibox_popup_border_and_shadow_bottom_right.png"),
+        url("./assets/chrome43/omnibox_popup_border_and_shadow_center.png");
+    background-position:
+        left top,
+        4px top,
+        right top,
+        left 20px,
+        right 20px,
+        left bottom,
+        4px bottom,
+        right bottom,
+        4px 20px;
+    background-size:
+        4px 20px,
+        calc(100% - 8px) 20px,
+        4px 20px,
+        4px calc(100% - 26px),
+        4px calc(100% - 26px),
+        4px 6px,
+        calc(100% - 8px) 6px,
+        4px 6px,
+        calc(100% - 8px) calc(100% - 26px);
+    background-repeat:
+        no-repeat,
+        repeat-x,
+        no-repeat,
+        repeat-y,
+        repeat-y,
+        no-repeat,
+        repeat-x,
+        no-repeat,
+        repeat;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-omnibox-popup[hidden] {
+    display: none;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-omnibox-popup-results {
+    padding: 4px var(--chrome-omnibox-popup-right-margin, 4px) 3px var(--chrome-omnibox-popup-left-margin, 4px);
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-omnibox-row {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    min-height: 22px;
+    box-sizing: border-box;
+    padding: 0 8px 0 3px;
+    border: none;
+    background: transparent;
+    color: inherit;
+    text-align: left;
+    font: inherit;
+    cursor: default;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-omnibox-row:hover,
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-omnibox-row:focus-visible {
+    background: rgba(49, 106, 197, 0.14);
+    outline: none;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-omnibox-row.is-selected {
+    background: #3875d7;
+    color: #ffffff;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-omnibox-row-icon {
+    flex: 0 0 auto;
+    width: 19px;
+    height: 19px;
+    margin-right: 3px;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: 19px 19px;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-omnibox-row.is-search .chrome-hosted-omnibox-row-icon {
+    background-image: url("./assets/chrome43/omnibox_search_dark.png");
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-omnibox-row.is-page .chrome-hosted-omnibox-row-icon,
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-omnibox-row.is-history .chrome-hosted-omnibox-row-icon {
+    background-image: url("./assets/chrome43/omnibox_http_dark.png");
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-omnibox-row.is-bookmark .chrome-hosted-omnibox-row-icon {
+    background-image: url("./assets/chrome43/omnibox_star_dark.png");
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-omnibox-row.is-calculator .chrome-hosted-omnibox-row-icon {
+    background-image: url("./assets/chrome43/omnibox_calculator.png");
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-omnibox-row.is-selected.is-search .chrome-hosted-omnibox-row-icon {
+    background-image: url("./assets/chrome43/omnibox_search_selected.png");
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-omnibox-row.is-selected.is-page .chrome-hosted-omnibox-row-icon,
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-omnibox-row.is-selected.is-history .chrome-hosted-omnibox-row-icon {
+    background-image: url("./assets/chrome43/omnibox_http_selected.png");
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-omnibox-row.is-selected.is-bookmark .chrome-hosted-omnibox-row-icon {
+    background-image: url("./assets/chrome43/omnibox_star_selected.png");
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-omnibox-row.is-selected.is-calculator .chrome-hosted-omnibox-row-icon {
+    background-image: url("./assets/chrome43/omnibox_calculator_selected.png");
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-omnibox-row-content {
+    display: flex;
+    align-items: baseline;
+    min-width: 0;
+    flex: 1 1 auto;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-omnibox-row-primary,
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-omnibox-row-secondary {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-omnibox-row-primary {
+    color: inherit;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-omnibox-row-secondary {
+    color: rgba(0, 0, 0, 0.5);
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-omnibox-row-secondary.is-url {
+    color: #008000;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-omnibox-row.is-selected .chrome-hosted-omnibox-row-secondary {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-omnibox-row.is-selected .chrome-hosted-omnibox-row-secondary.is-url {
+    color: rgba(255, 255, 255, 0.88);
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-omnibox-row-separator {
+    flex: 0 0 auto;
+    color: rgba(0, 0, 0, 0.32);
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-omnibox-row.is-selected .chrome-hosted-omnibox-row-separator {
+    color: rgba(255, 255, 255, 0.58);
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-submenu {
+    width: 238px;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-menu-separator {
+    height: 1px;
+    margin: 3px 1px;
+    background: #dcdcdc;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-menu-item {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    min-height: 25px;
+    box-sizing: border-box;
+    padding: 0 24px 0 29px;
+    border: none;
+    background: transparent;
+    color: inherit;
+    text-align: left;
+    font: inherit;
+    cursor: default;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-menu-item:hover,
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-menu-item:focus-visible,
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-menu-item.is-submenu-open {
+    background: linear-gradient(180deg, #eef6ff 0%, #dcecff 100%);
+    color: #000000;
+    outline: none;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-menu-item:disabled {
+    color: #9aa4af;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-menu-label {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-menu-check {
+    position: absolute;
+    left: 11px;
+    top: 50%;
+    width: 9px;
+    height: 6px;
+    margin-top: -3px;
+    opacity: 0;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-menu-item.is-checked .chrome-hosted-menu-check {
+    opacity: 1;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-menu-item.is-checked .chrome-hosted-menu-check::before {
+    content: "";
+    position: absolute;
+    inset: 1px 1px 2px 1px;
+    border-left: 2px solid #2b3138;
+    border-bottom: 2px solid #2b3138;
+    transform: rotate(-45deg);
+    transform-origin: center;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-menu-shortcut {
+    margin-left: 18px;
+    color: #6c6c6c;
+    white-space: nowrap;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-menu-arrow {
+    width: 0;
+    height: 0;
+    margin-left: 12px;
+    border-top: 4px solid transparent;
+    border-bottom: 4px solid transparent;
+    border-left: 5px solid #525c66;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-menu-item:disabled .chrome-hosted-menu-shortcut,
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-menu-item:disabled .chrome-hosted-menu-arrow {
+    color: #9aa4af;
+    border-left-color: #9aa4af;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-menu-control-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    min-height: 25px;
+    padding: 0 15px;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-menu-control-label {
+    color: #4e4e4e;
+    white-space: nowrap;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-menu-control-buttons {
+    display: flex;
+    align-items: center;
+    gap: 0;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-menu-control-button {
+    min-width: 28px;
+    height: 22px;
+    box-sizing: border-box;
+    padding: 0 15px;
+    border: 1px solid #acb4bc;
+    background: linear-gradient(180deg, #fefefe 0%, #e8edf3 100%);
+    color: #202428;
+    font: inherit;
+    cursor: default;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-menu-control-button+.chrome-hosted-menu-control-button {
+    margin-left: -1px;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-menu-control-button:hover,
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-menu-control-button:focus-visible {
+    position: relative;
+    z-index: 1;
+    border-color: #8ea9c7;
+    background: linear-gradient(180deg, #fbfdff 0%, #dbe9fb 100%);
+    outline: none;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-menu-control-button:active {
+    border-color: #809ab8;
+    background: linear-gradient(180deg, #d9e7f8 0%, #f2f7fd 100%);
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-menu-control-button.is-zoom-display {
+    min-width: 48px;
+    padding: 0 2px;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-menu-control-button.is-fullscreen {
+    width: 30px;
+    min-width: 30px;
+    padding: 0;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-menu-fullscreen-glyph {
+    display: block;
+    width: 100%;
+    height: 100%;
+    background: url("./assets/chrome43/fullscreen_menu_button.png") no-repeat center / 17px 17px;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-bookmark-popup,
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-bookmark-context-menu,
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-webview-context-menu,
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-tab-context-menu {
+    position: absolute;
+    z-index: 8;
+    padding: 4px 0;
+    border: 1px solid #b6b6b6;
+    background: #ffffff;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.75),
+        0 2px 7px rgba(0, 0, 0, 0.22);
+    color: #202428;
+    font: 12px "Segoe UI", Tahoma, sans-serif;
+    -webkit-app-region: no-drag;
+    pointer-events: auto;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-bookmark-popup {
+    z-index: 7;
+    min-width: 196px;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-bookmark-popup[hidden] {
+    display: none;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-bookmark-bubble {
+    position: absolute;
+    z-index: 7;
+    width: 282px;
+    box-sizing: border-box;
+    padding: 13px 20px 20px;
+    border: 1px solid #b8bec4;
+    border-radius: 6px;
+    background: #fff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.24);
+    color: #222;
+    font: 12px "Segoe UI", Tahoma, sans-serif;
+    -webkit-app-region: no-drag;
+    pointer-events: auto;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-bookmark-bubble[hidden] {
+    display: none;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-bookmark-context-menu {
+    min-width: 198px;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-bookmark-context-menu[hidden] {
+    display: none;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-webview-context-menu {
+    min-width: 214px;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-webview-context-menu[hidden] {
+    display: none;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-tab-context-menu {
+    min-width: 214px;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-tab-context-menu[hidden] {
+    display: none;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-webview-context-menu-backdrop {
+    position: absolute;
+    inset: 0;
+    z-index: 7;
+    background: transparent;
+    pointer-events: auto;
+    -webkit-app-region: no-drag;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-webview-context-menu-backdrop[hidden] {
+    display: none;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-webview-context-item,
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-bookmark-context-item,
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-bookmark-menu-item,
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-tab-context-item {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    min-height: 24px;
+    box-sizing: border-box;
+    border: none;
+    background: transparent;
+    color: inherit;
+    text-align: left;
+    font: inherit;
+    cursor: default;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-webview-context-item,
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-tab-context-item {
+    justify-content: space-between;
+    gap: 18px;
+    padding: 0 12px;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-webview-context-item:hover,
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-webview-context-item:focus-visible,
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-bookmark-context-item:hover,
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-bookmark-context-item:focus-visible,
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-bookmark-menu-item:hover,
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-bookmark-menu-item:focus-visible,
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-tab-context-item:hover,
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-tab-context-item:focus-visible {
+    background: linear-gradient(180deg, #eef6ff 0%, #dcecff 100%);
+    color: #000000;
+    outline: none;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-webview-context-item:disabled,
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-webview-context-item:disabled:hover,
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-tab-context-item:disabled,
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-tab-context-item:disabled:hover {
+    background: transparent;
+    color: #8a939c;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-webview-context-label {
+    flex: 1;
+    min-width: 0;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-webview-context-shortcut {
+    flex: 0 0 auto;
+    color: #6c6c6c;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-webview-context-item:hover .chrome-hosted-webview-context-shortcut,
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-webview-context-item:focus-visible .chrome-hosted-webview-context-shortcut {
+    color: currentColor;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-webview-context-separator,
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-tab-context-separator {
+    height: 1px;
+    margin: 4px 1px;
+    background: #dcdcdc;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-overscroll-layer {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 3;
+    overflow: hidden;
+    pointer-events: none;
+    background: transparent;
+    --chrome-overscroll-progress: 0;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-overscroll-layer[hidden] {
+    display: none;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-overscroll-pane {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    background: #f7f7f7;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-overscroll-target {
+    opacity: 0.96;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-overscroll-current {
+    z-index: 2;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.22);
+    transition: transform 180ms cubic-bezier(.17, .67, .32, 1);
+    will-change: transform;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-overscroll-layer.is-visible .chrome-hosted-overscroll-current {
+    transition-duration: 0ms;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-overscroll-layer.is-animating .chrome-hosted-overscroll-current {
+    transition-duration: 180ms;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-overscroll-screenshot {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-overscroll-fallback {
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    padding: 24px 28px;
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(244, 244, 244, 0.98)),
+        url("./assets/chrome43/theme_toolbar_default.png") repeat-x left top;
+    color: #2d2d2d;
+    font: 12px "Segoe UI", Tahoma, sans-serif;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-overscroll-fallback-title {
+    font-size: 24px;
+    line-height: 1.15;
+    font-weight: 400;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-overscroll-fallback-address {
+    color: #6b6b6b;
+    font-size: 13px;
+    line-height: 1.3;
+    word-break: break-all;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-overscroll-indicator {
+    position: absolute;
+    top: 50%;
+    z-index: 3;
+    width: 140px;
+    height: 280px;
+    margin-top: -140px;
+    opacity: 0.25;
+    transition: opacity 180ms linear, transform 180ms cubic-bezier(.17, .67, .32, 1);
+    pointer-events: none;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-overscroll-layer.is-back .chrome-hosted-overscroll-indicator {
+    left: 0;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-overscroll-layer.is-forward .chrome-hosted-overscroll-indicator {
+    right: 0;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-overscroll-indicator-inner {
+    position: absolute;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.63);
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: auto;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-overscroll-layer.is-back .chrome-hosted-overscroll-indicator-inner {
+    border-radius: 0 140px 140px 0;
+    background-image: url("./assets/chrome49/back_arrow.png");
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-overscroll-layer.is-forward .chrome-hosted-overscroll-indicator-inner {
+    border-radius: 140px 0 0 140px;
+    background-image: url("./assets/chrome49/forward_arrow.png");
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-status-bubble {
+    position: absolute;
+    left: -1px;
+    bottom: -1px;
+    z-index: 7;
+    max-width: 240px;
+    box-sizing: border-box;
+    padding: 3px 4px 4px;
+    border-radius: 0 4px 0 0;
+    background: rgb(223, 223, 223);
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.12);
+    color: rgb(111, 111, 111);
+    font: 12px "Segoe UI", Tahoma, sans-serif;
+    line-height: 1.25;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    pointer-events: none;
+    opacity: 0;
+    transform: translateY(0px);
+    transition: opacity 120ms linear;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-status-bubble.is-visible {
+    opacity: 1;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-status-bubble:not(.is-visible) {
+    transition-duration: 200ms;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-status-bubble[hidden] {
+    display: none;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-download-shelf {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 6;
+    min-height: 44px;
+    box-sizing: border-box;
+    border-top: 1px solid rgb(214, 214, 214);
+    background: linear-gradient(to bottom, #f3f3f3 0%, #ebebeb 100%);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.84);
+    pointer-events: auto;
+    -webkit-app-region: no-drag;
+    overflow: hidden;
+    animation: chrome-download-shelf-show 120ms ease-out;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-download-shelf[hidden] {
+    display: none;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-download-shelf-inner {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 43px;
+    padding: 2px 8px 2px 2px;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-download-shelf-items {
+    flex: 1 1 auto;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-download-shelf-item {
+    flex: 0 0 208px;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    transform-origin: left center;
+    animation: chrome-download-shelf-item-enter 800ms cubic-bezier(0.2, 0.85, 0.2, 1);
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-download-shelf-button-row {
+    display: flex;
+    align-items: stretch;
+    min-width: 0;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-download-shelf-main,
+.classic-app-container--custom-titlebar-chrome .chrome-download-shelf-menu {
+    box-sizing: border-box;
+    height: 39px;
+    border: none;
+    background-repeat: no-repeat, repeat-x, no-repeat, repeat-y, repeat, repeat-y, no-repeat, repeat-x, no-repeat;
+    font: 12px "Segoe UI", Tahoma, sans-serif;
+    color: #222;
+    appearance: none;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-download-shelf-main {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: grid;
+    grid-template-columns: 39px minmax(0, 1fr);
+    align-items: center;
+    padding: 0 8px 0 0;
+    text-align: left;
+    cursor: default;
+    background-image:
+        url("./assets/chrome49/download_button_left_top.png"),
+        url("./assets/chrome49/download_button_center_top.png"),
+        url("./assets/chrome49/download_button_right_top.png"),
+        url("./assets/chrome49/download_button_left_middle.png"),
+        url("./assets/chrome49/download_button_center_middle.png"),
+        url("./assets/chrome49/download_button_right_middle.png"),
+        url("./assets/chrome49/download_button_left_bottom.png"),
+        url("./assets/chrome49/download_button_center_bottom.png"),
+        url("./assets/chrome49/download_button_right_bottom.png");
+    background-position:
+        left top,
+        8px top,
+        right top,
+        left 19px,
+        8px 19px,
+        right 19px,
+        left bottom,
+        8px bottom,
+        right bottom;
+    background-size:
+        8px 19px,
+        calc(100% - 13px) 19px,
+        5px 19px,
+        8px calc(100% - 38px),
+        calc(100% - 13px) calc(100% - 38px),
+        5px calc(100% - 38px),
+        8px 19px,
+        calc(100% - 13px) 19px,
+        5px 19px;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-download-shelf-main:hover,
+.classic-app-container--custom-titlebar-chrome .chrome-download-shelf-main:focus-visible {
+    outline: none;
+    background-image:
+        url("./assets/chrome49/download_button_left_top_hover.png"),
+        url("./assets/chrome49/download_button_center_top_hover.png"),
+        url("./assets/chrome49/download_button_right_top_hover.png"),
+        url("./assets/chrome49/download_button_left_middle_hover.png"),
+        url("./assets/chrome49/download_button_center_middle_hover.png"),
+        url("./assets/chrome49/download_button_right_middle_hover.png"),
+        url("./assets/chrome49/download_button_left_bottom_hover.png"),
+        url("./assets/chrome49/download_button_center_bottom_hover.png"),
+        url("./assets/chrome49/download_button_right_bottom_hover.png");
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-download-shelf-main:active {
+    background-image:
+        url("./assets/chrome49/download_button_left_top_pressed.png"),
+        url("./assets/chrome49/download_button_center_top_pressed.png"),
+        url("./assets/chrome49/download_button_right_top_pressed.png"),
+        url("./assets/chrome49/download_button_left_middle_pressed.png"),
+        url("./assets/chrome49/download_button_center_middle_pressed.png"),
+        url("./assets/chrome49/download_button_right_middle_pressed.png"),
+        url("./assets/chrome49/download_button_left_bottom_pressed.png"),
+        url("./assets/chrome49/download_button_center_bottom_pressed.png"),
+        url("./assets/chrome49/download_button_right_bottom_pressed.png");
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-download-shelf-menu {
+    flex: 0 0 16px;
+    width: 16px;
+    padding: 0;
+    cursor: default;
+    background-image:
+        url("./assets/chrome49/download_button_menu_top.png"),
+        url("./assets/chrome49/download_button_menu_top.png"),
+        url("./assets/chrome49/download_button_menu_top.png"),
+        url("./assets/chrome49/download_button_menu_middle.png"),
+        url("./assets/chrome49/download_button_menu_middle.png"),
+        url("./assets/chrome49/download_button_menu_middle.png"),
+        url("./assets/chrome49/download_button_menu_bottom.png"),
+        url("./assets/chrome49/download_button_menu_bottom.png"),
+        url("./assets/chrome49/download_button_menu_bottom.png");
+    background-position:
+        left top,
+        left top,
+        right top,
+        left 19px,
+        left 19px,
+        right 19px,
+        left bottom,
+        left bottom,
+        right bottom;
+    background-size:
+        16px 19px,
+        0 19px,
+        0 19px,
+        16px calc(100% - 38px),
+        0 calc(100% - 38px),
+        0 calc(100% - 38px),
+        16px 19px,
+        0 19px,
+        0 19px;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-download-shelf-menu:hover,
+.classic-app-container--custom-titlebar-chrome .chrome-download-shelf-menu:focus-visible {
+    outline: none;
+    background-image:
+        url("./assets/chrome49/download_button_menu_top_hover.png"),
+        url("./assets/chrome49/download_button_menu_top_hover.png"),
+        url("./assets/chrome49/download_button_menu_top_hover.png"),
+        url("./assets/chrome49/download_button_menu_middle_hover.png"),
+        url("./assets/chrome49/download_button_menu_middle_hover.png"),
+        url("./assets/chrome49/download_button_menu_middle_hover.png"),
+        url("./assets/chrome49/download_button_menu_bottom_hover.png"),
+        url("./assets/chrome49/download_button_menu_bottom_hover.png"),
+        url("./assets/chrome49/download_button_menu_bottom_hover.png");
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-download-shelf-menu:active {
+    background-image:
+        url("./assets/chrome49/download_button_menu_top_pressed.png"),
+        url("./assets/chrome49/download_button_menu_top_pressed.png"),
+        url("./assets/chrome49/download_button_menu_top_pressed.png"),
+        url("./assets/chrome49/download_button_menu_middle_pressed.png"),
+        url("./assets/chrome49/download_button_menu_middle_pressed.png"),
+        url("./assets/chrome49/download_button_menu_middle_pressed.png"),
+        url("./assets/chrome49/download_button_menu_bottom_pressed.png"),
+        url("./assets/chrome49/download_button_menu_bottom_pressed.png"),
+        url("./assets/chrome49/download_button_menu_bottom_pressed.png");
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-download-shelf-menu::before {
+    content: "";
+    display: block;
+    width: 0;
+    height: 0;
+    margin: 17px auto 0;
+    border-left: 3px solid transparent;
+    border-right: 3px solid transparent;
+    border-top: 4px solid #626262;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-download-shelf-icon {
+    position: relative;
+    width: 20px;
+    height: 20px;
+    margin-left: 10px;
+    border-radius: 3px;
+    background: linear-gradient(to bottom, #ffffff 0%, #f3f6fa 100%);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.88),
+        0 0 0 1px #b3bcc8;
+    color: #516173;
+    font: 700 8px/20px "Segoe UI", Tahoma, sans-serif;
+    letter-spacing: 0.2px;
+    text-align: center;
+    text-transform: uppercase;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-download-shelf-icon::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 0;
+    height: 0;
+    border-style: solid;
+    border-width: 0 6px 6px 0;
+    border-color: transparent #dbe5f1 transparent transparent;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-download-shelf-icon--pdf {
+    color: #b5392f;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-download-shelf-icon--image {
+    color: #2d7a39;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-download-shelf-icon--exe {
+    color: #2a64ad;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-download-shelf-copy {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-download-shelf-name,
+.classic-app-container--custom-titlebar-chrome .chrome-download-shelf-status {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-download-shelf-name {
+    color: #1a1a1a;
+    font-size: 12px;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-download-shelf-status {
+    color: #6a6a6a;
+    font-size: 11px;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-download-shelf-item.is-completed .chrome-download-shelf-status {
+    color: #5e6a77;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-download-shelf-item.is-paused .chrome-download-shelf-status {
+    color: #8a5f1c;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-download-shelf-item.is-in-progress .chrome-download-shelf-status,
+.classic-app-container--custom-titlebar-chrome .chrome-download-shelf-item.is-pending .chrome-download-shelf-status {
+    color: #2d5f96;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-download-shelf-progress {
+    height: 3px;
+    margin: 0 5px 0 39px;
+    border: 1px solid #a9b4c2;
+    background: #ffffff;
+    overflow: hidden;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-download-shelf-progress.is-hidden {
+    visibility: hidden;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-download-shelf-progress-value {
+    display: block;
+    height: 100%;
+    background: linear-gradient(to bottom, #70b2f9 0%, #2d7bdc 100%);
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-download-shelf-link {
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: #1a5fb4;
+    font: 11px "Segoe UI", Tahoma, sans-serif;
+    cursor: default;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-download-shelf-link:hover,
+.classic-app-container--custom-titlebar-chrome .chrome-download-shelf-link:focus-visible {
+    text-decoration: underline;
+    outline: none;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-download-shelf-controls {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    white-space: nowrap;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-download-shelf-summary {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-download-shelf-summary-icon {
+    width: 16px;
+    height: 16px;
+    background: url("./assets/chrome43/favicon_downloads.png") no-repeat center / 16px 16px;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-download-shelf-show-all {
+    font-size: 11px;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-download-shelf-close {
+    width: 18px;
+    height: 18px;
+    padding: 0;
+    border: none;
+    background: url("./assets/chrome49/download_shelf_close.png") no-repeat center / 18px 18px;
+    cursor: default;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-download-shelf-close:hover {
+    background-image: url("./assets/chrome49/download_shelf_close_hover.png");
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-download-shelf-close:active {
+    background-image: url("./assets/chrome49/download_shelf_close_pressed.png");
+}
+
+@keyframes chrome-download-shelf-show {
+    0% {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes chrome-download-shelf-item-enter {
+    0% {
+        opacity: 0;
+        transform: scaleX(0.06);
+    }
+
+    100% {
+        opacity: 1;
+        transform: scaleX(1);
+    }
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-bookmark-editor {
+    position: absolute;
+    inset: 0;
+    z-index: 9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: auto;
+    -webkit-app-region: no-drag;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-bookmark-editor[hidden] {
+    display: none;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-download-prompt {
+    position: absolute;
+    inset: 0;
+    z-index: 9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: auto;
+    -webkit-app-region: no-drag;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-download-prompt[hidden] {
+    display: none;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-download-prompt-scrim {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.18);
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-download-prompt-dialog {
+    position: relative;
+    width: 400px;
+    max-width: calc(100% - 48px);
+    box-sizing: border-box;
+    padding: 16px 18px 14px;
+    border: 1px solid #b8bec4;
+    background: #fff;
+    box-shadow: 0 7px 24px rgba(0, 0, 0, 0.28);
+    color: #222;
+    font: 12px "Segoe UI", Tahoma, sans-serif;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-download-prompt-title {
+    margin: 0 0 14px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-download-prompt-body {
+    margin-bottom: 14px;
+    line-height: 1.45;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-download-prompt-body p {
+    margin: 0 0 10px;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-download-prompt-file {
+    margin-bottom: 6px;
+    font-weight: 600;
+    word-break: break-word;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-download-prompt-meta {
+    color: #555;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-download-prompt-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-bookmark-editor-scrim {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.18);
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-bookmark-editor-dialog {
+    position: relative;
+    width: 440px;
+    max-width: calc(100% - 48px);
+    box-sizing: border-box;
+    padding: 16px 18px 14px;
+    border: 1px solid #b8bec4;
+    background: #fff;
+    box-shadow: 0 7px 24px rgba(0, 0, 0, 0.28);
+    color: #222;
+    font: 12px "Segoe UI", Tahoma, sans-serif;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-bookmark-editor-title {
+    margin: 0 0 14px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-bookmark-editor-row {
+    display: grid;
+    grid-template-columns: 48px minmax(0, 1fr);
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-bookmark-editor-label {
+    color: #444;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-bookmark-editor-input,
+.classic-app-container--custom-titlebar-chrome .chrome-bookmark-editor-select {
+    min-width: 0;
+    height: 26px;
+    box-sizing: border-box;
+    padding: 3px 6px;
+    border: 1px solid #aeb7c1;
+    background: #fff;
+    color: #222;
+    font: inherit;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-bookmark-editor-input:focus,
+.classic-app-container--custom-titlebar-chrome .chrome-bookmark-editor-select:focus {
+    outline: none;
+    border-color: #7da2ce;
+    box-shadow: 0 0 0 1px rgba(123, 159, 204, 0.18);
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-bookmark-editor-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 6px;
+    margin-top: 14px;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-bookmark-context-item {
+    position: relative;
+    padding: 0 12px 0 28px;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-bookmark-context-check {
+    position: absolute;
+    left: 10px;
+    width: 10px;
+    height: 10px;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-bookmark-context-item.is-checkbox.is-checked .chrome-hosted-bookmark-context-check::before {
+    content: "";
+    position: absolute;
+    inset: 1px 1px 2px 1px;
+    border-left: 2px solid #4d5863;
+    border-bottom: 2px solid #4d5863;
+    transform: rotate(-45deg);
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-bookmark-context-label {
+    flex: 1;
+    min-width: 0;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-bookmark-context-separator {
+    height: 1px;
+    margin: 4px 1px;
+    background: #dcdcdc;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-bookmark-bubble-title {
+    margin: 0 0 12px;
+    color: #222;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-bookmark-bubble-row {
+    display: grid;
+    grid-template-columns: 48px minmax(0, 1fr);
+    align-items: center;
+    gap: 12px;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-bookmark-bubble-row+.chrome-bookmark-bubble-row {
+    margin-top: 12px;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-bookmark-bubble-label {
+    color: #555;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-bookmark-bubble-input,
+.classic-app-container--custom-titlebar-chrome .chrome-bookmark-bubble-select {
+    width: 100%;
+    min-width: 0;
+    height: 28px;
+    padding: 4px 8px;
+    border: 1px solid #babfc5;
+    border-radius: 2px;
+    background: #fff;
+    color: #222;
+    font: inherit;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-bookmark-bubble-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 6px;
+    margin-top: 14px;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-bookmark-bubble-button {
+    box-sizing: border-box;
+    min-width: 70px;
+    min-height: 33px;
+    padding: 7px 13px;
+    border: 5px solid transparent;
+    border-image-slice: 5 fill;
+    border-image-width: 5px;
+    border-image-repeat: stretch;
+    border-image-source: url("./assets/chrome43/button.png");
+    background: transparent;
+    color: #222;
+    font: inherit;
+    font-weight: 400;
+    text-shadow: 0 1px rgba(255, 255, 255, 0.85);
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-bookmark-bubble-button:hover {
+    border-image-source: url("./assets/chrome43/button_hover.png");
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-bookmark-bubble-button:active {
+    border-image-source: url("./assets/chrome43/button_pressed.png");
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-bookmark-bubble-button:focus-visible {
+    border-image-source: url("./assets/chrome43/button_focused.png");
+    outline: none;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-bookmark-bubble-button:focus-visible:hover {
+    border-image-source: url("./assets/chrome43/button_focused_hover.png");
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-bookmark-bubble-button:focus-visible:active {
+    border-image-source: url("./assets/chrome43/button_focused_pressed.png");
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-bookmark-bubble-button:disabled {
+    border-image-source: url("./assets/chrome43/button_inactive.png");
+    color: #7f7f7f;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-bookmark-bubble-button--default {
+    font-weight: 700;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-bookmark-menu-item {
+    position: relative;
+    padding: 0 24px 0 28px;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-bookmark-menu-icon {
+    position: absolute;
+    top: 50%;
+    left: 8px;
+    width: 16px;
+    height: 16px;
+    margin-top: -8px;
+    background: url("./assets/chrome43/favicon_bookmarks.png") no-repeat center / 16px 16px;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-bookmark-menu-item.is-folder .chrome-hosted-bookmark-menu-icon {
+    width: 16px;
+    height: 18px;
+    margin-top: -8px;
+    background-image: url("./assets/chrome43/bookmark_bar_folder.png");
+    background-size: 16px 18px;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-bookmark-menu-item.is-apps .chrome-hosted-bookmark-menu-icon {
+    background-image: url("./assets/chrome43/apps_bookmark_bar_icon.png");
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-bookmark-menu-label {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-bookmark-menu-arrow {
+    position: absolute;
+    top: 50%;
+    right: 8px;
+    width: 0;
+    height: 0;
+    margin-top: -4px;
+    border-top: 4px solid transparent;
+    border-bottom: 4px solid transparent;
+    border-left: 5px solid #66717c;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-bookmark-menu-item:hover .chrome-hosted-bookmark-menu-arrow,
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-bookmark-menu-item:focus-visible .chrome-hosted-bookmark-menu-arrow {
+    border-left-color: #4e5760;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-tab-context-label {
+    flex: 1;
+    min-width: 0;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-top-chrome .chrome-address-shell {
+    position: relative;
+    flex: 1;
+    min-width: 0;
+    height: 29px;
+    border: none;
+    border-radius: 0;
+    padding: 0;
+    background: transparent;
+    box-shadow: none;
+    overflow: hidden;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-top-chrome .chrome-address-border {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-top-chrome .chrome-address-slice {
+    position: absolute;
+    background-repeat: no-repeat;
+    pointer-events: none;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-top-chrome .chrome-address-top-left {
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 21px;
+    background-image: url("./assets/chrome43/textfield_top_left.png");
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-top-chrome .chrome-address-top {
+    top: 0;
+    left: 4px;
+    right: 4px;
+    height: 21px;
+    background: url("./assets/chrome43/textfield_top.png") repeat-x left top / 1px 21px;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-top-chrome .chrome-address-top-right {
+    top: 0;
+    right: 0;
+    width: 4px;
+    height: 21px;
+    background-image: url("./assets/chrome43/textfield_top_right.png");
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-top-chrome .chrome-address-left {
+    top: 21px;
+    left: 0;
+    width: 4px;
+    height: 1px;
+    background-image: url("./assets/chrome43/textfield_left.png");
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-top-chrome .chrome-address-right {
+    top: 21px;
+    right: 0;
+    width: 4px;
+    height: 1px;
+    background-image: url("./assets/chrome43/textfield_right.png");
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-top-chrome .chrome-address-bottom-left {
+    right: auto;
+    bottom: 0;
+    left: 0;
+    width: 4px;
+    height: 7px;
+    background-image: url("./assets/chrome43/textfield_bottom_left.png");
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-top-chrome .chrome-address-bottom {
+    right: 4px;
+    bottom: 0;
+    left: 4px;
+    height: 7px;
+    background: url("./assets/chrome43/textfield_bottom.png") repeat-x left bottom / 1px 7px;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-top-chrome .chrome-address-bottom-right {
+    right: 0;
+    bottom: 0;
+    width: 4px;
+    height: 7px;
+    background-image: url("./assets/chrome43/textfield_bottom_right.png");
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-top-chrome .chrome-address-fill {
+    position: absolute;
+    top: 1px;
+    right: 1px;
+    bottom: 1px;
+    left: 1px;
+    background: #ffffff;
+    clip-path: polygon(3px 0,
+            calc(100% - 3px) 0,
+            100% 3px,
+            100% calc(100% - 3px),
+            calc(100% - 3px) 100%,
+            3px 100%,
+            0 calc(100% - 3px),
+            0 3px);
+    z-index: 0;
+    pointer-events: none;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-top-chrome .chrome-address-content {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0;
+    height: 100%;
+    padding: 0 3px 0 5px;
+    z-index: 2;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-top-chrome .chrome-address-display {
+    position: absolute;
+    top: 0;
+    right: 48px;
+    bottom: 0;
+    left: 26px;
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+    white-space: nowrap;
+    pointer-events: none;
+    transform: translateY(1px);
+    z-index: 1;
+    font: 16px Arial, sans-serif;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-top-chrome .chrome-address-display-part {
+    flex: 0 0 auto;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-top-chrome .chrome-address-display-part.is-plain,
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-top-chrome .chrome-address-display-part.is-host {
+    color: #1f252b;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-top-chrome .chrome-address-display-part.is-deemphasized,
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-top-chrome .chrome-address-display-part.is-security.is-warning {
+    color: rgba(31, 37, 43, 0.5);
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-top-chrome .chrome-address-display-part.is-security.is-secure {
+    color: #079500;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-top-chrome .chrome-address-display-part.is-security.is-error {
+    color: #a20000;
+    text-decoration: line-through;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-top-chrome .chrome-address-shell:focus-within .chrome-address-fill {
+    filter: brightness(1.01);
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-top-chrome .chrome-address-shell:focus-within {
+    filter: none;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-top-chrome .chrome-address-shell:focus-within .chrome-address-display {
+    display: none;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-top-chrome .chrome-address-shell.is-ntp-fakebox-handoff:focus-within .chrome-address-fill {
+    filter: none;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-top-chrome .chrome-address-shell.is-ntp-fakebox-handoff:focus-within .chrome-address-input {
+    caret-color: transparent;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-top-chrome .chrome-security-badge {
+    position: relative;
+    width: 19px;
+    height: 19px;
+    margin: 0 3px 0 0;
+    border-radius: 0;
+    background: url("./assets/chrome43/omnibox_https_valid.png") no-repeat center / 19px 19px;
+    box-shadow: none;
+    flex: 0 0 auto;
+    pointer-events: auto;
+    -webkit-app-region: no-drag;
+    z-index: 2;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-top-chrome .chrome-security-badge::before {
+    content: none;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-top-chrome .chrome-security-badge.is-neutral {
+    background-image: url("./assets/chrome43/omnibox_http_dark.png");
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-top-chrome .chrome-security-badge.is-neutral::before {
+    content: none;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-top-chrome .chrome-security-badge.is-page {
+    background-image: var(--chrome-security-badge-image, url("./assets/chrome43/location_bar_http.png"));
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-top-chrome .chrome-security-badge.has-custom-page-icon {
+    background-size: 16px 16px;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-top-chrome .chrome-security-badge.is-warning {
+    background-image: url("./assets/chrome43/omnibox_https_warning.png");
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-top-chrome .chrome-security-badge.is-error {
+    background-image: url("./assets/chrome43/omnibox_https_invalid.png");
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-top-chrome .chrome-address-input {
+    flex: 1;
+    min-width: 0;
+    border: none;
+    background: transparent;
+    color: #1f252b;
+    font: 16px Arial, sans-serif;
+    outline: none;
+    transform: translateY(1px);
+    position: relative;
+    z-index: 2;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-top-chrome .chrome-zoom-indicator {
+    width: 19px;
+    height: 19px;
+    margin-left: 2px;
+    margin-right: 2px;
+    border: none;
+    background: var(--chrome-zoom-indicator-image) no-repeat center / 19px 19px;
+    flex: 0 0 auto;
+    z-index: 2;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-top-chrome .chrome-zoom-indicator:hover {
+    background-color: rgba(170, 198, 232, 0.24);
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-top-chrome .chrome-address-shell:not(:focus-within) .chrome-address-input {
+    color: transparent;
+    caret-color: transparent;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-top-chrome .chrome-star-button {
+    position: relative;
+    width: 19px;
+    height: 19px;
+    margin-left: 3px;
+    margin-right: 3px;
+    border: none;
+    border-radius: 0;
+    z-index: 2;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-top-chrome .chrome-star-button::before {
+    width: 19px;
+    height: 19px;
+    background-image: url("./assets/chrome43/star.png");
+    background-size: 19px 19px;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-top-chrome .chrome-star-button.is-bookmarked::before {
+    background-image: url("./assets/chrome43/star_lit.png");
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-zoom-bubble {
+    position: absolute;
+    z-index: 8;
+    min-width: 154px;
+    box-sizing: border-box;
+    padding: 12px 14px 14px;
+    border: 1px solid #b8bec4;
+    border-radius: 4px;
+    background: #fff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.24);
+    color: #222;
+    font: 12px "Segoe UI", Tahoma, sans-serif;
+    pointer-events: auto;
+    -webkit-app-region: no-drag;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-zoom-bubble[hidden] {
+    display: none;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-zoom-bubble-label {
+    margin-bottom: 10px;
+    color: #202428;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-zoom-bubble-button {
+    min-width: 124px;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-page-info-bubble {
+    position: absolute;
+    z-index: 8;
+    width: 310px;
+    box-sizing: border-box;
+    padding: 14px;
+    border: 1px solid #b8bec4;
+    border-radius: 4px;
+    background: #fff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.24);
+    color: #222;
+    font: 12px "Segoe UI", Tahoma, sans-serif;
+    pointer-events: auto;
+    -webkit-app-region: no-drag;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-page-info-bubble[hidden] {
+    display: none;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-page-info-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-page-info-badge {
+    width: 19px;
+    height: 19px;
+    flex: 0 0 19px;
+    background: url("./assets/chrome43/omnibox_http_dark.png") no-repeat center / 19px 19px;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-page-info-badge.is-secure {
+    background-image: url("./assets/chrome43/omnibox_https_valid.png");
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-page-info-badge.is-warning {
+    background-image: url("./assets/chrome43/omnibox_https_warning.png");
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-page-info-badge.is-error {
+    background-image: url("./assets/chrome43/omnibox_https_invalid.png");
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-page-info-badge.is-page {
+    background-image: var(--chrome-page-info-badge-image, url("./assets/chrome43/chrome_beta_logo_16.png"));
+    background-size: 16px 16px;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-page-info-heading {
+    display: grid;
+    gap: 2px;
+    min-width: 0;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-page-info-title {
+    color: #222;
+    font-size: 13px;
+    font-weight: 600;
+    word-break: break-word;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-page-info-subtitle {
+    color: #666;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-page-info-copy {
+    display: grid;
+    gap: 7px;
+    margin-top: 12px;
+    line-height: 1.4;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-page-info-copy-primary {
+    color: #222;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-page-info-copy-secondary {
+    color: #666;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-page-info-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 14px;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-top-chrome .chrome-bookmarks-bar {
+    position: relative;
+    z-index: 2;
+    min-height: 28px;
+    padding: 4px 1px 2px;
+    margin-top: -1px;
+    background: transparent;
+    border-bottom: 1px solid #cad2da;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-top-chrome .chrome-bookmarks-bar.is-detached {
+    margin-top: 0;
+    padding-top: 5px;
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.46) 0, rgba(255, 255, 255, 0.08) 10px, transparent 10px);
+    border-top: 1px solid rgba(255, 255, 255, 0.55);
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-top-chrome .chrome-bookmarks-inner {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    min-height: 26px;
+    width: 100%;
+    overflow: hidden;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-top-chrome .chrome-bookmarks-inner.is-drop-target {
+    background: linear-gradient(180deg, rgba(238, 245, 253, 0.45) 0, rgba(219, 232, 249, 0.55) 100%);
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-top-chrome .chrome-bookmark {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    flex: 0 0 auto;
+    box-sizing: border-box;
+    max-width: 150px;
+    height: 24px;
+    padding: 4px 6px;
+    border: 1px solid transparent;
+    border-radius: 2px;
+    background: transparent;
+    color: #4d5863;
+    font: 12px "Segoe UI", Tahoma, sans-serif;
+    line-height: 14px;
+    text-align: left;
+    cursor: default;
+    animation: chromeBookmarkReveal 120ms cubic-bezier(0.2, 0.8, 0.2, 1);
+    transition:
+        background-color 150ms ease,
+        border-color 150ms ease,
+        box-shadow 150ms ease;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-top-chrome .chrome-bookmark[hidden] {
+    display: none;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-top-chrome .chrome-bookmark-label {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-top-chrome .chrome-bookmark-icon {
+    flex: 0 0 auto;
+    width: 16px;
+    height: 16px;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 16px 16px;
+    transform: translateY(0);
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-top-chrome .chrome-bookmark--url .chrome-bookmark-icon {
+    background-image: url("./assets/chrome43/default_favicon.png");
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-top-chrome .chrome-bookmark--folder .chrome-bookmark-icon {
+    width: 16px;
+    height: 18px;
+    background-image: url("./assets/chrome43/bookmark_bar_folder.png");
+    background-size: 16px 18px;
+    transform: translateY(1px);
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-top-chrome .chrome-bookmark--apps .chrome-bookmark-icon {
+    background-image: url("./assets/chrome43/apps_bookmark_bar_icon.png");
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-top-chrome .chrome-bookmark--overflow {
+    width: 24px;
+    min-width: 24px;
+    max-width: 24px;
+    justify-content: center;
+    padding: 4px 0;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-top-chrome .chrome-bookmark--overflow .chrome-bookmark-icon {
+    width: 8px;
+    height: 14px;
+    background-image: url("./assets/chrome43/bookmark_bar_chevrons.png");
+    background-size: 8px 14px;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-top-chrome .chrome-bookmark:hover {
+    border-color: #c6ced6;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.8) 0, rgba(233, 238, 243, 0.9) 100%);
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-top-chrome .chrome-bookmark.is-menu-open,
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-top-chrome .chrome-bookmark:active {
+    border-color: #b9c1ca;
+    background: linear-gradient(180deg, rgba(231, 236, 242, 0.95) 0, rgba(216, 223, 230, 0.95) 100%);
+    box-shadow: inset 0 1px rgba(255, 255, 255, 0.55);
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-top-chrome .chrome-bookmark.is-dragging {
+    position: relative;
+    z-index: 4;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.18));
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-top-chrome .chrome-bookmark.is-drag-placeholder,
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-top-chrome .chrome-hosted-bookmark-menu-item.is-drag-placeholder {
+    opacity: 0.45;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-top-chrome .chrome-bookmark.is-drop-target,
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-top-chrome .chrome-hosted-bookmark-menu-item.is-drop-target {
+    background: linear-gradient(180deg, #edf5ff 0%, #dce9f9 100%);
+    border-color: #8aa9cf;
+    color: #0f3e7b;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.55);
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-top-chrome .chrome-bookmark-drag-ghost {
+    z-index: 9;
+    max-width: 180px;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-bookmark-drag-ghost {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    box-sizing: border-box;
+    max-width: 180px;
+    height: 24px;
+    padding: 4px 6px;
+    border: 1px solid #b9c1ca;
+    border-radius: 2px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0, rgba(233, 238, 243, 0.96) 100%);
+    color: #4d5863;
+    font: 12px "Segoe UI", Tahoma, sans-serif;
+    line-height: 14px;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-bookmark-drag-ghost .chrome-bookmark-label {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-bookmark-drag-ghost .chrome-bookmark-icon {
+    flex: 0 0 auto;
+    width: 16px;
+    height: 16px;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 16px 16px;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-bookmark-drag-ghost.chrome-bookmark--url .chrome-bookmark-icon {
+    background-image: url("./assets/chrome43/default_favicon.png");
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-bookmark-drag-ghost.chrome-bookmark--folder .chrome-bookmark-icon {
+    width: 16px;
+    height: 18px;
+    background-image: url("./assets/chrome43/bookmark_bar_folder.png");
+    background-size: 16px 18px;
+    transform: translateY(1px);
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-bookmark-drag-ghost.chrome-bookmark--apps .chrome-bookmark-icon {
+    background-image: url("./assets/chrome43/apps_bookmark_bar_icon.png");
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-tabstrip {
+    --chrome-hosted-tab-overlap: 26px;
+    --chrome-hosted-tab-width: 218px;
+    --chrome-hosted-tab-cap-width: 21px;
+    --chrome-hosted-tab-height: 29px;
+    --chrome-hosted-tab-surface-offset-y: 11px;
+    --chrome-hosted-tab-fill-top-inset: 4px;
+    --chrome-hosted-tab-fill-bottom-inset: 1px;
+    --chrome-hosted-tab-fill-image: url("./assets/chrome43/theme_tab_background.png");
+    --chrome-hosted-active-tab-fill-image: url("./assets/chrome43/theme_toolbar_default.png");
+    --chrome-hosted-tab-fill-color: #cedced;
+    --chrome-hosted-active-tab-fill-color: #dfdfdf;
+    display: flex;
+    position: relative;
+    align-items: flex-end;
+    gap: 0;
+    flex: 0 1 auto;
+    min-width: 0;
+    width: auto;
+    max-width: 100%;
+    height: 100%;
+    font-family: "Segoe UI", Tahoma, sans-serif;
+    font-size: 12px;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-tabstrip button,
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-tabstrip .chrome-tab-title,
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-tabstrip .chrome-new-tab-glyph {
+    font: inherit;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-tabstrip .chrome-tabs {
+    --chrome-tab-render-width: var(--chrome-hosted-tab-width);
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    gap: 0;
+    min-width: 0;
+    flex: 0 1 auto;
+    padding: 0;
+    overflow: visible;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-tabstrip .chrome-tab {
+    position: relative;
+    top: 1px;
+    display: flex;
+    align-items: center;
+    flex: 0 0 var(--chrome-tab-render-width);
+    width: var(--chrome-tab-render-width);
+    min-width: var(--chrome-tab-render-width);
+    max-width: var(--chrome-tab-render-width);
+    height: var(--chrome-hosted-tab-height);
+    margin: 0;
+    padding: 0;
+    border: none;
+    background: transparent;
+    box-shadow: none;
+    appearance: none;
+    -webkit-appearance: none;
+    color: #4c5965;
+    cursor: default;
+    user-select: none;
+    overflow: visible;
+    transition:
+        opacity 120ms linear,
+        filter 120ms linear;
+    z-index: 1;
+}
+
+.classic-app-container--custom-titlebar-chrome.is-bookmark-editor-open .chrome-hosted-tabstrip .chrome-tab,
+.classic-app-container--custom-titlebar-chrome.is-download-prompt-open .chrome-hosted-tabstrip .chrome-tab {
+    opacity: 0.72;
+    filter: saturate(0.88) brightness(0.94);
+}
+
+.classic-app-container--custom-titlebar-chrome.is-bookmark-editor-open .chrome-hosted-tabstrip .chrome-tab.is-active,
+.classic-app-container--custom-titlebar-chrome.is-bookmark-editor-open .chrome-hosted-tabstrip .chrome-tab.is-drag-visual-active,
+.classic-app-container--custom-titlebar-chrome.is-download-prompt-open .chrome-hosted-tabstrip .chrome-tab.is-active,
+.classic-app-container--custom-titlebar-chrome.is-download-prompt-open .chrome-hosted-tabstrip .chrome-tab.is-drag-visual-active {
+    opacity: 0.8;
+    filter: saturate(0.9) brightness(0.96);
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-tabstrip .chrome-tab:not(:last-child) {
+    margin-right: calc(var(--chrome-hosted-tab-overlap) * -1);
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-tabstrip .chrome-tab:last-child {
+    margin-right: 0;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-tabstrip .chrome-tab:first-child {
+    margin-left: -4px;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-tabstrip .chrome-tab.is-closing-ghost {
+    position: absolute;
+    margin: 0;
+    pointer-events: none;
+    overflow: hidden;
+    z-index: 0;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-tabstrip .chrome-tab.is-dragging {
+    z-index: 6;
+    cursor: grabbing;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.22));
+}
+
+.classic-app-container--custom-titlebar-chrome.is-external-tab-drop-target .chrome-hosted-tabstrip {
+    z-index: 7;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-tabstrip .chrome-tab.is-drag-placeholder {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-tabstrip .chrome-tab.is-drag-detached-placeholder {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.chrome-tab-tearout-preview {
+    position: fixed;
+    z-index: 9996;
+    pointer-events: none;
+    width: 0;
+    height: 0;
+    font-family: "Segoe UI", Tahoma, sans-serif;
+    font-size: 12px;
+    --chrome-hosted-tab-cap-width: 21px;
+    --chrome-hosted-tab-height: 29px;
+    --chrome-hosted-tab-surface-offset-y: 11px;
+    --chrome-hosted-tab-fill-top-inset: 4px;
+    --chrome-hosted-tab-fill-image: url("./assets/chrome43/theme_tab_background.png");
+    --chrome-hosted-active-tab-fill-image: url("./assets/chrome43/theme_toolbar_default.png");
+    --chrome-hosted-tab-fill-color: #cedced;
+    --chrome-hosted-active-tab-fill-color: #dfdfdf;
+}
+
+.chrome-tab-tearout-preview .chrome-tab {
+    top: 0;
+    left: 0;
+    display: flex;
+    align-items: center;
+    margin: 0;
+    padding: 0;
+    border: none;
+    background: transparent;
+    box-shadow: none;
+    appearance: none;
+    -webkit-appearance: none;
+    color: #202428;
+    cursor: default;
+    user-select: none;
+    overflow: visible;
+    filter: drop-shadow(0 3px 8px rgba(0, 0, 0, 0.26));
+}
+
+.chrome-tab-tearout-preview .chrome-tab.is-dragging {
+    position: absolute;
+    z-index: 2;
+}
+
+.chrome-tab-tearout-preview .chrome-tab::before,
+.chrome-tab-tearout-preview .chrome-tab::after {
+    display: none;
+}
+
+.chrome-tab-tearout-preview .chrome-tab-shape {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.chrome-tab-tearout-preview .chrome-tab-shape::before {
+    content: "";
+    position: absolute;
+    top: var(--chrome-hosted-tab-fill-top-inset);
+    right: 0;
+    bottom: -1px;
+    left: 0;
+    background-color: var(--chrome-hosted-active-tab-fill-color);
+    background-image: var(--chrome-hosted-active-tab-fill-image);
+    background-repeat: repeat-x;
+    background-position: left calc(var(--chrome-hosted-tab-surface-offset-y) * -1);
+    clip-path: polygon(8px 100%, 18px 0, calc(100% - 18px) 0, calc(100% - 8px) 100%);
+}
+
+.chrome-tab-tearout-preview .chrome-tab-fill,
+.chrome-tab-tearout-preview .chrome-tab-cap {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    background-repeat: no-repeat;
+}
+
+.chrome-tab-tearout-preview .chrome-tab-fill {
+    left: var(--chrome-hosted-tab-cap-width);
+    right: var(--chrome-hosted-tab-cap-width);
+    background-image: url("./assets/chrome43/tab_active_center.png");
+    background-size: 1px 100%;
+    background-repeat: repeat-x;
+}
+
+.chrome-tab-tearout-preview .chrome-tab-cap {
+    width: var(--chrome-hosted-tab-cap-width);
+    background-position: 0 0;
+    background-size: 100% 100%;
+}
+
+.chrome-tab-tearout-preview .chrome-tab-cap--left {
+    left: 0;
+    background-image: url("./assets/chrome43/tab_active_left.png");
+}
+
+.chrome-tab-tearout-preview .chrome-tab-cap--right {
+    right: 0;
+    background-image: url("./assets/chrome43/tab_active_right.png");
+}
+
+.chrome-tab-tearout-preview .chrome-tab-content {
+    position: absolute;
+    inset: 4px 17px 2px 22px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 4px;
+    padding-right: 21px;
+    min-width: 0;
+    z-index: 2;
+}
+
+.chrome-tab-tearout-preview .chrome-tab.has-no-icon .chrome-tab-content {
+    left: 22px;
+    gap: 0;
+}
+
+.chrome-tab-tearout-preview .chrome-tab-favicon {
+    position: relative;
+    z-index: 2;
+    width: 16px;
+    height: 16px;
+    margin: 0 4px 0 0;
+    background: url("./assets/chrome43/default_favicon.png") no-repeat center / 16px 16px;
+    flex: 0 0 auto;
+}
+
+.chrome-tab-tearout-preview .chrome-tab.has-no-icon .chrome-tab-favicon {
+    display: none;
+}
+
+.chrome-tab-tearout-preview .chrome-tab-favicon.has-image {
+    background: none;
+}
+
+.chrome-tab-tearout-preview .chrome-tab-favicon-image,
+.chrome-tab-tearout-preview .chrome-tab-throbber {
+    position: absolute;
+    inset: 0;
+    width: 16px;
+    height: 16px;
+}
+
+.chrome-tab-tearout-preview .chrome-tab-favicon-image {
+    display: block;
+    object-fit: contain;
+    pointer-events: none;
+}
+
+.chrome-tab-tearout-preview .chrome-tab-throbber {
+    display: none;
+}
+
+.chrome-tab-tearout-preview .chrome-tab-title {
+    position: relative;
+    z-index: 2;
+    display: block;
+    flex: 0 1 auto;
+    min-width: 0;
+    max-width: 100%;
+    margin-right: auto;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-align: left;
+    line-height: 1.1;
+}
+
+.chrome-tab-tearout-preview .chrome-tab-close {
+    position: absolute;
+    z-index: 2;
+    top: 2px;
+    right: 0;
+    width: 18px;
+    height: 18px;
+    padding: 0;
+    border: none;
+    background-color: currentColor;
+    -webkit-mask-image: url("./assets/chrome43/close_1_mask.png");
+    -webkit-mask-repeat: no-repeat;
+    -webkit-mask-position: center center;
+    -webkit-mask-size: 18px 18px;
+    mask-image: url("./assets/chrome43/close_1_mask.png");
+    mask-repeat: no-repeat;
+    mask-position: center center;
+    mask-size: 18px 18px;
+    color: inherit;
+    font-size: 0;
+    line-height: 0;
+    opacity: 1;
+}
+
+.chrome-tab-tearout-card {
+    position: absolute;
+    top: 22px;
+    left: 8px;
+    border: 1px solid rgba(64, 71, 82, 0.34);
+    border-radius: 3px;
+    overflow: hidden;
+    background: #f7f8fa;
+    box-shadow: 0 9px 22px rgba(0, 0, 0, 0.24);
+}
+
+.chrome-tab-tearout-card-page {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(to bottom, rgba(252, 252, 252, 0.99), rgba(246, 247, 249, 0.99));
+}
+
+.chrome-tab-tearout-card-page::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.72);
+    pointer-events: none;
+}
+
+.chrome-tab-tearout-card-url {
+    position: absolute;
+    top: 14px;
+    left: 14px;
+    right: 14px;
+    font-size: 11px;
+    line-height: 1.35;
+    color: rgba(76, 88, 101, 0.72);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.chrome-tab-tearout-card-page.has-screenshot {
+    background: #fff;
+}
+
+.chrome-tab-tearout-card-page.has-screenshot::before {
+    border-top-color: rgba(255, 255, 255, 0.44);
+}
+
+.chrome-tab-tearout-card-page.has-dom-preview {
+    background: #fff;
+}
+
+.chrome-tab-tearout-card-page.has-dom-preview::before {
+    border-top-color: rgba(255, 255, 255, 0.44);
+}
+
+.chrome-tab-tearout-card-screenshot {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    background: #fff;
+}
+
+.chrome-tab-tearout-card-local-preview {
+    transform-origin: top left;
+    will-change: transform;
+    height: 100%;
+}
+
+.chrome-tab-tearout-card-local-preview-shell {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+.chrome-tab-tearout-card-local-preview .chrome-page {
+    min-height: 0;
+}
+
+.chrome-tab-tearout-card-local-preview.chrome-page-host,
+.chrome-tab-tearout-card-local-preview .chrome-content-area {
+    overflow: hidden;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-tabstrip .chrome-tab.is-active,
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-tabstrip .chrome-tab.is-drag-visual-active {
+    color: #202428;
+    z-index: 4;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-tabstrip .chrome-tab::before,
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-tabstrip .chrome-tab::after {
+    display: none;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-tabstrip .chrome-tab-shape {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-tabstrip .chrome-tab-shape::before {
+    content: "";
+    position: absolute;
+    top: var(--chrome-hosted-tab-fill-top-inset);
+    right: 0;
+    bottom: 0;
+    left: 0;
+    background-color: var(--chrome-hosted-tab-fill-color);
+    background-image: var(--chrome-hosted-tab-fill-image);
+    background-repeat: repeat-x;
+    background-position: left calc(var(--chrome-hosted-tab-surface-offset-y) * -1);
+    clip-path: polygon(8px 100%, 18px 0, calc(100% - 18px) 0, calc(100% - 8px) 100%);
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-tabstrip .chrome-tab-shape::after {
+    content: "";
+    position: absolute;
+    top: var(--chrome-hosted-tab-fill-top-inset);
+    right: 0;
+    bottom: 0;
+    left: 0;
+    opacity: 0;
+    background: radial-gradient(circle 80px at var(--chrome-tab-hover-x, 50%) calc(var(--chrome-tab-hover-y, 50%) - var(--chrome-hosted-tab-fill-top-inset)),
+            rgba(255, 255, 255, 0.32) 0,
+            rgba(255, 255, 255, 0.12) 36%,
+            rgba(255, 255, 255, 0) 68%);
+    clip-path: polygon(8px 100%, 18px 0, calc(100% - 18px) 0, calc(100% - 8px) 100%);
+    transition: opacity 400ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-tabstrip .chrome-tab.is-hover-glow .chrome-tab-shape::after {
+    opacity: 1;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-tabstrip .chrome-tab.is-active.is-hover-glow .chrome-tab-shape::after,
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-tabstrip .chrome-tab.is-drag-visual-active.is-hover-glow .chrome-tab-shape::after {
+    opacity: 0.56;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-tabstrip .chrome-tab.is-active .chrome-tab-shape::before,
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-tabstrip .chrome-tab.is-drag-visual-active .chrome-tab-shape::before {
+    bottom: -1px;
+    background-color: var(--chrome-hosted-active-tab-fill-color);
+    background-image: var(--chrome-hosted-active-tab-fill-image);
+    background-position: left calc(var(--chrome-hosted-tab-surface-offset-y) * -1);
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-tabstrip .chrome-tab-content {
+    position: absolute;
+    inset: 4px 17px 2px 22px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 4px;
+    padding-right: 21px;
+    min-width: 0;
+    z-index: 2;
+    transform: translateY(0);
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-tabstrip .chrome-tab.has-no-icon .chrome-tab-content {
+    left: 22px;
+    gap: 0;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-tabstrip .chrome-tab-fill,
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-tabstrip .chrome-tab-cap {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    background-repeat: no-repeat;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-tabstrip .chrome-tab-fill {
+    left: var(--chrome-hosted-tab-cap-width);
+    right: var(--chrome-hosted-tab-cap-width);
+    background-image: url("./assets/chrome43/tab_inactive_center.png");
+    background-size: 1px 100%;
+    background-repeat: repeat-x;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-tabstrip .chrome-tab-cap {
+    width: var(--chrome-hosted-tab-cap-width);
+    background-position: 0 0;
+    background-size: 100% 100%;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-tabstrip .chrome-tab-cap--left {
+    left: 0;
+    background-image: url("./assets/chrome43/tab_inactive_left.png");
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-tabstrip .chrome-tab-cap--right {
+    right: 0;
+    background-image: url("./assets/chrome43/tab_inactive_right.png");
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-tabstrip .chrome-tab.is-active .chrome-tab-fill,
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-tabstrip .chrome-tab.is-drag-visual-active .chrome-tab-fill {
+    background-image: url("./assets/chrome43/tab_active_center.png");
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-tabstrip .chrome-tab.is-active .chrome-tab-cap--left,
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-tabstrip .chrome-tab.is-drag-visual-active .chrome-tab-cap--left {
+    background-image: url("./assets/chrome43/tab_active_left.png");
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-tabstrip .chrome-tab.is-active .chrome-tab-cap--right,
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-tabstrip .chrome-tab.is-drag-visual-active .chrome-tab-cap--right {
+    background-image: url("./assets/chrome43/tab_active_right.png");
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-tabstrip .chrome-tab-favicon {
+    position: relative;
+    z-index: 2;
+    width: 16px;
+    height: 16px;
+    margin: 0 4px 0 0;
+    background: url("./assets/chrome43/default_favicon.png") no-repeat center / 16px 16px;
+    flex: 0 0 auto;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-tabstrip .chrome-tab.has-no-icon .chrome-tab-favicon {
+    display: none;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-tabstrip .chrome-tab-favicon.has-image {
+    background: none;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-tabstrip .chrome-tab-favicon-image,
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-tabstrip .chrome-tab-throbber {
+    position: absolute;
+    inset: 0;
+    width: 16px;
+    height: 16px;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-tabstrip .chrome-tab-favicon-image {
+    display: block;
+    object-fit: contain;
+    pointer-events: none;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-tabstrip .chrome-tab-throbber {
+    display: none;
+    pointer-events: none;
+    background-repeat: no-repeat;
+    background-position: 0 0;
+    background-size: 576px 16px;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-tabstrip .chrome-tab.is-loading .chrome-tab-favicon {
+    background: none;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-tabstrip .chrome-tab.is-loading .chrome-tab-favicon-image {
+    opacity: 0;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-tabstrip .chrome-tab.is-loading .chrome-tab-throbber {
+    display: block;
+    background-image: url("./assets/chrome43/throbber.png");
+    animation: chrome-tab-throbber-loading 1080ms steps(36) infinite;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-tabstrip .chrome-tab.is-waiting .chrome-tab-throbber {
+    background-image: url("./assets/chrome43/throbber_waiting.png");
+    background-size: 2864px 16px;
+    animation: chrome-tab-throbber-waiting 5370ms steps(179) infinite;
+}
+
+@keyframes chrome-tab-throbber-loading {
+    from {
+        background-position: 0 0;
+    }
+
+    to {
+        background-position: -576px 0;
+    }
+}
+
+@keyframes chrome-tab-throbber-waiting {
+    from {
+        background-position: 0 0;
+    }
+
+    to {
+        background-position: -2864px 0;
+    }
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-tabstrip .chrome-tab-title {
+    position: relative;
+    z-index: 2;
+    display: block;
+    flex: 0 1 auto;
+    min-width: 0;
+    max-width: 100%;
+    margin-right: auto;
+    padding-right: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-align: left;
+    font-size: var(--system-font-size);
+    line-height: 1.1;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-tabstrip .chrome-tab-close {
+    position: absolute;
+    z-index: 2;
+    top: 2px;
+    right: 0;
+    display: grid;
+    place-items: center;
+    width: 18px;
+    height: 18px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background-color: currentColor;
+    background-repeat: no-repeat;
+    background-position: center center;
+    background-size: 18px 18px;
+    -webkit-mask-image: url("./assets/chrome43/close_1_mask.png");
+    -webkit-mask-repeat: no-repeat;
+    -webkit-mask-position: center center;
+    -webkit-mask-size: 18px 18px;
+    mask-image: url("./assets/chrome43/close_1_mask.png");
+    mask-repeat: no-repeat;
+    mask-position: center center;
+    mask-size: 18px 18px;
+    color: inherit;
+    font-size: 0;
+    line-height: 0;
+    opacity: 1;
+    transition: opacity 120ms ease, background-color 120ms ease;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-tabstrip .chrome-tab.is-active .chrome-tab-close,
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-tabstrip .chrome-tab.is-drag-visual-active .chrome-tab-close {
+    background-color: currentColor;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-tabstrip .chrome-tab-close:hover {
+    background-color: transparent;
+    background-image: url("./assets/chrome43/close_1_hover.png");
+    color: transparent;
+    -webkit-mask-image: none;
+    mask-image: none;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-tabstrip .chrome-tab-close:active {
+    background-color: transparent;
+    background-image: url("./assets/chrome43/close_1_pressed.png");
+    color: transparent;
+    -webkit-mask-image: none;
+    mask-image: none;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-tabstrip .chrome-tab-close:not(:hover):not(:active) {
+    background-color: currentColor;
+    background-image: none;
+    color: inherit;
+    -webkit-mask-image: url("./assets/chrome43/close_1_mask.png");
+    mask-image: url("./assets/chrome43/close_1_mask.png");
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-tabstrip .chrome-tab.is-mini .chrome-tab-title {
+    width: 0;
+    margin: 0;
+    opacity: 0;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-tabstrip .chrome-tab.is-mini .chrome-tab-content {
+    inset: 4px 10px 2px 12px;
+    justify-content: center;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-tabstrip .chrome-tab.is-mini .chrome-tab-favicon {
+    margin-right: 0;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-tabstrip .chrome-new-tab-button {
+    position: relative;
+    width: 34px;
+    height: 25px;
+    margin: 0 0 4px -8px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    box-shadow: none;
+    cursor: default;
+    flex: 0 0 auto;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-tabstrip .chrome-new-tab-button::before,
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-tabstrip .chrome-new-tab-button::after {
+    content: "";
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    width: 34px;
+    height: 18px;
+    pointer-events: none;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-tabstrip .chrome-new-tab-button::before {
+    background-color: #d8e4ef;
+    background-image: url("./assets/chrome43/theme_tab_background.png");
+    background-repeat: repeat-x;
+    background-position: left calc(var(--chrome-hosted-tab-surface-offset-y) * -1);
+    -webkit-mask-image: url("./assets/chrome43/newtab_button_mask.png");
+    -webkit-mask-repeat: no-repeat;
+    -webkit-mask-position: left bottom;
+    -webkit-mask-size: 34px 18px;
+    mask-image: url("./assets/chrome43/newtab_button_mask.png");
+    mask-repeat: no-repeat;
+    mask-position: left bottom;
+    mask-size: 34px 18px;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-tabstrip .chrome-new-tab-button::after {
+    background: url("./assets/chrome43/newtab_normal.png") no-repeat left bottom / 34px 18px;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-tabstrip .chrome-new-tab-button:hover {
+    background: transparent;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-tabstrip .chrome-new-tab-button:hover::before {
+    box-shadow: inset 0 0 0 999px rgba(255, 255, 255, 0.18);
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-tabstrip .chrome-new-tab-button:hover::after {
+    background-image: url("./assets/chrome43/newtab_hover.png");
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-tabstrip .chrome-new-tab-button:active {
+    background: transparent;
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-tabstrip .chrome-new-tab-button:active::before {
+    box-shadow: inset 0 0 0 999px rgba(255, 255, 255, 0.06);
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-tabstrip .chrome-new-tab-button:active::after {
+    background-image: url("./assets/chrome43/newtab_pressed.png");
+}
+
+.classic-app-container--custom-titlebar-chrome .chrome-hosted-tabstrip .chrome-new-tab-glyph {
+    display: none;
+}

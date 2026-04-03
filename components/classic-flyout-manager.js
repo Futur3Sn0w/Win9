@@ -23,6 +23,13 @@
         );
     }
 
+    function usesThresholdShellAnimation($flyout) {
+        return Boolean(
+            $flyout &&
+            (isModernClockFlyout($flyout) || $flyout.hasClass('classic-flyout-threshold-shell'))
+        );
+    }
+
     function clearCloseTimer(flyoutData) {
         if (flyoutData && flyoutData.closeTimer) {
             clearTimeout(flyoutData.closeTimer);
@@ -195,6 +202,10 @@
             window.closeAllTaskbarPopupsAndMenus();
         }
 
+        if (typeof window.unfocusAllClassicWindows === 'function') {
+            window.unfocusAllClassicWindows('classic-flyout');
+        }
+
         // Hide all other flyouts first
         hideAllFlyouts();
 
@@ -225,7 +236,7 @@
 
         clearCloseTimer(flyoutData);
 
-        if (isModernClockFlyout($flyout)) {
+        if (usesThresholdShellAnimation($flyout)) {
             $flyout.removeClass('visible').addClass('closing');
             flyoutData.closeTimer = setTimeout(() => {
                 $flyout.removeClass('closing');

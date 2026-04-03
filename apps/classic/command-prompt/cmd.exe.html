@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Command Prompt</title>
+
+    <link rel="stylesheet" href="../../../css/classic-windows.css">
+    <link rel="stylesheet" href="../../../css/classic-controls.css">
+    <link rel="stylesheet" href="../../../css/styles.css">
+    <link rel="stylesheet" href="../../../css/fonts.css">
+    <link rel="stylesheet" href="cmd.exe.css">
+</head>
+
+<body>
+    <div class="cmd-shell">
+        <div class="cmd-console" id="cmd-console" aria-label="Command Prompt console output">
+            <div class="cmd-line">Microsoft Windows [Version 6.3.9600]</div>
+            <div class="cmd-line">(c) 2013 Microsoft Corporation. All rights reserved.</div>
+            <div class="cmd-line cmd-line--spacer"></div>
+            <div class="cmd-line">C:\Users\User&gt; <span class="cmd-muted">Blank template ready for implementation.</span></div>
+        </div>
+
+        <form class="cmd-input-row" id="cmd-form" autocomplete="off">
+            <label class="cmd-prompt" for="cmd-input">C:\Users\User&gt;</label>
+            <input id="cmd-input" class="cmd-input" type="text" spellcheck="false" aria-label="Command Prompt input">
+        </form>
+    </div>
+
+    <script src="cmd.exe.js"></script>
+</body>
+
+</html>

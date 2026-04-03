@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mail</title>
+    <link rel="stylesheet" href="../../../css/fonts.css">
+    <link rel="stylesheet" href="./mail.css">
+</head>
+<body>
+    <div id="mail-app" class="mail-app">
+        <div id="mail-splash" class="mail-splash" aria-hidden="true">
+            <img src="apps/modern/mail/resources/splash.png" alt="" class="mail-splash__image" draggable="false">
+            <div class="mail-splash__ring"></div>
+        </div>
+
+        <div id="mailFrame" class="mail-frame">
+            <aside class="mailFrameNavPaneBackground" aria-label="Mail folders">
+                <div class="mailNavPane">
+                    <div id="mailNavPaneHeaderArea">
+                        <h1 id="mailNavPaneHeader">Mail</h1>
+                    </div>
+
+                    <div class="mail-nav-body">
+                        <div class="mail-nav-section">Favorites</div>
+                        <div id="mail-folder-list" class="mail-folder-list"></div>
+
+                        <div class="mail-nav-section">Pinned people</div>
+                        <div class="mail-people">
+                            <div class="mail-people__chip">Alex</div>
+                            <div class="mail-people__chip">Casey</div>
+                            <div class="mail-people__chip">Morgan</div>
+                        </div>
+                    </div>
+
+                    <button id="mail-account-button" class="accountSwitcher" type="button" aria-label="Switch account">
+                        <img src="apps/modern/mail/resources/icons/account-switcher.png" alt="" draggable="false">
+                        <span class="accountSwitcher__content">
+                            <span id="mail-account-name" class="accountSwitcher__name">Outlook.com</span>
+                            <span id="mail-account-meta" class="accountSwitcher__meta">Connected</span>
+                        </span>
+                        <span class="accountSwitcher__chevron" aria-hidden="true">&#xE0E3;</span>
+                    </button>
+                </div>
+            </aside>
+
+            <section id="mailFrameMessageList" class="mailFrameMessageListBackground" aria-label="Message list">
+                <div class="mail-list-pane">
+                    <header class="mail-list-header">
+                        <div id="mail-folder-eyebrow" class="mail-list-eyebrow typeSizeNormal">Inbox</div>
+                        <h2 id="mail-folder-title" class="mail-list-title">Inbox</h2>
+                        <div id="mail-folder-meta" class="mail-list-meta typeSizeSmall"></div>
+                    </header>
+                    <div id="mail-message-list" class="mail-message-list"></div>
+                </div>
+            </section>
+
+            <section id="mailFrameReadingPaneSection" class="mailReadingPaneSection" aria-label="Reading pane">
+                <div class="mailReadingPaneWrapper">
+                    <div class="mailReadingPaneCanvasButtonArea">
+                        <button id="mail-reading-back" class="mailCanvasButton mailReadingPaneBackButton" type="button" aria-label="Back">
+                            <span aria-hidden="true">&#xE0D5;</span>
+                        </button>
+                        <div class="mailReadingPaneRightAlignedCanvasButtons">
+                            <button class="mailCanvasButton" type="button" data-action="reply" aria-label="Reply">
+                                <span aria-hidden="true">&#xE172;</span>
+                            </button>
+                            <button class="mailCanvasButton" type="button" data-action="markUnread" aria-label="Mark unread">
+                                <span aria-hidden="true">&#xE119;</span>
+                            </button>
+                            <button class="mailCanvasButton" type="button" data-action="flag" aria-label="Flag">
+                                <span aria-hidden="true">&#xE129;</span>
+                            </button>
+                            <button class="mailCanvasButton" type="button" data-action="delete" aria-label="Delete">
+                                <span aria-hidden="true">&#xE107;</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="mailReadingPaneContent">
+                        <div class="mailReadingPaneHeaderArea">
+                            <div id="mail-reading-avatar" class="mailReadingPaneUserTile"></div>
+                            <div class="mailReadingPaneHeaderDetails">
+                                <div class="mailReadingPaneFromArea">
+                                    <div class="mailReadingPaneFrom">
+                                        <div id="mail-reading-from" class="mailReadingPaneSingleFrom mailReadingPaneHeader typeSize16pt"></div>
+                                    </div>
+                                    <div class="mailReadingPaneDateTime typeSizeNormal">
+                                        <div id="mail-reading-date" class="mailReadingPaneDateContent"></div>
+                                        <div id="mail-reading-time" class="mailReadingPaneTimeContent"></div>
+                                    </div>
+                                </div>
+
+                                <div class="mailReadingPaneHeader mailReadingPaneTo">
+                                    <span class="mailReadingPaneToLabel typeSizeNormal">To:</span>
+                                    <span id="mail-reading-to" class="mailReadingPaneToContent typeSizeNormal"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <section id="mail-reading-banner" class="mailReadingPaneWarning typeSizeNormal" hidden></section>
+
+                        <div class="mailReadingPaneSubjectArea typeSize16pt">
+                            <div id="mail-reading-subject" class="mailReadingPaneSubject"></div>
+                            <div id="mail-reading-status" class="mailReadingPaneFlagArea"></div>
+                        </div>
+
+                        <section id="mail-reading-attachments" class="mailReadingPaneAttachmentWell" hidden>
+                            <div class="mail-reading-section-title typeSizeSmall">Attachments</div>
+                            <div id="mail-attachment-list" class="mail-attachment-list"></div>
+                        </section>
+
+                        <section id="mail-reading-invite" class="mailReadingPaneInviteArea typeSizeNormal" hidden>
+                            <div class="mail-reading-invite__head">
+                                <img src="apps/modern/mail/resources/icons/invite.png" alt="" draggable="false">
+                                <div>
+                                    <div class="mail-reading-invite__title">Calendar invite</div>
+                                    <div id="mail-invite-time" class="mail-reading-invite__time"></div>
+                                </div>
+                            </div>
+                            <p id="mail-invite-copy" class="mail-reading-invite__copy"></p>
+                        </section>
+
+                        <div class="mailReadingPaneBodyWrapper">
+                            <div id="mail-reading-body" class="mail-reading-body"></div>
+                            <iframe
+                                id="mail-reading-html"
+                                class="mail-reading-html"
+                                title="Message body"
+                                sandbox="allow-same-origin"
+                                referrerpolicy="no-referrer"
+                                hidden
+                            ></iframe>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <div id="mail-toast" class="mail-toast" hidden></div>
+        <div id="mail-selection-bar" class="mail-selection-bar" hidden>
+            <div id="mail-selection-summary" class="mail-selection-bar__summary typeSizeSmall">0 selected</div>
+            <div class="mail-selection-bar__actions">
+                <button id="mail-selection-toggle-all" class="mail-selection-bar__button" type="button">Select all</button>
+                <button id="mail-selection-read" class="mail-selection-bar__button" type="button">Mark read</button>
+                <button id="mail-selection-flag" class="mail-selection-bar__button" type="button">Flag</button>
+                <button id="mail-selection-delete" class="mail-selection-bar__button" type="button">Delete</button>
+                <button id="mail-selection-clear" class="mail-selection-bar__button" type="button">Clear</button>
+            </div>
+        </div>
+        <div id="mail-context-menu" class="mail-context-menu" hidden>
+            <button type="button" class="mail-context-menu__item" data-context-action="markUnread">Mark read/unread</button>
+            <button type="button" class="mail-context-menu__item" data-context-action="flag">Flag/unflag</button>
+            <button type="button" class="mail-context-menu__item" data-context-action="delete">Delete</button>
+        </div>
+        <div id="mail-account-flyout" class="mail-account-flyout" hidden>
+            <div id="mail-account-flyout-list" class="mail-account-flyout__list"></div>
+            <button id="mail-account-manage" class="mail-account-flyout__manage" type="button">Manage accounts</button>
+        </div>
+    </div>
+    <script src="./mail.js"></script>
+</body>
+</html>

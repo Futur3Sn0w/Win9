@@ -13,8 +13,20 @@
     const $ejectIcon = $('#eject-icon');
     const $ejectContextMenu = $('#eject-icon-context-menu');
 
-    // Track currently connected USB drives
+    // Track currently connected removable drives that belong in the eject tray.
     let connectedUSBDrives = new Map();
+
+    function isTrayEligibleDrive(driveData) {
+        if (!driveData || driveData.isSystem || driveData.isVirtual) {
+            return false;
+        }
+
+        if (typeof driveData.trayEligible === 'boolean') {
+            return driveData.trayEligible;
+        }
+
+        return Boolean(driveData.isUSB || driveData.isRemovable || driveData.isCard);
+    }
 
     /**
      * Update the visibility of the eject icon based on connected drives
@@ -44,13 +56,13 @@
                 // Extract drive letter for Windows (e.g., "E:\" -> "E:")
                 const driveLetter = path.match(/^([A-Z]:)/);
                 if (driveLetter) {
-                    return `USB Drive (${driveLetter[1]})`;
+                    return `Drive (${driveLetter[1]})`;
                 }
                 return path;
             }
         }
         // Fall back to description
-        return drive.description || 'USB Drive';
+        return drive.description || 'Removable Drive';
     }
 
     /**
@@ -97,37 +109,37 @@
 
         // First item: "Open Devices and Printers" (disabled)
         items.push(`
-            <button class="classic-context-menu-item is-disabled" disabled>
+            <div class="classic-context-menu-item is-disabled">
                 <span class="classic-context-menu-item-icon">
                     <img src="resources/images/icons/charms_devices.png" alt="" style="width: 16px; height: 16px;" />
                 </span>
                 <span class="classic-context-menu-item-text">Open Devices and Printers</span>
-            </button>
+            </div>
         `);
 
         // Separator
         items.push(`<div class="classic-context-menu-separator"></div>`);
 
-        // Add an item for each connected USB drive
+        // Add an item for each connected removable drive
         if (connectedUSBDrives.size === 0) {
             items.push(`
                 <div class="classic-context-menu-item is-disabled">
                     <span class="classic-context-menu-item-icon"></span>
-                    <span class="classic-context-menu-item-text">No USB drives detected</span>
+                    <span class="classic-context-menu-item-text">No removable drives detected</span>
                 </div>
             `);
         } else {
             connectedUSBDrives.forEach((drive, devicePath) => {
                 const driveName = getDriveName(drive);
-                const driveIcon = 'mif-usb';
+                const driveIcon = drive.icon || 'sui-usb';
 
                 items.push(`
-                    <button class="classic-context-menu-item eject-drive-item" data-device-path="${devicePath}">
+                    <div class="classic-context-menu-item eject-drive-item" data-device-path="${devicePath}">
                         <span class="classic-context-menu-item-icon">
                             <span class="${driveIcon}"></span>
                         </span>
                         <span class="classic-context-menu-item-text">Eject ${driveName}</span>
-                    </button>
+                    </div>
                 `);
             });
         }
@@ -200,9 +212,9 @@
      */
     function onDriveConnected(driveData) {
 
-        // Only track non-system USB drives
-        if (!driveData.isUSB || driveData.isSystem) {
-            console.log('[USB EJECT] Ignoring drive (not a non-system USB drive)');
+        // Only track drives that should appear in the hardware eject tray.
+        if (!isTrayEligibleDrive(driveData)) {
+            console.log('[USB EJECT] Ignoring drive (not tray-eligible)');
             return;
         }
 
@@ -238,7 +250,7 @@
             // Show success notification
             if (window.notificationManager) {
                 window.notificationManager.show({
-                    icon: 'mif-checkmark',
+                    icon: 'sui-accept',
                     title: 'Safe To Remove Hardware',
                     description: `${driveName} can now be safely removed`,
                     duration: 5000
@@ -259,7 +271,7 @@
             // Show error notification
             if (window.notificationManager) {
                 window.notificationManager.show({
-                    icon: 'mif-cross',
+                    icon: 'sui-cancel',
                     title: 'Problem Ejecting USB Mass Storage Device',
                     description: error || `${driveName} is currently in use. Close any programs using the device and try again.`,
                     duration: 0 // Persistent notification for errors

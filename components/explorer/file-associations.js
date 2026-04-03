@@ -547,7 +547,8 @@ const FileDirector = {
     openPath,
     openPathExternally,
     openFolderInExplorer,
-    rebuildAssociations
+    rebuildAssociations,
+    saveOpenChoice
 };
 
 window.FileAssociations = FileDirector;

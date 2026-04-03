@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Windows</title>
+    <link rel="stylesheet" href="css/fade-overlay.css" data-no-reload>
     <link rel="stylesheet" href="css/css.css">
     <link rel="stylesheet" href="css/classic-windows.css">
     <link rel="stylesheet" href="css/classic-controls.css">
@@ -75,12 +76,27 @@
                     <div class="user-picker-name">User</div>
                 </div>
             </div>
+            <!-- Bottom-left user list (Threshold modern lock screen) -->
+            <div class="login-user-list" hidden>
+                <div class="login-user-list-item" data-user="user">
+                    <div class="login-user-list-avatar">
+                        <img src="resources/images/user.png" alt="User">
+                    </div>
+                    <div class="login-user-list-name">User</div>
+                </div>
+            </div>
+            <!-- Bottom-right indicators area -->
+            <div class="login-indicators" hidden>
+                <div class="login-indicator login-indicator-network">
+                    <img class="login-indicator-icon" alt="Network">
+                </div>
+                <div class="login-indicator login-indicator-battery">
+                    <div class="login-indicator-icon login-indicator-battery-sprite"></div>
+                </div>
+            </div>
             <!-- Power Button -->
             <button class="login-power-button">
-                <svg class="login-power-icon" viewBox="0 0 24 24">
-                    <path
-                        d="M13 3h-2v10h2V3zm4.83 2.17l-1.42 1.42C17.99 7.86 19 9.81 19 12c0 3.87-3.13 7-7 7s-7-3.13-7-7c0-2.19 1.01-4.14 2.58-5.42L6.17 5.17C4.23 6.82 3 9.26 3 12c0 4.97 4.03 9 9 9s9-4.03 9-9c0-2.74-1.23-5.18-3.17-6.83z" />
-                </svg>
+                <span class="login-power-icon sui-power" aria-hidden="true"></span>
             </button>
             <!-- Power Options Menu for Login Screen -->
             <div class="modern-dropdown login-power-menu">
@@ -125,10 +141,10 @@
                         <span class="start-header-title">Start</span>
                         <div class="start-header-buttons">
                             <button class="start-header-button search-button active-scale-effect" title="Search">
-                                <span class="mif-search"></span>
+                                <span class="sui-search"></span>
                             </button>
                             <button class="start-header-button power-button active-scale-effect" title="Power">
-                                <span class="mif-switch"></span>
+                                <span class="start-power-symbol sui-power" aria-hidden="true"></span>
                             </button>
                             <div class="user-tile active-scale-effect">
                                 <img src="resources/images/user.png" alt="User" class="user-tile-icon">
@@ -158,7 +174,7 @@
                     </div>
                     <div class="start-footer">
                         <button class="all-apps-toggle pinned-apps-toggle">
-                            <span class="all-apps-toggle-icon"><span class="mif-arrow-down"></span></span>
+                            <span class="all-apps-toggle-icon"><span class="sui-arrow-down"></span></span>
                             <span class="all-apps-toggle-text">Apps</span>
                         </button>
                     </div>
@@ -175,7 +191,7 @@
                     </div>
                     <div class="start-footer">
                         <button class="all-apps-toggle all-apps-up-toggle">
-                            <span class="all-apps-toggle-icon"><span class="mif-arrow-up"></span></span>
+                            <span class="all-apps-toggle-icon"><span class="sui-arrow-up"></span></span>
                             <span class="all-apps-toggle-text">Pinned</span>
                         </button>
                     </div>
@@ -194,9 +210,16 @@
                         <img src="resources/images/user.png" alt="User" class="user-tile-icon">
                         <span class="user-tile-name">User</span>
                     </div>
-                    <button class="start-menu-power-button power-button active-scale-effect" title="Power">
-                        <span class="mif-switch"></span>
-                    </button>
+                    <div class="start-menu-top-actions">
+                        <button class="start-menu-fullscreen-button active-scale-effect" id="start-menu-fullscreen-button"
+                            title="Use full screen Start" aria-label="Use full screen Start" aria-pressed="false">
+                            <span class="start-menu-fullscreen-symbol sui-expand" id="start-menu-fullscreen-symbol"
+                                aria-hidden="true"></span>
+                        </button>
+                        <button class="start-menu-power-button power-button active-scale-effect" title="Power">
+                            <span class="start-power-symbol sui-power" aria-hidden="true"></span>
+                        </button>
+                    </div>
                 </div>
                 <div class="start-menu-list-separator"></div>
                 <div class="start-menu-left-scroll">
@@ -204,14 +227,14 @@
                 </div>
                 <div class="start-menu-bottom">
                     <button class="start-menu-all-apps-toggle" id="start-menu-all-apps-toggle">
-                        <span class="start-menu-all-apps-icon"><span class="mif-arrow-right"></span></span>
+                        <span class="start-menu-all-apps-icon"><span class="sui-arrow-down"></span></span>
                         <span class="start-menu-all-apps-text">All apps</span>
                     </button>
                     <div class="start-menu-search">
                         <input type="text" id="start-menu-search-input" placeholder="Search everywhere"
                             autocomplete="off">
                         <button class="start-menu-search-button" id="start-menu-search-button" title="Search">
-                            <span class="mif-search"></span>
+                            <span class="sui-search"></span>
                         </button>
                     </div>
                 </div>
@@ -240,6 +263,9 @@
         <div class="context-menu-item" data-action="pin">
             <span class="context-menu-item-text">Pin to Start</span>
         </div>
+        <div class="context-menu-item" data-action="toggle-start-list">
+            <span class="context-menu-item-text">Pin to Start List</span>
+        </div>
         <div class="context-menu-item" data-action="pin-taskbar">
             <span class="context-menu-item-text">Pin to Taskbar</span>
         </div>
@@ -266,13 +292,7 @@
                 </div>
             </div>
         </div>
-    </div>
-
-    <div id="start-menu-item-context-menu" class="context-menu">
-        <div class="context-menu-item" data-action="pin-start-tile">
-            <span class="context-menu-item-text">Pin to Start</span>
-        </div>
-        <div class="context-menu-separator"></div>
+        <div class="context-menu-separator" data-role="list-separator"></div>
         <div class="context-menu-item" data-action="keep-in-list">
             <span class="context-menu-item-text">Keep in this list</span>
         </div>
@@ -295,11 +315,12 @@
             <p class="desktop-watermark__line desktop-watermark__line--title" id="desktop-watermark-title">Windows
                 Technical Preview</p>
             <p class="desktop-watermark__line desktop-watermark__line--build" id="desktop-watermark-build">Evaluation
-                copy. Build 9888</p>
+                copy. Build 9999</p>
         </div>
         <div class="task-view-placeholder" id="task-view-placeholder" aria-hidden="true">
             <div class="task-view-window-grid" id="task-view-window-grid" aria-live="polite"></div>
             <div class="task-view-desktop-bar">
+                <div class="task-view-desktop-cards" id="task-view-desktop-cards"></div>
                 <button class="task-view-add-desktop-button" type="button" aria-label="Add desktop">
                     <span class="task-view-add-desktop-button__icon" aria-hidden="true">
                         <span class="task-view-add-desktop-button__plus"></span>
@@ -308,10 +329,18 @@
                 </button>
             </div>
         </div>
+        <div class="snap-assist-placeholder" id="snap-assist-placeholder" aria-hidden="true">
+            <div class="snap-assist-region">
+                <div class="task-view-window-grid snap-assist-window-grid" id="snap-assist-window-grid"
+                    aria-live="polite"></div>
+            </div>
+        </div>
     </div>
 
     <!-- TASKBAR (global, outside desktop) -->
     <div class="taskbar-trigger"></div>
+    <div class="desktop-modern-task-view-edge-trigger" aria-hidden="true"></div>
+    <div class="desktop-modern-taskbar-edge-trigger" aria-hidden="true"></div>
     <div class="taskbar-hover-preview-layer" id="taskbar-hover-preview-layer" aria-hidden="true">
         <div class="taskbar-hover-preview-surface" id="taskbar-hover-preview-surface">
             <div class="taskbar-hover-preview-track" id="taskbar-hover-preview-track" aria-live="polite"></div>
@@ -320,6 +349,10 @@
     <div class="taskbar">
         <button class="start-button">
             <span class="start-icon"></span>
+        </button>
+        <button class="taskbar-shell-button taskbar-continuum-back-button is-hidden" type="button" title="Back"
+            aria-label="Back">
+            <span class="taskbar-shell-button-glyph continuum-back-glyph sui-back" aria-hidden="true"></span>
         </button>
         <button class="taskbar-shell-button taskbar-search-button" type="button" title="Search" aria-label="Search">
             <img class="taskbar-shell-button-icon taskbar-shell-button-icon--search" data-icon-folder="search" alt=""
@@ -337,6 +370,11 @@
 
         <div class="system-tray">
             <div class="tray-cluster">
+                <button class="tray-overflow-toggle continuum-prompt-toggle-button is-hidden"
+                    id="continuum-prompt-toggle-button" type="button" aria-label="Continuum mode options"
+                    title="Continuum mode options">
+                    <span class="continuum-prompt-toggle-glyph sui-enter-tablet" aria-hidden="true"></span>
+                </button>
                 <button class="tray-overflow-toggle" id="tray-overflow-toggle" type="button"
                     aria-label="Show hidden notification icons" aria-expanded="false">
                     <img class="tray-overflow-toggle-icon" id="tray-overflow-toggle-icon"
@@ -349,12 +387,18 @@
                         <img id="eject-icon-img" src="resources/images/tray/eject/taskbar.png" alt="Eject">
                     </div>
                     <div class="system-icon tray-reorderable volume-icon" id="volume-icon" data-tray-item-id="volume">
-                        <img id="volume-icon-img" src="resources/images/tray/volume/vol_3.png" alt="Volume">
+                        <img id="volume-icon-img" src="resources/images/tray/volume/vol_3/16.png" alt="Volume">
                     </div>
-                    <div class="system-icon tray-reorderable network-icon" id="network-icon" data-tray-item-id="network">
-                        <img id="network-icon-img" src="resources/images/tray/network/wireless_5.png" alt="Network">
+                    <div class="system-icon tray-reorderable network-icon" id="network-icon"
+                        data-tray-item-id="network">
+                        <img id="network-icon-img" src="resources/images/tray/network/wireless_5/16.png" alt="Network">
                     </div>
-                    <div class="system-icon tray-reorderable battery-icon" id="battery-icon" data-tray-item-id="battery">
+                    <div class="system-icon tray-reorderable bluetooth-icon" id="bluetooth-icon"
+                        data-tray-item-id="bluetooth" title="Bluetooth Devices">
+                        <img id="bluetooth-icon-img" alt="Bluetooth">
+                    </div>
+                    <div class="system-icon tray-reorderable battery-icon" id="battery-icon"
+                        data-tray-item-id="battery">
                         <div id="battery-icon-img"></div>
                     </div>
                 </div>
@@ -367,6 +411,13 @@
                 <span>10:30 AM</span>
                 <span>10/9/2025</span>
             </div>
+            <button class="system-icon taskbar-usertile-button" id="taskbar-usertile-button" type="button"
+                title="User account" aria-label="User account">
+                <span class="taskbar-usertile-avatar-shell">
+                    <img src="resources/images/user.png" alt="User" class="user-tile-icon taskbar-usertile-image"
+                        id="taskbar-usertile-image">
+                </span>
+            </button>
         </div>
 
         <!-- VOLUME FLYOUT -->
@@ -379,7 +430,7 @@
                 <div class="volume-flyout-body">
                     <button type="button" class="volume-icon-display" id="volume-flyout-icon-button"
                         aria-label="Mute or unmute volume">
-                        <span class="mif-volume-high" id="volume-flyout-icon"></span>
+                        <span class="sui-volume-high" id="volume-flyout-icon"></span>
                     </button>
                     <div class="volume-slider-container">
                         <input type="range" class="volume-slider" id="volume-slider" min="0" max="100" value="50"
@@ -435,14 +486,45 @@
                     </div>
                 </div>
                 <div class="clock-flyout-footer">
-                    <a href="#" class="clock-settings-link" id="clock-settings-link">Change date and time settings...</a>
+                    <a href="#" class="clock-settings-link" id="clock-settings-link">Change date and time
+                        settings...</a>
                 </div>
             </div>
         </div>
 
         <!-- BATTERY FLYOUT -->
         <div class="classic-flyout battery-flyout" id="battery-flyout">
-            <div class="classic-flyout-content">
+            <div class="classic-flyout-content battery-flyout-content">
+                <div class="battery-status-header">
+                    <div class="battery-icon-wrapper">
+                        <div class="battery-icon-display" id="battery-popup-icon">
+                            <div class="battery-icon-sprite" id="battery-popup-sprite"></div>
+                            <div class="battery-charge-indicator" id="battery-popup-charging-indicator"></div>
+                        </div>
+                    </div>
+                    <div class="battery-status-text" id="battery-popup-status">
+                        Fully charged (100%)
+                    </div>
+                </div>
+
+                <div class="battery-power-plan">
+                    <div class="power-plan-label">Select a power plan:</div>
+                    <div class="power-plan-options">
+                        <label class="power-plan-option">
+                            <input type="radio" name="power-plan" value="balanced" checked>
+                            <span>Balanced</span>
+                        </label>
+                        <label class="power-plan-option">
+                            <input type="radio" name="power-plan" value="power-saver">
+                            <span>Power saver</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="battery-flyout-footer">
+                    <a href="#" class="battery-action-link">Adjust screen brightness</a>
+                    <a href="#" class="battery-action-link">More power options</a>
+                </div>
             </div>
         </div>
 
@@ -454,7 +536,8 @@
                     </div>
                 </div>
                 <div class="tray-overflow-footer">
-                    <button class="tray-overflow-customize" id="tray-overflow-customize" type="button">Customize...</button>
+                    <button class="tray-overflow-customize" id="tray-overflow-customize"
+                        type="button">Customize...</button>
                 </div>
             </div>
         </div>
@@ -470,15 +553,48 @@
             <div class="notification-center-panel-body" id="notification-center-panel-body"></div>
         </div>
 
+        <div class="classic-flyout usertile-panel classic-flyout-threshold-shell" id="usertile-panel"
+            aria-hidden="true">
+            <div class="classic-flyout-content usertile-panel-content">
+                <div class="usertile-panel-label">Currently logged in as:</div>
+                <div class="usertile-panel-header">
+                    <div class="usertile-panel-photo-shell" id="usertile-panel-photo-shell">
+                        <img src="resources/images/user.png" alt="User"
+                            class="user-tile-icon usertile-panel-photo-image" id="usertile-panel-photo-image">
+                        <img src="resources/images/usertile_frames/frame@1x.png" alt="" aria-hidden="true"
+                            class="usertile-panel-photo-frame" id="usertile-panel-photo-frame">
+                    </div>
+                    <div class="usertile-panel-profile">
+                        <div class="usertile-panel-name user-tile-name" id="usertile-panel-name">User</div>
+                        <div class="usertile-panel-meta" id="usertile-panel-account-type">User account</div>
+                        <div class="usertile-panel-meta" id="usertile-panel-username">User</div>
+                    </div>
+                </div>
+                <div class="usertile-panel-actions">
+                    <button class="usertile-panel-link" id="usertile-panel-lock" type="button"
+                        data-usertile-action="lock">Lock computer</button>
+                    <button class="usertile-panel-link" id="usertile-panel-sign-out" type="button"
+                        data-usertile-action="sign-out">Log off</button>
+                    <button class="usertile-panel-link" id="usertile-panel-switch-user" type="button"
+                        data-usertile-action="switch-user">Switch user</button>
+                </div>
+                <div class="usertile-panel-footer">
+                    <button class="usertile-panel-footer-button" id="usertile-panel-settings" type="button"
+                        data-usertile-action="settings">Change user settings...</button>
+                </div>
+            </div>
+        </div>
+
         <div class="search-panel" id="search-panel" aria-hidden="true">
-            <div class="search-panel-results" id="search-panel-results" role="listbox" aria-label="Search results"></div>
+            <div class="search-panel-results" id="search-panel-results" role="listbox" aria-label="Search results">
+            </div>
             <div class="search-panel-input-row">
                 <div class="search-panel-input-shell">
                     <input type="text" id="search-panel-input" autocomplete="off" spellcheck="false"
                         placeholder="Search apps, settings, and files">
                     <button class="search-panel-submit" id="search-panel-submit" type="button" title="Search"
                         aria-label="Search">
-                        <span class="mif-search" aria-hidden="true"></span>
+                        <span class="sui-search" aria-hidden="true"></span>
                     </button>
                 </div>
             </div>
@@ -492,6 +608,25 @@
             style="display: none; position: fixed; z-index: 200010;">
             <!-- Menu items will be dynamically populated -->
         </div>
+
+        <!-- BLUETOOTH ICON CONTEXT MENU -->
+        <div id="bluetooth-icon-context-menu" class="classic-context-menu"
+            style="display: none; position: fixed; z-index: 200010;">
+            <!-- Menu items will be dynamically populated -->
+        </div>
+    </div>
+
+    <div class="continuum-posture-prompt" id="continuum-posture-prompt" aria-hidden="true" role="dialog"
+        aria-labelledby="continuum-posture-prompt-title" aria-modal="false">
+        <div class="continuum-posture-prompt__title" id="continuum-posture-prompt-title">Enter tablet mode?</div>
+        <div class="continuum-posture-prompt__actions">
+            <button type="button" class="continuum-posture-prompt__button" id="continuum-posture-prompt-yes">Yes</button>
+            <button type="button" class="continuum-posture-prompt__button" id="continuum-posture-prompt-no">No</button>
+        </div>
+        <label class="continuum-posture-prompt__remember">
+            <input type="checkbox" id="continuum-posture-prompt-remember">
+            <span>Remember my choice</span>
+        </label>
     </div>
 
     <!-- TASKBAR CONTEXT MENU -->
@@ -519,6 +654,11 @@
         <div class="classic-context-menu-item taskbar-context-menu-button" data-action="properties">
             <span class="classic-context-menu-item-icon"></span>
             <span class="classic-context-menu-item-text">Properties</span>
+        </div>
+        <div class="classic-context-menu-item taskbar-context-menu-button" data-action="restart-explorer"
+            style="display: none;">
+            <span class="classic-context-menu-item-icon"></span>
+            <span class="classic-context-menu-item-text">Exit Explorer</span>
         </div>
     </div>
 
@@ -626,6 +766,7 @@
     <!-- CHARMS BAR -->
     <div class="charms-trigger top"></div>
     <div class="charms-trigger bottom"></div>
+    <div class="desktop-modern-charms-edge-trigger" aria-hidden="true"></div>
     <div class="charms-bar">
         <div class="charms-bar-background"></div>
         <div class="charms-icons">
@@ -652,13 +793,17 @@
         </div>
     </div>
 
-    <!-- CHARMS DATE/TIME PANEL -->
-    <div class="charms-datetime-panel">
-        <div class="charms-datetime-content">
-            <div class="charms-time">10:30</div>
-            <div class="charms-date">
-                <div class="charms-date-weekday">Thursday</div>
-                <div class="charms-date-monthday">October 9</div>
+    <!-- TDBN PANEL (Time, Date, Battery, Network) -->
+    <div class="tdbn-panel">
+        <div class="tdbn-content">
+            <div class="tdbn-status-icons">
+                <img class="tdbn-network-icon" id="tdbn-network-icon"
+                    src="resources/images/tray/network/wireless_5/32.png" alt="Network">
+            </div>
+            <div class="tdbn-time">10:30</div>
+            <div class="tdbn-date">
+                <div class="tdbn-date-weekday">Thursday</div>
+                <div class="tdbn-date-monthday">October 9</div>
             </div>
         </div>
     </div>
@@ -667,7 +812,29 @@
     <div class="modern-flyout" data-flyout="search">
         <div class="modern-flyout-header">Search</div>
         <div class="modern-flyout-content">
-            <!-- Search modern flyout content -->
+            <div class="charms-search-shell">
+                <div class="charms-search-controls">
+                    <div class="charms-search-input-shell">
+                        <input type="text" id="charms-search-input" autocomplete="off" spellcheck="false"
+                            placeholder="Search apps">
+                        <button type="button" id="charms-search-submit" aria-label="Search">
+                            <span class="sui-search" aria-hidden="true"></span>
+                        </button>
+                    </div>
+                    <label class="charms-search-source-label" for="charms-search-source">Search for</label>
+                    <select id="charms-search-source" class="charms-search-source">
+                        <option value="apps">Apps</option>
+                        <option value="all">Everything</option>
+                        <option value="settings">Settings</option>
+                        <option value="files">Files</option>
+                    </select>
+                </div>
+                <div class="charms-search-results" id="charms-search-results" role="listbox"
+                    aria-label="Search results"></div>
+                <button type="button" class="charms-search-open-app" id="charms-search-open-app">
+                    Open Search app
+                </button>
+            </div>
         </div>
     </div>
 
@@ -686,9 +853,44 @@
     </div>
 
     <div class="modern-flyout" data-flyout="network">
-        <div class="modern-flyout-header">Network</div>
-        <div class="modern-flyout-content">
-            <!-- Network modern flyout content -->
+        <div class="modern-flyout-header">
+            <button class="metro-back-btn network-back-button" title="Back">
+                <span class="sui-back"></span>
+            </button>
+            <span class="modern-flyout-header-text">Networks</span>
+        </div>
+        <div class="modern-flyout-content network-flyout-content">
+            <div class="network-flyout-link">View Connection Settings</div>
+
+            <div class="network-flyout-section">
+                <div class="network-flyout-section-title">Airplane mode</div>
+                <div class="network-flyout-toggle-row">
+                    <span class="network-flyout-toggle-label" id="airplane-mode-label">Off</span>
+                    <button class="modern-switch" type="button" id="airplane-mode-toggle" aria-pressed="false">
+                        <span class="modern-switch-thumb"></span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="network-flyout-section" id="network-flyout-connections">
+                <div class="network-flyout-section-title">Connections</div>
+                <div class="network-flyout-connections-list" id="network-connections-list">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+
+            <div class="network-flyout-section" id="network-flyout-wifi-section">
+                <div class="network-flyout-section-title">Wi-Fi</div>
+                <div class="network-flyout-toggle-row">
+                    <span class="network-flyout-toggle-label" id="wifi-toggle-label">On</span>
+                    <button class="modern-switch is-on" type="button" id="wifi-toggle" aria-pressed="true">
+                        <span class="modern-switch-thumb"></span>
+                    </button>
+                </div>
+                <div class="network-flyout-wifi-list" id="network-wifi-list">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
         </div>
     </div>
 
@@ -712,44 +914,45 @@
                     <div class="modern-dropdown-item settings-power-menu-item" data-action="shut-down">Shut down</div>
                     <div class="modern-dropdown-item settings-power-menu-item" data-action="restart">Restart</div>
                 </div>
-                <div class="settings-controls">
-                    <div class="settings-controls-grid">
-                        <div class="settings-control-item" data-control="network">
-                            <span class="mif-network-cell"></span>
-                            <span class="settings-control-label">Network</span>
+                <div class="six-pack">
+                    <div class="six-pack-grid">
+                        <div class="six-pack-item" data-control="network">
+                            <img class="six-pack-network-icon" id="six-pack-network-icon"
+                                src="resources/images/tray/network/wireless_5/32.png" alt="Network">
+                            <span class="six-pack-label" id="six-pack-network-label">Network</span>
                         </div>
-                        <div class="settings-control-item" data-control="volume">
-                            <span class="mif-volume-high"></span>
-                            <span class="settings-control-label">Volume</span>
-                            <div class="settings-slider-popup" data-popup="volume" aria-hidden="true">
-                                <div class="settings-slider-track-wrapper">
-                                    <input type="range" min="0" max="100" value="50" step="1" class="settings-slider"
+                        <div class="six-pack-item" data-control="volume">
+                            <span class="sui-volume-high"></span>
+                            <span class="six-pack-label">Volume</span>
+                            <div class="six-pack-slider-popup" data-popup="volume" aria-hidden="true">
+                                <div class="six-pack-slider-track-wrapper">
+                                    <input type="range" min="0" max="100" value="50" step="1" class="six-pack-slider"
                                         id="settings-volume-slider" aria-label="Adjust volume">
                                 </div>
                             </div>
                         </div>
-                        <div class="settings-control-item" data-control="brightness">
-                            <span class="mif-brightness"></span>
-                            <span class="settings-control-label">Brightness</span>
-                            <div class="settings-slider-popup" data-popup="brightness" aria-hidden="true">
-                                <div class="settings-slider-track-wrapper">
-                                    <input type="range" min="0" max="100" value="100" step="1" class="settings-slider"
+                        <div class="six-pack-item" data-control="brightness">
+                            <span class="sui-brightness"></span>
+                            <span class="six-pack-label">Brightness</span>
+                            <div class="six-pack-slider-popup" data-popup="brightness" aria-hidden="true">
+                                <div class="six-pack-slider-track-wrapper">
+                                    <input type="range" min="0" max="100" value="100" step="1" class="six-pack-slider"
                                         id="settings-brightness-slider" aria-label="Adjust screen brightness">
                                 </div>
                             </div>
                         </div>
-                        <div class="settings-control-item" data-control="fullscreen">
-                            <span class="settings-control-glyph settings-control-glyph--fullscreen"
+                        <div class="six-pack-item" data-control="fullscreen">
+                            <span class="six-pack-glyph sui-expand"
                                 aria-hidden="true"></span>
-                            <span class="settings-control-label">Fullscreen</span>
+                            <span class="six-pack-label">Fullscreen</span>
                         </div>
-                        <div class="settings-control-item" data-control="power">
-                            <span class="mif-settings-power"></span>
-                            <span class="settings-control-label">Power</span>
+                        <div class="six-pack-item" data-control="power">
+                            <span class="sui-power"></span>
+                            <span class="six-pack-label">Power</span>
                         </div>
-                        <div class="settings-control-item" data-control="keyboard">
-                            <span class="mif-keyboard"></span>
-                            <span class="settings-control-label">Keyboard</span>
+                        <div class="six-pack-item" data-control="keyboard">
+                            <span class="sui-keyboard"></span>
+                            <span class="six-pack-label">Keyboard</span>
                         </div>
                     </div>
                     <div class="settings-pc-link">
@@ -761,8 +964,8 @@
             <!-- Personalize Panel (includes header, content, no footer) -->
             <div class="settings-panel personalize-panel">
                 <div class="modern-flyout-header">
-                    <button class="personalize-back-button" title="Back to Settings">
-                        <span class="personalize-back-icon">‹</span>
+                    <button class="metro-back-btn personalize-back-button" title="Back to Settings">
+                        <span class="sui-back"></span>
                     </button>
                     <span class="modern-flyout-header-text">Personalize</span>
                 </div>
@@ -785,8 +988,8 @@
             <!-- Tiles Panel (includes header, content, no footer) -->
             <div class="settings-panel tiles-panel">
                 <div class="modern-flyout-header">
-                    <button class="tiles-back-button" title="Back to Settings">
-                        <span class="tiles-back-icon">‹</span>
+                    <button class="metro-back-btn tiles-back-button" title="Back to Settings">
+                        <span class="sui-back"></span>
                     </button>
                     <span class="modern-flyout-header-text">Tiles</span>
                 </div>
@@ -828,6 +1031,7 @@
     <script src="vendor/sortable.min.js"></script>
     <script src="registry/tile-layout-registry.js"></script>
     <script src="registry/store-registry.js"></script>
+    <script src="registry/market-registry.js"></script>
     <script src="registry/ie-registry.js"></script>
     <script src="registry/explorer-registry.js"></script>
     <script src="registry/file-associations-registry.js"></script>
@@ -844,16 +1048,26 @@
     <script src="components/device_connectivity/drive-notifications.js"></script>
     <script src="components/device_connectivity/usb-eject-monitor.js"></script>
     <script src="components/classic-flyout-manager.js"></script>
+    <script src="components/shell/time-bank.js"></script>
     <script src="components/taskbar-flyouts-init.js"></script>
     <script src="components/volume/volume-ui.js"></script>
+    <script src="components/brightness/brightness-ui.js"></script>
     <script src="components/clock/clock-flyout.js"></script>
     <script src="components/network/network-monitor.js"></script>
+    <script src="components/bluetooth/bluetooth-tray.js"></script>
     <script src="components/battery/battery-monitor.js"></script>
+    <script src="components/battery/battery-popup.js"></script>
     <script src="components/explorer/open-with-dialog.js"></script>
     <script src="components/explorer/file-associations.js"></script>
     <script src="components/explorer/icon-builder.js"></script>
+    <script src="components/explorer/known-folders.js"></script>
     <script src="components/explorer/explorer-engine.js"></script>
+    <script src="components/search/one-search.js"></script>
+    <script src="components/continuum/device-posture-dom.js"></script>
+    <script src="components/shell/virtual-desktops.js"></script>
     <script src="components/shell/task-view.js"></script>
+    <script src="components/shell/snap-assist.js"></script>
+    <script src="components/shell/snap-shortcuts.js"></script>
     <script src="components/shell/taskbar-hover-preview.js"></script>
     <script src="components/shell/tray-overflow.js"></script>
     <script src="components/shell/host-wallpaper.js"></script>

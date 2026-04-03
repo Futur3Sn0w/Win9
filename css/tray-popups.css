@@ -1,0 +1,1469 @@
+/* ===== TRAY POPUP VARIABLES & ANIMATION ===== */
+body {
+    --threshold-desktop-popup-border-color: color-mix(in srgb, var(--ui-wall-color, #0078d7) 58%, #000 42%);
+    --threshold-desktop-popup-shadow:
+        0 25px 70px rgba(0, 0, 0, 0.22),
+        0 6px 16px rgba(0, 0, 0, 0.2);
+    --threshold-desktop-popup-shadow-soft:
+        0 25px 70px rgba(0, 0, 0, 0.12),
+        0 6px 16px rgba(0, 0, 0, 0.1);
+    --threshold-desktop-popup-shadow-hidden:
+        0 25px 70px rgba(0, 0, 0, 0),
+        0 6px 16px rgba(0, 0, 0, 0);
+    --threshold-desktop-popup-z-index: 199990;
+    --threshold-desktop-popup-enter-offset: 7px;
+    --threshold-desktop-popup-enter-transform-duration: 0.15s;
+    --threshold-desktop-popup-enter-opacity-duration: 0.11s;
+    --threshold-desktop-popup-close-duration: 0.22s;
+}
+
+body.modern-window-styling-disabled {
+    --threshold-desktop-popup-border-color: #00000044;
+    --threshold-desktop-popup-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
+    --threshold-desktop-popup-shadow-soft: 0 0 4px rgba(0, 0, 0, 0.1);
+    --threshold-desktop-popup-shadow-hidden: 0 0 4px rgba(0, 0, 0, 0);
+}
+
+@keyframes thresholdDesktopPopupClose {
+    0% {
+        opacity: 1;
+        transform: translateY(0);
+        box-shadow: var(--threshold-desktop-popup-shadow);
+    }
+
+    20% {
+        box-shadow: var(--threshold-desktop-popup-shadow-soft);
+    }
+
+    40% {
+        box-shadow: var(--threshold-desktop-popup-shadow-hidden);
+    }
+
+    100% {
+        opacity: 0;
+        transform: translateY(0);
+        box-shadow: var(--threshold-desktop-popup-shadow-hidden);
+    }
+}
+
+/* ===== CLASSIC DESKTOP TASKBAR FLYOUTS ===== */
+.classic-flyout {
+    position: fixed;
+    bottom: 50px;
+    right: 10px;
+
+    min-width: 50px;
+    min-height: 50px;
+
+    background: var(--ui-wall-color);
+    box-shadow:
+        0 0 3px rgba(0, 0, 0, 0.2),
+        inset 0 0 0 1px rgba(0, 0, 0, 0.2);
+
+    display: none;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+
+    padding: 8px;
+    box-sizing: border-box;
+
+    z-index: 200010;
+
+    &::after {
+        content: '';
+        position: absolute;
+        z-index: 50;
+
+        width: 100%;
+        height: 100%;
+
+        background-color: rgba(255, 255, 255, 0.3);
+    }
+}
+
+body.continuum-tablet-start-home .classic-flyout,
+body.continuum-tablet-start-home .volume-flyout {
+    z-index: 200120;
+}
+
+.classic-flyout.visible {
+    display: flex;
+}
+
+/* Lower z-index on system screens so they appear below those screens */
+body.view-boot .classic-flyout,
+body.view-boot #eject-icon-context-menu,
+body.view-boot #bluetooth-icon-context-menu,
+body.view-lock .classic-flyout,
+body.view-lock #eject-icon-context-menu,
+body.view-lock #bluetooth-icon-context-menu,
+body.view-login .classic-flyout,
+body.view-login #eject-icon-context-menu,
+body.view-login #bluetooth-icon-context-menu {
+    z-index: 1 !important;
+    pointer-events: none;
+}
+
+.classic-flyout-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 100%;
+    width: 100%;
+    gap: 0;
+
+    position: relative;
+    z-index: 100;
+    background-color: white;
+
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.2);
+}
+
+/* ===== BATTERY POPUP STYLES ===== */
+.battery-flyout-content {
+    padding: 12px 15px;
+    gap: 12px;
+    align-items: flex-start;
+}
+
+.battery-status-header {
+    display: flex;
+    gap: 12px;
+    width: 100%;
+    align-items: flex-start;
+}
+
+.battery-icon-wrapper {
+    flex-shrink: 0;
+}
+
+.battery-icon-display {
+    position: relative;
+    width: 32px;
+    height: 32px;
+}
+
+.battery-icon-sprite {
+    position: absolute;
+    width: 32px;
+    height: 32px;
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: 0 0;
+}
+
+.battery-charge-indicator {
+    position: absolute;
+    bottom: 0;
+    right: -2px;
+    width: 32px;
+    height: 32px;
+    background-size: 992px 32px;
+    background-repeat: no-repeat;
+    background-position: 0 0;
+    display: none;
+}
+
+.battery-charge-indicator.visible {
+    display: block;
+}
+
+.battery-status-text {
+    flex: 1;
+    font-size: var(--system-font-size);
+    color: #000;
+    font-family: Segoe UI, sans-serif;
+    padding-top: 2px;
+}
+
+.battery-power-plan {
+    width: 100%;
+    border-top: 1px solid #e0e0e0;
+    padding-top: 8px;
+    padding-left: 8px;
+}
+
+.power-plan-label {
+    font-size: 10px;
+    color: #666;
+    margin-bottom: 6px;
+    font-family: Segoe UI, sans-serif;
+}
+
+.power-plan-options {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.power-plan-option {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    font-size: var(--system-font-size);
+    color: #000;
+    font-family: Segoe UI, sans-serif;
+}
+
+.power-plan-option input[type="radio"] {
+    cursor: pointer;
+    width: 14px;
+    height: 14px;
+}
+
+.battery-flyout-footer {
+    width: 100%;
+    border-top: 1px solid #e0e0e0;
+    padding-top: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    align-items: center;
+}
+
+.battery-action-link {
+    font-size: var(--system-font-size);
+    color: #0066cc;
+    text-decoration: none;
+    font-family: Segoe UI, sans-serif;
+
+    &:hover {
+        text-decoration: underline;
+    }
+}
+
+/* ===== TRAY OVERFLOW POPUP ===== */
+.tray-overflow-popup {
+    position: fixed;
+    left: 0;
+    bottom: calc(var(--taskbar-reserved-height, var(--taskbar-height, 40px)) + 8px);
+    min-width: 118px;
+    padding: 6px;
+    background: color-mix(in srgb, var(--ui-wall-color, #0078d7) 82%, #8cb8df 18%);
+    border: 1px solid var(--threshold-desktop-popup-border-color);
+    box-shadow: var(--threshold-desktop-popup-shadow);
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(var(--threshold-desktop-popup-enter-offset));
+    transition:
+        transform var(--threshold-desktop-popup-enter-transform-duration) ease-out,
+        opacity var(--threshold-desktop-popup-enter-opacity-duration) ease-out;
+    z-index: var(--threshold-desktop-popup-z-index);
+}
+
+.tray-overflow-popup::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    box-shadow:
+        inset 0 0 0 1000px rgba(255, 255, 255, 0.16),
+        inset 0 0 0 1000px rgba(90, 90, 90, 0.1);
+}
+
+.tray-overflow-popup.visible {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
+}
+
+.tray-overflow-popup.closing {
+    opacity: 1;
+    pointer-events: none;
+    transform: translateY(0);
+    animation: thresholdDesktopPopupClose var(--threshold-desktop-popup-close-duration) cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.tray-overflow-popup-shell {
+    position: relative;
+    z-index: 1;
+    background: #fff;
+    min-width: 104px;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.94);
+}
+
+.tray-overflow-popup-plate {
+    position: relative;
+    min-height: 48px;
+    padding: 8px 7px 8px;
+    background: #ffffff;
+}
+
+.tray-overflow-items {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    min-width: 28px;
+    min-height: 28px;
+}
+
+.tray-overflow-items .system-icon {
+    width: 28px;
+    height: 28px;
+    padding: 6px;
+    z-index: 1;
+}
+
+.tray-overflow-items .system-icon::before,
+.tray-overflow-items .system-icon::after {
+    content: none;
+}
+
+.tray-overflow-items .system-icon:hover {
+    background: rgba(0, 120, 215, 0.08);
+    box-shadow: inset 0 0 0 1px rgba(0, 120, 215, 0.2);
+}
+
+.tray-overflow-footer {
+    padding: 8px 7px 7px;
+    border-top: 1px solid rgba(0, 0, 0, 0.14);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.78);
+}
+
+.tray-overflow-customize {
+    width: 100%;
+    height: 26px;
+    padding: 0 9px 1px;
+    background: #fff;
+    border: none;
+    color: #0054b9;
+    font-family: 'Segoe UI', sans-serif;
+    font-size: var(--system-font-size);
+    cursor: pointer;
+
+    &:hover {
+        text-decoration: underline;
+    }
+}
+
+body.taskbar-small-icons .tray-overflow-items .system-icon {
+    width: 24px;
+    height: 24px;
+    padding: 4px;
+}
+
+/* ===== NOTIFICATION CENTER PANEL ===== */
+.notification-center-panel {
+    position: fixed;
+    right: 10px;
+    bottom: calc(var(--taskbar-reserved-height, var(--taskbar-height, 40px)) + 10px);
+    width: 310px;
+    height: 400px;
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+    border: 1px solid var(--threshold-desktop-popup-border-color);
+    box-shadow: var(--threshold-desktop-popup-shadow);
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(var(--threshold-desktop-popup-enter-offset));
+    transform-origin: bottom right;
+    transition:
+        transform var(--threshold-desktop-popup-enter-transform-duration) ease-out,
+        opacity var(--threshold-desktop-popup-enter-opacity-duration) ease-out;
+    z-index: var(--threshold-desktop-popup-z-index);
+    overflow: hidden;
+}
+
+.notification-center-panel.visible {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
+}
+
+.notification-center-panel.closing {
+    opacity: 1;
+    pointer-events: none;
+    transform: translateY(0);
+    animation: thresholdDesktopPopupClose var(--threshold-desktop-popup-close-duration) cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.notification-center-panel-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 8px 10px 6px;
+    flex-shrink: 0;
+}
+
+.notification-center-panel-title {
+    color: #8a8a8a;
+    font-size: 19px;
+    font-weight: 300;
+    letter-spacing: -0.3px;
+    flex: 1;
+}
+
+.notification-center-panel-clear {
+    border: none;
+    background: transparent;
+    color: #8a8a8a;
+    font-family: 'Segoe UI', sans-serif;
+    padding: 0;
+}
+
+.notification-center-panel-clear {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: var(--system-font-size);
+    text-transform: uppercase;
+    padding: 4px 6px;
+    border-radius: 2px;
+}
+
+.notification-center-panel-clear:hover {
+    color: #4b4b4b;
+    background: #f0f0f0;
+}
+
+.notification-center-panel-clear:active {
+    background: #e0e0e0;
+    color: #3b3b3b;
+}
+
+.notification-center-panel-clear-icon {
+    font-size: 14px;
+    line-height: 1;
+    margin-top: -1px;
+}
+
+.notification-center-panel-clear:disabled {
+    opacity: 0.45;
+    pointer-events: none;
+}
+
+.notification-center-panel-body {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    background: #fff;
+}
+
+.notification-center-section {
+    border-top: 1px solid #ececec;
+}
+
+.notification-center-section:first-child {
+    border-top: none;
+}
+
+.notification-center-section-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 12px 7px;
+}
+
+.notification-center-section-header--with-icon {
+    padding-left: 0;
+}
+
+.notification-center-section-icon {
+    width: 36px;
+    height: 36px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.notification-center-section-icon[class*="app-icon-plate--"] {
+    box-shadow: inset 0 0 1px rgba(255, 255, 255, 0.4);
+}
+
+.notification-center-section-icon img {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+}
+
+.notification-center-section-icon span[class^="mif-"],
+.notification-center-section-icon span[class^="sui-"] {
+    font-size: 18px;
+    color: #fff;
+}
+
+.notification-center-section-title {
+    color: #4f4f4f;
+    font-size: 16px;
+    font-weight: 300;
+    line-height: 1.2;
+}
+
+.notification-center-item {
+    position: relative;
+    padding: 0 0 8px;
+    color: #111;
+    touch-action: pan-y;
+}
+
+.notification-center-item-button {
+    width: 100%;
+    border: none;
+    background: transparent;
+    padding: 4px 34px 6px 12px;
+    text-align: left;
+    color: inherit;
+    font: inherit;
+    display: block;
+    border-radius: 2px;
+    transition: background-color 0.14s ease, opacity 0.14s ease;
+}
+
+.notification-center-item:hover .notification-center-item-button,
+.notification-center-item:focus-within .notification-center-item-button,
+.notification-center-item.notification-center-item--dragging .notification-center-item-button {
+    background: #f3f3f3;
+}
+
+.notification-center-section--with-icon .notification-center-item-button {
+    padding-left: 44px;
+}
+
+.notification-center-item.notification-center-item--dragging {
+    z-index: 1;
+}
+
+.notification-center-item.notification-center-item--dragging .notification-center-item-button {
+    transition: background-color 0.14s ease;
+}
+
+.notification-center-item-dismiss {
+    position: absolute;
+    top: 4px;
+    right: 8px;
+    width: 24px;
+    height: 24px;
+    border: none;
+    background: transparent;
+    color: #6d6d6d;
+    border-radius: 2px;
+    opacity: 0;
+    transform: translateX(6px);
+    pointer-events: none;
+    transition: opacity 0.14s ease, transform 0.14s ease, background-color 0.14s ease, color 0.14s ease;
+    z-index: 2;
+}
+
+@media (hover: hover) and (pointer: fine) {
+
+    .notification-center-item:hover .notification-center-item-dismiss,
+    .notification-center-item:focus-within .notification-center-item-dismiss,
+    .notification-center-item.notification-center-item--dragging .notification-center-item-dismiss {
+        opacity: 1;
+        transform: translateX(0);
+        pointer-events: auto;
+    }
+}
+
+.notification-center-item-dismiss:hover {
+    background: #e7e7e7;
+    color: #2f2f2f;
+}
+
+.notification-center-item-dismiss:active {
+    background: #d9d9d9;
+    color: #1f1f1f;
+}
+
+.notification-center-item-topline {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+}
+
+.notification-center-item-title {
+    flex: 1;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.35;
+}
+
+.notification-center-item-time {
+    font-size: var(--system-font-size);
+    font-weight: 500;
+    white-space: nowrap;
+    transition: transform 0.14s ease, opacity 0.14s ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+
+    .notification-center-item:hover .notification-center-item-time,
+    .notification-center-item:focus-within .notification-center-item-time {
+        transform: translateX(-18px);
+        opacity: 0.7;
+    }
+}
+
+.notification-center-item-description {
+    margin-top: 2px;
+    color: #383838;
+    font-size: var(--system-font-size);
+    line-height: 1.45;
+}
+
+/* ===== VOLUME FLYOUT ===== */
+.volume-flyout {
+    width: 84px;
+    height: 305px;
+}
+
+.volume-flyout .classic-flyout-content {
+    padding: 0;
+}
+
+.volume-flyout-body {
+    display: flex;
+    flex: 1;
+    width: 100%;
+    flex-direction: column;
+    align-items: center;
+}
+
+.volume-flyout-modern-header {
+    display: none;
+}
+
+.volume-icon-display {
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font: inherit;
+    font-size: 28px;
+    color: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 15px 0 20px;
+}
+
+.volume-slider-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    position: relative;
+}
+
+.volume-slider {
+    -webkit-appearance: slider-vertical;
+    appearance: slider-vertical;
+    width: 8px;
+    height: 117px;
+    background: rgba(255, 255, 255, 0.1);
+    outline: none;
+    border-radius: 0;
+    margin: 0;
+    padding: 0;
+}
+
+.volume-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    background: #fff;
+    border-radius: 50%;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+}
+
+.volume-slider::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    background: #fff;
+    border: none;
+    border-radius: 50%;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+}
+
+.volume-slider::-webkit-slider-thumb:hover {
+    background: var(--ui-accent);
+}
+
+.volume-slider::-moz-range-thumb:hover {
+    background: var(--ui-accent);
+}
+
+.volume-level-display {
+    color: #000;
+    font-size: 14px;
+    font-weight: 300;
+    min-width: 35px;
+    text-align: center;
+    margin: auto 0;
+}
+
+.volume-flyout .mixer {
+    height: 43px;
+    width: 100%;
+
+    margin-top: auto;
+
+    background-color: #F6F6F6;
+    border-top: 1px solid #DBDBDB;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+
+    & a {
+        text-decoration: none;
+        font-size: 13px;
+    }
+}
+
+body.taskbar-modern-volume-popup-enabled .volume-flyout {
+    display: flex;
+    visibility: hidden;
+    width: 220px;
+    height: auto;
+    min-height: 0;
+    background: #1d1d1d;
+    border: 1px solid var(--threshold-desktop-popup-border-color);
+    box-shadow: var(--threshold-desktop-popup-shadow);
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(var(--threshold-desktop-popup-enter-offset));
+    transform-origin: bottom right;
+    transition:
+        transform var(--threshold-desktop-popup-enter-transform-duration) ease-out,
+        opacity var(--threshold-desktop-popup-enter-opacity-duration) ease-out;
+    padding: 0;
+    z-index: var(--threshold-desktop-popup-z-index);
+}
+
+body.taskbar-modern-volume-popup-enabled .volume-flyout.visible {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: translateY(0);
+}
+
+body.taskbar-modern-volume-popup-enabled .volume-flyout.closing {
+    display: flex;
+    opacity: 1;
+    visibility: visible;
+    pointer-events: none;
+    transform: translateY(0);
+    animation: thresholdDesktopPopupClose var(--threshold-desktop-popup-close-duration) cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+body.taskbar-modern-volume-popup-enabled .volume-flyout::after {
+    display: none;
+}
+
+body.taskbar-modern-volume-popup-enabled .volume-flyout .classic-flyout-content {
+    background: #1d1d1d;
+    box-shadow: none;
+    height: auto;
+    padding: 10px 12px 12px;
+}
+
+body.taskbar-modern-volume-popup-enabled .volume-flyout-body {
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    flex: 0 0 auto;
+}
+
+body.taskbar-modern-volume-popup-enabled .volume-flyout-modern-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    width: 100%;
+    margin-bottom: 9px;
+    color: #f2f2f2;
+    font-size: 12px;
+    line-height: 1.2;
+}
+
+body.taskbar-modern-volume-popup-enabled .volume-flyout-device-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
+}
+
+body.taskbar-modern-volume-popup-enabled .volume-flyout-device-chevron {
+    color: #d4d4d4;
+    font-size: 14px;
+    line-height: 1;
+}
+
+body.taskbar-modern-volume-popup-enabled .volume-icon-display {
+    width: 14px;
+    min-width: 14px;
+    padding: 0;
+    color: #fff;
+    font-size: 14px;
+}
+
+body.taskbar-modern-volume-popup-enabled .volume-slider-container {
+    flex: 1;
+    align-items: stretch;
+    gap: 0;
+}
+
+body.taskbar-modern-volume-popup-enabled .volume-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 154px;
+    height: 10px;
+    background: #414141;
+    border-radius: 0;
+    margin: 0;
+}
+
+body.taskbar-modern-volume-popup-enabled .volume-slider::-webkit-slider-runnable-track {
+    height: 10px;
+    background: transparent;
+}
+
+body.taskbar-modern-volume-popup-enabled .volume-slider::-moz-range-track {
+    height: 10px;
+    background: #414141;
+    border: none;
+    border-radius: 0;
+}
+
+body.taskbar-modern-volume-popup-enabled .volume-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 11px;
+    height: 10px;
+    margin-top: 0;
+    background: #fff;
+    border-radius: 0;
+    box-shadow: none;
+}
+
+body.taskbar-modern-volume-popup-enabled .volume-slider::-webkit-slider-thumb:hover {
+    background: #fff;
+}
+
+body.taskbar-modern-volume-popup-enabled .volume-slider::-moz-range-thumb {
+    width: 11px;
+    height: 10px;
+    background: #fff;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+}
+
+body.taskbar-modern-volume-popup-enabled .volume-slider::-moz-range-thumb:hover {
+    background: #fff;
+}
+
+body.taskbar-modern-volume-popup-enabled .volume-slider::-moz-range-progress {
+    height: 10px;
+    background: var(--ui-accent);
+    border-radius: 0;
+}
+
+body.taskbar-modern-volume-popup-enabled .volume-level-display,
+body.taskbar-modern-volume-popup-enabled .volume-flyout .mixer {
+    display: none;
+}
+
+/* ===== CLOCK FLYOUT ===== */
+.clock-flyout {
+    width: 352px;
+    height: 263px;
+}
+
+.clock-flyout-modern-shell {
+    display: none;
+}
+
+.clock-flyout .classic-flyout-content {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
+    padding: 0;
+}
+
+.clock-flyout-date-header {
+    text-align: center;
+    font-size: var(--system-font-size);
+    color: #0072C6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 42px;
+    flex-shrink: 0;
+}
+
+.clock-flyout-main {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    height: 165px;
+    width: 100%;
+}
+
+.clock-flyout-calendar {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    width: 160px;
+    height: 165px;
+}
+
+.calendar-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.calendar-nav-button {
+    background: none;
+    border: none;
+    color: #000;
+    padding: 0 5px;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    font-size: 0;
+    line-height: 1;
+    overflow: hidden;
+}
+
+.calendar-nav-button::before {
+    display: block;
+    font-size: 18px;
+    line-height: 1;
+}
+
+.calendar-prev::before {
+    content: '\2039';
+}
+
+.calendar-next::before {
+    content: '\203A';
+}
+
+.calendar-nav-button:hover {
+    background-color: rgba(0, 114, 198, 0.1);
+}
+
+.calendar-nav-button:active {
+    background-color: rgba(0, 114, 198, 0.2);
+}
+
+.calendar-month-year {
+    font-size: 12px;
+    color: #000;
+}
+
+.calendar-weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 0;
+    margin-bottom: 4px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.15);
+    padding-bottom: 4px;
+}
+
+.calendar-weekday {
+    text-align: center;
+    font-size: 12px;
+    color: #000;
+}
+
+.calendar-days {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    grid-template-rows: repeat(6, 1fr);
+    gap: 0;
+}
+
+.calendar-day {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    color: #000;
+    width: 24px;
+    height: 15px;
+    border: 1px solid transparent;
+}
+
+.calendar-day:hover {
+    background-color: rgba(0, 114, 198, 0.1);
+    border-color: rgba(0, 114, 198, 0.3);
+}
+
+.calendar-day.other-month {
+    opacity: 0.5;
+}
+
+.calendar-day.today {
+    background-color: #CBE8F6;
+    border-color: #0066CC;
+}
+
+.calendar-day.today:hover {
+    background-color: #CBE8F6;
+    border-color: #249CE4;
+}
+
+.clock-flyout-analog {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    height: 165px;
+}
+
+.analog-clock-canvas {
+    display: block;
+}
+
+.digital-time {
+    font-size: 13px;
+    color: #000;
+    text-align: center;
+}
+
+.clock-flyout-footer {
+    border-top: 1px solid #DBDBDB;
+    background-color: #F6F6F6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 41px;
+    width: 100%;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.clock-settings-link {
+    color: #0072C6;
+    text-decoration: none;
+    font-size: var(--system-font-size);
+}
+
+.clock-settings-link:hover {
+    text-decoration: underline;
+}
+
+body.taskbar-modern-clock-popup-enabled .clock-flyout {
+    display: flex;
+    visibility: hidden;
+    width: 288px;
+    height: auto;
+    min-height: 431px;
+    background: #fff;
+    border: 1px solid var(--threshold-desktop-popup-border-color);
+    box-shadow: var(--threshold-desktop-popup-shadow);
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(var(--threshold-desktop-popup-enter-offset));
+    transform-origin: bottom right;
+    transition:
+        transform var(--threshold-desktop-popup-enter-transform-duration) ease-out,
+        opacity var(--threshold-desktop-popup-enter-opacity-duration) ease-out;
+    padding: 0;
+    z-index: var(--threshold-desktop-popup-z-index);
+}
+
+body.taskbar-modern-clock-popup-enabled .clock-flyout.visible {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: translateY(0);
+}
+
+body.taskbar-modern-clock-popup-enabled .clock-flyout.closing {
+    display: flex;
+    opacity: 1;
+    visibility: visible;
+    pointer-events: none;
+    transform: translateY(0);
+    animation: thresholdDesktopPopupClose var(--threshold-desktop-popup-close-duration) cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+body.taskbar-modern-clock-popup-enabled .clock-flyout::after {
+    display: none;
+}
+
+body.taskbar-modern-clock-popup-enabled .clock-flyout .classic-flyout-content {
+    background: #fff;
+    box-shadow: none;
+    height: auto;
+    padding: 24px 26px 22px;
+}
+
+body.taskbar-modern-clock-popup-enabled .clock-flyout-modern-shell {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    width: 236px;
+}
+
+body.taskbar-modern-clock-popup-enabled .clock-flyout-modern-time {
+    display: flex;
+    align-items: baseline;
+    gap: 5px;
+    color: #1b1b1b;
+    font-family: 'Segoe UI Light', 'Segoe UI', sans-serif;
+    font-weight: 300;
+    line-height: 1;
+}
+
+body.taskbar-modern-clock-popup-enabled .clock-flyout-modern-time-value {
+    font-size: 22px;
+    letter-spacing: -0.02em;
+}
+
+body.taskbar-modern-clock-popup-enabled .clock-flyout-modern-time-period {
+    margin-top: 0;
+    font-size: 13px;
+    font-family: 'Segoe UI', sans-serif;
+    font-weight: 400;
+    letter-spacing: 0.08em;
+    line-height: 1;
+}
+
+body.taskbar-modern-clock-popup-enabled .clock-flyout-modern-link {
+    margin-top: 34px;
+    color: #2d4f85;
+    text-decoration: none;
+    font-size: 12px;
+    line-height: 1.2;
+}
+
+body.taskbar-modern-clock-popup-enabled .clock-flyout-modern-link:hover {
+    text-decoration: underline;
+}
+
+body.taskbar-modern-clock-popup-enabled .clock-flyout-modern-divider {
+    width: 236px;
+    height: 1px;
+    margin-top: 21px;
+    background: #a6a6a6;
+}
+
+body.taskbar-modern-clock-popup-enabled .clock-flyout-date-header {
+    align-self: flex-start;
+    width: 236px;
+    justify-content: flex-start;
+    text-align: left;
+    height: auto;
+    margin-top: 22px;
+    margin-bottom: 20px;
+    color: #2d4f85;
+    font-size: 12px;
+    line-height: 1.2;
+}
+
+body.taskbar-modern-clock-popup-enabled .clock-flyout-main {
+    display: block;
+    height: auto;
+}
+
+body.taskbar-modern-clock-popup-enabled .clock-flyout-calendar {
+    width: 236px;
+    height: auto;
+    justify-content: flex-start;
+}
+
+body.taskbar-modern-clock-popup-enabled .calendar-header {
+    height: 40px;
+    margin-bottom: 0;
+    border: 1px solid #dcdcdc;
+    border-bottom: none;
+    background: #fdfdfd;
+}
+
+body.taskbar-modern-clock-popup-enabled .calendar-month-year {
+    order: 0;
+    flex: 1;
+    padding-left: 12px;
+    color: #1c1c1c;
+    font-family: 'Segoe UI Semibold', 'Segoe UI', sans-serif;
+    font-size: 17px;
+    font-weight: 600;
+    line-height: 1;
+}
+
+body.taskbar-modern-clock-popup-enabled .calendar-nav-button {
+    width: 32px;
+    height: 40px;
+    padding: 0;
+    color: #222;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+body.taskbar-modern-clock-popup-enabled .calendar-prev {
+    order: 1;
+}
+
+body.taskbar-modern-clock-popup-enabled .calendar-next {
+    order: 2;
+}
+
+body.taskbar-modern-clock-popup-enabled .calendar-nav-button::before {
+    content: '';
+    width: 10px;
+    height: 10px;
+    border-top: 1.5px solid currentColor;
+    border-right: 1.5px solid currentColor;
+    font-size: 0;
+}
+
+body.taskbar-modern-clock-popup-enabled .calendar-prev::before {
+    transform: translateY(4px) rotate(-45deg);
+}
+
+body.taskbar-modern-clock-popup-enabled .calendar-next::before {
+    transform: translateY(-4px) rotate(135deg);
+}
+
+body.taskbar-modern-clock-popup-enabled .calendar-nav-button:hover {
+    background: #f2f2f2;
+}
+
+body.taskbar-modern-clock-popup-enabled .calendar-nav-button:active {
+    background: #e9e9e9;
+}
+
+body.taskbar-modern-clock-popup-enabled .calendar-weekdays {
+    margin-bottom: 0;
+    border: 1px solid #dcdcdc;
+    border-top: none;
+    border-bottom: none;
+    padding: 8px 0 7px;
+}
+
+body.taskbar-modern-clock-popup-enabled .calendar-weekday {
+    color: #3f3f3f;
+    font-size: var(--system-font-size);
+}
+
+body.taskbar-modern-clock-popup-enabled .calendar-days {
+    grid-template-rows: repeat(6, calc(236px / 7));
+    border-left: 1px solid #dcdcdc;
+    border-top: 1px solid #dcdcdc;
+}
+
+body.taskbar-modern-clock-popup-enabled .calendar-day {
+    width: auto;
+    aspect-ratio: 1 / 1;
+    height: auto;
+    border: none;
+    border-right: 1px solid #dcdcdc;
+    border-bottom: 1px solid #dcdcdc;
+    background: #fff;
+    color: #1d1d1d;
+    font-size: 16px;
+    font-weight: 400;
+}
+
+body.taskbar-modern-clock-popup-enabled .calendar-day:hover {
+    background: #f7f7f7;
+    border-color: #dcdcdc;
+}
+
+body.taskbar-modern-clock-popup-enabled .calendar-day.other-month {
+    background: #f3f3f3;
+    color: #6e6e6e;
+    opacity: 1;
+    font-weight: 300;
+}
+
+body.taskbar-modern-clock-popup-enabled .calendar-day.today {
+    background: #edf4ff;
+    color: #3c5b8d;
+    border-color: #dcdcdc;
+}
+
+body.taskbar-modern-clock-popup-enabled .calendar-day.today:hover {
+    background: #edf4ff;
+}
+
+body.taskbar-modern-clock-popup-enabled .clock-flyout-analog,
+body.taskbar-modern-clock-popup-enabled .clock-flyout-footer {
+    display: none;
+}
+
+/* ===== TASKBAR USERTILE PANEL ===== */
+.usertile-panel {
+    display: flex;
+    visibility: hidden;
+    width: 286px;
+    min-height: 0;
+    background: #fff;
+    border: 1px solid var(--threshold-desktop-popup-border-color);
+    box-shadow: var(--threshold-desktop-popup-shadow);
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(var(--threshold-desktop-popup-enter-offset));
+    transform-origin: bottom right;
+    transition:
+        transform var(--threshold-desktop-popup-enter-transform-duration) ease-out,
+        opacity var(--threshold-desktop-popup-enter-opacity-duration) ease-out;
+    padding: 0;
+    z-index: var(--threshold-desktop-popup-z-index);
+}
+
+.usertile-panel.visible {
+    display: flex;
+    visibility: visible;
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
+}
+
+.usertile-panel.closing {
+    display: flex;
+    visibility: visible;
+    opacity: 1;
+    pointer-events: none;
+    transform: translateY(0);
+    animation: thresholdDesktopPopupClose var(--threshold-desktop-popup-close-duration) cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.usertile-panel::after {
+    display: none;
+}
+
+.usertile-panel .classic-flyout-content {
+    align-items: stretch;
+    background: #fff;
+    box-shadow: none;
+    height: auto;
+    padding: 15px 18px 0;
+}
+
+.usertile-panel-label {
+    color: #3d3d3d;
+    font-size: 13px;
+    line-height: 1.2;
+}
+
+.usertile-panel-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    margin-top: 12px;
+}
+
+.usertile-panel-photo-shell {
+    position: relative;
+    width: 64px;
+    height: 64px;
+    flex-shrink: 0;
+    --usertile-panel-photo-inset: 8px;
+}
+
+.usertile-panel-photo-image {
+    position: absolute;
+    inset: var(--usertile-panel-photo-inset);
+    width: calc(100% - (var(--usertile-panel-photo-inset) * 2));
+    height: calc(100% - (var(--usertile-panel-photo-inset) * 2));
+    object-fit: cover;
+    object-position: center;
+    display: block;
+    border-radius: 0;
+}
+
+body.threshold-modern-logonui .usertile-panel-photo-image {
+    border-radius: 0;
+}
+
+.usertile-panel-photo-frame {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+    pointer-events: none;
+}
+
+.usertile-panel-profile {
+    min-width: 0;
+    padding-top: 7px;
+}
+
+.usertile-panel-name {
+    color: #111;
+    font-size: 29px;
+    font-family: 'Segoe UI Semibold', 'Segoe UI', sans-serif;
+    font-weight: 600;
+    line-height: 1.05;
+    letter-spacing: -0.03em;
+    word-break: break-word;
+}
+
+.usertile-panel-meta {
+    color: #202020;
+    font-size: 12px;
+    line-height: 1.35;
+}
+
+.usertile-panel-meta+.usertile-panel-meta {
+    margin-top: 1px;
+}
+
+.usertile-panel-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 9px;
+    margin-top: 27px;
+    padding-bottom: 20px;
+}
+
+.usertile-panel-link,
+.usertile-panel-footer-button {
+    border: none;
+    background: transparent;
+    color: #2d4f85;
+    font: inherit;
+    font-size: 12px;
+    line-height: 1.2;
+    padding: 0;
+    cursor: pointer;
+    text-align: left;
+}
+
+.usertile-panel-link:hover,
+.usertile-panel-footer-button:hover {
+    text-decoration: underline;
+}
+
+.usertile-panel-footer {
+    margin: 0 -18px;
+    border-top: 1px solid #d8d8d8;
+    background: linear-gradient(to bottom, #fbfbfb 0%, #f1f1f1 100%);
+    padding: 11px 18px 12px;
+}
+
+.usertile-panel-footer-button {
+    width: 100%;
+    text-align: center;
+}
+
+/* ===== BATTERY FLYOUT ===== */
+.battery-flyout {
+    width: 249px;
+    height: 207px;
+}

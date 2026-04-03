@@ -3,7 +3,7 @@
     {
       "id": "system-security",
       "name": "System and Security",
-      "icon": "mif-security",
+      "icon": "sui-lock",
       "quickLinks": [
         {
           "text": "Review your computer's status",
@@ -22,7 +22,7 @@
     {
       "id": "network-internet",
       "name": "Network and Internet",
-      "icon": "mif-earth",
+      "icon": "sui-globe",
       "quickLinks": [
         {
           "text": "View network status and tasks",
@@ -33,7 +33,7 @@
     {
       "id": "hardware-sound",
       "name": "Hardware and Sound",
-      "icon": "mif-printer",
+      "icon": "sui-printer",
       "quickLinks": [
         {
           "text": "View devices and printers",
@@ -48,7 +48,7 @@
     {
       "id": "programs",
       "name": "Programs",
-      "icon": "mif-apps",
+      "icon": "sui-all-apps",
       "quickLinks": [
         {
           "text": "Uninstall a program",
@@ -59,7 +59,7 @@
     {
       "id": "user-accounts",
       "name": "User Accounts and Family Safety",
-      "icon": "mif-users",
+      "icon": "sui-people",
       "quickLinks": [
         {
           "text": "Change account type",
@@ -74,7 +74,7 @@
     {
       "id": "appearance",
       "name": "Appearance and Personalization",
-      "icon": "mif-paint",
+      "icon": "sui-pencil",
       "quickLinks": [
         {
           "text": "Change the theme",
@@ -93,7 +93,7 @@
     {
       "id": "clock-region",
       "name": "Clock, Language, and Region",
-      "icon": "mif-alarm",
+      "icon": "sui-clock",
       "quickLinks": [
         {
           "text": "Change input methods",
@@ -108,7 +108,7 @@
     {
       "id": "ease-of-access",
       "name": "Ease of Access",
-      "icon": "mif-accessibility",
+      "icon": "sui-accessibility",
       "quickLinks": [
         {
           "text": "Let Windows suggest settings",

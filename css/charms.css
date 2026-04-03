@@ -4,8 +4,20 @@
     right: -5px;
     width: 20px;
     height: 20px;
-    z-index: 200001;
+    z-index: 200002;
     pointer-events: all;
+}
+
+.desktop-modern-charms-edge-trigger {
+    position: fixed;
+    top: 20px;
+    right: 0;
+    width: 20px;
+    height: calc(100% - 40px);
+    z-index: 200001;
+    display: none;
+    pointer-events: none;
+    touch-action: none;
 }
 
 .charms-trigger.top {
@@ -22,15 +34,13 @@
     right: 0;
     width: 86px;
     height: 100%;
-    z-index: 200000;
+    z-index: 200001;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    opacity: 0;
-    transform: translateX(100%);
     pointer-events: none;
-    transition: opacity 0.25s ease, transform 0.25s ease;
     overflow: hidden;
+    visibility: hidden;
 
     &:not(.show-background):not(.touch-dragging) .charms-icon-label {
         color: transparent;
@@ -38,42 +48,44 @@
 }
 
 .charms-bar.visible {
-    opacity: 1;
-    transform: translateX(0);
+    visibility: visible;
     pointer-events: all;
 }
 
+.charms-bar.touch-open-cooldown,
+.charms-bar.touch-open-cooldown .charms-icons,
+.charms-bar.touch-open-cooldown .charms-icon,
+.charms-bar.touch-open-cooldown .charms-icon * {
+    pointer-events: none !important;
+}
+
+/* ---- Touch drag: the whole bar (icons + background) follows the finger ---- */
 .charms-bar.touch-dragging {
-    opacity: 1;
+    visibility: visible;
     transform: translateX(var(--charms-touch-offset, 100%));
-    transition: none;
-    animation: none;
     pointer-events: none;
 }
 
-/* When triggered by keyboard (Win+C), slide in from the edge */
-.charms-bar.keyboard-triggered {
-    animation: charms-slide-in 0.25s ease;
+/* Per-icon stagger during touch drag */
+.charms-bar.touch-dragging .charms-icon {
+    transition: none;
 }
 
-@keyframes charms-slide-in {
-    from {
-        transform: translateX(100%);
-        opacity: 0;
-    }
-
-    to {
-        transform: translateX(0);
-        opacity: 1;
-    }
-}
-
-.charms-bar.hiding {
-    opacity: 0;
+.charms-bar.touch-dragging .charms-icon[data-charm="start"] {
     transform: translateX(0);
-    transition: opacity 0.25s ease;
 }
 
+.charms-bar.touch-dragging .charms-icon[data-charm="share"],
+.charms-bar.touch-dragging .charms-icon[data-charm="devices"] {
+    transform: translateX(var(--charms-stagger-tier1, 0px));
+}
+
+.charms-bar.touch-dragging .charms-icon[data-charm="search"],
+.charms-bar.touch-dragging .charms-icon[data-charm="settings"] {
+    transform: translateX(var(--charms-stagger-tier2, 0px));
+}
+
+/* ---- Background layer: slides/fades independently ---- */
 .charms-bar-background {
     position: absolute;
     top: 0;
@@ -86,9 +98,114 @@
     z-index: -1;
 }
 
-.charms-bar.show-background .charms-bar-background,
+.charms-bar.show-background .charms-bar-background {
+    opacity: 1;
+}
+
 .charms-bar.touch-dragging .charms-bar-background {
     opacity: 1;
+    transition: none;
+}
+
+/* When triggered by keyboard (Win+C), slide background in from the edge */
+.charms-bar.keyboard-triggered .charms-bar-background {
+    animation: charms-bg-slide-in 0.25s ease both;
+}
+
+@keyframes charms-bg-slide-in {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* ---- Per-icon stagger via animations ---- */
+@keyframes charms-icon-stagger-in {
+    from {
+        opacity: 0;
+        transform: translateX(15px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Entrance: icons start hidden, animation fills forward to visible */
+.charms-bar.stagger-from-top .charms-icon,
+.charms-bar.stagger-from-bottom .charms-icon,
+.charms-bar.stagger-from-center .charms-icon {
+    opacity: 0;
+    animation: charms-icon-stagger-in 0.2s ease forwards;
+}
+
+/* Top trigger: Search first → Settings last */
+.charms-bar.stagger-from-top .charms-icon[data-charm="search"] {
+    animation-delay: 0ms;
+}
+
+.charms-bar.stagger-from-top .charms-icon[data-charm="share"] {
+    animation-delay: 30ms;
+}
+
+.charms-bar.stagger-from-top .charms-icon[data-charm="start"] {
+    animation-delay: 60ms;
+}
+
+.charms-bar.stagger-from-top .charms-icon[data-charm="devices"] {
+    animation-delay: 90ms;
+}
+
+.charms-bar.stagger-from-top .charms-icon[data-charm="settings"] {
+    animation-delay: 120ms;
+}
+
+/* Bottom trigger: Settings first → Search last */
+.charms-bar.stagger-from-bottom .charms-icon[data-charm="settings"] {
+    animation-delay: 0ms;
+}
+
+.charms-bar.stagger-from-bottom .charms-icon[data-charm="devices"] {
+    animation-delay: 30ms;
+}
+
+.charms-bar.stagger-from-bottom .charms-icon[data-charm="start"] {
+    animation-delay: 60ms;
+}
+
+.charms-bar.stagger-from-bottom .charms-icon[data-charm="share"] {
+    animation-delay: 90ms;
+}
+
+.charms-bar.stagger-from-bottom .charms-icon[data-charm="search"] {
+    animation-delay: 120ms;
+}
+
+/* Center trigger (Win+C): Start first → outward */
+.charms-bar.stagger-from-center .charms-icon[data-charm="start"] {
+    animation-delay: 0ms;
+}
+
+.charms-bar.stagger-from-center .charms-icon[data-charm="share"],
+.charms-bar.stagger-from-center .charms-icon[data-charm="devices"] {
+    animation-delay: 40ms;
+}
+
+.charms-bar.stagger-from-center .charms-icon[data-charm="search"],
+.charms-bar.stagger-from-center .charms-icon[data-charm="settings"] {
+    animation-delay: 80ms;
+}
+
+/* ---- Hiding: fade the entire bar layer ---- */
+.charms-bar.hiding {
+    opacity: 0;
+    transition: opacity 0.25s ease;
 }
 
 .charms-icons {
@@ -113,6 +230,7 @@
     color: #fff;
     transition: background-color 0.2s ease;
     text-decoration: none;
+    pointer-events: none;
 }
 
 .charms-icon:hover {
@@ -247,9 +365,14 @@
     text-align: center;
 }
 
+.charms-bar.show-background:not(.hiding) .charms-icon {
+    pointer-events: auto;
+}
+
 /* Hide charms bar and triggers by default */
 .charms-bar,
-.charms-trigger {
+.charms-trigger,
+.desktop-modern-charms-edge-trigger {
     display: none;
 }
 
@@ -262,29 +385,47 @@ body.charms-allowed .charms-trigger {
     display: block;
 }
 
+body.charms-mouse-triggers-suspended .charms-trigger,
 body.charms-hotcorners-disabled .charms-trigger {
+    pointer-events: none;
+}
+
+body.charms-titlebar-gesture-guard .charms-trigger.top {
+    pointer-events: none;
+}
+
+body.touch-capable.desktop-modern-metro-mode.charms-allowed .desktop-modern-charms-edge-trigger {
+    display: block;
+    pointer-events: all;
+}
+
+body.charms-titlebar-gesture-guard .desktop-modern-charms-edge-trigger,
+body.charms-hotcorners-disabled .desktop-modern-charms-edge-trigger {
     pointer-events: none;
 }
 
 /* Lower z-index on system screens so they appear below those screens */
 body.view-boot .charms-bar,
 body.view-boot .charms-trigger,
-body.view-boot .charms-datetime-panel,
+body.view-boot .desktop-modern-charms-edge-trigger,
+body.view-boot .tdbn-panel,
 body.view-boot .modern-flyout,
 body.view-lock .charms-bar,
 body.view-lock .charms-trigger,
-body.view-lock .charms-datetime-panel,
+body.view-lock .desktop-modern-charms-edge-trigger,
+body.view-lock .tdbn-panel,
 body.view-lock .modern-flyout,
 body.view-login .charms-bar,
 body.view-login .charms-trigger,
-body.view-login .charms-datetime-panel,
+body.view-login .desktop-modern-charms-edge-trigger,
+body.view-login .tdbn-panel,
 body.view-login .modern-flyout {
     z-index: 1;
     pointer-events: none;
 }
 
-/* ===== CHARMS DATE/TIME PANEL ===== */
-.charms-datetime-panel {
+/* ===== TDBN PANEL (Time, Date, Battery, Network) ===== */
+.tdbn-panel {
     position: fixed;
     left: 50px;
     bottom: 48px;
@@ -293,20 +434,23 @@ body.view-login .modern-flyout {
     background-color: rgba(21, 21, 21, 1);
     z-index: 200000;
     opacity: 0;
+    visibility: hidden;
     pointer-events: none;
-    transition: opacity 0.3s ease;
+    transition: opacity 0.3s ease, visibility 0s linear 0.3s;
     display: none;
 }
 
-body.charms-allowed .charms-datetime-panel {
+body.charms-allowed .tdbn-panel {
     display: flex;
 }
 
-.charms-datetime-panel.visible {
+body.charms-allowed:has(.charms-bar.visible.show-background:not(.hiding)) .tdbn-panel {
     opacity: 1;
+    visibility: visible;
+    transition-delay: 0s;
 }
 
-.charms-datetime-content {
+.tdbn-content {
     display: flex;
     align-items: center;
     justify-content: flex-end;
@@ -317,7 +461,7 @@ body.charms-allowed .charms-datetime-panel {
     padding-right: 35px;
 }
 
-.charms-time {
+.tdbn-time {
     font-family: 'Segoe UI Light', 'Segoe UI', sans-serif;
     font-size: 85px;
     font-weight: 200;
@@ -325,14 +469,14 @@ body.charms-allowed .charms-datetime-panel {
     padding-bottom: 7px;
 }
 
-.charms-date {
+.tdbn-date {
     display: flex;
     flex-direction: column;
     justify-content: center;
     gap: 4px;
 }
 
-.charms-date-weekday {
+.tdbn-date-weekday {
     font-family: 'Segoe UI', sans-serif;
     font-size: 28px;
     font-weight: 300;
@@ -340,7 +484,7 @@ body.charms-allowed .charms-datetime-panel {
 
 }
 
-.charms-date-monthday {
+.tdbn-date-monthday {
     font-family: 'Segoe UI', sans-serif;
     font-size: 28px;
     font-weight: 300;
@@ -435,42 +579,9 @@ body.charms-allowed .charms-datetime-panel {
     flex: 1;
 }
 
-/* Personalize Back Button */
+/* Personalize Back Button — layout only; base style via .metro-back-btn */
 .personalize-back-button {
-    width: 36px;
-    height: 36px;
-    background: transparent;
-    border: 2px solid #fff;
-    border-radius: 50%;
-    color: #fff;
-    font-size: 28px;
-
-    display: none;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s;
-    padding: 0;
     margin-left: -8px;
-}
-
-.personalize-back-button:hover {
-    background: rgba(255, 255, 255, 0.1);
-}
-
-.personalize-back-button:active {
-    background: rgba(255, 255, 255, 1);
-    color: var(--ui-accent);
-}
-
-.personalize-back-icon {
-    display: block;
-    line-height: 1;
-    margin-top: -2px;
-}
-
-/* Back button is always shown in its panel's header (no need for conditional display) */
-.personalize-back-button {
-    display: flex;
 }
 
 .modern-flyout-content {
@@ -486,6 +597,181 @@ body.charms-allowed .charms-datetime-panel {
     transform: translateX(100%);
     opacity: 0;
     transition: transform 1s cubic-bezier(0.05, 0.7, 0.1, 1) 0.22s, opacity 1s cubic-bezier(0.05, 0.7, 0.1, 1) 0.22s;
+}
+
+.modern-flyout[data-flyout="search"] .modern-flyout-content {
+    padding: 0 24px 24px;
+}
+
+.charms-search-shell {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.charms-search-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.charms-search-input-shell {
+    display: flex;
+    min-height: 40px;
+    background: rgba(255, 255, 255, 0.96);
+    border: 1px solid rgba(0, 0, 0, 0.35);
+}
+
+.charms-search-input-shell:focus-within {
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.55);
+}
+
+.charms-search-input-shell input {
+    flex: 1;
+    min-width: 0;
+    border: none;
+    background: transparent;
+    color: #111;
+    font: 15px 'Segoe UI', sans-serif;
+    padding: 0 12px;
+}
+
+.charms-search-input-shell input:focus {
+    outline: none;
+}
+
+.charms-search-input-shell input::placeholder {
+    color: #666;
+}
+
+.charms-search-input-shell button {
+    width: 40px;
+    border: none;
+    border-left: 1px solid rgba(0, 0, 0, 0.22);
+    background: transparent;
+    color: #111;
+    font-size: 16px;
+}
+
+.charms-search-source-label {
+    font: 12px 'Segoe UI', sans-serif;
+    color: rgba(255, 255, 255, 0.72);
+}
+
+.charms-search-source {
+    width: 100%;
+    min-height: 34px;
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    background: rgba(0, 0, 0, 0.16);
+    color: #fff;
+    font: 13px 'Segoe UI', sans-serif;
+    padding: 0 10px;
+}
+
+.charms-search-results {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.charms-search-empty-state {
+    padding: 14px 12px;
+    color: rgba(255, 255, 255, 0.78);
+    font: 13px/1.45 'Segoe UI', sans-serif;
+}
+
+.charms-search-result {
+    width: 100%;
+    min-height: 52px;
+    border: none;
+    background: transparent;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 10px;
+    text-align: left;
+    font: inherit;
+}
+
+.charms-search-result:hover,
+.charms-search-result.is-selected {
+    background: rgba(255, 255, 255, 0.16);
+}
+
+.charms-search-result:focus {
+    outline: none;
+}
+
+.charms-search-result-icon {
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    color: #fff;
+}
+
+.charms-search-result-icon.search-panel-result-icon--plate {
+    padding: 4px;
+}
+
+.charms-search-result-icon img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+}
+
+.charms-search-result-icon [class^="mif-"],
+.charms-search-result-icon [class*=" mif-"],
+.charms-search-result-icon [class^="sui-"],
+.charms-search-result-icon [class*=" sui-"] {
+    font-size: 20px;
+    line-height: 1;
+}
+
+.charms-search-result-text {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.charms-search-result-title {
+    color: #fff;
+    font-size: 15px;
+    line-height: 1.25;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.charms-search-result-subtitle {
+    color: rgba(255, 255, 255, 0.72);
+    font-size: var(--system-font-size);
+    line-height: 1.25;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.charms-search-result--action .charms-search-result-title {
+    font-weight: 600;
+}
+
+.charms-search-open-app {
+    min-height: 34px;
+    border: 1px solid rgba(255, 255, 255, 0.36);
+    background: rgba(0, 0, 0, 0.14);
+    color: #fff;
+    font: 13px 'Segoe UI', sans-serif;
+    text-align: left;
+    padding: 0 12px;
 }
 
 /* Hide flyouts by default */
@@ -508,7 +794,7 @@ body:not(.charms-allowed) .modern-flyout {
     transition: transform 1s cubic-bezier(0.05, 0.7, 0.1, 1) 0.22s, opacity 1s cubic-bezier(0.05, 0.7, 0.1, 1) 0.22s;
 }
 
-.modern-flyout[data-flyout="settings"] .settings-controls {
+.modern-flyout[data-flyout="settings"] .six-pack {
     /* Stage 4: Controls slide in after content */
     transform: translateX(100%);
     opacity: 0;
@@ -518,7 +804,7 @@ body:not(.charms-allowed) .modern-flyout {
 /* When settings modern flyout is visible, slide in all elements */
 .modern-flyout[data-flyout="settings"].visible .settings-panel .modern-flyout-header,
 .modern-flyout[data-flyout="settings"].visible .settings-panel .modern-flyout-content,
-.modern-flyout[data-flyout="settings"].visible .settings-controls {
+.modern-flyout[data-flyout="settings"].visible .six-pack {
     transform: translateX(0);
     opacity: 1;
 }
@@ -526,7 +812,7 @@ body:not(.charms-allowed) .modern-flyout {
 /* When settings modern flyout is closing, slide out all elements together */
 .modern-flyout[data-flyout="settings"].closing .settings-panel .modern-flyout-header,
 .modern-flyout[data-flyout="settings"].closing .settings-panel .modern-flyout-content,
-.modern-flyout[data-flyout="settings"].closing .settings-controls {
+.modern-flyout[data-flyout="settings"].closing .six-pack {
     transform: translateX(100%);
     opacity: 0;
     transition: transform 0.35s cubic-bezier(0.05, 0.7, 0.1, 1), opacity 0.35s cubic-bezier(0.05, 0.7, 0.1, 1);
@@ -547,8 +833,8 @@ body:not(.charms-allowed) .modern-flyout {
     pointer-events: none;
 }
 
-/* Settings Controls - Pinned to bottom */
-.settings-controls {
+/* Six-Pack - Pinned to bottom */
+.six-pack {
     position: relative;
     z-index: 11;
     bottom: 0;
@@ -558,7 +844,7 @@ body:not(.charms-allowed) .modern-flyout {
     flex-shrink: 0;
 }
 
-.settings-controls-grid {
+.six-pack-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     grid-template-rows: repeat(2, 1fr);
@@ -570,7 +856,7 @@ body:not(.charms-allowed) .modern-flyout {
     padding-top: 14px;
 }
 
-.settings-control-item {
+.six-pack-item {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -584,20 +870,20 @@ body:not(.charms-allowed) .modern-flyout {
     position: relative;
 }
 
-.settings-control-item:hover {
+.six-pack-item:hover {
     background-color: rgba(255, 255, 255, 0.1);
 }
 
-.settings-control-item:active {
+.six-pack-item:active {
     background-color: rgba(255, 255, 255, 0.2);
 }
 
-.settings-control-item.active-slider {
+.six-pack-item.active-slider {
     background-color: rgba(255, 255, 255, 0.15);
 }
 
-.settings-control-item {
-    & span:first-of-type {
+.six-pack-item {
+    & span:first-of-type:not(.six-pack-label) {
         width: 40px;
         height: 40px;
         fill: #fff;
@@ -608,37 +894,29 @@ body:not(.charms-allowed) .modern-flyout {
 
         font-size: 36px;
     }
+
+    &:nth-of-type(4) span:first-of-type:not(.six-pack-label) {
+        font-size: 26px;
+    }
+
+    &:nth-of-type(5) span:first-of-type:not(.six-pack-label) {
+        font-size: 38px;
+    }
 }
 
-.settings-control-glyph {
+.six-pack-glyph {
     font-family: 'Segoe UI Symbol', 'Segoe UI', sans-serif;
     line-height: 1;
 }
 
-.settings-control-glyph--fullscreen::before {
-    content: '';
-    display: block;
-    width: 20px;
-    height: 20px;
-    background:
-        linear-gradient(#fff, #fff) left top / 8px 2px no-repeat,
-        linear-gradient(#fff, #fff) left top / 2px 8px no-repeat,
-        linear-gradient(#fff, #fff) right top / 8px 2px no-repeat,
-        linear-gradient(#fff, #fff) right top / 2px 8px no-repeat,
-        linear-gradient(#fff, #fff) left bottom / 8px 2px no-repeat,
-        linear-gradient(#fff, #fff) left bottom / 2px 8px no-repeat,
-        linear-gradient(#fff, #fff) right bottom / 8px 2px no-repeat,
-        linear-gradient(#fff, #fff) right bottom / 2px 8px no-repeat;
-}
-
-.settings-control-label {
+.six-pack-label {
     font-family: 'Segoe UI', sans-serif;
-    font-size: 11px;
+    font-size: var(--system-font-size);
     color: #fff;
     text-align: center;
 }
 
-.settings-slider-popup {
+.six-pack-slider-popup {
     position: absolute;
     bottom: calc(100% + 16px);
     left: 50%;
@@ -657,23 +935,23 @@ body:not(.charms-allowed) .modern-flyout {
     z-index: 15;
 }
 
-.settings-slider-popup.visible {
+.six-pack-slider-popup.visible {
     opacity: 1;
     pointer-events: all;
     transform: translate(-50%, 0);
 }
 
-.settings-slider-popup.closing {
+.six-pack-slider-popup.closing {
     opacity: 0;
     pointer-events: none;
     transform: translate(-50%, 0);
 }
 
-.settings-slider-popup::after {
+.six-pack-slider-popup::after {
     display: none;
 }
 
-.settings-slider-track-wrapper {
+.six-pack-slider-track-wrapper {
     width: 100%;
     display: flex;
     justify-content: center;
@@ -682,8 +960,8 @@ body:not(.charms-allowed) .modern-flyout {
     height: 180px;
 }
 
-.settings-slider {
-    --settings-slider-track-color: #d0d0d0;
+.six-pack-slider {
+    --six-pack-slider-track-color: #d0d0d0;
     -webkit-appearance: none;
     appearance: none;
     width: 180px;
@@ -694,19 +972,19 @@ body:not(.charms-allowed) .modern-flyout {
     transform-origin: 50% 50%;
 }
 
-.settings-slider.is-active {
-    --settings-slider-track-color: var(--ui-accent);
+.six-pack-slider.is-active {
+    --six-pack-slider-track-color: var(--ui-accent);
 }
 
-.settings-slider::-webkit-slider-runnable-track {
+.six-pack-slider::-webkit-slider-runnable-track {
     width: 100%;
     height: 15px;
-    background: var(--settings-slider-track-color);
+    background: var(--six-pack-slider-track-color);
     border-radius: 0;
     transition: background-color 0.1s ease;
 }
 
-.settings-slider::-webkit-slider-thumb {
+.six-pack-slider::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
     width: 15px;
@@ -717,20 +995,20 @@ body:not(.charms-allowed) .modern-flyout {
     border-radius: 0;
 }
 
-.settings-slider::-moz-range-track {
+.six-pack-slider::-moz-range-track {
     width: 100%;
     height: 15px;
-    background: var(--settings-slider-track-color);
+    background: var(--six-pack-slider-track-color);
     border-radius: 0;
 }
 
-.settings-slider::-moz-range-progress {
+.six-pack-slider::-moz-range-progress {
     height: 15px;
-    background: var(--settings-slider-track-color);
+    background: var(--six-pack-slider-track-color);
     border-radius: 0;
 }
 
-.settings-slider::-moz-range-thumb {
+.six-pack-slider::-moz-range-thumb {
     width: 15px;
     height: 15px;
     background: #000;
@@ -738,7 +1016,7 @@ body:not(.charms-allowed) .modern-flyout {
     border-radius: 0;
 }
 
-.settings-slider::-ms-track {
+.six-pack-slider::-ms-track {
     width: 100%;
     height: 15px;
     background: transparent;
@@ -746,13 +1024,13 @@ body:not(.charms-allowed) .modern-flyout {
     border-color: transparent;
 }
 
-.settings-slider::-ms-fill-lower,
-.settings-slider::-ms-fill-upper {
-    background: var(--settings-slider-track-color);
+.six-pack-slider::-ms-fill-lower,
+.six-pack-slider::-ms-fill-upper {
+    background: var(--six-pack-slider-track-color);
     border-radius: 0;
 }
 
-.settings-slider::-ms-thumb {
+.six-pack-slider::-ms-thumb {
     width: 15px;
     height: 15px;
     background: #000;
@@ -798,7 +1076,7 @@ body:not(.charms-allowed) .modern-flyout {
 
     color: #fff;
     font-family: 'Segoe UI', sans-serif;
-    font-size: 16px;
+    font-size: 14px;
     transition: background-color 0.2s ease;
 }
 
@@ -856,7 +1134,7 @@ body:not(.charms-allowed) .modern-flyout {
 /* Panel content for fade animations - only apply when switching between panels, not on initial open */
 .settings-panel.fade-out .modern-flyout-header,
 .settings-panel.fade-out .modern-flyout-content,
-.settings-panel.fade-out .settings-controls,
+.settings-panel.fade-out .six-pack,
 .settings-panel.fade-out .modern-dropdown {
     opacity: 0 !important;
     transition: opacity 0.15s ease-out !important;
@@ -1084,36 +1362,9 @@ body:not(.charms-allowed) .modern-flyout {
     opacity: 1;
 }
 
-/* Tiles back button */
+/* Tiles back button — layout only; base style via .metro-back-btn */
 .tiles-back-button {
-    width: 36px;
-    height: 36px;
-    background: transparent;
-    border: 2px solid #fff;
-    border-radius: 50%;
-    color: #fff;
-    font-size: 28px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s;
-    padding: 0;
     margin-left: -8px;
-}
-
-.tiles-back-button:hover {
-    background: rgba(255, 255, 255, 0.1);
-}
-
-.tiles-back-button:active {
-    background: rgba(255, 255, 255, 1);
-    color: var(--ui-accent);
-}
-
-.tiles-back-icon {
-    display: block;
-    line-height: 1;
-    margin-top: -2px;
 }
 
 /* Tiles settings section */
@@ -1200,4 +1451,172 @@ body:not(.charms-allowed) .modern-flyout {
 
 .tiles-toggle-switch:hover .tiles-toggle-slider {
     opacity: 0.9;
+}
+
+/* ===== SIX-PACK NETWORK ICON ===== */
+.six-pack-network-icon {
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+    image-rendering: auto;
+    filter: brightness(0) invert(1);
+    margin-bottom: 8px;
+}
+
+/* ===== TDBN NETWORK ICON ===== */
+.tdbn-status-icons {
+    display: flex;
+    align-items: center;
+    margin-right: auto;
+    padding-left: 10px;
+}
+
+.tdbn-network-icon {
+    width: 32px;
+    height: 32px;
+    object-fit: contain;
+    image-rendering: auto;
+    filter: brightness(0) invert(1);
+}
+
+/* ===== NETWORK FLYOUT ===== */
+.network-flyout-content {
+    padding: 0 !important;
+    overflow-y: auto;
+}
+
+.network-flyout-link {
+    font-family: 'Segoe UI', sans-serif;
+    font-size: var(--system-font-size);
+    color: var(--ui-accent);
+    padding: 16px 40px 8px;
+    cursor: pointer;
+}
+
+.network-flyout-link:hover {
+    text-decoration: underline;
+}
+
+.network-flyout-section {
+    padding: 12px 40px;
+}
+
+.network-flyout-section-title {
+    font-family: 'Segoe UI Light', 'Segoe UI', sans-serif;
+    font-size: 20px;
+    font-weight: 200;
+    color: #fff;
+    margin-bottom: 10px;
+}
+
+.network-flyout-toggle-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 8px;
+}
+
+.network-flyout-toggle-label {
+    font-family: 'Segoe UI', sans-serif;
+    font-size: 14px;
+    font-weight: 300;
+    color: #fff;
+    min-width: 28px;
+}
+
+/* Connection items */
+.network-connection-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 10px 0;
+}
+
+.network-connection-icon {
+    width: 32px;
+    height: 32px;
+    object-fit: contain;
+    image-rendering: auto;
+    flex-shrink: 0;
+    filter: brightness(0) invert(1);
+}
+
+.network-connection-info {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.network-connection-name {
+    font-family: 'Segoe UI', sans-serif;
+    font-size: 15px;
+    font-weight: 400;
+    color: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.network-connection-status {
+    font-family: 'Segoe UI', sans-serif;
+    font-size: var(--system-font-size);
+    font-weight: 300;
+    color: #aaa;
+}
+
+/* Wi-Fi network items */
+.network-wifi-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 10px 0;
+    cursor: default;
+}
+
+.network-wifi-item:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+    margin: 0 -10px;
+    padding: 10px 10px;
+}
+
+.network-wifi-icon {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+    image-rendering: auto;
+    flex-shrink: 0;
+    filter: brightness(0) invert(1);
+}
+
+.network-wifi-name {
+    font-family: 'Segoe UI', sans-serif;
+    font-size: 14px;
+    font-weight: 400;
+    color: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex: 1;
+    min-width: 0;
+}
+
+.network-wifi-secured {
+    font-family: 'Segoe UI Symbol', 'Segoe UI', sans-serif;
+    font-size: var(--system-font-size);
+    color: #aaa;
+    flex-shrink: 0;
+}
+
+/* Network back button — layout only; base style via .metro-back-btn */
+.network-back-button {
+    margin-left: -8px;
+}
+
+/* Loading indicator for wifi scan */
+.network-wifi-loading {
+    font-family: 'Segoe UI', sans-serif;
+    font-size: 13px;
+    font-weight: 300;
+    color: #888;
+    padding: 8px 0;
 }

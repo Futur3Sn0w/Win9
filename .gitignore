@@ -10,10 +10,16 @@ Thumbs.db
 .idea/
 refs/
 
+# Application requisitions and temporary files
+appreqs/
+tmp/
+
 # Environment and local overrides
 .env
 .env.*
 *.local
+quickrun.bat*
+secrets/
 
 # Logs
 *.log

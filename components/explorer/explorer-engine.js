@@ -4,6 +4,7 @@ const os = require('os');
 
 let ExplorerRegistry = null;
 let ExplorerIconBuilder = null;
+let KnownFolders = null;
 
 try {
     ExplorerRegistry = require('../../registry/explorer-registry.js');
@@ -47,6 +48,18 @@ try {
     }
 
     ExplorerIconBuilder = resolved;
+}
+
+try {
+    KnownFolders = require('./known-folders.js');
+} catch (error) {
+    let resolved = null;
+
+    if (!resolved && typeof window !== 'undefined') {
+        resolved = window.KnownFolders || null;
+    }
+
+    KnownFolders = resolved;
 }
 
 const ExplorerEngine = (() => {
@@ -97,6 +110,7 @@ const ExplorerEngine = (() => {
         snapToGrid: true,
         arrangeIcons: false,
         showIcons: true,
+        favoriteFolderPaths: [],
         iconOrder: [],
         iconPositions: {
             grid: {},
@@ -112,6 +126,7 @@ const ExplorerEngine = (() => {
     };
 
     let settings = clone(DEFAULT_SETTINGS);
+    let settingsLoaded = false;
 
     let desktopContainer = null;
     let gridElement = null;
@@ -130,6 +145,9 @@ const ExplorerEngine = (() => {
         empty: true,
         itemCount: 0
     };
+    let desktopWatcher = null;
+    let desktopWatchRefreshTimer = null;
+    const DESKTOP_WATCH_REFRESH_DELAY_MS = 150;
 
     const itemEntryMap = new WeakMap();
     let entryElementsByPath = new Map();
@@ -183,6 +201,178 @@ const ExplorerEngine = (() => {
         return null;
     }
 
+    function getKnownFoldersApi() {
+        if (KnownFolders && typeof KnownFolders === 'object') {
+            return KnownFolders;
+        }
+        if (typeof window !== 'undefined' && window.KnownFolders) {
+            return window.KnownFolders;
+        }
+        return null;
+    }
+
+    function getDefaultFavoriteFolderPaths() {
+        const knownFoldersApi = getKnownFoldersApi();
+        const defaultIds = ['desktop', 'downloads', 'videos'];
+
+        if (!knownFoldersApi || typeof knownFoldersApi.resolvePath !== 'function') {
+            return defaultIds
+                .map(folderId => path.join(os.homedir(), folderId.charAt(0).toUpperCase() + folderId.slice(1)))
+                .filter(Boolean);
+        }
+
+        return defaultIds
+            .map(folderId => knownFoldersApi.resolvePath(folderId))
+            .filter(folderPath => typeof folderPath === 'string' && folderPath);
+    }
+
+    function normalizeEntryPathForComparison(targetPath) {
+        if (typeof targetPath !== 'string' || !targetPath) {
+            return '';
+        }
+
+        const normalized = path.resolve(targetPath);
+        return process.platform === 'win32'
+            ? normalized.toLowerCase()
+            : normalized;
+    }
+
+    function isWindowsShellMetadataName(fileName) {
+        if (typeof fileName !== 'string' || !fileName) {
+            return false;
+        }
+
+        const normalized = fileName.toLowerCase();
+        return normalized === 'desktop.ini'
+            || normalized === 'thumbs.db'
+            || normalized === 'ehthumbs.db'
+            || normalized === '.ds_store'
+            || normalized === 'icon\r';
+    }
+
+    function isHiddenEntryName(fileName) {
+        if (typeof fileName !== 'string' || !fileName) {
+            return false;
+        }
+
+        if (fileName.startsWith('.')) {
+            return true;
+        }
+
+        const extension = path.extname(fileName).toLowerCase();
+        if (extension === '.ini') {
+            return true;
+        }
+
+        return isWindowsShellMetadataName(fileName);
+    }
+
+    function hasClipboardPayload() {
+        return Boolean(clipboardData && Array.isArray(clipboardData.paths) && clipboardData.paths.length);
+    }
+
+    function getClipboardSnapshot() {
+        if (!hasClipboardPayload()) {
+            return null;
+        }
+
+        return {
+            type: clipboardData.type === 'cut' ? 'cut' : 'copy',
+            paths: clipboardData.paths.slice(),
+            timestamp: Number(clipboardData.timestamp || 0)
+        };
+    }
+
+    function setClipboardData(nextClipboardData) {
+        if (!nextClipboardData || !Array.isArray(nextClipboardData.paths) || !nextClipboardData.paths.length) {
+            clipboardData = null;
+            return null;
+        }
+
+        clipboardData = {
+            type: nextClipboardData.type === 'cut' ? 'cut' : 'copy',
+            paths: nextClipboardData.paths
+                .filter(pathValue => typeof pathValue === 'string' && pathValue)
+                .map(pathValue => path.resolve(pathValue)),
+            timestamp: Date.now()
+        };
+
+        if (!clipboardData.paths.length) {
+            clipboardData = null;
+            return null;
+        }
+
+        return getClipboardSnapshot();
+    }
+
+    function copyPathsToClipboard(paths) {
+        return setClipboardData({
+            type: 'copy',
+            paths: Array.isArray(paths) ? paths : []
+        });
+    }
+
+    function cutPathsToClipboard(paths) {
+        return setClipboardData({
+            type: 'cut',
+            paths: Array.isArray(paths) ? paths : []
+        });
+    }
+
+    function clearClipboard() {
+        clipboardData = null;
+    }
+
+    function clearClipboardForPaths(paths = []) {
+        if (!hasClipboardPayload()) {
+            return;
+        }
+
+        const normalizedPaths = new Set(
+            (Array.isArray(paths) ? paths : [])
+                .map(pathValue => normalizeEntryPathForComparison(pathValue))
+                .filter(Boolean)
+        );
+
+        const clipboardPaths = clipboardData.paths
+            .map(pathValue => normalizeEntryPathForComparison(pathValue))
+            .filter(Boolean);
+
+        if (clipboardPaths.some(pathValue => normalizedPaths.has(pathValue))) {
+            clearClipboard();
+        }
+    }
+
+    function pathMatches(leftPath, rightPath) {
+        return normalizeEntryPathForComparison(leftPath) === normalizeEntryPathForComparison(rightPath);
+    }
+
+    function isPathWithin(parentPath, candidatePath) {
+        if (!parentPath || !candidatePath) {
+            return false;
+        }
+
+        const relative = path.relative(parentPath, candidatePath);
+        return Boolean(relative) && relative !== '.' && !relative.startsWith('..') && !path.isAbsolute(relative);
+    }
+
+    function pathAffectsDesktop(targetPath) {
+        if (!targetPath) {
+            return false;
+        }
+
+        return pathMatches(targetPath, desktopPath) || isPathWithin(desktopPath, targetPath);
+    }
+
+    async function refreshDesktopIfAffected(pathsToCheck = []) {
+        const shouldRefresh = pathsToCheck.some(pathValue => pathAffectsDesktop(pathValue));
+        if (!shouldRefresh) {
+            return;
+        }
+
+        await refreshDesktop();
+    }
+
     function ensureDesktopContainer() {
         if (desktopContainer) {
             return true;
@@ -212,6 +402,59 @@ const ExplorerEngine = (() => {
         desktopContainer.addEventListener('mousedown', handleDesktopMouseDown);
         window.addEventListener('resize', handleWindowResize);
         eventsBound = true;
+    }
+
+    function scheduleWatchedDesktopRefresh(changedPath = null) {
+        const iconBuilder = getExplorerIconBuilderApi();
+        if (changedPath && iconBuilder && typeof iconBuilder.invalidateIconCacheForPath === 'function') {
+            iconBuilder.invalidateIconCacheForPath(changedPath);
+        }
+
+        if (desktopWatchRefreshTimer) {
+            clearTimeout(desktopWatchRefreshTimer);
+        }
+
+        desktopWatchRefreshTimer = setTimeout(() => {
+            desktopWatchRefreshTimer = null;
+            refreshDesktop().catch(error => {
+                console.error('ExplorerEngine: Failed to refresh desktop after file change.', error);
+            });
+        }, DESKTOP_WATCH_REFRESH_DELAY_MS);
+    }
+
+    function bindDesktopWatcher() {
+        if (desktopWatcher || typeof fs.watch !== 'function') {
+            return;
+        }
+
+        try {
+            desktopWatcher = fs.watch(desktopPath, { persistent: false }, (eventType, filename) => {
+                const normalizedFileName = typeof filename === 'string'
+                    ? filename
+                    : ((typeof Buffer !== 'undefined' && Buffer.isBuffer(filename)) ? filename.toString() : '');
+                const changedPath = normalizedFileName
+                    ? path.join(desktopPath, normalizedFileName)
+                    : null;
+
+                scheduleWatchedDesktopRefresh(changedPath);
+            });
+
+            if (desktopWatcher && typeof desktopWatcher.on === 'function') {
+                desktopWatcher.on('error', error => {
+                    console.warn('ExplorerEngine: Desktop watcher failed.', error);
+                    if (desktopWatcher && typeof desktopWatcher.close === 'function') {
+                        try {
+                            desktopWatcher.close();
+                        } catch (_closeError) {
+                            // Ignore close failures after watcher errors.
+                        }
+                    }
+                    desktopWatcher = null;
+                });
+            }
+        } catch (error) {
+            console.warn('ExplorerEngine: Unable to watch desktop for file changes.', error);
+        }
     }
 
     function normalizeRecycleBinState(state) {
@@ -280,8 +523,8 @@ const ExplorerEngine = (() => {
                 return;
             }
 
-            const shrink = width < lastLayoutWidth || height < lastLayoutHeight;
-            if (shrink) {
+            const sizeChanged = width !== lastLayoutWidth || height !== lastLayoutHeight;
+            if (sizeChanged) {
                 layoutIcons({ persist: true });
             }
 
@@ -300,6 +543,9 @@ const ExplorerEngine = (() => {
                     settings = {
                         ...clone(DEFAULT_SETTINGS),
                         ...loaded,
+                        favoriteFolderPaths: Array.isArray(loaded?.favoriteFolderPaths)
+                            ? loaded.favoriteFolderPaths
+                            : getDefaultFavoriteFolderPaths(),
                         iconPositions: {
                             grid: loaded?.iconPositions?.grid || {},
                             free: loaded?.iconPositions?.free || {}
@@ -307,6 +553,7 @@ const ExplorerEngine = (() => {
                         iconOrder: Array.isArray(loaded?.iconOrder) ? loaded.iconOrder.slice() : [],
                         sortBy: normalizeDesktopSortKey(loaded?.sortBy)
                     };
+                    settingsLoaded = true;
                     return;
                 }
             }
@@ -315,9 +562,18 @@ const ExplorerEngine = (() => {
         }
 
         settings = clone(DEFAULT_SETTINGS);
+        settings.favoriteFolderPaths = getDefaultFavoriteFolderPaths();
+        settingsLoaded = true;
+    }
+
+    function ensureSettingsLoaded() {
+        if (!settingsLoaded) {
+            loadSettings();
+        }
     }
 
     function saveSettings() {
+        ensureSettingsLoaded();
         const registryApi = getExplorerRegistryApi();
         const data = {
             iconSize: settings.iconSize,
@@ -325,6 +581,7 @@ const ExplorerEngine = (() => {
             snapToGrid: !!settings.snapToGrid,
             arrangeIcons: !!settings.arrangeIcons,
             showIcons: !!settings.showIcons,
+            favoriteFolderPaths: Array.isArray(settings.favoriteFolderPaths) ? settings.favoriteFolderPaths.slice() : [],
             iconOrder: Array.isArray(settings.iconOrder) ? settings.iconOrder.slice() : [],
             iconPositions: {
                 grid: settings.iconPositions?.grid || {},
@@ -344,13 +601,77 @@ const ExplorerEngine = (() => {
     }
 
     function getSettingsSnapshot() {
+        ensureSettingsLoaded();
         return {
             iconSize: settings.iconSize,
             sortBy: normalizeDesktopSortKey(settings.sortBy),
             snapToGrid: settings.snapToGrid,
             arrangeIcons: settings.arrangeIcons,
-            showIcons: settings.showIcons
+            showIcons: settings.showIcons,
+            favoriteFolderPaths: Array.isArray(settings.favoriteFolderPaths) ? settings.favoriteFolderPaths.slice() : []
         };
+    }
+
+    function normalizeFolderPathList(paths = []) {
+        const deduped = new Map();
+
+        (Array.isArray(paths) ? paths : []).forEach(folderPath => {
+            if (typeof folderPath !== 'string' || !folderPath) {
+                return;
+            }
+
+            const resolvedPath = path.resolve(folderPath);
+            const comparisonKey = normalizeEntryPathForComparison(resolvedPath);
+            if (!comparisonKey || deduped.has(comparisonKey)) {
+                return;
+            }
+
+            deduped.set(comparisonKey, resolvedPath);
+        });
+
+        return Array.from(deduped.values());
+    }
+
+    function getFavoriteFolderPaths() {
+        ensureSettingsLoaded();
+        settings.favoriteFolderPaths = normalizeFolderPathList(
+            Array.isArray(settings.favoriteFolderPaths) && settings.favoriteFolderPaths.length
+                ? settings.favoriteFolderPaths
+                : getDefaultFavoriteFolderPaths()
+        );
+        return settings.favoriteFolderPaths.slice();
+    }
+
+    function isFavoriteFolderPath(folderPath) {
+        if (typeof folderPath !== 'string' || !folderPath) {
+            return false;
+        }
+
+        const comparisonKey = normalizeEntryPathForComparison(folderPath);
+        return getFavoriteFolderPaths().some(candidatePath => normalizeEntryPathForComparison(candidatePath) === comparisonKey);
+    }
+
+    function addFavoriteFolderPath(folderPath) {
+        if (typeof folderPath !== 'string' || !folderPath) {
+            return getFavoriteFolderPaths();
+        }
+
+        const nextFavorites = normalizeFolderPathList([...getFavoriteFolderPaths(), folderPath]);
+        settings.favoriteFolderPaths = nextFavorites;
+        saveSettings();
+        return nextFavorites.slice();
+    }
+
+    function removeFavoriteFolderPath(folderPath) {
+        if (typeof folderPath !== 'string' || !folderPath) {
+            return getFavoriteFolderPaths();
+        }
+
+        const comparisonKey = normalizeEntryPathForComparison(folderPath);
+        settings.favoriteFolderPaths = getFavoriteFolderPaths()
+            .filter(candidatePath => normalizeEntryPathForComparison(candidatePath) !== comparisonKey);
+        saveSettings();
+        return settings.favoriteFolderPaths.slice();
     }
 
     function normalizeDesktopSortKey(sortKey) {
@@ -390,6 +711,7 @@ const ExplorerEngine = (() => {
         loadSettings();
         applySizeClass();
         bindDesktopEvents();
+        bindDesktopWatcher();
         bindRecycleBinEvents();
         await loadRecycleBinState();
         initialized = true;
@@ -404,6 +726,8 @@ const ExplorerEngine = (() => {
         if (!gridElement) {
             return;
         }
+
+        bindDesktopWatcher();
 
         if (refreshInFlight) {
             return refreshInFlight;
@@ -422,20 +746,7 @@ const ExplorerEngine = (() => {
                 ]);
 
                 recycleBinState = nextRecycleBinState;
-
-                gridElement.innerHTML = '';
-                entryElementsByPath = new Map();
-                selectedElements = new Set();
-                hoveredItem = null;
-
-                const recycleEntry = buildRecycleEntry();
-                const recycleItem = buildDesktopItem(recycleEntry);
-                gridElement.appendChild(recycleItem);
-
-                entries.forEach(entry => {
-                    const item = buildDesktopItem(entry);
-                    gridElement.appendChild(item);
-                });
+                renderDesktopEntries(entries);
 
                 if (pendingSelectPath) {
                     clearSelection();
@@ -460,32 +771,52 @@ const ExplorerEngine = (() => {
         return refreshInFlight;
     }
 
-    async function readDesktopEntries() {
-        try {
-            const stats = await fsp.stat(desktopPath);
-            if (!stats.isDirectory()) {
-                console.warn('ExplorerEngine: Desktop path is not a directory.', desktopPath);
-                return [];
-            }
-        } catch (error) {
-            console.error('ExplorerEngine: Unable to access desktop path.', desktopPath, error);
+    async function readFolderEntries(targetFolderPath, options = {}) {
+        const {
+            locationId = null,
+            locationName = null
+        } = options;
+
+        if (typeof targetFolderPath !== 'string' || !targetFolderPath) {
             return [];
         }
 
         try {
-            const dirents = await fsp.readdir(desktopPath, { withFileTypes: true });
+            const stats = await fsp.stat(targetFolderPath);
+            if (!stats.isDirectory()) {
+                console.warn('ExplorerEngine: Path is not a directory.', targetFolderPath);
+                return [];
+            }
+        } catch (error) {
+            console.error('ExplorerEngine: Unable to access folder path.', targetFolderPath, error);
+            return [];
+        }
+
+        try {
+            const dirents = await fsp.readdir(targetFolderPath, { withFileTypes: true });
             const entries = await Promise.all(dirents
-                .filter(dirent => !dirent.name.startsWith('.'))
+                .filter(dirent => !isHiddenEntryName(dirent.name))
                 .map(async dirent => {
                     const isDirectory = dirent.isDirectory();
-                    const entryPath = path.join(desktopPath, dirent.name);
+                    const entryPath = path.join(targetFolderPath, dirent.name);
                     const extension = !isDirectory ? path.extname(dirent.name).slice(1).toLowerCase() : '';
                     let stats = null;
 
                     try {
                         stats = await fsp.stat(entryPath);
                     } catch (error) {
-                        console.warn('ExplorerEngine: Failed to read desktop entry metadata.', entryPath, error);
+                        console.warn('ExplorerEngine: Failed to read folder entry metadata.', entryPath, error);
+                    }
+
+                    let folderIconCategory;
+                    if (isDirectory) {
+                        try {
+                            const subEntries = await fsp.readdir(entryPath);
+                            const visibleSubEntries = subEntries.filter(name => !isHiddenEntryName(name));
+                            folderIconCategory = visibleSubEntries.length > 0 ? 'folder_of_folders' : 'generic_folder';
+                        } catch (_) {
+                            folderIconCategory = 'generic_folder';
+                        }
                     }
 
                     return {
@@ -495,18 +826,74 @@ const ExplorerEngine = (() => {
                         extension,
                         size: isDirectory ? 0 : (stats?.size || 0),
                         modifiedTime: stats?.mtimeMs || 0,
+                        iconCategory: isDirectory ? folderIconCategory : undefined,
                         typeLabel: getDesktopEntryTypeLabel({
+                            name: dirent.name,
                             type: isDirectory ? 'folder' : 'file',
                             extension
-                        })
+                        }),
+                        locationId,
+                        locationName: locationName || path.basename(targetFolderPath)
                     };
                 }));
 
             return entries.sort((a, b) => compareDesktopEntries(a, b));
         } catch (error) {
-            console.error('ExplorerEngine: Failed to read desktop directory.', error);
+            console.error('ExplorerEngine: Failed to read folder directory.', error);
             return [];
         }
+    }
+
+    async function readDesktopEntries() {
+        return readFolderEntries(desktopPath, {
+            locationId: 'desktop',
+            locationName: 'Desktop'
+        });
+    }
+
+    async function readKnownFolderEntries(folderIds = null) {
+        const knownFoldersApi = getKnownFoldersApi();
+        if (!knownFoldersApi || typeof knownFoldersApi.getDefinitions !== 'function') {
+            return readDesktopEntries();
+        }
+
+        const definitions = knownFoldersApi.getDefinitions();
+        const requestedIds = Array.isArray(folderIds) && folderIds.length
+            ? new Set(folderIds.map(id => String(id || '').trim()).filter(Boolean))
+            : null;
+        const selectedDefinitions = requestedIds
+            ? definitions.filter(definition => requestedIds.has(definition.id))
+            : definitions;
+
+        const folderEntries = await Promise.all(selectedDefinitions.map(async definition => {
+            const folderPath = typeof knownFoldersApi.resolvePath === 'function'
+                ? knownFoldersApi.resolvePath(definition.id)
+                : null;
+
+            if (!folderPath) {
+                return [];
+            }
+
+            return readFolderEntries(folderPath, {
+                locationId: definition.id,
+                locationName: definition.name
+            });
+        }));
+
+        const dedupedEntries = new Map();
+        folderEntries.flat().forEach(entry => {
+            const key = typeof entry?.path === 'string'
+                ? entry.path.toLowerCase()
+                : null;
+
+            if (!key || dedupedEntries.has(key)) {
+                return;
+            }
+
+            dedupedEntries.set(key, entry);
+        });
+
+        return Array.from(dedupedEntries.values()).sort((left, right) => compareDesktopEntries(left, right));
     }
 
     function compareDesktopEntries(leftEntry, rightEntry, options = {}) {
@@ -564,6 +951,23 @@ const ExplorerEngine = (() => {
         return (leftEntry?.name || '').localeCompare(rightEntry?.name || '', undefined, { sensitivity: 'base' });
     }
 
+    function getShortcutTargetExtension(entry) {
+        if (entry?.type !== 'file') {
+            return '';
+        }
+
+        const extension = typeof entry.extension === 'string' ? entry.extension.toLowerCase() : '';
+        if (extension !== 'ink' && extension !== 'lnk') {
+            return '';
+        }
+
+        const fileName = typeof entry.name === 'string' ? entry.name : '';
+        const baseWithoutShortcut = fileName.replace(/\.(ink|lnk)$/i, '').replace(/\s*-\s*Shortcut$/i, '');
+        const segments = baseWithoutShortcut.split('.');
+        const targetExtension = (segments.length > 1 ? segments.pop() : '').toLowerCase();
+        return targetExtension;
+    }
+
     function getDesktopEntryTypeLabel(entry) {
         if (entry?.type === 'recycle-bin') {
             return 'Recycle Bin';
@@ -571,6 +975,11 @@ const ExplorerEngine = (() => {
 
         if (entry?.type === 'folder') {
             return 'File folder';
+        }
+
+        const shortcutTargetExtension = getShortcutTargetExtension(entry);
+        if (shortcutTargetExtension) {
+            return `${shortcutTargetExtension.toUpperCase()} Shortcut`;
         }
 
         if (entry?.extension) {
@@ -593,21 +1002,49 @@ const ExplorerEngine = (() => {
         };
     }
 
-    function buildDesktopItem(entry) {
-        const item = document.createElement('div');
+    function getDesktopItemRenderSignature(entry) {
+        const iconBuilder = getExplorerIconBuilderApi();
+        const preset = resolveSizePreset(settings.iconSize);
+        const iconCategory = iconBuilder && typeof iconBuilder.getIconCategory === 'function'
+            ? (iconBuilder.getIconCategory(entry) || '')
+            : '';
+        const isThumbnail = iconBuilder && typeof iconBuilder.isDisplayableImage === 'function'
+            ? iconBuilder.isDisplayableImage(entry)
+            : false;
+        const modifiedTime = Number.isFinite(Number(entry?.modifiedTime))
+            ? Number(entry.modifiedTime)
+            : 0;
+
+        return [
+            entry?.type || '',
+            entry?.name || '',
+            entry?.path || '',
+            entry?.extension || '',
+            entry?.typeLabel || '',
+            iconCategory,
+            preset.iconSize,
+            entry?.type === 'recycle-bin' ? (entry.recycleBinEmpty ? 'empty' : 'full') : '',
+            isEntryClickable(entry) ? 'clickable' : 'disabled',
+            isThumbnail ? modifiedTime : ''
+        ].join('|');
+    }
+
+    function applyDesktopItemState(item, entry, itemKey, renderSignature) {
         item.className = 'desktop-item';
         item.setAttribute('data-type', entry.type);
-
-        const itemKey = deriveItemKey(entry);
         item.dataset.itemKey = itemKey;
+        item.dataset.renderSignature = renderSignature;
 
         if (entry.path) {
             item.setAttribute('data-path', entry.path);
-            entryElementsByPath.set(entry.path, item);
+        } else {
+            item.removeAttribute('data-path');
         }
 
         if (entry.extension) {
             item.setAttribute('data-extension', entry.extension);
+        } else {
+            item.removeAttribute('data-extension');
         }
 
         if (isEntryClickable(entry)) {
@@ -615,6 +1052,72 @@ const ExplorerEngine = (() => {
         } else if (entry.type === 'recycle-bin') {
             item.classList.add('desktop-item--disabled');
         }
+
+        itemEntryMap.set(item, entry);
+    }
+
+    function reuseDesktopItem(item, entry, itemKey, renderSignature) {
+        applyDesktopItemState(item, entry, itemKey, renderSignature);
+        return item;
+    }
+
+    function invalidateDesktopItemIconCache(entry) {
+        const iconBuilder = getExplorerIconBuilderApi();
+        if (iconBuilder && typeof iconBuilder.invalidateIconCacheForEntry === 'function') {
+            iconBuilder.invalidateIconCacheForEntry(entry);
+        }
+    }
+
+    function renderDesktopEntries(entries) {
+        const previousItems = gridElement
+            ? new Map(Array.from(gridElement.querySelectorAll('.desktop-item')).map(item => [item.dataset.itemKey, item]))
+            : new Map();
+        const nextEntryElementsByPath = new Map();
+        const fragment = document.createDocumentFragment();
+        const entriesToRender = [buildRecycleEntry(), ...entries];
+
+        selectedElements = new Set();
+        hoveredItem = null;
+
+        entriesToRender.forEach(entry => {
+            const itemKey = deriveItemKey(entry);
+            const renderSignature = getDesktopItemRenderSignature(entry);
+            const existingItem = previousItems.get(itemKey);
+
+            let item = null;
+            if (existingItem && existingItem.dataset.renderSignature === renderSignature) {
+                item = reuseDesktopItem(existingItem, entry, itemKey, renderSignature);
+            } else {
+                if (existingItem) {
+                    invalidateDesktopItemIconCache(itemEntryMap.get(existingItem) || entry);
+                }
+                item = buildDesktopItem(entry, { itemKey, renderSignature });
+            }
+
+            previousItems.delete(itemKey);
+
+            if (entry.path) {
+                nextEntryElementsByPath.set(entry.path, item);
+            }
+
+            fragment.appendChild(item);
+        });
+
+        previousItems.forEach(staleItem => {
+            invalidateDesktopItemIconCache(itemEntryMap.get(staleItem));
+        });
+
+        gridElement.replaceChildren(fragment);
+        entryElementsByPath = nextEntryElementsByPath;
+    }
+
+    function buildDesktopItem(entry, options = {}) {
+        const {
+            itemKey = deriveItemKey(entry),
+            renderSignature = getDesktopItemRenderSignature(entry)
+        } = options;
+        const item = document.createElement('div');
+        applyDesktopItemState(item, entry, itemKey, renderSignature);
 
         const preset = resolveSizePreset(settings.iconSize);
         const iconBuilder = getExplorerIconBuilderApi();
@@ -648,8 +1151,6 @@ const ExplorerEngine = (() => {
 
         item.appendChild(icon);
         item.appendChild(labelContainer);
-
-        itemEntryMap.set(item, entry);
 
         item.addEventListener('click', handleItemClick);
         item.addEventListener('dblclick', handleItemDoubleClick);
@@ -1630,7 +2131,7 @@ const ExplorerEngine = (() => {
     }
 
     function resolvePasteTargetDirectory(entry) {
-        if (!clipboardData || !Array.isArray(clipboardData.paths) || !clipboardData.paths.length) {
+        if (!hasClipboardPayload()) {
             return null;
         }
 
@@ -1647,6 +2148,14 @@ const ExplorerEngine = (() => {
         }
 
         return desktopPath;
+    }
+
+    function canPasteToDirectory(targetDirectory) {
+        if (!hasClipboardPayload()) {
+            return false;
+        }
+
+        return Boolean(targetDirectory && typeof targetDirectory === 'string');
     }
 
     function getRecycleBinContextMenuIconPath() {
@@ -1725,9 +2234,53 @@ const ExplorerEngine = (() => {
             const canRename = canRenameEntry(entry);
             const canRecycle = copyTargets.length > 0;
             const canCopy = copyTargets.length > 0;
+            const canCut = copyTargets.length > 0;
             const canPaste = Boolean(pasteTarget);
 
-            menuItems = [
+            const isFile = entry.type === 'file';
+            const hasPath = Boolean(entry.path);
+
+            menuItems = [];
+
+            if (isFile && hasPath) {
+                menuItems.push({
+                    type: 'action',
+                    action: 'open',
+                    label: 'Open',
+                    bold: true,
+                    handler: () => {
+                        openEntryPath(entry.path, 'file').catch(error => {
+                            console.error('ExplorerEngine: Failed to open file from context menu.', error);
+                        });
+                    }
+                });
+                menuItems.push({
+                    type: 'action',
+                    action: 'open-with',
+                    label: 'Open with...',
+                    handler: () => {
+                        openEntryPathWithChooser(entry.path).catch(error => {
+                            console.error('ExplorerEngine: Failed to show open-with chooser.', error);
+                        });
+                    }
+                });
+                menuItems.push({ type: 'separator' });
+            } else if (entry.type === 'folder' && hasPath) {
+                menuItems.push({
+                    type: 'action',
+                    action: 'open',
+                    label: 'Open',
+                    bold: true,
+                    handler: () => {
+                        openEntryPath(entry.path, 'folder').catch(error => {
+                            console.error('ExplorerEngine: Failed to open folder from context menu.', error);
+                        });
+                    }
+                });
+                menuItems.push({ type: 'separator' });
+            }
+
+            menuItems.push(
                 { type: 'action', action: 'rename', label: 'Rename', disabled: !canRename, handler: () => handleRenameEntry(entry, item) },
                 {
                     type: 'action',
@@ -1740,8 +2293,9 @@ const ExplorerEngine = (() => {
                 },
                 { type: 'separator' },
                 { type: 'action', action: 'copy', label: 'Copy', disabled: !canCopy, handler: () => handleCopySelection(entry) },
+                { type: 'action', action: 'cut', label: 'Cut', disabled: !canCut, handler: () => handleCutSelection(entry) },
                 { type: 'action', action: 'paste', label: 'Paste', disabled: !canPaste, handler: () => handlePasteInto(entry) }
-            ];
+            );
         }
 
         const menu = document.createElement('div');
@@ -1761,6 +2315,10 @@ const ExplorerEngine = (() => {
 
             if (itemConfig.disabled) {
                 button.classList.add('is-disabled');
+            }
+
+            if (itemConfig.bold) {
+                button.style.fontWeight = 'bold';
             }
 
             const iconWrapper = document.createElement('span');
@@ -1829,9 +2387,14 @@ const ExplorerEngine = (() => {
         const menuHeight = menu.offsetHeight;
         const windowWidth = window.innerWidth;
         const windowHeight = window.innerHeight;
+        const taskbarReservedHeight = Math.max(
+            0,
+            parseInt(getComputedStyle(document.body).getPropertyValue('--taskbar-reserved-height'), 10) || 0
+        );
         const maxLeft = Math.max(viewportPadding, windowWidth - menuWidth - viewportPadding);
-        const maxTop = Math.max(viewportPadding, windowHeight - menuHeight - viewportPadding);
-        const availableBelow = windowHeight - pageY - cursorGap - viewportPadding;
+        const bottomBoundary = Math.max(viewportPadding, windowHeight - taskbarReservedHeight - viewportPadding);
+        const maxTop = Math.max(viewportPadding, bottomBoundary - menuHeight);
+        const availableBelow = bottomBoundary - pageY - cursorGap;
         const availableAbove = pageY - cursorGap - viewportPadding;
 
         let left = Math.min(Math.max(pageX, viewportPadding), maxLeft);
@@ -2056,23 +2619,11 @@ const ExplorerEngine = (() => {
             return;
         }
 
-        const destinationPath = path.join(path.dirname(entry.path), proposed);
-        const normalizedSourcePath = entry.path.toLowerCase();
-        const normalizedDestinationPath = destinationPath.toLowerCase();
-        const skipExistenceCheck = normalizedSourcePath === normalizedDestinationPath;
-
         renameState.commitInProgress = true;
         input.disabled = true;
 
         try {
-            if (!skipExistenceCheck) {
-                const exists = await pathExists(destinationPath);
-                if (exists) {
-                    throw Object.assign(new Error('An item with that name already exists.'), { code: 'EEXIST' });
-                }
-            }
-
-            await fsp.rename(entry.path, destinationPath);
+            const destinationPath = await renameEntryPath(entry.path, proposed);
 
             entry.path = destinationPath;
             entry.name = proposed;
@@ -2097,12 +2648,6 @@ const ExplorerEngine = (() => {
         }
 
         finishInlineRename(proposed);
-
-        try {
-            await refreshDesktop();
-        } catch (error) {
-            console.error('ExplorerEngine: Refresh failed after rename.', error);
-        }
     }
 
     function isValidFilename(value) {
@@ -2140,17 +2685,14 @@ const ExplorerEngine = (() => {
         }
 
         try {
-            for (const targetPath of targets) {
-                await movePathToTrash(targetPath);
-            }
+            await movePathsToRecycleBin(targets);
         } catch (error) {
             console.error('ExplorerEngine: Failed to move item to recycle bin.', error);
             const recycleLabel = process.platform === 'darwin' ? 'Trash' : 'Recycle Bin';
             systemDialog.error(`Unable to move one or more items to the ${recycleLabel.toLowerCase()}.`, recycleLabel);
-        } finally {
-            pendingSelectPath = null;
-            await refreshDesktop();
         }
+
+        pendingSelectPath = null;
     }
 
     async function movePathToTrash(targetPath) {
@@ -2180,15 +2722,20 @@ const ExplorerEngine = (() => {
             return;
         }
 
-        clipboardData = {
-            type: 'copy',
-            paths: targets.slice(),
-            timestamp: Date.now()
-        };
+        copyPathsToClipboard(targets);
+    }
+
+    function handleCutSelection(entry) {
+        const targets = getSelectionPaths({ fallbackEntry: entry });
+        if (!targets.length) {
+            return;
+        }
+
+        cutPathsToClipboard(targets);
     }
 
     async function handlePasteInto(entry) {
-        if (!clipboardData || !Array.isArray(clipboardData.paths) || !clipboardData.paths.length) {
+        if (!hasClipboardPayload()) {
             return;
         }
 
@@ -2197,34 +2744,61 @@ const ExplorerEngine = (() => {
             return;
         }
 
-        const createdPaths = [];
-
-        for (const sourcePath of clipboardData.paths) {
-            try {
-                const createdPath = await copyEntryToDirectory(sourcePath, targetDirectory);
-                if (createdPath) {
-                    createdPaths.push(createdPath);
-                }
-            } catch (error) {
-                console.error('ExplorerEngine: Failed to paste item.', error);
-                systemDialog.error(error && error.message ? error.message : 'Unable to paste item.', 'Paste');
-                break;
+        try {
+            const result = await pasteClipboardToDirectory(targetDirectory);
+            if (result.createdPaths.length) {
+                pendingSelectPath = result.createdPaths[result.createdPaths.length - 1];
             }
+        } catch (error) {
+            console.error('ExplorerEngine: Failed to paste item.', error);
+            systemDialog.error(error && error.message ? error.message : 'Unable to paste item.', 'Paste');
         }
-
-        if (createdPaths.length) {
-            pendingSelectPath = createdPaths[createdPaths.length - 1];
-        }
-
-        await refreshDesktop();
     }
 
     function canPasteToDesktop() {
-        return Boolean(resolvePasteTargetDirectory(null));
+        return canPasteToDirectory(desktopPath);
     }
 
     async function pasteClipboardToDesktop() {
-        await handlePasteInto(null);
+        return pasteClipboardToDirectory(desktopPath);
+    }
+
+    async function pasteClipboardToDirectory(targetDirectory) {
+        if (!hasClipboardPayload()) {
+            return {
+                type: 'copy',
+                createdPaths: []
+            };
+        }
+
+        const normalizedTargetDirectory = path.resolve(targetDirectory);
+        const clipboardSnapshot = getClipboardSnapshot();
+        const createdPaths = [];
+
+        for (const sourcePath of clipboardSnapshot.paths) {
+            const operation = clipboardSnapshot.type === 'cut'
+                ? moveEntryToDirectory
+                : copyEntryToDirectory;
+            const createdPath = await operation(sourcePath, normalizedTargetDirectory);
+            if (createdPath) {
+                createdPaths.push(createdPath);
+            }
+        }
+
+        if (clipboardSnapshot.type === 'cut' && createdPaths.length === clipboardSnapshot.paths.length) {
+            clearClipboard();
+        }
+
+        await refreshDesktopIfAffected(
+            clipboardSnapshot.type === 'cut'
+                ? [...clipboardSnapshot.paths, normalizedTargetDirectory]
+                : [normalizedTargetDirectory]
+        );
+
+        return {
+            type: clipboardSnapshot.type,
+            createdPaths
+        };
     }
 
     async function copyEntryToDirectory(sourcePath, targetDirectory) {
@@ -2256,6 +2830,52 @@ const ExplorerEngine = (() => {
         return destination.path;
     }
 
+    async function moveEntryToDirectory(sourcePath, targetDirectory) {
+        if (!sourcePath || !targetDirectory) {
+            throw new Error('Invalid move parameters.');
+        }
+
+        const normalizedSourcePath = path.resolve(sourcePath);
+        const normalizedTargetDirectory = path.resolve(targetDirectory);
+        const sourceStats = await fsp.stat(normalizedSourcePath);
+
+        if (!sourceStats.isDirectory() && pathMatches(path.dirname(normalizedSourcePath), normalizedTargetDirectory)) {
+            return normalizedSourcePath;
+        }
+
+        if (sourceStats.isDirectory() && (pathMatches(normalizedSourcePath, normalizedTargetDirectory) || isPathWithin(normalizedSourcePath, normalizedTargetDirectory))) {
+            throw new Error('You cannot move a folder into itself.');
+        }
+
+        if (pathMatches(path.dirname(normalizedSourcePath), normalizedTargetDirectory)) {
+            return normalizedSourcePath;
+        }
+
+        const destination = await findMoveDestinationName(path.basename(normalizedSourcePath), normalizedTargetDirectory);
+
+        try {
+            await fsp.rename(normalizedSourcePath, destination.path);
+            return destination.path;
+        } catch (error) {
+            if (error && error.code !== 'EXDEV') {
+                throw error;
+            }
+        }
+
+        if (sourceStats.isDirectory()) {
+            if (typeof fsp.cp === 'function') {
+                await fsp.cp(normalizedSourcePath, destination.path, { recursive: true, force: false, errorOnExist: true });
+            } else {
+                await copyDirectoryRecursive(normalizedSourcePath, destination.path);
+            }
+        } else {
+            await fsp.copyFile(normalizedSourcePath, destination.path);
+        }
+
+        await removeEntryPath(normalizedSourcePath);
+        return destination.path;
+    }
+
     async function findCopyDestinationName(originalName, targetDirectory) {
         const parsed = path.parse(originalName);
         const baseName = parsed.name;
@@ -2275,6 +2895,32 @@ const ExplorerEngine = (() => {
         throw new Error('Unable to create a copy of this item.');
     }
 
+    async function findMoveDestinationName(originalName, targetDirectory) {
+        const initialPath = path.join(targetDirectory, originalName);
+        const initialExists = await pathExists(initialPath);
+        if (!initialExists) {
+            return {
+                name: originalName,
+                path: initialPath
+            };
+        }
+
+        const parsed = path.parse(originalName);
+        const baseName = parsed.name;
+        const extension = parsed.ext || '';
+
+        for (let attempt = 2; attempt <= 500; attempt += 1) {
+            const candidateName = `${baseName} (${attempt})${extension}`;
+            const candidatePath = path.join(targetDirectory, candidateName);
+            const exists = await pathExists(candidatePath);
+            if (!exists) {
+                return { name: candidateName, path: candidatePath };
+            }
+        }
+
+        throw new Error('Unable to move this item because all target names are in use.');
+    }
+
     async function copyDirectoryRecursive(sourceDir, destDir) {
         await fsp.mkdir(destDir, { recursive: true });
         const entries = await fsp.readdir(sourceDir, { withFileTypes: true });
@@ -2292,6 +2938,75 @@ const ExplorerEngine = (() => {
                 await fsp.copyFile(sourceEntryPath, destEntryPath);
             }
         }
+    }
+
+    async function removeEntryPath(targetPath) {
+        const stats = await fsp.lstat(targetPath);
+
+        if (stats.isDirectory() && !stats.isSymbolicLink()) {
+            if (typeof fsp.rm === 'function') {
+                await fsp.rm(targetPath, { recursive: true, force: false });
+                return;
+            }
+
+            const entries = await fsp.readdir(targetPath, { withFileTypes: true });
+            for (const entry of entries) {
+                await removeEntryPath(path.join(targetPath, entry.name));
+            }
+            await fsp.rmdir(targetPath);
+            return;
+        }
+
+        await fsp.unlink(targetPath);
+    }
+
+    async function renameEntryPath(entryPath, proposedName) {
+        if (typeof entryPath !== 'string' || !entryPath) {
+            throw new Error('No item was provided for rename.');
+        }
+
+        const trimmedName = typeof proposedName === 'string' ? proposedName.trim() : '';
+        if (!trimmedName) {
+            throw new Error('Please enter a name.');
+        }
+
+        if (!isValidFilename(trimmedName)) {
+            throw new Error('The name contains invalid characters.');
+        }
+
+        const sourcePath = path.resolve(entryPath);
+        const destinationPath = path.join(path.dirname(sourcePath), trimmedName);
+
+        if (pathMatches(sourcePath, destinationPath)) {
+            return destinationPath;
+        }
+
+        const exists = await pathExists(destinationPath);
+        if (exists) {
+            throw Object.assign(new Error('An item with that name already exists.'), { code: 'EEXIST' });
+        }
+
+        await fsp.rename(sourcePath, destinationPath);
+        await refreshDesktopIfAffected([sourcePath, destinationPath]);
+        return destinationPath;
+    }
+
+    async function movePathsToRecycleBin(paths) {
+        const targetPaths = Array.isArray(paths)
+            ? paths.filter(pathValue => typeof pathValue === 'string' && pathValue)
+            : [];
+
+        if (!targetPaths.length) {
+            return [];
+        }
+
+        for (const targetPath of targetPaths) {
+            await movePathToTrash(targetPath);
+        }
+
+        clearClipboardForPaths(targetPaths);
+        await refreshDesktopIfAffected(targetPaths);
+        return targetPaths;
     }
 
     async function createNewFolder() {
@@ -2373,6 +3088,54 @@ const ExplorerEngine = (() => {
         }
     }
 
+    async function openEntryPathWithChooser(targetPath) {
+        if (!window.FileAssociations) {
+            await openEntryPath(targetPath, 'file');
+            return;
+        }
+
+        const FA = window.FileAssociations;
+        const extension = FA.getFileExtension(targetPath);
+        const compatibleApps = await FA.getCompatibleAppIds(targetPath);
+
+        // Always include the host OS option via the chooser
+        if (window.OpenWithChooser && typeof window.OpenWithChooser.show === 'function') {
+            const candidates = compatibleApps
+                .map(appId => ({
+                    appId,
+                    app: window.AppsManager?.getAppById(appId) || null
+                }))
+                .filter(c => c.app);
+
+            const choice = await window.OpenWithChooser.show({
+                extension,
+                candidates
+            });
+
+            if (!choice) {
+                return;
+            }
+
+            if (choice.kind === 'app' && choice.appId) {
+                if (choice.remember && extension) {
+                    if (typeof FA.saveOpenChoice === 'function') {
+                        FA.saveOpenChoice(extension, { kind: 'app', appId: choice.appId });
+                    }
+                }
+                await FA.openFileInternally(targetPath, choice.appId);
+            } else if (choice.kind === 'host') {
+                if (choice.remember && extension) {
+                    if (typeof FA.saveOpenChoice === 'function') {
+                        FA.saveOpenChoice(extension, { kind: 'host' });
+                    }
+                }
+                await FA.openPathExternally(targetPath);
+            }
+        } else {
+            await openEntryPath(targetPath, 'file');
+        }
+    }
+
     async function openRecycleBin() {
         try {
             if (typeof window.launchApp === 'function') {
@@ -2426,7 +3189,9 @@ const ExplorerEngine = (() => {
 
         settings.iconSize = sizeKey;
         applySizeClass();
-        layoutIcons({ persist: true });
+        refreshDesktop().catch(error => {
+            console.error('ExplorerEngine: Failed to refresh desktop after icon size change.', error);
+        });
     }
 
     function toggleSnapToGrid(forceValue) {
@@ -2547,7 +3312,9 @@ const ExplorerEngine = (() => {
     return {
         initializeDesktop,
         refreshDesktop,
+        readFolderEntries,
         readDesktopEntries,
+        readKnownFolderEntries,
         createNewFolder,
         createNewTextDocument,
         openEntryPath,
@@ -2558,8 +3325,21 @@ const ExplorerEngine = (() => {
         toggleSnapToGrid,
         toggleArrangeIcons,
         toggleShowIcons,
+        getFavoriteFolderPaths,
+        isFavoriteFolderPath,
+        addFavoriteFolderPath,
+        removeFavoriteFolderPath,
+        getClipboardSnapshot,
+        copyPathsToClipboard,
+        cutPathsToClipboard,
+        clearClipboard,
+        pasteClipboardToDirectory,
         pasteClipboardToDesktop,
+        canPasteToDirectory,
         canPasteToDesktop,
+        renameEntryPath,
+        movePathsToRecycleBin,
+        isHiddenEntryName,
         closeItemContextMenu: hideItemContextMenu,
         getSettings: getSettingsSnapshot,
         getDesktopPath: () => desktopPath

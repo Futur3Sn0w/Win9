@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PC Settings</title>
+    <link rel="stylesheet" href="../../../css/fonts.css">
     <link rel="stylesheet" href="../../../css/modern-ui.css">
     <link rel="stylesheet" href="https://cdn.metroui.org.ua/v4/css/metro-icons.min.css">
     <style>
@@ -70,18 +71,7 @@
         }
 
         .settings-back-btn {
-            background: transparent;
-            border: 2px solid #fff;
-            color: #fff;
-            font-size: 20px;
-            width: 32px;
-            height: 32px;
             display: none;
-            align-items: center;
-            justify-content: center;
-            transition: background 0.15s ease, color 0.15s ease;
-            border-radius: 50%;
-            flex-shrink: 0;
             margin-left: -40px;
             margin-right: -10px;
             margin-bottom: -3px;
@@ -89,15 +79,6 @@
 
         .settings-back-btn.visible {
             display: flex;
-        }
-
-        .settings-back-btn:hover {
-            background: rgba(255, 255, 255, 0.15);
-        }
-
-        .settings-back-btn:active {
-            background: #fff;
-            color: #000;
         }
 
         .settings-search-icon {
@@ -282,35 +263,6 @@
             margin: -8px 0 30px;
         }
 
-        .settings-toggle {
-            width: 44px;
-            height: 24px;
-            background: #ccc;
-            border-radius: 12px;
-            position: relative;
-
-            transition: background 0.2s ease;
-        }
-
-        .settings-toggle.on {
-            background: #0078d7;
-        }
-
-        .settings-toggle-slider {
-            width: 18px;
-            height: 18px;
-            background: white;
-            border-radius: 15%;
-            position: absolute;
-            top: 3px;
-            left: 3px;
-            transition: transform 0.2s ease;
-        }
-
-        .settings-toggle.on .settings-toggle-slider {
-            transform: translateX(20px);
-        }
-
         .personalize-tiles {
             display: flex;
             flex-wrap: wrap;
@@ -392,12 +344,40 @@
             text-decoration: underline;
         }
 
-        /* Lock screen preview styles */
+        /* Lock screen page */
+        .settings-lock-screen-page {
+            max-width: 860px;
+        }
+
+        .settings-lock-screen-intro,
+        .settings-lock-screen-note {
+            font-size: 14px;
+            line-height: 1.5;
+            color: #666;
+        }
+
+        .settings-lock-screen-intro {
+            margin: -8px 0 24px;
+        }
+
+        .settings-lock-screen-stage {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 220px;
+            gap: 28px;
+            align-items: start;
+            margin-bottom: 22px;
+        }
+
+        .settings-lock-screen-frame {
+            padding: 14px;
+            background: #2f2f2f;
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+        }
+
         .lock-screen-preview {
             position: relative;
-            width: 600px;
-            height: 337px;
-            margin: 20px 0;
+            width: 100%;
+            aspect-ratio: 16 / 9;
             overflow: hidden;
             background: #000;
         }
@@ -408,21 +388,84 @@
             object-fit: cover;
         }
 
+        .lock-screen-status-strip {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        .lock-screen-status-detailed {
+            min-width: 120px;
+            padding: 10px 12px;
+            background: rgba(6, 6, 6, 0.56);
+            color: #fff;
+            backdrop-filter: blur(3px);
+        }
+
+        .lock-screen-status-detailed-label {
+            display: block;
+            font-size: 11px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            opacity: 0.72;
+        }
+
+        .lock-screen-status-detailed-name {
+            display: block;
+            margin-top: 4px;
+            font-size: 20px;
+            font-weight: 300;
+        }
+
+        .lock-screen-status-detailed-text {
+            display: block;
+            margin-top: 6px;
+            font-size: 12px;
+            line-height: 1.35;
+            opacity: 0.88;
+        }
+
+        .lock-screen-status-icons {
+            display: grid;
+            grid-template-columns: repeat(2, 36px);
+            gap: 8px;
+        }
+
+        .lock-screen-status-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            background: rgba(6, 6, 6, 0.56);
+            color: #fff;
+            font-size: 11px;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            backdrop-filter: blur(3px);
+        }
+
+        .lock-screen-status-badge.is-empty {
+            background: rgba(6, 6, 6, 0.26);
+            color: rgba(255, 255, 255, 0.58);
+        }
+
         .lock-screen-overlay {
             position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            padding: 40px;
+            inset: auto 0 0 0;
+            padding: 42px 40px 34px;
             color: white;
-            background: linear-gradient(to top, rgba(0, 0, 0, 0.6), transparent);
+            background: linear-gradient(to top, rgba(0, 0, 0, 0.64), transparent 72%);
         }
 
         .lock-screen-time {
             font-size: 72px;
             font-weight: 300;
-            line-height: 1;
-            margin-bottom: 5px;
+            line-height: 0.95;
+            margin-bottom: 7px;
         }
 
         .lock-screen-date {
@@ -430,22 +473,152 @@
             font-weight: 300;
         }
 
-        .lock-screen-wallpapers {
+        .lock-screen-overlay-layout {
             display: flex;
-            gap: 10px;
+            align-items: flex-end;
+            justify-content: space-between;
+            gap: 28px;
+        }
+
+        .lock-screen-overlay-primary {
+            min-width: 0;
+        }
+
+        .lock-screen-overlay-secondary {
+            min-width: 160px;
+            margin-bottom: 16px;
+            text-align: left;
+        }
+
+        .lock-screen-preview-detailed {
+            color: rgba(255, 255, 255, 0.92);
+        }
+
+        .lock-screen-preview-detailed-title {
+            display: block;
+            font-size: 20px;
+            font-weight: 300;
+            line-height: 1.1;
+        }
+
+        .lock-screen-preview-detailed-text {
+            display: block;
+            margin-top: 3px;
+            font-size: 13px;
+            line-height: 1.25;
+            opacity: 0.86;
+        }
+
+        .lock-screen-preview-quick {
+            display: flex;
+            align-items: center;
+            gap: 8px;
             margin-top: 20px;
         }
 
+        .lock-screen-preview-quick-slot {
+            width: 18px;
+            height: 18px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: rgba(255, 255, 255, 0.88);
+            font-size: 12px;
+        }
+
+        .lock-screen-preview-quick-slot.is-empty {
+            color: rgba(255, 255, 255, 0.34);
+        }
+
+        .lock-screen-app-icon {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+            color: inherit;
+            font-size: 20px;
+            line-height: 1;
+        }
+
+        .lock-screen-app-icon.is-preview {
+            font-size: 14px;
+        }
+
+        .lock-screen-app-icon-plus {
+            position: absolute;
+            font-size: 16px;
+            line-height: 1;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        .settings-lock-screen-control-group {
+            margin-bottom: 18px;
+        }
+
+        .settings-lock-screen-control-label,
+        .settings-lock-screen-field-label {
+            display: block;
+            margin-bottom: 10px;
+            font-size: 12px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: #666;
+        }
+
+        .settings-lock-screen-mode-group {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .settings-lock-screen-mode-button {
+            min-width: 96px;
+            padding: 9px 14px;
+            border: 1px solid #cfcfcf;
+            background: #f5f5f5;
+            color: #222;
+            font-size: 13px;
+            cursor: pointer;
+            transition: background-color 0.12s ease, border-color 0.12s ease;
+        }
+
+        .settings-lock-screen-mode-button:hover,
+        .settings-lock-screen-status-app:hover {
+            background: #ededed;
+        }
+
+        .settings-lock-screen-mode-button.is-active {
+            border-color: var(--ui-accent);
+            background: rgba(var(--accent-rgb, 0, 120, 215), 0.08);
+            color: var(--ui-accent);
+        }
+
+        .lock-screen-wallpapers {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 10px;
+        }
+
         .lock-screen-wallpaper-tile {
-            width: 112px;
-            height: 112px;
+            position: relative;
+            width: 100%;
+            aspect-ratio: 1 / 1;
             overflow: hidden;
             border: 2px solid transparent;
-            transition: transform 0.15s ease;
+            background: #1f1f1f;
+            cursor: pointer;
+            transition: transform 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
         }
 
         .lock-screen-wallpaper-tile:hover {
-            opacity: .75;
+            opacity: 0.8;
+            transform: translateY(-1px);
+        }
+
+        .lock-screen-wallpaper-tile.is-active {
+            border-color: var(--ui-accent);
         }
 
         .lock-screen-wallpaper-tile img {
@@ -454,19 +627,251 @@
             object-fit: cover;
         }
 
+        .lock-screen-wallpaper-check {
+            position: absolute;
+            right: 8px;
+            bottom: 8px;
+            width: 22px;
+            height: 22px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.55);
+            color: #fff;
+            font-size: 13px;
+        }
+
         .browse-button {
-            display: inline-block;
-            padding: 10px 20px;
-            margin-top: 20px;
-            background: #f0f0f0;
-            border: 1px solid #ccc;
-            color: #333;
-            font-size: 14px;
-            transition: background 0.15s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 120px;
+            padding: 10px 18px;
+            margin-top: 16px;
+            border: 1px solid #c7c7c7;
+            background: #f3f3f3;
+            color: #222;
+            font-size: 13px;
+            cursor: pointer;
+            transition: background-color 0.12s ease, border-color 0.12s ease;
         }
 
         .browse-button:hover {
-            background: #e0e0e0;
+            background: #e8e8e8;
+            border-color: #b8b8b8;
+        }
+
+        .settings-lock-screen-section {
+            margin-top: 30px;
+        }
+
+        .settings-lock-screen-app-preview {
+            display: block;
+            margin-bottom: 20px;
+        }
+
+        .settings-lock-screen-app-preview-label {
+            font-size: 13px;
+            color: #555;
+        }
+
+        .settings-lock-screen-app-row,
+        .settings-lock-screen-slot-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .settings-lock-screen-app-preview-note {
+            margin-bottom: 12px;
+            font-size: 13px;
+            color: #555;
+            line-height: 1.45;
+        }
+
+        .settings-lock-screen-slot {
+            position: relative;
+            width: 38px;
+            height: 38px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: 0;
+            background: #d5d5d5;
+            color: #fff;
+            cursor: pointer;
+            transition: background-color 0.12s ease, transform 0.12s ease;
+        }
+
+        .settings-lock-screen-slot:hover {
+            transform: translateY(-1px);
+            filter: brightness(0.96);
+        }
+
+        .settings-lock-screen-slot.is-empty {
+            background: #d7d7d7;
+            color: #fff;
+        }
+
+        .settings-lock-screen-slot.is-selected {
+            box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.82);
+        }
+
+        .settings-lock-screen-slot-row {
+            margin-top: 10px;
+        }
+
+        .settings-lock-screen-slot-group {
+            margin-top: 18px;
+        }
+
+        .settings-lock-screen-slot-label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 13px;
+            color: #222;
+        }
+
+        .settings-lock-screen-slot-chooser {
+            display: grid;
+            grid-template-columns: 110px minmax(0, 1fr);
+            gap: 18px;
+            align-items: start;
+            margin-top: 18px;
+        }
+
+        .settings-lock-screen-slot-preview {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding-top: 8px;
+        }
+
+        .settings-lock-screen-slot-preview .settings-lock-screen-slot {
+            width: 42px;
+            height: 42px;
+        }
+
+        .settings-lock-screen-picker {
+            width: 100%;
+            max-width: 340px;
+            border: 2px solid #2b2b2b;
+            background: #fff;
+        }
+
+        .settings-lock-screen-picker-header {
+            padding: 16px 18px 10px;
+            font-size: 20px;
+            font-weight: 300;
+            color: #222;
+        }
+
+        .settings-lock-screen-picker-option {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 18px;
+            border: 0;
+            background: transparent;
+            color: #222;
+            text-align: left;
+            cursor: pointer;
+            transition: background-color 0.12s ease;
+        }
+
+        .settings-lock-screen-picker-option:hover {
+            background: #efefef;
+        }
+
+        .settings-lock-screen-picker-option.is-active {
+            background: #d8d8d8;
+        }
+
+        .settings-lock-screen-picker-option.is-clear {
+            color: #1b7f96;
+        }
+
+        .settings-lock-screen-picker-option-text {
+            font-size: 13px;
+            line-height: 1.3;
+        }
+
+        .settings-lock-screen-picker-option-icon {
+            width: 36px;
+            height: 36px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        .settings-lock-screen-picker-dismiss {
+            display: inline-block;
+            margin-top: 12px;
+            font-size: 12px;
+            color: #1b7f96;
+            text-decoration: none;
+        }
+
+        .settings-lock-screen-picker-dismiss:hover {
+            text-decoration: underline;
+        }
+
+        .settings-lock-screen-note {
+            margin-top: 10px;
+        }
+
+        .settings-lock-screen-dropdown-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            padding: 15px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .settings-lock-screen-dropdown-copy {
+            flex: 1;
+        }
+
+        .settings-lock-screen-dropdown-title {
+            font-size: 15px;
+            color: #111;
+        }
+
+        .settings-lock-screen-dropdown-description {
+            margin-top: 4px;
+            font-size: 13px;
+            color: #666;
+        }
+
+        @media (max-width: 820px) {
+            .settings-lock-screen-stage {
+                grid-template-columns: 1fr;
+            }
+
+            .lock-screen-overlay-layout {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 16px;
+            }
+
+            .lock-screen-overlay-secondary {
+                margin-bottom: 0;
+            }
+
+            .settings-lock-screen-dropdown-row {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+
+            .settings-lock-screen-slot-chooser {
+                grid-template-columns: 1fr;
+            }
         }
 
         .settings-toggle-container {
@@ -480,6 +885,192 @@
         .settings-toggle-label {
             font-size: 15px;
         }
+
+        .settings-toggle-description {
+            font-size: 13px;
+            color: #666;
+            margin-top: 4px;
+        }
+
+        .settings-toggle-copy {
+            flex: 1;
+            padding-right: 20px;
+        }
+
+        .settings-bluetooth-page {
+            max-width: 760px;
+        }
+
+        .settings-bluetooth-intro {
+            font-size: 14px;
+            line-height: 1.5;
+            color: #666;
+            margin: -8px 0 28px;
+        }
+
+        .settings-bluetooth-searching {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .settings-bluetooth-searching-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--ui-accent);
+            animation: bluetoothSearchingPulse 1.2s ease-in-out infinite;
+        }
+
+        .settings-bluetooth-searching-dot:nth-child(2) {
+            animation-delay: 0.15s;
+        }
+
+        .settings-bluetooth-searching-dot:nth-child(3) {
+            animation-delay: 0.3s;
+        }
+
+        .settings-bluetooth-section {
+            margin-top: 28px;
+        }
+
+        .settings-bluetooth-section-title {
+            font-size: 20px;
+            font-weight: 300;
+            color: #111;
+            margin-bottom: 12px;
+        }
+
+        .settings-bluetooth-device-list {
+            border-top: 1px solid #e6e6e6;
+        }
+
+        .settings-bluetooth-device {
+            border-bottom: 1px solid #ededed;
+            transition: background-color 0.15s ease;
+        }
+
+        .settings-bluetooth-device.expanded {
+            background: #f7fbff;
+        }
+
+        .settings-bluetooth-device-button {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 14px 0;
+            border: 0;
+            background: transparent;
+            text-align: left;
+            color: inherit;
+            cursor: pointer;
+        }
+
+        .settings-bluetooth-device-button:disabled {
+            cursor: default;
+        }
+
+        .settings-bluetooth-device-icon {
+            width: 40px;
+            height: 40px;
+            flex-shrink: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--ui-accent);
+            color: #fff;
+            font-size: 20px;
+        }
+
+        .settings-bluetooth-device-copy {
+            min-width: 0;
+            flex: 1;
+        }
+
+        .settings-bluetooth-device-name {
+            display: block;
+            font-size: 16px;
+            color: #111;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .settings-bluetooth-device-status {
+            display: block;
+            margin-top: 2px;
+            font-size: 13px;
+            color: #6a6a6a;
+        }
+
+        .settings-bluetooth-device-chevron {
+            color: #767676;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+
+        .settings-bluetooth-device-actions {
+            display: none;
+            gap: 10px;
+            padding: 0 0 14px 54px;
+        }
+
+        .settings-bluetooth-device.expanded .settings-bluetooth-device-actions {
+            display: flex;
+        }
+
+        .settings-bluetooth-action {
+            min-width: 106px;
+            padding: 8px 16px;
+            border: 1px solid #c9c9c9;
+            background: #f3f3f3;
+            color: #222;
+            font-size: 13px;
+            cursor: pointer;
+            transition: background-color 0.12s ease, border-color 0.12s ease;
+        }
+
+        .settings-bluetooth-action:hover:not(:disabled) {
+            background: #e8e8e8;
+            border-color: #b9b9b9;
+        }
+
+        .settings-bluetooth-action.primary {
+            background: var(--ui-accent);
+            border-color: var(--ui-accent);
+            color: #fff;
+        }
+
+        .settings-bluetooth-action.primary:hover:not(:disabled) {
+            filter: brightness(0.95);
+        }
+
+        .settings-bluetooth-action:disabled {
+            opacity: 0.6;
+            cursor: default;
+        }
+
+        .settings-bluetooth-empty {
+            padding: 18px 0;
+            color: #666;
+            font-size: 14px;
+            border-bottom: 1px solid #ededed;
+        }
+
+        @keyframes bluetoothSearchingPulse {
+            0%,
+            80%,
+            100% {
+                opacity: 0.25;
+                transform: scale(0.85);
+            }
+
+            40% {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
     </style>
 </head>
 
@@ -488,13 +1079,13 @@
         <div class="settings-sidebar">
             <div class="settings-sidebar-title" id="sidebar-title">
                 <div class="settings-sidebar-title-content">
-                    <button class="settings-back-btn" id="back-btn">
-                        <span class="mif-arrow-left"></span>
+                    <button class="metro-back-btn settings-back-btn" id="back-btn">
+                        <span class="sui-back"></span>
                     </button>
                     <span id="sidebar-title-text">PC settings</span>
                 </div>
                 <span class="settings-search-icon">
-                    <span class="mif-search"></span>
+                    <span class="sui-search"></span>
                 </span>
             </div>
             <div class="settings-menu-list" id="main-menu">
@@ -576,6 +1167,8 @@
         // Navigation state
         let currentMenu = 'main'; // 'main' or 'submenu'
         let currentCategory = null;
+        let currentItem = null;
+        let settingsRenderToken = 0;
 
         // Settings data will be loaded from JSON file
         let settingsData = {};
@@ -602,11 +1195,52 @@
             return null;
         })();
 
+        const timeBankAPI = (function () {
+            const contexts = [window, window.parent, window.top];
+            for (const ctx of contexts) {
+                if (ctx && ctx.TimeBank) {
+                    return ctx.TimeBank;
+                }
+            }
+            return null;
+        })();
+
+        const settingsIpcRenderer = (function () {
+            try {
+                if (typeof require === 'function') {
+                    return require('electron').ipcRenderer;
+                }
+            } catch (error) {
+                console.warn('[Settings] Electron IPC is unavailable:', error);
+            }
+
+            try {
+                if (window.parent && window.parent !== window &&
+                    window.parent.Win8ElectronBridge &&
+                    typeof window.parent.Win8ElectronBridge.invoke === 'function') {
+                    console.log('[Settings] Using parent Win8ElectronBridge for IPC');
+                    return window.parent.Win8ElectronBridge;
+                }
+            } catch (error) {
+                console.warn('[Settings] Parent IPC bridge is unavailable:', error);
+            }
+
+            return null;
+        })();
+
         let shellUserProfile = {
             username: 'User',
             displayName: 'User',
             imageUrl: DEFAULT_SHELL_USER_IMAGE
         };
+        let latestTimeSnapshot = timeBankAPI && typeof timeBankAPI.getSnapshot === 'function'
+            ? timeBankAPI.getSnapshot()
+            : { now: new Date(), timestamp: Date.now(), reason: 'fallback' };
+
+        let bluetoothPageState = null;
+        let bluetoothExpandedDeviceId = null;
+        let bluetoothBusyDeviceId = null;
+        let bluetoothBusyAction = null;
 
         function escapeHtml(value) {
             return String(value || '')
@@ -710,6 +1344,32 @@
                 recentWallpapers: ['img101.png', 'img100.jpg', 'img102.jpg', 'img103.png', 'img104.jpg']
             };
         const MAX_RECENT_LOCK_WALLPAPERS = 8;
+        const LOCK_SCREEN_PAGE_STATE_PATH = 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\ImmersiveControlPanel\\LockScreen';
+        const LOCK_SCREEN_PAGE_STATE_VALUE = 'SimulatorState';
+        const LOCK_SCREEN_PAGE_LEGACY_STORAGE_KEY = 'win8-settings-lock-screen-state-v1';
+        const LOCK_SCREEN_STATUS_APPS = Object.freeze([
+            { id: 'none', label: 'None', badge: '--', detailTitle: 'No app', detailText: 'No detailed status is currently selected.', iconClass: 'mif-blocked', tileColor: '#d0d0d0', supportsAlarm: false },
+            { id: 'alarms', label: 'Alarms', badge: 'AL', detailTitle: 'Alarm', detailText: 'The next alarm is set for 6:30 AM.', iconClass: 'sui-alarm', tileColor: '#c22f5a', supportsAlarm: true },
+            { id: 'calendar', label: 'Calendar', badge: 'CA', detailTitle: 'Calendar', detailText: 'Today at 3:00 PM: Project review.', iconClass: 'mif-calendar', tileColor: '#7b55d6', supportsAlarm: false },
+            { id: 'mail', label: 'Mail', badge: 'ML', detailTitle: 'Mail', detailText: '2 unread messages are waiting for you.', iconClass: 'mif-mail', tileColor: '#0078d7', supportsAlarm: false },
+            { id: 'messaging', label: 'Messaging', badge: 'MS', detailTitle: 'Messaging', detailText: '1 new conversation needs your attention.', iconClass: 'mif-bubbles', tileColor: '#008299', supportsAlarm: false },
+            { id: 'weather', label: 'Weather', badge: 'WE', detailTitle: 'Weather', detailText: '58 degrees and partly cloudy right now.', iconClass: 'mif-cloud', tileColor: '#2672ec', supportsAlarm: false },
+            { id: 'store', label: 'Store', badge: 'ST', detailTitle: 'Store', detailText: '1 app has an update ready to install.', iconClass: 'sui-shop', tileColor: '#a05000', supportsAlarm: false },
+            { id: 'reader', label: 'Reader', badge: 'RD', detailTitle: 'Reader', detailText: 'Continue where you left off in your latest document.', iconClass: 'sui-file-text', tileColor: '#5b2d90', supportsAlarm: false },
+            { id: 'skype', label: 'Skype', badge: 'SK', detailTitle: 'Skype', detailText: '1 missed call and 3 unread messages.', iconClass: 'mif-skype', tileColor: '#00aff0', supportsAlarm: false }
+        ]);
+        const DEFAULT_LOCK_SCREEN_PAGE_STATE = Object.freeze({
+            backgroundMode: 'picture',
+            slideshowSource: 'onedrive',
+            slideshowEnabledOnBattery: false,
+            slideshowOptimizePhotos: true,
+            slideshowAutoLock: true,
+            slideshowDuration: '15 minutes',
+            detailedStatusApp: 'calendar',
+            quickStatusApps: ['mail', 'weather', 'alarms', 'messaging'],
+            alarmsStatusApp: 'alarms',
+            cameraEnabled: false
+        });
 
         function dedupeList(values) {
             const seen = new Set();
@@ -745,6 +1405,296 @@
         }
         lockScreenWallpapers = dedupeList(lockScreenWallpapers).slice(0, MAX_RECENT_LOCK_WALLPAPERS);
 
+        function normalizeLockScreenPageState(rawState) {
+            const base = {
+                ...DEFAULT_LOCK_SCREEN_PAGE_STATE,
+                ...(rawState && typeof rawState === 'object' ? rawState : {})
+            };
+            const backgroundMode = base.backgroundMode === 'slideshow' ? 'slideshow' : 'picture';
+            const slideshowSource = base.slideshowSource === 'onedrive' ? 'onedrive' : 'local';
+            const slideshowDurationOptions = new Set(['15 minutes', '30 minutes', '1 hour', 'Do not turn off']);
+            const slideshowDuration = slideshowDurationOptions.has(base.slideshowDuration)
+                ? base.slideshowDuration
+                : DEFAULT_LOCK_SCREEN_PAGE_STATE.slideshowDuration;
+            const validAppIds = new Set(LOCK_SCREEN_STATUS_APPS.map((app) => app.id));
+            const detailedStatusApp = validAppIds.has(base.detailedStatusApp)
+                ? base.detailedStatusApp
+                : DEFAULT_LOCK_SCREEN_PAGE_STATE.detailedStatusApp;
+            const alarmCapableAppIds = new Set(LOCK_SCREEN_STATUS_APPS.filter((app) => app.supportsAlarm).map((app) => app.id));
+            const alarmsStatusApp = alarmCapableAppIds.has(base.alarmsStatusApp)
+                ? base.alarmsStatusApp
+                : 'none';
+            const quickStatusApps = dedupeList(Array.isArray(base.quickStatusApps) ? base.quickStatusApps : [])
+                .filter((appId) => appId !== 'none' && appId !== detailedStatusApp && appId !== alarmsStatusApp && validAppIds.has(appId))
+                .slice(0, 7);
+
+            return {
+                backgroundMode,
+                slideshowSource,
+                slideshowEnabledOnBattery: Boolean(base.slideshowEnabledOnBattery),
+                slideshowOptimizePhotos: Boolean(base.slideshowOptimizePhotos),
+                slideshowAutoLock: Boolean(base.slideshowAutoLock),
+                slideshowDuration,
+                detailedStatusApp,
+                quickStatusApps,
+                alarmsStatusApp,
+                cameraEnabled: Boolean(base.cameraEnabled)
+            };
+        }
+
+        function loadLockScreenPageState() {
+            let rawValue = null;
+
+            if (registryAPI && typeof registryAPI.getValue === 'function') {
+                try {
+                    rawValue = registryAPI.getValue(LOCK_SCREEN_PAGE_STATE_PATH, LOCK_SCREEN_PAGE_STATE_VALUE, null);
+                } catch (error) {
+                    console.warn('[Settings] Failed to load lock screen simulator state from registry:', error);
+                }
+            }
+
+            if (!rawValue && typeof window.localStorage !== 'undefined') {
+                try {
+                    rawValue = window.localStorage.getItem(LOCK_SCREEN_PAGE_LEGACY_STORAGE_KEY);
+                } catch (error) {
+                    console.warn('[Settings] Failed to load lock screen simulator state from localStorage:', error);
+                }
+            }
+
+            if (!rawValue) {
+                return normalizeLockScreenPageState(null);
+            }
+
+            try {
+                const parsed = typeof rawValue === 'string' ? JSON.parse(rawValue) : rawValue;
+                return normalizeLockScreenPageState(parsed);
+            } catch (error) {
+                console.warn('[Settings] Failed to parse lock screen simulator state:', error);
+                return normalizeLockScreenPageState(null);
+            }
+        }
+
+        function saveLockScreenPageState(nextState) {
+            const normalizedState = normalizeLockScreenPageState(nextState);
+            const payload = JSON.stringify(normalizedState);
+
+            if (registryAPI && typeof registryAPI.setValue === 'function') {
+                try {
+                    registryAPI.setValue(LOCK_SCREEN_PAGE_STATE_PATH, LOCK_SCREEN_PAGE_STATE_VALUE, payload);
+                } catch (error) {
+                    console.warn('[Settings] Failed to save lock screen simulator state to registry:', error);
+                }
+            }
+
+            if (typeof window.localStorage !== 'undefined') {
+                try {
+                    window.localStorage.setItem(LOCK_SCREEN_PAGE_LEGACY_STORAGE_KEY, payload);
+                } catch (error) {
+                    console.warn('[Settings] Failed to save lock screen simulator state to localStorage:', error);
+                }
+            }
+
+            return normalizedState;
+        }
+
+        function toImageUrl(imagePath) {
+            const normalizedPath = String(imagePath || '').trim().replace(/\\/g, '/');
+            if (!normalizedPath) {
+                return '';
+            }
+
+            if (/^(?:data:|file:|https?:|blob:)/i.test(normalizedPath)) {
+                return normalizedPath;
+            }
+
+            if (/^[A-Za-z]:\//.test(normalizedPath)) {
+                return 'file:///' + encodeURI(normalizedPath);
+            }
+
+            if (normalizedPath.startsWith('//')) {
+                return 'file:' + encodeURI(normalizedPath);
+            }
+
+            try {
+                return new URL(normalizedPath, window.location.href).href;
+            } catch (error) {
+                console.warn('[Settings] Failed to convert image path to URL:', normalizedPath, error);
+                return normalizedPath;
+            }
+        }
+
+        function buildLockScreenWallpaperState(nextWallpaper, nextType) {
+            lockScreenWallpapers = dedupeList([nextWallpaper, ...lockScreenWallpapers.filter((wallpaper) => wallpaper !== nextWallpaper)])
+                .slice(0, MAX_RECENT_LOCK_WALLPAPERS);
+
+            lockScreenState = {
+                currentWallpaper: nextWallpaper,
+                currentWallpaperType: nextType,
+                recentWallpapers: lockScreenWallpapers.slice()
+            };
+
+            return lockScreenState;
+        }
+
+        function persistLockScreenWallpaperState(nextWallpaper, nextType) {
+            buildLockScreenWallpaperState(nextWallpaper, nextType);
+            currentLockScreenWallpaper = nextWallpaper;
+            currentLockScreenWallpaperType = nextType;
+
+            if (window.parent && typeof window.parent.updateLockScreenWallpaper === 'function') {
+                window.parent.updateLockScreenWallpaper(currentLockScreenWallpaper, {
+                    wallpaperType: currentLockScreenWallpaperType,
+                    recentWallpapers: lockScreenWallpapers.slice()
+                });
+            } else if (registryAPI && typeof registryAPI.saveLockScreenWallpaperState === 'function') {
+                try {
+                    registryAPI.saveLockScreenWallpaperState(lockScreenState);
+                } catch (error) {
+                    console.warn('[Settings] Failed to persist lock screen wallpaper via RegistryAPI:', error);
+                }
+            }
+
+            updatePersonalizeLockScreenTile();
+        }
+
+        let lockScreenPageState = loadLockScreenPageState();
+        let lockScreenChooserState = null;
+
+        function getLockScreenStatusApp(appId) {
+            return LOCK_SCREEN_STATUS_APPS.find((app) => app.id === appId) || LOCK_SCREEN_STATUS_APPS[0];
+        }
+
+        function getLockScreenQuickStatusApps() {
+            return normalizeLockScreenPageState(lockScreenPageState).quickStatusApps;
+        }
+
+        function getLockScreenSlotColor(app) {
+            return app && app.tileColor ? app.tileColor : '#d5d5d5';
+        }
+
+        function getLockScreenChooserOptions(type) {
+            if (type === 'alarms') {
+                return [
+                    getLockScreenStatusApp('none'),
+                    ...LOCK_SCREEN_STATUS_APPS.filter((app) => app.supportsAlarm)
+                ];
+            }
+
+            return LOCK_SCREEN_STATUS_APPS;
+        }
+
+        function getLockScreenAppIconMarkup(app, variant = 'tile') {
+            const iconClass = app && app.iconClass ? app.iconClass : 'sui-apps';
+            const isEmpty = app && app.id === 'none';
+            const ariaLabel = app ? app.label : 'App';
+            return `
+                <span class="lock-screen-app-icon ${variant === 'preview' ? 'is-preview' : ''}" aria-label="${escapeHtml(ariaLabel)}">
+                    ${isEmpty
+                        ? `<span class="lock-screen-app-icon-plus">+</span>`
+                        : `<span class="${escapeHtml(iconClass)}"></span>`}
+                </span>
+            `;
+        }
+
+        function updateLockScreenPageState(partialState) {
+            lockScreenPageState = saveLockScreenPageState({
+                ...lockScreenPageState,
+                ...partialState
+            });
+            return lockScreenPageState;
+        }
+
+        function renderLockScreenSlot(appId, options = {}) {
+            const app = getLockScreenStatusApp(appId || 'none');
+            const {
+                attributes = '',
+                isSelected = false,
+                isPreview = false
+            } = options;
+            const classNames = ['settings-lock-screen-slot'];
+            if (app.id === 'none') {
+                classNames.push('is-empty');
+            }
+            if (isSelected) {
+                classNames.push('is-selected');
+            }
+
+            return `
+                <button class="${classNames.join(' ')}"
+                    type="button"
+                    style="background:${escapeHtml(getLockScreenSlotColor(app))};"
+                    ${attributes}>
+                    ${getLockScreenAppIconMarkup(app, isPreview ? 'preview' : 'tile')}
+                </button>
+            `;
+        }
+
+        function openLockScreenChooser(type, slotIndex = null) {
+            lockScreenChooserState = { type, slotIndex };
+            renderLockScreenState(false);
+        }
+
+        function closeLockScreenChooser() {
+            if (!lockScreenChooserState) {
+                return;
+            }
+            lockScreenChooserState = null;
+            renderLockScreenState(false);
+        }
+
+        function applyLockScreenChooserSelection(appId) {
+            if (!lockScreenChooserState) {
+                return;
+            }
+
+            const chooser = lockScreenChooserState;
+            const nextAppId = getLockScreenStatusApp(appId).id;
+
+            if (chooser.type === 'detailed') {
+                const nextQuickApps = getLockScreenQuickStatusApps().filter((value) => value !== nextAppId);
+                const nextAlarmApp = lockScreenPageState.alarmsStatusApp === nextAppId ? 'none' : lockScreenPageState.alarmsStatusApp;
+                updateLockScreenPageState({
+                    detailedStatusApp: nextAppId,
+                    quickStatusApps: nextQuickApps,
+                    alarmsStatusApp: nextAlarmApp
+                });
+            } else if (chooser.type === 'alarms') {
+                const nextQuickApps = getLockScreenQuickStatusApps().filter((value) => value !== nextAppId);
+                const nextDetailedApp = lockScreenPageState.detailedStatusApp === nextAppId ? 'none' : lockScreenPageState.detailedStatusApp;
+                updateLockScreenPageState({
+                    alarmsStatusApp: nextAppId,
+                    quickStatusApps: nextQuickApps,
+                    detailedStatusApp: nextDetailedApp
+                });
+            } else if (chooser.type === 'quick') {
+                const slotIndex = typeof chooser.slotIndex === 'number' ? chooser.slotIndex : getLockScreenQuickStatusApps().length;
+                let nextQuickApps = getLockScreenQuickStatusApps().slice();
+                if (nextAppId === 'none') {
+                    if (slotIndex >= 0 && slotIndex < nextQuickApps.length) {
+                        nextQuickApps.splice(slotIndex, 1);
+                    }
+                } else {
+                    nextQuickApps = nextQuickApps.filter((value) => value !== nextAppId);
+                    if (lockScreenPageState.detailedStatusApp === nextAppId) {
+                        updateLockScreenPageState({ detailedStatusApp: 'none' });
+                    }
+                    if (lockScreenPageState.alarmsStatusApp === nextAppId) {
+                        updateLockScreenPageState({ alarmsStatusApp: 'none' });
+                    }
+                    const insertAt = Math.max(0, Math.min(slotIndex, 6));
+                    while (nextQuickApps.length < insertAt) {
+                        nextQuickApps.push('none');
+                    }
+                    nextQuickApps.splice(insertAt, 0, nextAppId);
+                    nextQuickApps = nextQuickApps.filter((value) => value !== 'none').slice(0, 7);
+                }
+                updateLockScreenPageState({ quickStatusApps: nextQuickApps });
+            }
+
+            lockScreenChooserState = null;
+            renderLockScreenState(false);
+        }
+
         function resolveLockScreenImageSrc(wallpaper, type = 'builtin') {
             const identifier = wallpaper || DEFAULT_LOCK_SCREEN_STATE.currentWallpaper;
             if (registryAPI && typeof registryAPI.resolveLockScreenWallpaperPath === 'function') {
@@ -753,9 +1703,9 @@
                     if (typeof resolved === 'string' && resolved.length > 0) {
                         const normalized = resolved.replace(/\\/g, '/');
                         if (normalized.startsWith('resources/')) {
-                            return '../../../' + normalized;
+                            return new URL('../../../' + normalized, window.location.href).href;
                         }
-                        return normalized;
+                        return toImageUrl(normalized);
                     }
                 } catch (error) {
                     console.warn('[Settings] Failed to resolve lock screen wallpaper path:', error);
@@ -763,14 +1713,12 @@
             }
 
             if (identifier.startsWith('resources/')) {
-                return '../../../' + identifier.replace(/\\/g, '/');
+                return new URL('../../../' + identifier.replace(/\\/g, '/'), window.location.href).href;
             }
 
-            if (/^https?:\/\//i.test(identifier) || identifier.startsWith('file://') || /^[A-Za-z]:/.test(identifier)) {
-                return identifier;
-            }
-
-            return '../../../resources/images/wallpapers/Lock/' + identifier;
+            return toImageUrl(/^(?:https?:|file:|blob:|data:|[A-Za-z]:)/i.test(identifier)
+                ? identifier
+                : '../../../resources/images/wallpapers/Lock/' + identifier);
         }
 
         // Function to update the lock screen tile image on the Personalize page
@@ -830,90 +1778,785 @@
         const mainMenu = document.getElementById('main-menu');
         const settingsContent = document.getElementById('settings-content');
 
-        // Function to render lock screen preview
-        function renderLockScreenPreview() {
-            const now = new Date();
+        function renderLockScreenPreviewFigure() {
+            const now = latestTimeSnapshot && latestTimeSnapshot.now instanceof Date
+                ? latestTimeSnapshot.now
+                : new Date();
             let timeStr = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
-            // Remove AM/PM suffix
             timeStr = timeStr.replace(/\s?(AM|PM)/i, '');
             const dateStr = now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
             const previewSrc = resolveLockScreenImageSrc(currentLockScreenWallpaper, currentLockScreenWallpaperType);
+            const detailedApp = getLockScreenStatusApp(lockScreenPageState.detailedStatusApp);
+            const quickApps = getLockScreenQuickStatusApps();
+            const alarmsApp = getLockScreenStatusApp(lockScreenPageState.alarmsStatusApp);
+            const previewQuickApps = quickApps.slice(0, 4);
+            if (alarmsApp.id !== 'none' && previewQuickApps.length < 4) {
+                previewQuickApps.push(alarmsApp.id);
+            }
+            const filledQuickApps = previewQuickApps.slice(0, 4);
+            const emptySlots = Math.max(0, 4 - filledQuickApps.length);
 
-            let html = '<div class="lock-screen-preview">';
-            html += '<img src="' + previewSrc + '" alt="Lock screen preview">';
-            html += '<div class="lock-screen-overlay">';
-            html += '<div class="lock-screen-time">' + timeStr + '</div>';
-            html += '<div class="lock-screen-date">' + dateStr + '</div>';
-            html += '</div></div>';
-
-            // Add wallpaper tiles
-            html += '<div class="lock-screen-wallpapers">';
-            lockScreenWallpapers.forEach((wallpaper, index) => {
-                const isActive = wallpaper === currentLockScreenWallpaper ? 'active' : '';
-                const tileType = wallpaper === currentLockScreenWallpaper ? currentLockScreenWallpaperType : 'builtin';
-                const tileSrc = resolveLockScreenImageSrc(wallpaper, tileType);
-                html += '<div class="active-scale-effect lock-screen-wallpaper-tile ' + isActive + '" data-wallpaper="' + wallpaper + '" data-type="' + tileType + '">';
-                html += '<img src="' + tileSrc + '" alt="Wallpaper">';
-                html += '</div>';
-            });
-            html += '</div>';
-
-            // Add browse button
-            html += '<div class="browse-button">Browse</div>';
-
-            return html;
+            return `
+                <div class="settings-lock-screen-frame">
+                    <div class="lock-screen-preview">
+                        <img src="${escapeHtml(previewSrc)}" alt="Lock screen preview">
+                        <div class="lock-screen-overlay">
+                            <div class="lock-screen-overlay-layout">
+                                <div class="lock-screen-overlay-primary">
+                                    <div class="lock-screen-time">${escapeHtml(timeStr)}</div>
+                                    <div class="lock-screen-date">${escapeHtml(dateStr)}</div>
+                                    <div class="lock-screen-preview-quick" aria-hidden="true">
+                                        ${filledQuickApps.map((appId) => {
+                                            const app = getLockScreenStatusApp(appId);
+                                            return `<span class="lock-screen-preview-quick-slot">${getLockScreenAppIconMarkup(app, 'preview')}</span>`;
+                                        }).join('')}
+                                        ${Array.from({ length: emptySlots }, () => '<span class="lock-screen-preview-quick-slot is-empty"><span class="lock-screen-app-icon is-preview"><span class="sui-add"></span></span></span>').join('')}
+                                    </div>
+                                </div>
+                                ${detailedApp.id !== 'none' ? `
+                                    <div class="lock-screen-overlay-secondary">
+                                        <div class="lock-screen-preview-detailed">
+                                            <span class="lock-screen-preview-detailed-title">${escapeHtml(detailedApp.detailTitle)}</span>
+                                            <span class="lock-screen-preview-detailed-text">${escapeHtml(detailedApp.detailText)}</span>
+                                        </div>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
         }
 
-        // Function to setup lock screen wallpaper tile handlers
-        function setupLockScreenHandlers() {
-            const tiles = document.querySelectorAll('.lock-screen-wallpaper-tile');
-            tiles.forEach(tile => {
-                tile.addEventListener('click', function () {
-                    const wallpaper = this.getAttribute('data-wallpaper');
-                    const wallpaperType = this.getAttribute('data-type') || 'builtin';
+        function renderLockScreenWallpaperChooser() {
+            const label = lockScreenPageState.backgroundMode === 'slideshow'
+                ? 'Pictures for your slide show'
+                : 'Choose your picture';
 
-                    // If clicking the current wallpaper, do nothing
-                    if (wallpaper === currentLockScreenWallpaper && wallpaperType === currentLockScreenWallpaperType) {
+            return `
+                <div class="settings-lock-screen-control-group">
+                    <span class="settings-lock-screen-control-label">Background</span>
+                    <div class="settings-lock-screen-mode-group">
+                        <button class="settings-lock-screen-mode-button ${lockScreenPageState.backgroundMode === 'picture' ? 'is-active' : ''}"
+                            type="button"
+                            data-lock-screen-background-mode="picture">
+                            Picture
+                        </button>
+                        <button class="settings-lock-screen-mode-button ${lockScreenPageState.backgroundMode === 'slideshow' ? 'is-active' : ''}"
+                            type="button"
+                            data-lock-screen-background-mode="slideshow">
+                            Slideshow
+                        </button>
+                    </div>
+                </div>
+                <div class="settings-lock-screen-control-group">
+                    <span class="settings-lock-screen-control-label">${escapeHtml(label)}</span>
+                    <div class="lock-screen-wallpapers">
+                        ${lockScreenWallpapers.map((wallpaper) => {
+                            const isActive = wallpaper === currentLockScreenWallpaper;
+                            const tileType = isActive ? currentLockScreenWallpaperType : 'builtin';
+                            const tileSrc = resolveLockScreenImageSrc(wallpaper, tileType);
+                            return `
+                                <button class="lock-screen-wallpaper-tile ${isActive ? 'is-active' : ''}"
+                                    type="button"
+                                    data-lock-screen-wallpaper="${escapeHtml(wallpaper)}"
+                                    data-lock-screen-wallpaper-type="${escapeHtml(tileType)}">
+                                    <img src="${escapeHtml(tileSrc)}" alt="Lock screen wallpaper">
+                                    ${isActive ? '<span class="lock-screen-wallpaper-check">OK</span>' : ''}
+                                </button>
+                            `;
+                        }).join('')}
+                    </div>
+                    <button class="browse-button" type="button" data-lock-screen-browse>Browse</button>
+                    <input type="file" accept="image/*" data-lock-screen-file hidden>
+                </div>
+            `;
+        }
+
+        function renderLockScreenSlideshowOptions() {
+            if (lockScreenPageState.backgroundMode !== 'slideshow') {
+                return `
+                    <div class="settings-lock-screen-note">
+                        Choose <strong>Slideshow</strong> above to reveal the extra lock screen background options used by the original page.
+                    </div>
+                `;
+            }
+
+            return `
+                <div class="settings-toggle-container">
+                    <div class="settings-toggle-copy">
+                        <div class="settings-toggle-label">Use pictures from OneDrive</div>
+                        <div class="settings-toggle-description">Include your OneDrive photos in the lock screen slide show.</div>
+                    </div>
+                    <button class="modern-switch ${lockScreenPageState.slideshowSource === 'onedrive' ? 'is-on' : ''}"
+                        type="button"
+                        data-lock-screen-source-toggle
+                        aria-pressed="${lockScreenPageState.slideshowSource === 'onedrive' ? 'true' : 'false'}">
+                        <span class="modern-switch-thumb"></span>
+                    </button>
+                </div>
+                <div class="settings-toggle-container">
+                    <div class="settings-toggle-copy">
+                        <div class="settings-toggle-label">Only use pictures that fit my screen</div>
+                        <div class="settings-toggle-description">Let the lock screen slide show prefer photos that look best in the preview frame.</div>
+                    </div>
+                    <button class="modern-switch ${lockScreenPageState.slideshowOptimizePhotos ? 'is-on' : ''}"
+                        type="button"
+                        data-lock-screen-toggle="slideshowOptimizePhotos"
+                        aria-pressed="${lockScreenPageState.slideshowOptimizePhotos ? 'true' : 'false'}">
+                        <span class="modern-switch-thumb"></span>
+                    </button>
+                </div>
+                <div class="settings-toggle-container">
+                    <div class="settings-toggle-copy">
+                        <div class="settings-toggle-label">Play a slide show when using battery power</div>
+                        <div class="settings-toggle-description">Keep the slideshow running even when the PC is not plugged in.</div>
+                    </div>
+                    <button class="modern-switch ${lockScreenPageState.slideshowEnabledOnBattery ? 'is-on' : ''}"
+                        type="button"
+                        data-lock-screen-toggle="slideshowEnabledOnBattery"
+                        aria-pressed="${lockScreenPageState.slideshowEnabledOnBattery ? 'true' : 'false'}">
+                        <span class="modern-switch-thumb"></span>
+                    </button>
+                </div>
+                <div class="settings-toggle-container">
+                    <div class="settings-toggle-copy">
+                        <div class="settings-toggle-label">When my PC is inactive, show the lock screen instead of turning off the screen</div>
+                        <div class="settings-toggle-description">Keep the lock screen visible after the slideshow has cycled through.</div>
+                    </div>
+                    <button class="modern-switch ${lockScreenPageState.slideshowAutoLock ? 'is-on' : ''}"
+                        type="button"
+                        data-lock-screen-toggle="slideshowAutoLock"
+                        aria-pressed="${lockScreenPageState.slideshowAutoLock ? 'true' : 'false'}">
+                        <span class="modern-switch-thumb"></span>
+                    </button>
+                </div>
+                <div class="settings-lock-screen-dropdown-row">
+                    <div class="settings-lock-screen-dropdown-copy">
+                        <div class="settings-lock-screen-dropdown-title">Turn off the screen after the slide show has played for</div>
+                        <div class="settings-lock-screen-dropdown-description">Choose how long the slideshow can remain on screen before the display powers down.</div>
+                    </div>
+                    <select class="settings-lock-screen-select" data-lock-screen-duration>
+                        ${['15 minutes', '30 minutes', '1 hour', 'Do not turn off'].map((option) => `
+                            <option value="${escapeHtml(option)}" ${lockScreenPageState.slideshowDuration === option ? 'selected' : ''}>${escapeHtml(option)}</option>
+                        `).join('')}
+                    </select>
+                </div>
+            `;
+        }
+
+        function renderLockScreenAppsSection() {
+            const quickApps = getLockScreenQuickStatusApps();
+            const detailedApp = getLockScreenStatusApp(lockScreenPageState.detailedStatusApp);
+            const alarmsApp = getLockScreenStatusApp(lockScreenPageState.alarmsStatusApp);
+            const chooser = lockScreenChooserState;
+            const chooserOptions = chooser ? getLockScreenChooserOptions(chooser.type) : [];
+            const chooserSelectedAppId = chooser
+                ? (chooser.type === 'detailed'
+                    ? detailedApp.id
+                    : chooser.type === 'alarms'
+                        ? alarmsApp.id
+                        : (quickApps[chooser.slotIndex] || 'none'))
+                : 'none';
+            const chooserPreviewApp = getLockScreenStatusApp(chooserSelectedAppId);
+
+            return `
+                <div class="settings-content-title">Lock screen apps</div>
+                <div class="settings-lock-screen-intro">
+                    Choose apps to run in the background and show quick status and notifications, even when your screen is locked.
+                </div>
+                <div class="settings-lock-screen-app-preview">
+                    <div class="settings-lock-screen-app-preview-note">
+                        Choose apps to run in the background and show quick status and notifications, even when your screen is locked
+                    </div>
+                    <div class="settings-lock-screen-slot-row">
+                        ${Array.from({ length: 7 }, (_, index) => {
+                            const appId = quickApps[index] || 'none';
+                            return renderLockScreenSlot(appId, {
+                                attributes: `data-lock-screen-slot="quick" data-lock-screen-slot-index="${index}"`,
+                                isSelected: chooser && chooser.type === 'quick' && chooser.slotIndex === index
+                            });
+                        }).join('')}
+                    </div>
+                </div>
+                <div class="settings-lock-screen-slot-group">
+                    <span class="settings-lock-screen-slot-label">Choose an app to display detailed status</span>
+                    <div class="settings-lock-screen-slot-row">
+                        ${renderLockScreenSlot(detailedApp.id, {
+                            attributes: 'data-lock-screen-slot="detailed"',
+                            isSelected: chooser && chooser.type === 'detailed'
+                        })}
+                    </div>
+                </div>
+                <div class="settings-lock-screen-slot-group">
+                    <span class="settings-lock-screen-slot-label">Choose an app to show alarms</span>
+                    <div class="settings-lock-screen-slot-row">
+                        ${renderLockScreenSlot(alarmsApp.id, {
+                            attributes: 'data-lock-screen-slot="alarms"',
+                            isSelected: chooser && chooser.type === 'alarms'
+                        })}
+                    </div>
+                </div>
+                ${chooser ? `
+                    <div class="settings-lock-screen-slot-chooser">
+                        <div class="settings-lock-screen-slot-preview">
+                            ${renderLockScreenSlot(chooserPreviewApp.id, { isSelected: true })}
+                        </div>
+                        <div>
+                            <div class="settings-lock-screen-picker">
+                                <div class="settings-lock-screen-picker-header">Choose an app</div>
+                                ${chooserOptions.map((app) => `
+                                    <button class="settings-lock-screen-picker-option ${chooserSelectedAppId === app.id ? 'is-active' : ''} ${app.id === 'none' ? 'is-clear' : ''}"
+                                        type="button"
+                                        data-lock-screen-choose-app="${escapeHtml(app.id)}">
+                                        ${app.id === 'none'
+                                            ? `<div class="settings-lock-screen-picker-option-text">${chooser.type === 'alarms' ? 'Don’t show alarms on the lock screen' : 'Don’t show this app on the lock screen'}</div>`
+                                            : `
+                                                <span class="settings-lock-screen-picker-option-icon" style="background:${escapeHtml(getLockScreenSlotColor(app))};">
+                                                    ${getLockScreenAppIconMarkup(app)}
+                                                </span>
+                                                <div class="settings-lock-screen-picker-option-text">${escapeHtml(app.label)}</div>
+                                            `}
+                                    </button>
+                                `).join('')}
+                            </div>
+                            <a href="#" class="settings-lock-screen-picker-dismiss" data-lock-screen-chooser-dismiss>Close</a>
+                        </div>
+                    </div>
+                ` : ''}
+            `;
+        }
+
+        function renderLockScreenCameraSection() {
+            return `
+                <div class="settings-content-title">Camera</div>
+                <div class="settings-toggle-container">
+                    <div class="settings-toggle-copy">
+                        <div class="settings-toggle-label">Swipe down on the lock screen to use the camera</div>
+                        <div class="settings-toggle-description">Turn this on to launch the camera directly from the lock screen.</div>
+                    </div>
+                    <button class="modern-switch ${lockScreenPageState.cameraEnabled ? 'is-on' : ''}"
+                        type="button"
+                        data-lock-screen-toggle="cameraEnabled"
+                        aria-pressed="${lockScreenPageState.cameraEnabled ? 'true' : 'false'}">
+                        <span class="modern-switch-thumb"></span>
+                    </button>
+                </div>
+            `;
+        }
+
+        function renderLockScreenSettingsContent() {
+            return `
+                <div class="settings-lock-screen-page">
+                    <div class="settings-content-title">Lock screen preview</div>
+                    <div class="settings-lock-screen-intro">
+                        Pick a background for the lock screen, preview it at full size, and decide which apps can surface status before you sign in.
+                    </div>
+                    <div class="settings-lock-screen-stage">
+                        ${renderLockScreenPreviewFigure()}
+                        <div>
+                            ${renderLockScreenWallpaperChooser()}
+                        </div>
+                    </div>
+                    ${renderLockScreenSlideshowOptions()}
+                    <div class="settings-lock-screen-section">
+                        ${renderLockScreenAppsSection()}
+                    </div>
+                    <div class="settings-lock-screen-section">
+                        ${renderLockScreenCameraSection()}
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderLockScreenState(animate = false) {
+            const wrapper = updateSettingsContentWrapper(renderLockScreenSettingsContent(), animate);
+            applyShellUserProfile(document);
+            setupLockScreenPageHandlers(wrapper);
+        }
+
+        function renderLockScreenSubmenuContent(animate = true) {
+            renderLockScreenState(animate);
+        }
+
+        function setupLockScreenPageHandlers(root = document) {
+            const scopedRoot = root && typeof root.querySelector === 'function' ? root : document;
+
+            scopedRoot.querySelectorAll('[data-lock-screen-wallpaper]').forEach((button) => {
+                button.addEventListener('click', function () {
+                    const wallpaper = this.getAttribute('data-lock-screen-wallpaper');
+                    const wallpaperType = this.getAttribute('data-lock-screen-wallpaper-type') || 'builtin';
+                    if (!wallpaper || (wallpaper === currentLockScreenWallpaper && wallpaperType === currentLockScreenWallpaperType)) {
                         return;
                     }
 
-                    currentLockScreenWallpaper = wallpaper;
-                    currentLockScreenWallpaperType = wallpaperType;
+                    persistLockScreenWallpaperState(wallpaper, wallpaperType);
+                    renderLockScreenState(false);
+                });
+            });
 
-                    lockScreenWallpapers = dedupeList([currentLockScreenWallpaper, ...lockScreenWallpapers.filter(w => w !== wallpaper)])
-                        .slice(0, MAX_RECENT_LOCK_WALLPAPERS);
-
-                    lockScreenState = {
-                        currentWallpaper: currentLockScreenWallpaper,
-                        currentWallpaperType: currentLockScreenWallpaperType,
-                        recentWallpapers: lockScreenWallpapers.slice()
-                    };
-
-                    // Notify parent window to update the actual lock screen
-                    if (window.parent && typeof window.parent.updateLockScreenWallpaper === 'function') {
-                        window.parent.updateLockScreenWallpaper(currentLockScreenWallpaper, {
-                            wallpaperType: currentLockScreenWallpaperType,
-                            recentWallpapers: lockScreenWallpapers.slice()
-                        });
-                    } else if (registryAPI && typeof registryAPI.saveLockScreenWallpaperState === 'function') {
-                        try {
-                            registryAPI.saveLockScreenWallpaperState(lockScreenState);
-                        } catch (error) {
-                            console.warn('[Settings] Failed to persist lock screen wallpaper via RegistryAPI:', error);
-                        }
+            scopedRoot.querySelectorAll('[data-lock-screen-background-mode]').forEach((button) => {
+                button.addEventListener('click', function () {
+                    const nextMode = this.getAttribute('data-lock-screen-background-mode') === 'slideshow' ? 'slideshow' : 'picture';
+                    if (lockScreenPageState.backgroundMode === nextMode) {
+                        return;
                     }
 
-                    updatePersonalizeLockScreenTile();
+                    updateLockScreenPageState({ backgroundMode: nextMode });
+                    renderLockScreenState(false);
+                });
+            });
 
-                    // Re-render the lock screen preview without animation
-                    renderSubmenuContent('pc-and-devices', 'lock-screen', false);
+            scopedRoot.querySelectorAll('[data-lock-screen-toggle]').forEach((button) => {
+                button.addEventListener('click', function () {
+                    const key = this.getAttribute('data-lock-screen-toggle');
+                    if (!key) {
+                        return;
+                    }
+
+                    updateLockScreenPageState({ [key]: !Boolean(lockScreenPageState[key]) });
+                    renderLockScreenState(false);
+                });
+            });
+
+            const sourceToggle = scopedRoot.querySelector('[data-lock-screen-source-toggle]');
+            if (sourceToggle) {
+                sourceToggle.addEventListener('click', function () {
+                    updateLockScreenPageState({
+                        slideshowSource: lockScreenPageState.slideshowSource === 'onedrive' ? 'local' : 'onedrive'
+                    });
+                    renderLockScreenState(false);
+                });
+            }
+
+            const durationSelect = scopedRoot.querySelector('[data-lock-screen-duration]');
+            if (durationSelect) {
+                durationSelect.addEventListener('change', function () {
+                    updateLockScreenPageState({ slideshowDuration: this.value });
+                });
+            }
+
+            scopedRoot.querySelectorAll('[data-lock-screen-slot]').forEach((button) => {
+                button.addEventListener('click', function () {
+                    const slotType = this.getAttribute('data-lock-screen-slot');
+                    if (!slotType) {
+                        return;
+                    }
+
+                    const slotIndexValue = this.getAttribute('data-lock-screen-slot-index');
+                    const slotIndex = slotIndexValue == null ? null : Number(slotIndexValue);
+                    openLockScreenChooser(slotType, Number.isFinite(slotIndex) ? slotIndex : null);
+                });
+            });
+
+            scopedRoot.querySelectorAll('[data-lock-screen-choose-app]').forEach((button) => {
+                button.addEventListener('click', function () {
+                    const appId = this.getAttribute('data-lock-screen-choose-app');
+                    if (!appId) {
+                        return;
+                    }
+
+                    applyLockScreenChooserSelection(appId);
+                });
+            });
+
+            const chooserDismiss = scopedRoot.querySelector('[data-lock-screen-chooser-dismiss]');
+            if (chooserDismiss) {
+                chooserDismiss.addEventListener('click', function (event) {
+                    event.preventDefault();
+                    closeLockScreenChooser();
+                });
+            }
+
+            const browseButton = scopedRoot.querySelector('[data-lock-screen-browse]');
+            const fileInput = scopedRoot.querySelector('[data-lock-screen-file]');
+            if (browseButton && fileInput) {
+                browseButton.addEventListener('click', () => {
+                    fileInput.click();
+                });
+
+                fileInput.addEventListener('change', function () {
+                    const file = this.files && this.files[0];
+                    if (!file) {
+                        return;
+                    }
+
+                    const candidatePath = typeof file.path === 'string' && file.path.length > 0
+                        ? file.path
+                        : URL.createObjectURL(file);
+                    persistLockScreenWallpaperState(candidatePath, 'custom');
+                    renderLockScreenState(false);
+                    this.value = '';
+                });
+            }
+        }
+
+        function updateSettingsContentWrapper(html, animate = true) {
+            let wrapper = settingsContent.querySelector('.settings-content-wrapper');
+
+            if (animate) {
+                if (wrapper) {
+                    wrapper.remove();
+                }
+
+                wrapper = document.createElement('div');
+                wrapper.className = 'settings-content-wrapper';
+                wrapper.innerHTML = html;
+                settingsContent.appendChild(wrapper);
+
+                requestAnimationFrame(() => {
+                    requestAnimationFrame(() => {
+                        wrapper.classList.add('visible');
+                    });
+                });
+            } else {
+                if (wrapper) {
+                    wrapper.innerHTML = html;
+                } else {
+                    wrapper = document.createElement('div');
+                    wrapper.className = 'settings-content-wrapper visible';
+                    wrapper.innerHTML = html;
+                    settingsContent.appendChild(wrapper);
+                }
+            }
+
+            return wrapper;
+        }
+
+        if (timeBankAPI && typeof timeBankAPI.subscribe === 'function') {
+            timeBankAPI.subscribe((snapshot) => {
+                latestTimeSnapshot = snapshot;
+                if (currentCategory === 'pc-and-devices' && currentItem === 'lock-screen') {
+                    renderLockScreenState(false);
+                }
+            }, { immediate: true });
+        }
+
+        function getBluetoothDeviceIconClass(deviceType) {
+            switch (deviceType) {
+                case 'audio':
+                    return 'sui-audio';
+                case 'speaker':
+                    return 'sui-volume-high';
+                case 'keyboard':
+                    return 'sui-keyboard';
+                case 'mouse':
+                    return 'sui-mouse';
+                case 'phone':
+                    return 'sui-cell-phone';
+                default:
+                    return 'mif-bluetooth';
+            }
+        }
+
+        function getBluetoothFallbackState() {
+            return {
+                success: true,
+                available: false,
+                enabled: false,
+                searching: false,
+                connectedDevices: [],
+                discoveredDevices: []
+            };
+        }
+
+        async function invokeBluetoothAction(channel, ...args) {
+            if (!settingsIpcRenderer || typeof settingsIpcRenderer.invoke !== 'function') {
+                console.warn('[Settings] Bluetooth IPC unavailable, using fallback state for channel:', channel);
+                return getBluetoothFallbackState();
+            }
+
+            console.log('[Settings] Invoking Bluetooth IPC:', channel, args);
+            const result = await Promise.race([
+                settingsIpcRenderer.invoke(channel, ...args),
+                new Promise((_, reject) => {
+                    setTimeout(() => reject(new Error(`Bluetooth request timed out for ${channel}.`)), 6000);
+                })
+            ]);
+
+            console.log('[Settings] Bluetooth IPC result:', channel, result);
+            if (!result || !result.success) {
+                throw new Error(result && result.error ? result.error : 'Bluetooth action failed.');
+            }
+
+            return result;
+        }
+
+        async function loadBluetoothState() {
+            return invokeBluetoothAction('bluetooth:get-state');
+        }
+
+        function getBluetoothEmptyMarkup(message) {
+            return '<div class="settings-bluetooth-empty">' + escapeHtml(message) + '</div>';
+        }
+
+        function renderBluetoothDeviceMarkup(device) {
+            const isExpanded = bluetoothExpandedDeviceId === device.id;
+            const isBusy = bluetoothBusyDeviceId === device.id;
+            const isHostBacked = Boolean(device.hostBacked);
+            const primaryAction = device.connected
+                ? { action: 'disconnect', label: 'Disconnect' }
+                : { action: 'connect', label: 'Connect' };
+            const chevronClass = isExpanded ? 'sui-chevron-thin-up' : 'sui-chevron-thin-down';
+            const actionsMarkup = isHostBacked
+                ? `
+                    <div class="settings-bluetooth-device-actions">
+                        <div class="settings-bluetooth-empty">Device actions coming later.</div>
+                    </div>
+                `
+                : `
+                    <div class="settings-bluetooth-device-actions">
+                        <button class="settings-bluetooth-action primary"
+                            type="button"
+                            data-bluetooth-action="${escapeHtml(primaryAction.action)}"
+                            data-bluetooth-device-id="${escapeHtml(device.id)}"
+                            ${isBusy ? 'disabled' : ''}>
+                            ${isBusy && bluetoothBusyAction === primaryAction.action ? 'Working...' : escapeHtml(primaryAction.label)}
+                        </button>
+                        <button class="settings-bluetooth-action"
+                            type="button"
+                            data-bluetooth-action="remove"
+                            data-bluetooth-device-id="${escapeHtml(device.id)}"
+                            ${isBusy ? 'disabled' : ''}>
+                            ${isBusy && bluetoothBusyAction === 'remove' ? 'Working...' : 'Remove'}
+                        </button>
+                    </div>
+                `;
+
+            return `
+                <div class="settings-bluetooth-device ${isExpanded ? 'expanded' : ''}">
+                    <button class="active-scale-effect settings-bluetooth-device-button"
+                        type="button"
+                        data-bluetooth-device-toggle="${escapeHtml(device.id)}"
+                        ${isBusy ? 'disabled' : ''}>
+                        <span class="settings-bluetooth-device-icon">
+                            <span class="${escapeHtml(getBluetoothDeviceIconClass(device.type))}"></span>
+                        </span>
+                        <span class="settings-bluetooth-device-copy">
+                            <span class="settings-bluetooth-device-name">${escapeHtml(device.name)}</span>
+                            <span class="settings-bluetooth-device-status">${escapeHtml(device.statusText)}</span>
+                        </span>
+                        <span class="settings-bluetooth-device-chevron ${escapeHtml(chevronClass)}"></span>
+                    </button>
+                    ${actionsMarkup}
+                </div>
+            `;
+        }
+
+        function syncBluetoothExpandedDevice(state) {
+            if (!bluetoothExpandedDeviceId || !state) {
+                return;
+            }
+
+            const visibleDeviceIds = new Set(
+                []
+                    .concat(state.connectedDevices || [])
+                    .concat(state.discoveredDevices || [])
+                    .map(device => device.id)
+            );
+
+            if (!visibleDeviceIds.has(bluetoothExpandedDeviceId)) {
+                bluetoothExpandedDeviceId = null;
+            }
+        }
+
+        function renderBluetoothSettingsContent(state) {
+            const isEnabled = Boolean(state && state.enabled);
+            const connectedDevices = Array.isArray(state && state.connectedDevices) ? state.connectedDevices : [];
+            const discoveredDevices = Array.isArray(state && state.discoveredDevices) ? state.discoveredDevices : [];
+            const introText = isEnabled
+                ? 'Your PC is searching for and can be discovered by Bluetooth devices.'
+                : 'Bluetooth is turned off. Turn it on to connect and discover devices.';
+
+            return `
+                <div class="settings-bluetooth-page">
+                    <div class="settings-content-title">Manage Bluetooth devices</div>
+                    <div class="settings-toggle-container">
+                        <div class="settings-toggle-copy">
+                            <div class="settings-toggle-label">Bluetooth</div>
+                            <div class="settings-toggle-description">Turn Bluetooth on or off.</div>
+                        </div>
+                        <button class="modern-switch ${isEnabled ? 'is-on' : ''}"
+                            type="button"
+                            data-bluetooth-toggle
+                            aria-pressed="${isEnabled ? 'true' : 'false'}">
+                            <span class="modern-switch-thumb"></span>
+                        </button>
+                    </div>
+                    <div class="settings-bluetooth-intro">
+                        ${escapeHtml(introText)}
+                        ${isEnabled && state.searching ? `
+                            <span class="settings-bluetooth-searching" aria-hidden="true">
+                                <span class="settings-bluetooth-searching-dot"></span>
+                                <span class="settings-bluetooth-searching-dot"></span>
+                                <span class="settings-bluetooth-searching-dot"></span>
+                            </span>
+                        ` : ''}
+                    </div>
+
+                    <div class="settings-bluetooth-section">
+                        <div class="settings-bluetooth-section-title">Connected devices</div>
+                        <div class="settings-bluetooth-device-list">
+                            ${isEnabled
+                                ? (connectedDevices.length > 0
+                                    ? connectedDevices.map(renderBluetoothDeviceMarkup).join('')
+                                    : getBluetoothEmptyMarkup('No devices are currently connected.'))
+                                : getBluetoothEmptyMarkup('Turn Bluetooth on to see connected devices.')}
+                        </div>
+                    </div>
+
+                    <div class="settings-bluetooth-section">
+                        <div class="settings-bluetooth-section-title">Discovered devices</div>
+                        <div class="settings-bluetooth-device-list">
+                            ${isEnabled
+                                ? (discoveredDevices.length > 0
+                                    ? discoveredDevices.map(renderBluetoothDeviceMarkup).join('')
+                                    : getBluetoothEmptyMarkup('No Bluetooth devices found right now.'))
+                                : getBluetoothEmptyMarkup('Discovered devices will appear here when Bluetooth is on.')}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderBluetoothErrorState(message, animate = false) {
+            updateSettingsContentWrapper(`
+                <div class="settings-bluetooth-page">
+                    <div class="settings-content-title">Manage Bluetooth devices</div>
+                    <div class="settings-bluetooth-intro">${escapeHtml(message)}</div>
+                </div>
+            `, animate);
+        }
+
+        function renderBluetoothState(state, animate = false) {
+            bluetoothPageState = state;
+            syncBluetoothExpandedDevice(state);
+            const wrapper = updateSettingsContentWrapper(renderBluetoothSettingsContent(state), animate);
+            applyShellUserProfile(document);
+            setupBluetoothPageHandlers(wrapper);
+        }
+
+        async function renderBluetoothSubmenuContent(animate = true, renderToken = 0) {
+            updateSettingsContentWrapper(`
+                <div class="settings-bluetooth-page">
+                    <div class="settings-content-title">Manage Bluetooth devices</div>
+                    <div class="settings-bluetooth-intro">Loading Bluetooth devices...</div>
+                </div>
+            `, animate);
+
+            try {
+                const state = await loadBluetoothState();
+                if (renderToken !== settingsRenderToken) {
+                    return;
+                }
+
+                renderBluetoothState(state, false);
+            } catch (error) {
+                if (renderToken !== settingsRenderToken) {
+                    return;
+                }
+
+                console.error('[Settings] Failed to load Bluetooth state:', error);
+                renderBluetoothErrorState(error.message || 'Unable to load Bluetooth devices.');
+            }
+        }
+
+        async function handleBluetoothDeviceAction(deviceId, action) {
+            if (!deviceId || !action) {
+                return;
+            }
+
+            bluetoothBusyDeviceId = deviceId;
+            bluetoothBusyAction = action;
+            renderBluetoothState(bluetoothPageState || getBluetoothFallbackState(), false);
+
+            try {
+                let state;
+                if (action === 'connect') {
+                    state = await invokeBluetoothAction('bluetooth:connect-device', deviceId);
+                } else if (action === 'disconnect') {
+                    state = await invokeBluetoothAction('bluetooth:disconnect-device', deviceId);
+                } else if (action === 'remove') {
+                    state = await invokeBluetoothAction('bluetooth:remove-device', deviceId);
+                } else {
+                    return;
+                }
+
+                renderBluetoothState(state, false);
+            } catch (error) {
+                console.error('[Settings] Bluetooth device action failed:', error);
+                renderBluetoothErrorState(error.message || 'Bluetooth action failed.');
+            } finally {
+                bluetoothBusyDeviceId = null;
+                bluetoothBusyAction = null;
+
+                if (currentCategory === 'pc-and-devices' && currentItem === 'bluetooth') {
+                    const latestState = await loadBluetoothState().catch(() => null);
+                    if (latestState) {
+                        renderBluetoothState(latestState, false);
+                    }
+                }
+            }
+        }
+
+        function setupBluetoothPageHandlers(root = document) {
+            const scopedRoot = root && typeof root.querySelector === 'function' ? root : document;
+            const toggle = scopedRoot.querySelector('[data-bluetooth-toggle]');
+            if (toggle) {
+                toggle.addEventListener('click', async function () {
+                    console.log('[Settings] Bluetooth toggle clicked');
+                    const nextEnabledState = !(bluetoothPageState && bluetoothPageState.enabled);
+                    toggle.disabled = true;
+
+                    try {
+                        bluetoothExpandedDeviceId = null;
+                        console.log('[Settings] Requesting Bluetooth enabled state:', nextEnabledState);
+                        const state = await invokeBluetoothAction('bluetooth:set-enabled', nextEnabledState);
+                        console.log('[Settings] Bluetooth toggle completed with state:', state);
+                        renderBluetoothState(state, false);
+                    } catch (error) {
+                        console.error('[Settings] Failed to toggle Bluetooth:', error);
+                        renderBluetoothErrorState(error.message || 'Unable to change Bluetooth state.');
+                    }
+                });
+            }
+
+            scopedRoot.querySelectorAll('[data-bluetooth-device-toggle]').forEach((button) => {
+                button.addEventListener('click', function () {
+                    const deviceId = this.getAttribute('data-bluetooth-device-toggle');
+                    bluetoothExpandedDeviceId = bluetoothExpandedDeviceId === deviceId ? null : deviceId;
+                    renderBluetoothState(bluetoothPageState || getBluetoothFallbackState(), false);
+                });
+            });
+
+            scopedRoot.querySelectorAll('[data-bluetooth-action]').forEach((button) => {
+                button.addEventListener('click', function (event) {
+                    event.stopPropagation();
+                    handleBluetoothDeviceAction(
+                        this.getAttribute('data-bluetooth-device-id'),
+                        this.getAttribute('data-bluetooth-action')
+                    );
                 });
             });
         }
 
         // Function to render content for a submenu item
         // animate parameter: true to slide in (default for navigation), false to update in place
-        function renderSubmenuContent(categoryId, itemId, animate = true) {
+        async function renderSubmenuContent(categoryId, itemId, animate = true) {
+            currentCategory = categoryId;
+            currentItem = itemId;
+            const renderToken = ++settingsRenderToken;
+
+            if (categoryId === 'pc-and-devices' && itemId === 'lock-screen') {
+                renderLockScreenSubmenuContent(animate);
+                return;
+            }
+
+            if (categoryId === 'pc-and-devices' && itemId === 'bluetooth') {
+                await renderBluetoothSubmenuContent(animate, renderToken);
+                return;
+            }
+
             const categoryData = settingsData[categoryId];
             if (!categoryData || !categoryData.items[itemId]) {
                 console.error('Invalid category or item:', categoryId, itemId);
@@ -932,11 +2575,6 @@
 
                 html += '<div class="settings-content-title"' + titleAttribute + '>' + escapeHtml(sectionTitle) + '</div>';
 
-                // Special handling for lock screen preview section
-                if (categoryId === 'pc-and-devices' && itemId === 'lock-screen' && section.title === 'Lock screen preview') {
-                    html += renderLockScreenPreview();
-                }
-
                 if (isProfileNameSection) {
                     html += renderAccountsProfileSummary();
                 } else if (isAccountsProfilePage && section.title === 'Account picture') {
@@ -954,46 +2592,9 @@
                 }
             });
 
-            // Get or create content wrapper
-            let wrapper = settingsContent.querySelector('.settings-content-wrapper');
-
-            if (animate) {
-                // Remove existing content wrapper (no exit animation)
-                if (wrapper) {
-                    wrapper.remove();
-                }
-
-                // Create new wrapper and set content
-                wrapper = document.createElement('div');
-                wrapper.className = 'settings-content-wrapper';
-                wrapper.innerHTML = html;
-                settingsContent.appendChild(wrapper);
-
-                // Trigger animation after DOM update
-                requestAnimationFrame(() => {
-                    requestAnimationFrame(() => {
-                        wrapper.classList.add('visible');
-                    });
-                });
-            } else {
-                // Update in place without animation
-                if (wrapper) {
-                    wrapper.innerHTML = html;
-                } else {
-                    // Shouldn't happen, but handle it
-                    wrapper = document.createElement('div');
-                    wrapper.className = 'settings-content-wrapper visible';
-                    wrapper.innerHTML = html;
-                    settingsContent.appendChild(wrapper);
-                }
-            }
+            updateSettingsContentWrapper(html, animate);
 
             applyShellUserProfile(document);
-
-            // Setup handlers if this is the lock screen page
-            if (categoryId === 'pc-and-devices' && itemId === 'lock-screen') {
-                setupLockScreenHandlers();
-            }
         }
 
         // Helper function to navigate to a specific submenu item
@@ -1090,6 +2691,9 @@
             // Return to main menu
             currentMenu = 'main';
             currentCategory = null;
+            currentItem = null;
+            settingsRenderToken += 1;
+            bluetoothExpandedDeviceId = null;
 
             // Hide back button
             backBtn.classList.remove('visible');
@@ -1177,6 +2781,7 @@
                 // Enter submenu mode
                 currentMenu = 'submenu';
                 currentCategory = categoryId;
+                currentItem = null;
 
                 // Instantly hide main menu (no exit animation)
                 mainMenu.classList.add('hidden');
@@ -1253,6 +2858,7 @@
                     const firstItemId = itemEntries[0][0];
                     renderSubmenuContent(categoryId, firstItemId);
                 } else {
+                    currentItem = null;
                     // No submenu items, just animate header
                     requestAnimationFrame(() => {
                         requestAnimationFrame(() => {

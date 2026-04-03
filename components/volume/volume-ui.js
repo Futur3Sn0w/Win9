@@ -43,7 +43,11 @@
     const MODERN_FLYOUT_WIDTH = 220;
     const MODERN_FLYOUT_HEIGHT = 72;
     const THRESHOLD_POPUP_CLOSE_ANIMATION_MS = 220;
+    const VOLUME_ICON_SIZES = [16, 24, 32];
+    const VOLUME_BASE_RENDER_SIZE = 16;
     let closeTimer = null;
+    let displaySettingsState = null;
+    let volumeBaseRenderSize = VOLUME_BASE_RENDER_SIZE;
 
     function isModernVolumeFlyoutEnabled() {
         return !!document.body && document.body.classList.contains('taskbar-modern-volume-popup-enabled');
@@ -74,20 +78,97 @@
         $volumeSlider.css('background', '');
     }
 
-    /**
-     * Get volume icon path based on volume and mute state
-     */
-    function getVolumeIconPath(volume, muted) {
+    function getVolumeIconState(volume, muted) {
         if (muted) {
-            return 'resources/images/tray/volume/vol_muted.png';
+            return 'vol_muted';
         } else if (volume === 0) {
-            return 'resources/images/tray/volume/vol_0.png';
+            return 'vol_0';
         } else if (volume <= 33) {
-            return 'resources/images/tray/volume/vol_1.png';
+            return 'vol_1';
         } else if (volume <= 66) {
-            return 'resources/images/tray/volume/vol_2.png';
+            return 'vol_2';
         } else {
-            return 'resources/images/tray/volume/vol_3.png';
+            return 'vol_3';
+        }
+    }
+
+    function measureVolumeIconRenderSize() {
+        if (!$volumeIconImg.length) {
+            return VOLUME_BASE_RENDER_SIZE;
+        }
+
+        const computedStyle = window.getComputedStyle($volumeIconImg[0]);
+        const width = parseFloat(computedStyle.width) || 0;
+        const height = parseFloat(computedStyle.height) || 0;
+
+        return Math.max(width, height, VOLUME_BASE_RENDER_SIZE);
+    }
+
+    function getVolumeIconBaseRenderSize() {
+        return Math.max(volumeBaseRenderSize || 0, VOLUME_BASE_RENDER_SIZE);
+    }
+
+    function getVolumeIconAssetScaleFactor() {
+        if (typeof window.getTaskbarShellButtonAssetScaleFactor === 'function') {
+            const scaleFactor = Number(window.getTaskbarShellButtonAssetScaleFactor());
+            if (Number.isFinite(scaleFactor) && scaleFactor > 0) {
+                return scaleFactor;
+            }
+        }
+
+        const displayScale = Number(displaySettingsState?.display?.scaleFactor) || 0;
+        const zoomScale = Number(displaySettingsState?.zoomFactor) || 0;
+        if (displayScale > 0 && zoomScale > 0) {
+            return Math.max(1, displayScale * zoomScale);
+        }
+
+        return Math.max(1, Number(window.devicePixelRatio) || 1);
+    }
+
+    function selectVolumeIconSize(targetSize) {
+        let bestSize = VOLUME_ICON_SIZES[0];
+        let bestDistance = Math.abs(targetSize - bestSize);
+
+        for (const size of VOLUME_ICON_SIZES) {
+            const distance = Math.abs(targetSize - size);
+            if (distance < bestDistance) {
+                bestSize = size;
+                bestDistance = distance;
+                continue;
+            }
+
+            if (distance === bestDistance && size < bestSize) {
+                bestSize = size;
+            }
+        }
+
+        return bestSize;
+    }
+
+    function getVolumeIconSelection(volume, muted) {
+        const iconState = getVolumeIconState(volume, muted);
+        const targetAssetSize = Math.max(1, Math.ceil(getVolumeIconBaseRenderSize() * getVolumeIconAssetScaleFactor()));
+        const selectedSize = selectVolumeIconSize(targetAssetSize);
+
+        return {
+            path: `resources/images/tray/volume/${iconState}/${selectedSize}.png`,
+            renderSize: getVolumeIconBaseRenderSize()
+        };
+    }
+
+    function applyTaskbarVolumeIcon(volume, muted) {
+        if (!$volumeIconImg.length) {
+            return;
+        }
+
+        const { path, renderSize } = getVolumeIconSelection(volume, muted);
+        $volumeIconImg.css({
+            width: `${renderSize}px`,
+            height: `${renderSize}px`
+        });
+
+        if ($volumeIconImg.attr('src') !== path) {
+            $volumeIconImg.attr('src', path);
         }
     }
 
@@ -96,15 +177,15 @@
      */
     function getVolumeIconClass(volume, muted) {
         if (muted) {
-            return 'mif-volume-mute2'; // Muted state
+            return 'sui-volume-mute2'; // Muted state
         } else if (volume === 0) {
-            return 'mif-volume-mute'; // Volume at 0
+            return 'sui-volume-mute'; // Volume at 0
         } else if (volume <= 33) {
-            return 'mif-volume-low';
+            return 'sui-volume-low';
         } else if (volume <= 66) {
-            return 'mif-volume-medium';
+            return 'sui-volume-medium';
         } else {
-            return 'mif-volume-high';
+            return 'sui-volume-high';
         }
     }
 
@@ -116,13 +197,10 @@
         currentMuted = muted;
         updateFlyoutVariantState();
 
-        const iconPath = getVolumeIconPath(currentVolume, muted);
         const iconClass = getVolumeIconClass(currentVolume, muted);
 
         // Update taskbar icon image
-        if ($volumeIconImg.length) {
-            $volumeIconImg.attr('src', iconPath);
-        }
+        applyTaskbarVolumeIcon(currentVolume, muted);
 
         // Update taskbar icon tooltip
         updateVolumeTooltip(volume, muted);
@@ -364,7 +442,7 @@
      */
     function showVolumeFlyout() {
         if (typeof window.closeAllTaskbarPopupsAndMenus === 'function') {
-            window.closeAllTaskbarPopupsAndMenus();
+            window.closeAllTaskbarPopupsAndMenus({ excludeVolume: true });
         }
 
         updateFlyoutVariantState();
@@ -403,6 +481,7 @@
     function refreshFlyoutLayout() {
         updateFlyoutVariantState();
         updateSliderVisualState(currentVolume);
+        applyTaskbarVolumeIcon(currentVolume, currentMuted);
 
         if ($volumeFlyout.hasClass('visible')) {
             positionVolumeFlyout();
@@ -414,6 +493,8 @@
      */
     async function init() {
         console.log('Volume UI: Initializing...');
+
+        volumeBaseRenderSize = measureVolumeIconRenderSize();
 
         // Get initial volume state
         const state = await getVolumeState();
@@ -441,12 +522,9 @@
             updateSliderVisualState(volume);
 
             // Update icons immediately for visual feedback
-            const iconPath = getVolumeIconPath(volume, currentMuted);
             const iconClass = getVolumeIconClass(volume, currentMuted);
 
-            if ($volumeIconImg.length) {
-                $volumeIconImg.attr('src', iconPath);
-            }
+            applyTaskbarVolumeIcon(volume, currentMuted);
             $volumeFlyoutIcon.attr('class', iconClass);
 
             // Update tooltip
@@ -481,6 +559,16 @@
 
         // Reposition flyout when the window resizes while visible
         $(window).on('resize', function () {
+            applyTaskbarVolumeIcon(currentVolume, currentMuted);
+            if ($volumeFlyout.hasClass('visible')) {
+                positionVolumeFlyout();
+            }
+        });
+
+        window.addEventListener('win8-display-settings-changed', function (event) {
+            displaySettingsState = event?.detail?.state || null;
+            applyTaskbarVolumeIcon(currentVolume, currentMuted);
+
             if ($volumeFlyout.hasClass('visible')) {
                 positionVolumeFlyout();
             }

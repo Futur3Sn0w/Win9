@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Information</title>
+
+    <link rel="stylesheet" href="../../../css/classic-windows.css">
+    <link rel="stylesheet" href="../../../css/classic-controls.css">
+    <link rel="stylesheet" href="../../../css/styles.css">
+    <link rel="stylesheet" href="../../../css/fonts.css">
+    <link rel="stylesheet" href="msinfo32.exe.css">
+</head>
+
+<body>
+    <div class="msinfo-shell">
+        <div class="classic-command-bar">
+            <div class="classic-command-bar-item"><span class="classic-command-bar-label"><u>F</u>ile</span></div>
+            <div class="classic-command-bar-item"><span class="classic-command-bar-label"><u>E</u>dit</span></div>
+            <div class="classic-command-bar-item"><span class="classic-command-bar-label"><u>V</u>iew</span></div>
+            <div class="classic-command-bar-item"><span class="classic-command-bar-label"><u>H</u>elp</span></div>
+        </div>
+
+        <div class="msinfo-body">
+            <aside class="msinfo-sidebar" aria-label="System Information categories">
+                <button class="msinfo-tree-item is-active" type="button" data-panel="summary">System Summary</button>
+                <button class="msinfo-tree-item" type="button" data-panel="hardware">Hardware Resources</button>
+                <button class="msinfo-tree-item" type="button" data-panel="components">Components</button>
+                <button class="msinfo-tree-item" type="button" data-panel="software">Software Environment</button>
+            </aside>
+
+            <main class="msinfo-panel">
+                <div class="msinfo-header">
+                    <h1 id="msinfo-title">System Summary</h1>
+                    <p id="msinfo-description">Blank scaffold for the future msinfo32 implementation.</p>
+                </div>
+
+                <div class="msinfo-card">
+                    <div class="msinfo-card__label">Operating System Name</div>
+                    <div class="msinfo-card__value">Windows 8.1 Simulation</div>
+                </div>
+
+                <div class="msinfo-card">
+                    <div class="msinfo-card__label">System Type</div>
+                    <div class="msinfo-card__value">Placeholder</div>
+                </div>
+
+                <div class="msinfo-card">
+                    <div class="msinfo-card__label">Processor</div>
+                    <div class="msinfo-card__value">Data source not connected yet</div>
+                </div>
+
+                <div class="msinfo-card">
+                    <div class="msinfo-card__label">BIOS Version/Date</div>
+                    <div class="msinfo-card__value">Pending implementation</div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="msinfo32.exe.js"></script>
+</body>
+
+</html>

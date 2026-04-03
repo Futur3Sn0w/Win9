@@ -10,7 +10,15 @@
         console.debug('[TaskView] ipcRenderer unavailable:', error.message || error);
     }
 
-    function getGridElement() {
+    function getGridElement(target = null) {
+        if (target instanceof Element) {
+            return target;
+        }
+
+        if (typeof target === 'string' && target) {
+            return document.getElementById(target) || document.querySelector(target);
+        }
+
         return document.getElementById('task-view-window-grid');
     }
 
@@ -18,10 +26,20 @@
         return document.body.classList.contains('task-view-open');
     }
 
-    function getRunningWindowEntries() {
+    function getRunningWindowEntries(options = {}) {
         if (!window.AppsManager || typeof window.AppsManager.getRunningWindowsSnapshot !== 'function') {
             return [];
         }
+
+        const excludedWindowIds = new Set(
+            (options.excludeWindowIds || [])
+                .filter(Boolean)
+        );
+
+        // Optional desktop filtering
+        const filterDesktopId = options.desktopId !== undefined
+            ? options.desktopId
+            : (options.allDesktops ? null : (window.VirtualDesktops ? window.VirtualDesktops.getActiveDesktopId() : null));
 
         return window.AppsManager
             .getRunningWindowsSnapshot()
@@ -30,7 +48,23 @@
                     return false;
                 }
 
-                return !windowData.$container?.data('backgroundPreload');
+                if (excludedWindowIds.has(windowData.windowId)) {
+                    return false;
+                }
+
+                if (windowData.$container?.data('backgroundPreload')) {
+                    return false;
+                }
+
+                // Filter by desktop if VirtualDesktops is active and we have a target desktop
+                if (filterDesktopId && window.VirtualDesktops) {
+                    const winDesktop = window.VirtualDesktops.getWindowDesktopId(windowData.windowId);
+                    if (winDesktop && winDesktop !== filterDesktopId) {
+                        return false;
+                    }
+                }
+
+                return true;
             })
             .sort((left, right) => {
                 const focusedDelta = Number(isWindowFocused(right)) - Number(isWindowFocused(left));
@@ -311,10 +345,13 @@
         }
     }
 
-    function createWindowCard(windowData) {
+    function createWindowCard(windowData, options = {}) {
         const displayModel = getWindowDisplayModel(windowData);
         const card = document.createElement('article');
         card.className = 'task-view-window-card';
+        if (options.cardClassName) {
+            card.classList.add(options.cardClassName);
+        }
         card.dataset.windowId = windowData.windowId;
         card.dataset.appId = windowData.appId;
         card.tabIndex = 0;
@@ -329,17 +366,19 @@
         header.appendChild(title);
         card.appendChild(header);
 
-        const closeButton = document.createElement('button');
-        closeButton.className = 'task-view-window-card__close';
-        closeButton.type = 'button';
-        closeButton.setAttribute('aria-label', `Close ${title.textContent}`);
-        closeButton.textContent = '\u00d7';
-        closeButton.addEventListener('click', (event) => {
-            event.preventDefault();
-            event.stopPropagation();
-            closeWindowFromCard(windowData);
-        });
-        card.appendChild(closeButton);
+        if (options.allowCloseButton !== false) {
+            const closeButton = document.createElement('button');
+            closeButton.className = 'task-view-window-card__close';
+            closeButton.type = 'button';
+            closeButton.setAttribute('aria-label', `Close ${title.textContent}`);
+            closeButton.textContent = '\u00d7';
+            closeButton.addEventListener('click', (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                closeWindowFromCard(windowData);
+            });
+            card.appendChild(closeButton);
+        }
 
         const preview = document.createElement('div');
         preview.className = 'task-view-window-card__preview';
@@ -358,54 +397,72 @@
 
         card.appendChild(preview);
 
+        const handleSelect = typeof options.onCardSelect === 'function'
+            ? options.onCardSelect
+            : focusWindowFromCard;
+
         card.addEventListener('click', () => {
-            focusWindowFromCard(windowData);
+            handleSelect(windowData);
         });
         card.addEventListener('keydown', (event) => {
             if (event.key === 'Enter' || event.key === ' ') {
                 event.preventDefault();
-                focusWindowFromCard(windowData);
+                handleSelect(windowData);
             }
         });
 
         return card;
     }
 
-    function renderWindowCards() {
-        const grid = getGridElement();
+    function renderWindowCards(target = null, options = {}) {
+        const grid = getGridElement(target);
         if (!grid) {
-            return;
+            return [];
         }
 
-        const entries = getRunningWindowEntries();
-        prunePreviewCache(entries);
+        const liveEntries = getRunningWindowEntries();
+        const entries = Array.isArray(options.entries)
+            ? options.entries
+            : getRunningWindowEntries(options);
+        prunePreviewCache(liveEntries);
         grid.replaceChildren();
 
         if (entries.length === 0) {
-            const emptyState = document.createElement('div');
-            emptyState.className = 'task-view-window-grid__empty';
-            emptyState.textContent = 'No open windows';
-            grid.appendChild(emptyState);
-            return;
+            if (options.emptyMessage !== null && options.emptyMessage !== false) {
+                const emptyState = document.createElement('div');
+                emptyState.className = 'task-view-window-grid__empty';
+                emptyState.textContent = options.emptyMessage || 'No open windows';
+                grid.appendChild(emptyState);
+            }
+
+            return entries;
         }
 
         const fragment = document.createDocumentFragment();
         entries.forEach((windowData) => {
-            fragment.appendChild(createWindowCard(windowData));
+            fragment.appendChild(createWindowCard(windowData, options));
         });
         grid.appendChild(fragment);
+        return entries;
     }
 
-    async function prepareForOpen() {
+    async function prepareForOpen(options = {}) {
         if (pendingPreparePromise) {
             return pendingPreparePromise;
         }
 
         pendingPreparePromise = (async () => {
-            const entries = getRunningWindowEntries();
-            prunePreviewCache(entries);
+            const liveEntries = getRunningWindowEntries();
+            const entries = Array.isArray(options.entries)
+                ? options.entries
+                : getRunningWindowEntries(options);
+            prunePreviewCache(liveEntries);
             await captureVisibleWindowPreviews(entries);
-            renderWindowCards();
+            renderWindowCards(options.target || null, {
+                ...options,
+                entries
+            });
+            return entries;
         })().finally(() => {
             pendingPreparePromise = null;
         });
@@ -413,11 +470,179 @@
         return pendingPreparePromise;
     }
 
+    // ── Desktop bar ─────────────────────────────────────────────────
+    let desktopHoverTimer = null;
+    let hoveredDesktopId = null;
+    let newlyAddedDesktopId = null;
+
+    function renderDesktopBar() {
+        const container = document.getElementById('task-view-desktop-cards');
+        if (!container || !window.VirtualDesktops) return;
+
+        container.replaceChildren();
+
+        const vd = window.VirtualDesktops;
+        const allDesktops = vd.getDesktops();
+
+        // Only show cards when there are 2+ desktops
+        if (allDesktops.length < 2) return;
+
+        const activeId = vd.getActiveDesktopId();
+
+        allDesktops.forEach((desktop) => {
+            const card = document.createElement('div');
+            card.className = 'task-view-desktop-card';
+            if (desktop.id === activeId) {
+                card.classList.add('task-view-desktop-card--active');
+            }
+            card.dataset.desktopId = desktop.id;
+
+            // Thumbnail: wallpaper + miniature window rectangles
+            const thumb = document.createElement('div');
+            thumb.className = 'task-view-desktop-card__thumbnail';
+
+            // Use the current wallpaper as background
+            const wallpaperEl = document.getElementById('desktop-wallpaper');
+            if (wallpaperEl) {
+                const wpStyle = window.getComputedStyle(wallpaperEl);
+                // Copy the full background shorthand, falling back to individual properties
+                if (wpStyle.backgroundImage && wpStyle.backgroundImage !== 'none') {
+                    thumb.style.backgroundImage = wpStyle.backgroundImage;
+                    thumb.style.backgroundSize = 'cover';
+                    thumb.style.backgroundPosition = 'center';
+                } else {
+                    thumb.style.background = wpStyle.background;
+                }
+            }
+
+            // Draw mini window rectangles
+            const windowsOnDesktop = vd.getWindowsOnDesktop(desktop.id);
+            const screenW = window.innerWidth;
+            const screenH = window.innerHeight;
+            windowsOnDesktop.forEach(windowId => {
+                const wd = window.AppsManager && AppsManager.getRunningWindow(windowId);
+                if (!wd || !wd.$container) return;
+                if (AppsManager.isBackgroundWindow(wd)) return;
+                const el = wd.$container[0];
+                // Skip minimized/hidden windows for the thumbnail
+                if (wd.state === 'minimized') return;
+                if (el.style.display === 'none' && !el.classList.contains('vd-hidden')) return;
+
+                const rect = {
+                    left: parseInt(el.style.left) || 0,
+                    top: parseInt(el.style.top) || 0,
+                    width: el.offsetWidth || parseInt(el.style.width) || 200,
+                    height: el.offsetHeight || parseInt(el.style.height) || 150
+                };
+                const miniWin = document.createElement('div');
+                miniWin.className = 'task-view-desktop-card__mini-window';
+                miniWin.style.left = (rect.left / screenW * 100) + '%';
+                miniWin.style.top = (rect.top / screenH * 100) + '%';
+                miniWin.style.width = (rect.width / screenW * 100) + '%';
+                miniWin.style.height = (rect.height / screenH * 100) + '%';
+                thumb.appendChild(miniWin);
+            });
+
+            card.appendChild(thumb);
+
+            // Close button (hidden until hover-highlight)
+            const closeBtn = document.createElement('button');
+            closeBtn.className = 'task-view-desktop-card__close';
+            closeBtn.type = 'button';
+            closeBtn.setAttribute('aria-label', 'Close ' + desktop.label);
+            closeBtn.innerHTML = '<span>\u00d7</span>';
+            closeBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                clearDesktopHover();
+                vd.removeDesktop(desktop.id);
+                renderDesktopBar();
+                // Re-render window grid for the now-active desktop
+                renderWindowCards();
+            });
+            card.appendChild(closeBtn);
+
+            // Click → switch to desktop
+            card.addEventListener('click', () => {
+                clearDesktopHover();
+                if (desktop.id !== vd.getActiveDesktopId()) {
+                    vd.setActiveDesktop(desktop.id);
+                }
+                if (typeof window.closeTaskViewPlaceholder === 'function') {
+                    window.closeTaskViewPlaceholder();
+                }
+            });
+
+            // Hover → after 2s, highlight and show that desktop's windows
+            card.addEventListener('mouseenter', () => {
+                clearDesktopHover();
+                desktopHoverTimer = setTimeout(() => {
+                    hoveredDesktopId = desktop.id;
+                    card.classList.add('task-view-desktop-card--highlighted');
+                    // Show windows for this desktop
+                    renderWindowCards(null, { desktopId: desktop.id });
+                }, 2000);
+            });
+            card.addEventListener('mouseleave', () => {
+                clearDesktopHover();
+                card.classList.remove('task-view-desktop-card--highlighted');
+                // Restore window grid to active desktop
+                renderWindowCards();
+            });
+
+            // Animate newly added desktop card
+            if (desktop.id === newlyAddedDesktopId) {
+                card.classList.add('task-view-desktop-card--entering');
+                card.addEventListener('animationend', () => {
+                    card.classList.remove('task-view-desktop-card--entering');
+                }, { once: true });
+            }
+
+            container.appendChild(card);
+        });
+
+        newlyAddedDesktopId = null;
+    }
+
+    function clearDesktopHover() {
+        if (desktopHoverTimer) {
+            clearTimeout(desktopHoverTimer);
+            desktopHoverTimer = null;
+        }
+        hoveredDesktopId = null;
+        // Remove highlighted class from all cards
+        const container = document.getElementById('task-view-desktop-cards');
+        if (container) {
+            container.querySelectorAll('.task-view-desktop-card--highlighted').forEach(el => {
+                el.classList.remove('task-view-desktop-card--highlighted');
+            });
+        }
+    }
+
+    function handleAddDesktopClick() {
+        if (!window.VirtualDesktops) return;
+        newlyAddedDesktopId = window.VirtualDesktops.addDesktop();
+        renderDesktopBar();
+        renderWindowCards();
+    }
+
+    // Wire up the add-desktop button
+    document.addEventListener('DOMContentLoaded', () => {
+        const addBtn = document.querySelector('.task-view-add-desktop-button');
+        if (addBtn) {
+            addBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                handleAddDesktopClick();
+            });
+        }
+    });
+
     function handleOpen() {
+        renderDesktopBar();
         renderWindowCards();
     }
 
     function handleClose() {
+        clearDesktopHover();
         // Keep the current preview cache so re-opening Task View is faster.
     }
 
@@ -435,9 +660,11 @@
     document.addEventListener('win8:running-windows-changed', handleWindowsChanged);
 
     window.TaskViewShell = {
+        getRunningWindowEntries,
         prepareForOpen,
         handleOpen,
         handleClose,
-        renderWindowCards
+        renderWindowCards,
+        renderDesktopBar
     };
 })();

@@ -68,11 +68,11 @@
     }
 
     function getProfileImageNodes(root) {
-        return root.querySelectorAll('.user-picker-avatar img, .signing-in-avatar img, .user-tile-icon');
+        return root.querySelectorAll('.user-picker-avatar img, .signing-in-avatar img, .user-tile-icon, .login-user-list-avatar img');
     }
 
     function getProfileNameNodes(root) {
-        return root.querySelectorAll('.user-picker-name, .signing-in-name, .user-tile-name');
+        return root.querySelectorAll('.user-picker-name, .signing-in-name, .user-tile-name, .login-user-list-name');
     }
 
     function resolveRoot(root) {

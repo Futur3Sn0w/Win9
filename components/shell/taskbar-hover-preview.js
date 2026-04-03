@@ -113,7 +113,15 @@
         }
 
         if (document.body.classList.contains('task-view-open') ||
-            document.body.classList.contains('taskbar-dragging')) {
+            document.body.classList.contains('snap-assist-open') ||
+            document.body.classList.contains('taskbar-dragging') ||
+            document.body.classList.contains('taskbar-menu-gesturing')) {
+            return false;
+        }
+
+        if (window.TaskbarItemContextMenu &&
+            typeof window.TaskbarItemContextMenu.isVisible === 'function' &&
+            window.TaskbarItemContextMenu.isVisible()) {
             return false;
         }
 
@@ -549,13 +557,25 @@
     function positionLayer(iconElement = activeIconElement) {
         const layer = getLayerElement();
         const taskbar = getTaskbarElement();
+        const surface = getSurfaceElement();
         if (!layer || !iconElement || !taskbar) {
             return;
         }
 
         const iconRect = iconElement.getBoundingClientRect();
         const taskbarRect = taskbar.getBoundingClientRect();
-        layer.style.left = `${Math.round(iconRect.left + (iconRect.width / 2))}px`;
+
+        // Center on icon, but constrain to stay on screen
+        let left = iconRect.left + (iconRect.width / 2);
+        const surfaceWidth = surface?.offsetWidth || 300;
+        const halfSurfaceWidth = surfaceWidth / 2;
+
+        // Ensure preview doesn't go off left edge
+        left = Math.max(halfSurfaceWidth, left);
+        // Ensure preview doesn't go off right edge
+        left = Math.min(window.innerWidth - halfSurfaceWidth, left);
+
+        layer.style.left = `${Math.round(left)}px`;
         layer.style.bottom = `${Math.max(0, Math.round(window.innerHeight - taskbarRect.top + 5))}px`;
     }
 

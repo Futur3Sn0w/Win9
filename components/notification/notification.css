@@ -3,17 +3,20 @@
 .notification-container {
     position: fixed;
     top: 20px;
-    /* Above taskbar - will be adjusted dynamically */
     right: 0;
-    /* Align to right edge of screen */
     width: 385px;
     z-index: 200000;
     pointer-events: none;
     display: flex;
     flex-direction: column;
-    /* Stack from bottom to top */
     gap: 10px;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* When notification center is enabled, stack from bottom to top above the taskbar */
+.notification-container.bottom-stack {
+    top: auto;
+    flex-direction: column-reverse;
 }
 
 /* Lower z-index on system screens so they appear below those screens */
@@ -115,6 +118,7 @@ body.view-login .notification-container {
     justify-content: center;
     background: rgba(255, 255, 255, 0.1);
 }
+
 
 .notification-icon {
     font-size: 32px;

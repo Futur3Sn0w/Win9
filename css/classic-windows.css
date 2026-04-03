@@ -60,13 +60,13 @@
     --classic-window-close-from-transform: scale(1);
     --classic-window-close-to-transform: scale(0.95);
     --classic-window-open-shadow-hidden:
-        0 25px 70px rgba(0, 0, 0, 0),
+        0 25px 80px rgba(0, 0, 0, 0),
         0 6px 16px rgba(0, 0, 0, 0);
     --classic-window-open-shadow-soft:
-        0 25px 70px rgba(0, 0, 0, 0.12),
+        0 25px 80px rgba(0, 0, 0, 0.14),
         0 6px 16px rgba(0, 0, 0, 0.1);
     --classic-window-open-shadow-visible:
-        0 25px 70px rgba(0, 0, 0, 0.22),
+        0 25px 80px rgba(0, 0, 0, 0.22),
         0 6px 16px rgba(0, 0, 0, 0.2);
     --classic-window-inactive-shadow:
         0 8px 18px rgba(0, 0, 0, 0.18),
@@ -137,6 +137,34 @@
         width: 50% !important;
     }
 
+    &.snapped-top-left {
+        top: 0 !important;
+        left: 0 !important;
+        width: 50% !important;
+        height: 50% !important;
+    }
+
+    &.snapped-top-right {
+        top: 0 !important;
+        left: 50% !important;
+        width: 50% !important;
+        height: 50% !important;
+    }
+
+    &.snapped-bottom-left {
+        top: 50% !important;
+        left: 0 !important;
+        width: 50% !important;
+        height: calc(50% - var(--taskbar-reserved-height, 40px)) !important;
+    }
+
+    &.snapped-bottom-right {
+        top: 50% !important;
+        left: 50% !important;
+        width: 50% !important;
+        height: calc(50% - var(--taskbar-reserved-height, 40px)) !important;
+    }
+
     &.maximized {
         & .classic-window-titlebar {
             height: 23px;
@@ -157,8 +185,8 @@
             background: #EBEBEB;
         }
 
-        & .classic-window-content,
-        & iframe {
+        & iframe.classic-window-iframe,
+        & webview.classic-window-iframe {
             pointer-events: none !important;
         }
 
@@ -175,11 +203,6 @@
         & .classic-window-control-btn.close,
         & .modern-desktop-window-menu-button.close {
             color: #ECECEC;
-        }
-
-        & .classic-window-content,
-        & .modern-window-content {
-            pointer-events: none !important;
         }
     }
 
@@ -233,10 +256,18 @@
     gap: 0;
 }
 
+.classic-window-title.title-hidden {
+    display: none;
+}
+
 .classic-window-name {
     margin: 0 auto;
     padding-right: 16px;
     box-sizing: border-box;
+}
+
+.classic-window-titlebar-app-region {
+    display: none;
 }
 
 .modern-desktop-window-title {
@@ -247,6 +278,7 @@
 
 .modern-desktop-window-titlebar-trigger {
     display: none;
+    touch-action: none;
 }
 
 .modern-desktop-window-menu-button {
@@ -258,13 +290,17 @@
     padding: 0;
     border: none;
     background: transparent;
-    color: var(--ui-wall-text-contrast, #ffffff);
+    color: #000000;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     font-size: 13px;
     line-height: 1;
     display: inline-flex;
     align-items: center;
     justify-content: center;
+}
+
+.modern-desktop-window-menu-button.close {
+    color: #ffffff;
 }
 
 .modern-desktop-window-menu-button:hover {
@@ -275,6 +311,11 @@
 .modern-desktop-window-menu-button:active {
     background: #3D6099;
     color: white;
+}
+
+body.desktop-modern-app-commands-disabled .modern-desktop-window-menu-button,
+body.desktop-modern-app-commands-disabled #modern-desktop-titlebar-menu-overlay {
+    display: none !important;
 }
 
 .modern-desktop-titlebar-menu {
@@ -386,19 +427,30 @@
     gap: 1px;
 }
 
+.classic-app-container--custom-titlebar .classic-window-titlebar-app-region {
+    display: flex;
+    min-width: 0;
+    flex: 1;
+}
+
+
 .classic-window-control-btn {
     width: 25px;
     height: 20px;
-    color: var(--ui-wall-text-contrast, #ffffff);
+    color: #000000;
     border: none;
     border-radius: 0;
     background-color: transparent;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 11px;
+    font-size: var(--system-font-size);
     padding: 0;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.classic-window-control-btn.close {
+    color: #ffffff;
 }
 
 .classic-window-control-glyph {
@@ -498,6 +550,10 @@
     right: 0;
 }
 
+.classic-window-control-btn.exit-fullscreen {
+    display: none;
+}
+
 .classic-window-control-btn.close .classic-window-control-glyph::before,
 .classic-window-control-btn.close .classic-window-control-glyph::after {
     top: -1px;
@@ -514,6 +570,19 @@
 
 .classic-window-control-btn.close .classic-window-control-glyph::after {
     transform: rotate(-45deg);
+}
+
+.classic-window-control-btn.exit-fullscreen .classic-window-control-glyph {
+    width: 12px;
+    height: 12px;
+    background-color: currentColor;
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M2 6V2h4M2 2l5 5M14 10v4h-4M14 14l-5-5M10 2h4v4M14 2l-5 5M6 14H2v-4M2 14l5-5' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='square' stroke-linejoin='miter'/%3E%3C/svg%3E") center / contain no-repeat;
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M2 6V2h4M2 2l5 5M14 10v4h-4M14 14l-5-5M10 2h4v4M14 2l-5 5M6 14H2v-4M2 14l5-5' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='square' stroke-linejoin='miter'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+
+.classic-window-control-btn.exit-fullscreen .classic-window-control-glyph::before,
+.classic-window-control-btn.exit-fullscreen .classic-window-control-glyph::after {
+    content: none;
 }
 
 /* Classic Window Content (iframe) */
@@ -581,15 +650,22 @@ body.modern-window-styling-disabled .classic-window-content {
     position: absolute;
     top: 0;
     left: 0;
-    width: 100%;
+    width: calc(100% - 32px);
     height: 5px;
     display: block;
     z-index: 50011;
 }
 
+.modern-desktop-app-container.metro-mode .modern-desktop-window-titlebar.edge-visible,
+.modern-desktop-app-container.metro-mode .modern-desktop-window-titlebar.touch-visible,
+.modern-desktop-app-container.metro-mode .modern-desktop-window-titlebar.touch-pinned,
 .modern-desktop-app-container.metro-mode .modern-desktop-window-titlebar-trigger:hover~.modern-desktop-window-titlebar,
 .modern-desktop-app-container.metro-mode .modern-desktop-window-titlebar:hover {
     transform: translateY(0);
+}
+
+.modern-desktop-app-container.metro-mode .modern-desktop-window-titlebar.touch-dragging {
+    transform: translateY(var(--modern-titlebar-touch-offset, -100%));
 }
 
 .modern-desktop-app-container.metro-mode .classic-window-title,
@@ -633,13 +709,31 @@ body.modern-window-styling-disabled .classic-window-content {
     background: rgba(255, 255, 255, 0.18);
 }
 
+.modern-desktop-app-container.metro-mode .classic-window-control-btn.exit-fullscreen {
+    display: flex;
+    background: #3665b3;
+}
+
+body.continuum-shell-mode-tablet .modern-desktop-app-container.metro-mode .classic-window-control-btn.exit-fullscreen {
+    display: none;
+}
+
 .modern-desktop-app-container.metro-mode .classic-window-control-btn.maximize,
 .modern-desktop-app-container.metro-mode .classic-window-resize-handle {
     display: none;
 }
 
+.modern-desktop-app-container.metro-mode .classic-window-control-btn.exit-fullscreen:hover {
+    background: #4f7fd0;
+}
+
+.modern-desktop-app-container.metro-mode .classic-window-control-btn.exit-fullscreen:active {
+    background: #2f568f;
+}
+
 .modern-desktop-app-container.metro-mode .classic-window-content {
     border: none;
+    background: #000;
 }
 
 iframe.classic-window-iframe {
@@ -659,6 +753,7 @@ webview.classic-window-iframe {
 .classic-window-resize-handle {
     position: absolute;
     z-index: 10;
+    touch-action: none;
 }
 
 .classic-window-resize-handle.n {
@@ -723,6 +818,59 @@ webview.classic-window-iframe {
     width: 12px;
     height: 12px;
     cursor: sw-resize;
+}
+
+/* Enhanced touch targets for touch devices */
+@media (hover: none) and (pointer: coarse) {
+
+    /* Increase the touch target area for resize handles on touch devices */
+    .classic-window-resize-handle.n {
+        height: 16px;
+        top: -8px;
+    }
+
+    .classic-window-resize-handle.s {
+        height: 16px;
+        bottom: -8px;
+    }
+
+    .classic-window-resize-handle.e {
+        width: 16px;
+        right: -8px;
+    }
+
+    .classic-window-resize-handle.w {
+        width: 16px;
+        left: -8px;
+    }
+
+    .classic-window-resize-handle.ne {
+        width: 20px;
+        height: 20px;
+        top: -8px;
+        right: -8px;
+    }
+
+    .classic-window-resize-handle.nw {
+        width: 20px;
+        height: 20px;
+        top: -8px;
+        left: -8px;
+    }
+
+    .classic-window-resize-handle.se {
+        width: 20px;
+        height: 20px;
+        bottom: -8px;
+        right: -8px;
+    }
+
+    .classic-window-resize-handle.sw {
+        width: 20px;
+        height: 20px;
+        bottom: -8px;
+        left: -8px;
+    }
 }
 
 /* Animation for opening classic apps */
@@ -834,5 +982,35 @@ webview.classic-window-iframe {
     100% {
         transform: translate(0, 0) scale(1);
         opacity: 1;
+    }
+}
+
+/* Threshold-style zoom pop when maximizing */
+.classic-app-container.maximizing-window {
+    animation: classicWindowMaximize 0.24s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes classicWindowMaximize {
+    0% {
+        transform: scale(0.94);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
+
+/* Threshold-style zoom pop when restoring from maximized */
+.classic-app-container.restoring-from-max-window {
+    animation: classicWindowRestoreFromMax 0.22s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes classicWindowRestoreFromMax {
+    0% {
+        transform: scale(1.06);
+    }
+
+    100% {
+        transform: scale(1);
     }
 }

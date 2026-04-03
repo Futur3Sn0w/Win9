@@ -47,7 +47,7 @@ body {
 }
 
 .winver-body {
-    font-size: 11px;
+    font-size: var(--system-font-size);
     color: #000000;
     flex: 1;
     padding: 16px 45px 8px 51px;
@@ -77,7 +77,7 @@ body {
 
 .winver-licensee {
     margin-left: 16px;
-    font-size: 11px;
+    font-size: var(--system-font-size);
     color: #000000;
 }
 

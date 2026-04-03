@@ -36,6 +36,10 @@
                         <input type="checkbox" id="use-small-icons">
                         <label for="use-small-icons">Use small taskbar buttons</label>
                     </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="show-user-tile" checked>
+                        <label for="show-user-tile">Show user tile</label>
+                    </div>
                 </div>
 
                 <div class="property-section">
@@ -147,6 +151,10 @@
                 <div class="property-section bordered">
                     <h3>Shell</h3>
                     <div class="checkbox-item">
+                        <input type="checkbox" id="continuum-beta-enabled">
+                        <label for="continuum-beta-enabled">Continuum (Beta)</label>
+                    </div>
+                    <div class="checkbox-item">
                         <input type="checkbox" id="open-metro-apps-on-desktop">
                         <label for="open-metro-apps-on-desktop">Windowed Metro apps</label>
                     </div>
@@ -246,12 +254,29 @@
         const TASKBAR_SHOW_SEARCH_BUTTON_VALUE_NAME = 'ShowSearchButton';
         const TASKBAR_SHOW_TASK_VIEW_BUTTON_VALUE_NAME = 'ShowTaskViewButton';
         const TASKBAR_SHOW_NOTIFICATION_CENTER_ICON_VALUE_NAME = 'ShowNotificationCenterIcon';
+        const TASKBAR_SHOW_USER_TILE_VALUE_NAME = 'ShowUserTile';
         const TASKBAR_MODERN_CLOCK_POPUP_VALUE_NAME = 'UseModernClockPopup';
         const TASKBAR_MODERN_VOLUME_POPUP_VALUE_NAME = 'MTCUVC';
         const TASKBAR_USE_MODERN_WINDOW_STYLING_VALUE_NAME = 'UseModernWindowStyling';
         const TASKBAR_THRESHOLD_FEATURES_ENABLED_VALUE_NAME = 'ThresholdFeaturesEnabled';
+        const TASKBAR_CONTINUUM_BETA_ENABLED_VALUE_NAME = 'ContinuumBetaEnabled';
         const TASKBAR_OPEN_METRO_APPS_ON_DESKTOP_VALUE_NAME = 'OpenMetroAppsOnDesktop';
         const TASKBAR_DESKTOP_WATERMARK_VALUE_NAME = 'ShowDesktopWatermark';
+        const THRESHOLD_PENDING_SETTINGS_PATH = 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\PendingThresholdSettings';
+        const THRESHOLD_PENDING_SIGN_OUT_VALUE_NAME = 'PendingSignOut';
+        const THRESHOLD_PENDING_SETTING_KEYS = [
+            'thresholdFeaturesEnabled',
+            'useStartMenu',
+            'showSearchButton',
+            'showTaskViewButton',
+            'showNotificationCenterIcon',
+            'useModernClockPopup',
+            'useModernVolumePopup',
+            'continuumBetaEnabled',
+            'openMetroAppsOnDesktop',
+            'useModernWindowStyling',
+            'showDesktopWatermark'
+        ];
         // Navigation settings registry paths
         const REGISTRY_PATHS = {
             edgeUI: 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\ImmersiveShell\\EdgeUI',
@@ -288,6 +313,65 @@
         const CONTROL_SELECTOR = 'input[type="checkbox"], select';
         let initialSettingsSnapshot = null;
 
+        function loadPendingThresholdSettingsSnapshot() {
+            const snapshot = {
+                pending: false,
+                values: {}
+            };
+
+            try {
+                const registry = getRegistry();
+                snapshot.pending = Number(
+                    registry.getValue(THRESHOLD_PENDING_SETTINGS_PATH, THRESHOLD_PENDING_SIGN_OUT_VALUE_NAME, 0)
+                ) !== 0;
+
+                THRESHOLD_PENDING_SETTING_KEYS.forEach(key => {
+                    const value = registry.getValue(THRESHOLD_PENDING_SETTINGS_PATH, key, null);
+                    if (value === null || value === undefined) {
+                        return;
+                    }
+
+                    snapshot.values[key] = Number(value) !== 0;
+                });
+            } catch (error) {
+                console.error('Failed to load pending Threshold settings snapshot:', error);
+            }
+
+            return snapshot;
+        }
+
+        function applyPendingThresholdSettingsToForm() {
+            const pendingSnapshot = loadPendingThresholdSettingsSnapshot();
+            if (!pendingSnapshot.pending) {
+                return;
+            }
+
+            const controlMap = {
+                thresholdFeaturesEnabled: 'threshold-features-enabled',
+                useStartMenu: 'use-start-menu',
+                showSearchButton: 'show-search-button',
+                showTaskViewButton: 'show-task-view-button',
+                showNotificationCenterIcon: 'show-notification-center-icon',
+                useModernClockPopup: 'use-modern-clock-popup',
+                useModernVolumePopup: 'use-modern-volume-popup',
+                continuumBetaEnabled: 'continuum-beta-enabled',
+                openMetroAppsOnDesktop: 'open-metro-apps-on-desktop',
+                useModernWindowStyling: 'use-modern-window-styling',
+                showDesktopWatermark: 'show-desktop-watermark'
+            };
+
+            Object.entries(controlMap).forEach(([key, controlId]) => {
+                if (!Object.prototype.hasOwnProperty.call(pendingSnapshot.values, key)) {
+                    return;
+                }
+
+                const control = document.getElementById(controlId);
+                if (control) {
+                    control.checked = pendingSnapshot.values[key];
+                }
+            });
+        }
+
         function updateThresholdControlAvailability() {
             const thresholdFeaturesEnabled = document.getElementById('threshold-features-enabled').checked;
             [
@@ -297,6 +381,7 @@
                 'show-notification-center-icon',
                 'use-modern-clock-popup',
                 'use-modern-volume-popup',
+                'continuum-beta-enabled',
                 'open-metro-apps-on-desktop',
                 'use-modern-window-styling',
                 'show-desktop-watermark'
@@ -313,6 +398,7 @@
                 lockTaskbar: document.getElementById('lock-taskbar').checked,
                 autoHideTaskbar: document.getElementById('auto-hide-taskbar').checked,
                 useSmallIcons: document.getElementById('use-small-icons').checked,
+                showUserTile: document.getElementById('show-user-tile').checked,
                 taskbarLocation: document.getElementById('taskbar-location').value,
                 taskbarButtons: document.getElementById('taskbar-buttons').value,
                 charmsHotCornersEnabled: document.getElementById('top-left-corner').checked,
@@ -329,6 +415,7 @@
                 showNotificationCenterIcon: document.getElementById('show-notification-center-icon').checked,
                 useModernClockPopup: document.getElementById('use-modern-clock-popup').checked,
                 useModernVolumePopup: document.getElementById('use-modern-volume-popup').checked,
+                continuumBetaEnabled: document.getElementById('continuum-beta-enabled').checked,
                 openMetroAppsOnDesktop: document.getElementById('open-metro-apps-on-desktop').checked,
                 useModernWindowStyling: document.getElementById('use-modern-window-styling').checked,
                 showDesktopWatermark: document.getElementById('show-desktop-watermark').checked
@@ -344,6 +431,14 @@
             applyButton.classList.toggle('disabled', disabled);
         }
 
+        function areSettingsSnapshotsEqual(left, right) {
+            if (!left || !right) {
+                return false;
+            }
+
+            return Object.keys(left).every(key => left[key] === right[key]);
+        }
+
         function refreshApplyButtonState() {
             if (!initialSettingsSnapshot) {
                 setApplyButtonDisabled(true);
@@ -351,7 +446,7 @@
             }
 
             const currentSnapshot = getCurrentSettingsSnapshot();
-            const hasChanges = Object.keys(initialSettingsSnapshot).some(key => currentSnapshot[key] !== initialSettingsSnapshot[key]);
+            const hasChanges = !areSettingsSnapshotsEqual(initialSettingsSnapshot, currentSnapshot);
 
             setApplyButtonDisabled(!hasChanges);
         }
@@ -473,6 +568,10 @@
                     }
                 }
 
+                document.getElementById('show-user-tile').checked = Number(
+                    registry.getValue(ADVANCED_PATH, TASKBAR_SHOW_USER_TILE_VALUE_NAME, 1)
+                ) !== 0;
+
                 const glomLevel = registry.getValue(ADVANCED_PATH, 'TaskbarGlomLevel', null);
                 if (glomLevel !== null && glomLevel !== undefined && GLOM_TO_BUTTONS[glomLevel] !== undefined) {
                     document.getElementById('taskbar-buttons').value = GLOM_TO_BUTTONS[glomLevel];
@@ -500,6 +599,9 @@
                 document.getElementById('use-modern-volume-popup').checked = Number(
                     registry.getValue(ADVANCED_PATH, TASKBAR_MODERN_VOLUME_POPUP_VALUE_NAME, 1)
                 ) !== 0;
+                document.getElementById('continuum-beta-enabled').checked = Number(
+                    registry.getValue(ADVANCED_PATH, TASKBAR_CONTINUUM_BETA_ENABLED_VALUE_NAME, 0)
+                ) !== 0;
                 document.getElementById('open-metro-apps-on-desktop').checked = Number(
                     registry.getValue(ADVANCED_PATH, TASKBAR_OPEN_METRO_APPS_ON_DESKTOP_VALUE_NAME, 0)
                 ) !== 0;
@@ -524,6 +626,7 @@
             document.getElementById('search-everywhere').checked = navigationSettings.searchEverywhereFromApps;
             document.getElementById('list-desktop-apps-first').checked = navigationSettings.listDesktopAppsFirst;
             document.getElementById('use-start-menu').checked = navigationSettings.useStartMenu;
+            applyPendingThresholdSettingsToForm();
             updateThresholdControlAvailability();
 
             initialSettingsSnapshot = getCurrentSettingsSnapshot();
@@ -552,9 +655,16 @@
         });
 
         function applySettings() {
+            const currentSnapshot = getCurrentSettingsSnapshot();
+            if (initialSettingsSnapshot && areSettingsSnapshotsEqual(initialSettingsSnapshot, currentSnapshot)) {
+                setApplyButtonDisabled(true);
+                return false;
+            }
+
             const lockTaskbar = document.getElementById('lock-taskbar').checked;
             const autoHide = document.getElementById('auto-hide-taskbar').checked;
             const smallIcons = document.getElementById('use-small-icons').checked;
+            const showUserTile = document.getElementById('show-user-tile').checked;
             const location = document.getElementById('taskbar-location').value;
             const taskbarButtons = document.getElementById('taskbar-buttons').value;
             const charmsHotCornersEnabled = document.getElementById('top-left-corner').checked;
@@ -571,6 +681,7 @@
             const showNotificationCenterIcon = document.getElementById('show-notification-center-icon').checked;
             const useModernClockPopup = document.getElementById('use-modern-clock-popup').checked;
             const useModernVolumePopup = document.getElementById('use-modern-volume-popup').checked;
+            const continuumBetaEnabled = document.getElementById('continuum-beta-enabled').checked;
             const openMetroAppsOnDesktop = document.getElementById('open-metro-apps-on-desktop').checked;
             const useModernWindowStyling = document.getElementById('use-modern-window-styling').checked;
             const showDesktopWatermark = document.getElementById('show-desktop-watermark').checked;
@@ -609,16 +720,8 @@
                 registry.setValue(STUCKRECTS2_PATH, 'Settings', encodedArray, RegistryType.REG_BINARY);
 
                 registry.setValue(ADVANCED_PATH, 'TaskbarSmallIcons', smallIcons ? 1 : 0, RegistryType.REG_DWORD);
+                registry.setValue(ADVANCED_PATH, TASKBAR_SHOW_USER_TILE_VALUE_NAME, showUserTile ? 1 : 0, RegistryType.REG_DWORD);
                 registry.setValue(ADVANCED_PATH, 'TaskbarGlomLevel', BUTTONS_TO_GLOM[taskbarButtons] ?? 0, RegistryType.REG_DWORD);
-                registry.setValue(ADVANCED_PATH, TASKBAR_SHOW_SEARCH_BUTTON_VALUE_NAME, showSearchButton ? 1 : 0, RegistryType.REG_DWORD);
-                registry.setValue(ADVANCED_PATH, TASKBAR_SHOW_TASK_VIEW_BUTTON_VALUE_NAME, showTaskViewButton ? 1 : 0, RegistryType.REG_DWORD);
-                registry.setValue(ADVANCED_PATH, TASKBAR_SHOW_NOTIFICATION_CENTER_ICON_VALUE_NAME, showNotificationCenterIcon ? 1 : 0, RegistryType.REG_DWORD);
-                registry.setValue(ADVANCED_PATH, TASKBAR_MODERN_CLOCK_POPUP_VALUE_NAME, useModernClockPopup ? 1 : 0, RegistryType.REG_DWORD);
-                registry.setValue(ADVANCED_PATH, TASKBAR_MODERN_VOLUME_POPUP_VALUE_NAME, useModernVolumePopup ? 1 : 0, RegistryType.REG_DWORD);
-                registry.setValue(ADVANCED_PATH, TASKBAR_OPEN_METRO_APPS_ON_DESKTOP_VALUE_NAME, openMetroAppsOnDesktop ? 1 : 0, RegistryType.REG_DWORD);
-                registry.setValue(ADVANCED_PATH, TASKBAR_USE_MODERN_WINDOW_STYLING_VALUE_NAME, useModernWindowStyling ? 1 : 0, RegistryType.REG_DWORD);
-                registry.setValue(ADVANCED_PATH, TASKBAR_DESKTOP_WATERMARK_VALUE_NAME, showDesktopWatermark ? 1 : 0, RegistryType.REG_DWORD);
-                registry.setValue(ADVANCED_PATH, TASKBAR_THRESHOLD_FEATURES_ENABLED_VALUE_NAME, thresholdFeaturesEnabled ? 1 : 0, RegistryType.REG_DWORD);
             } catch (error) {
                 console.error('Failed to save taskbar settings to registry:', error);
             }
@@ -641,13 +744,11 @@
                 registry.setValue(REGISTRY_PATHS.edgeUI, 'ShowStartOnCurrentDisplay', showStartOnActiveDisplay ? 1 : 0, RegistryType.REG_DWORD);
                 // listDesktopAppsFirst
                 registry.setValue(REGISTRY_PATHS.startPage, 'ListDesktopAppsFirst', listDesktopAppsFirst ? 1 : 0, RegistryType.REG_DWORD);
-                // useStartMenu
-                registry.setValue(REGISTRY_PATHS.startPage, 'UseStartMenu', useStartMenu ? 1 : 0, RegistryType.REG_DWORD);
             } catch (error) {
                 console.error('Failed to save navigation settings to registry:', error);
             }
 
-            initialSettingsSnapshot = getCurrentSettingsSnapshot();
+            initialSettingsSnapshot = currentSnapshot;
             setApplyButtonDisabled(true);
 
             // Send message to parent to apply settings
@@ -658,11 +759,13 @@
                     locked: lockTaskbar,
                     autoHide: autoHide,
                     smallIcons: smallIcons,
+                    showUserTile: showUserTile,
                     showSearchButton: showSearchButton,
                     showTaskViewButton: showTaskViewButton,
                     showNotificationCenterIcon: showNotificationCenterIcon,
                     useModernClockPopup: useModernClockPopup,
                     useModernVolumePopup: useModernVolumePopup,
+                    continuumBetaEnabled: continuumBetaEnabled,
                     openMetroAppsOnDesktop: openMetroAppsOnDesktop,
                     showDesktopWatermark: showDesktopWatermark,
                     useModernWindowStyling: useModernWindowStyling,
@@ -680,6 +783,8 @@
                     }
                 }
             }, '*');
+
+            return true;
         }
     </script>
 </body>

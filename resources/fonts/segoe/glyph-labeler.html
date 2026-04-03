@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Segoe UI Symbol — Glyph Labeler</title>
+<style>
+  @font-face {
+    font-family: 'Segoe UI Symbol';
+    src: url('./seguisym.ttf') format('truetype');
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', sans-serif;
+    background: #1a1a1a;
+    color: #eee;
+    padding: 16px;
+  }
+
+  h1 { font-size: 18px; font-weight: 400; margin-bottom: 4px; }
+  .subtitle { font-size: 12px; color: #888; margin-bottom: 16px; }
+
+  .toolbar {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #333;
+  }
+
+  .toolbar label { font-size: 12px; color: #aaa; }
+
+  .filter-group { display: flex; gap: 4px; }
+
+  button {
+    padding: 5px 12px;
+    border: 1px solid #555;
+    background: #2a2a2a;
+    color: #ccc;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 12px;
+  }
+  button:hover { background: #383838; border-color: #777; }
+  button.active { background: #0078d4; border-color: #0078d4; color: #fff; }
+
+  .btn-export { background: #107c10; border-color: #107c10; color: #fff; }
+  .btn-export:hover { background: #1a8a1a; }
+  .btn-copy   { background: #005a9e; border-color: #005a9e; color: #fff; }
+  .btn-copy:hover { background: #006bbf; }
+
+  .stats { font-size: 12px; color: #888; margin-left: auto; }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+    gap: 6px;
+  }
+
+  .cell {
+    background: #242424;
+    border: 1px solid #333;
+    border-radius: 4px;
+    padding: 8px 6px 6px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+  }
+  .cell.has-label  { border-color: #2a5a2a; background: #1e2e1e; }
+  .cell.hidden     { display: none; }
+
+  .glyph {
+    font-family: 'Segoe UI Symbol';
+    font-size: 36px;
+    line-height: 1;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    user-select: none;
+  }
+
+  .code {
+    font-family: monospace;
+    font-size: 10px;
+    color: #666;
+    letter-spacing: 0.5px;
+  }
+
+  .label-input {
+    width: 100%;
+    background: #1a1a1a;
+    border: 1px solid #444;
+    border-radius: 2px;
+    color: #ddd;
+    font-size: 10px;
+    padding: 3px 5px;
+    text-align: center;
+  }
+  .label-input:focus { outline: none; border-color: #0078d4; background: #111; }
+  .label-input.filled { color: #6dbf6d; border-color: #2a5a2a; }
+
+  #export-output {
+    margin-top: 16px;
+    padding: 12px;
+    background: #111;
+    border: 1px solid #333;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 11px;
+    color: #aaa;
+    white-space: pre;
+    overflow-x: auto;
+    max-height: 300px;
+    overflow-y: auto;
+    display: none;
+  }
+</style>
+</head>
+<body>
+
+<h1>Segoe UI Symbol — Glyph Labeler</h1>
+<p class="subtitle">641 PUA glyphs · E000–E2FE · Type a label, then Export when done.</p>
+
+<div class="toolbar">
+  <label>Filter:</label>
+  <div class="filter-group">
+    <button class="active" onclick="setFilter('all', this)">All</button>
+    <button onclick="setFilter('unknown', this)">Unknown</button>
+    <button onclick="setFilter('named', this)">Named</button>
+  </div>
+  <button class="btn-export" onclick="exportJSON()">Export JSON</button>
+  <button class="btn-copy"   onclick="copyExport()">Copy to clipboard</button>
+  <span class="stats" id="stats"></span>
+</div>
+
+<div class="grid" id="grid"></div>
+<pre id="export-output"></pre>
+
+<script>
+// ── Known names ──────────────────────────────────────────────────────────────
+// WinRT Symbol enum (Windows.UI.Xaml.Controls.Symbol)
+const KNOWN = {
+  'E100': 'Previous',       'E101': 'Next',           'E102': 'Play',
+  'E103': 'Pause',          'E104': 'Edit',            'E105': 'Save',
+  'E106': 'Clear',          'E107': 'Delete',          'E108': 'Remove',
+  'E109': 'Add',            'E10A': 'Cancel',          'E10B': 'Accept',
+  'E10C': 'More',           'E10D': 'Redo',            'E10E': 'Undo',
+  'E10F': 'Home',           'E110': 'Up',              'E111': 'Forward',
+  'E112': 'Back',           'E113': 'Favorite',        'E114': 'Camera',
+  'E115': 'Setting',        'E116': 'Video',           'E117': 'Sync',
+  'E118': 'Download',       'E119': 'Mail',            'E11A': 'Find',
+  'E11B': 'Help',           'E11C': 'Upload',          'E11D': 'Emoji',
+  'E11E': 'TwoPage',        'E11F': 'LeaveChat',       'E120': 'MailForward',
+  'E121': 'Clock',          'E122': 'Send',            'E123': 'Crop',
+  'E124': 'RotateCamera',   'E125': 'People',          'E126': 'OpenPane',
+  'E127': 'ClosePane',      'E128': 'World',           'E129': 'Flag',
+  'E12A': 'PreviewLink',    'E12B': 'Globe',           'E12C': 'Trim',
+  'E12D': 'AttachCamera',   'E12E': 'ZoomIn',          'E12F': 'Bookmarks',
+  'E130': 'Document',       'E131': 'ProtectedDocument','E132': 'Page',
+  'E133': 'Bullets',        'E134': 'Comment',         'E135': 'MailFilled',
+  'E136': 'ContactInfo',    'E137': 'HangUp',          'E138': 'ViewAll',
+  'E139': 'MapPin',         'E13A': 'Phone',           'E13B': 'VideoChat',
+  'E13C': 'Switch',         'E13D': 'Contact',         'E13E': 'Rename',
+  'E141': 'Pin',            'E142': 'MusicInfo',       'E143': 'Go',
+  'E144': 'Keyboard',       'E145': 'DockLeft',        'E146': 'DockRight',
+  'E147': 'DockBottom',     'E148': 'Remote',          'E149': 'Refresh',
+  'E14A': 'Rotate',         'E14B': 'Shuffle',         'E14C': 'List',
+  'E14D': 'Shop',           'E14E': 'SelectAll',       'E14F': 'Orientation',
+  'E150': 'Import',         'E151': 'ImportAll',       'E155': 'BrowsePhotos',
+  'E156': 'WebCam',         'E158': 'Pictures',        'E159': 'SaveLocal',
+  'E15A': 'Caption',        'E15B': 'Stop',            'E15C': 'ShowResults',
+  'E15D': 'Volume',         'E15E': 'Repair',          'E15F': 'Message',
+  'E160': 'Page2',          'E161': 'CalendarDay',     'E162': 'CalendarWeek',
+  'E163': 'Calendar',       'E164': 'Character',       'E165': 'MailReplyAll',
+  'E166': 'Read',           'E167': 'Link',            'E168': 'Account',
+  'E169': 'ShowBcc',        'E16A': 'HideBcc',         'E16B': 'Cut',
+  'E16C': 'Attach',         'E16D': 'Paste',           'E16E': 'Filter',
+  'E16F': 'Copy',           'E170': 'Emoji2',          'E171': 'Important',
+  'E172': 'MailReply',      'E173': 'SlideShow',       'E174': 'Sort',
+  'E178': 'Manage',         'E179': 'AllApps',         'E17A': 'DisconnectDrive',
+  'E17B': 'MapDrive',       'E17C': 'NewWindow',       'E17D': 'OpenWith',
+  'E181': 'ContactPresence','E182': 'Priority',        'E184': 'GoToToday',
+  'E185': 'Font',           'E186': 'FontColor',       'E187': 'Contact2',
+  'E188': 'Folder',         'E189': 'Audio',           'E18A': 'Placeholder',
+  'E18B': 'View',           'E18C': 'SetLockScreen',   'E18D': 'SetTile',
+  'E190': 'ClosedCaption',  'E191': 'StopSlideShow',   'E192': 'Permissions',
+  'E193': 'Highlight',      'E194': 'DisableUpdates',  'E195': 'UnFavorite',
+  'E196': 'UnPin',          'E197': 'OpenLocal',       'E198': 'Mute',
+  'E199': 'Italic',         'E19A': 'Underline',       'E19B': 'Bold',
+  'E19C': 'MoveToFolder',   'E19D': 'LikeDislike',     'E19E': 'Dislike',
+  'E19F': 'Like',           'E1A0': 'AlignRight',      'E1A1': 'AlignCenter',
+  'E1A2': 'AlignLeft',      'E1A3': 'Zoom',            'E1A4': 'ZoomOut',
+  'E1A5': 'OpenFile',       'E1A6': 'OtherUser',       'E1A7': 'Admin',
+  'E1C3': 'Street',         'E1C4': 'Map',             'E1C5': 'ClearSelection',
+  'E1C6': 'FontDecrease',   'E1C7': 'FontIncrease',    'E1C8': 'FontSize',
+  'E1C9': 'CellPhone',      'E1CA': 'ReShare',         'E1CB': 'Tag',
+  'E1CC': 'RepeatOne',      'E1CD': 'RepeatAll',       'E1CE': 'OutlineStar',
+  'E1CF': 'SolidStar',      'E1D0': 'Calculator',      'E1D1': 'Directions',
+  'E1D2': 'Target',         'E1D3': 'Library',         'E1D4': 'PhoneBook',
+  'E1D5': 'Memo',           'E1D6': 'Microphone',      'E1D7': 'PostUpdate',
+  'E1D8': 'BackToWindow',   'E1D9': 'FullScreen',      'E1DA': 'NewFolder',
+  'E1DB': 'CalendarReply',  'E1DD': 'UnSyncFolder',    'E1DE': 'ReportHacked',
+  'E1DF': 'SyncFolder',     'E1E0': 'BlockContact',    'E1E1': 'SwitchApps',
+  'E1E2': 'AddFriend',      'E1E3': 'TouchPointer',    'E1E4': 'GoToStart',
+  'E1E5': 'ZeroBars',       'E1E6': 'OneBar',          'E1E7': 'TwoBars',
+  'E1E8': 'ThreeBars',      'E1E9': 'FourBars',        'E294': 'Scan',
+  'E295': 'Preview',
+  // Supplemental mappings from symbol-map.md
+  'E012': 'ChevronThinLeft', 'E013': 'ChevronThinRight',
+  'E014': 'ChevronThinUp',   'E015': 'ChevronThinDown',
+  'E016': 'ChevronLeft',     'E017': 'ChevronRight',
+  'E018': 'ChevronUp',       'E019': 'ChevronDown',
+  'E07D': 'Power',           'E07F': 'Accessibility',
+  'E0C2': 'EllipsisVertical','E0C3': 'EllipsisHorizontal',
+  'E0CF': 'Drive',           'E0F3': 'DevTools',
+  'E1C2': 'Pencil',          'E1F6': 'Locked',
+  'E1F7': 'Unlocked',        'E1FA': 'Notifications',
+  'E1FB': 'NotificationsOff','E1FC': 'ArrowDown',
+  'E1FE': 'ArrowUp',         'E211': 'Computer',
+  'E284': 'Brightness',      'E2AD': 'History',
+  'E2B1': 'Palette',         'E2B3': 'ExitTablet',
+  'E2B4': 'EnterTablet',     'E2B6': 'ArrowLeft',
+  'E2B7': 'ArrowRight',
+};
+
+// ── All 641 codepoints from the font's cmap ──────────────────────────────────
+const CODEPOINTS = [
+  0xe000,0xe001,0xe002,0xe003,0xe004,0xe005,0xe006,0xe007,0xe008,0xe009,
+  0xe00a,0xe00b,0xe00c,0xe00d,0xe00e,0xe00f,0xe010,0xe011,0xe012,0xe013,
+  0xe014,0xe015,0xe016,0xe017,0xe018,0xe019,0xe052,0xe070,0xe071,0xe072,
+  0xe07d,0xe07e,0xe07f,0xe080,0xe081,0xe082,0xe083,0xe084,0xe085,0xe086,
+  0xe087,0xe088,0xe089,0xe08a,0xe08b,0xe08c,0xe08d,0xe08e,0xe08f,0xe090,
+  0xe091,0xe092,0xe093,0xe094,0xe095,0xe096,0xe097,0xe098,0xe099,0xe09a,
+  0xe09b,0xe09c,0xe09d,0xe09e,0xe09f,0xe0a0,0xe0a1,0xe0a2,0xe0a3,0xe0a4,
+  0xe0a5,0xe0a6,0xe0a7,0xe0a8,0xe0a9,0xe0aa,0xe0ab,0xe0ac,0xe0ad,0xe0ae,
+  0xe0af,0xe0b0,0xe0b1,0xe0b2,0xe0b3,0xe0b4,0xe0b5,0xe0b6,0xe0b8,0xe0b9,
+  0xe0ba,0xe0bb,0xe0bc,0xe0bd,0xe0bf,0xe0c0,0xe0c1,0xe0c2,0xe0c3,0xe0c4,
+  0xe0c5,0xe0c6,0xe0c7,0xe0c8,0xe0c9,0xe0ca,0xe0cb,0xe0cc,0xe0cd,0xe0ce,
+  0xe0cf,0xe0d0,0xe0d1,0xe0d2,0xe0d3,0xe0d4,0xe0d5,0xe0d6,0xe0d7,0xe0d8,
+  0xe0d9,0xe0da,0xe0db,0xe0dc,0xe0dd,0xe0de,0xe0df,0xe0e0,0xe0e1,0xe0e2,
+  0xe0e3,0xe0e4,0xe0e5,0xe0e6,0xe0e7,0xe0e8,0xe0e9,0xe0ea,0xe0eb,0xe0ec,
+  0xe0ed,0xe0ee,0xe0ef,0xe0f0,0xe0f1,0xe0f2,0xe0f3,0xe0f4,0xe0f5,0xe0f6,
+  0xe0f7,0xe0f8,0xe0f9,0xe0fa,0xe0fb,0xe0fc,0xe100,0xe101,0xe102,0xe103,
+  0xe104,0xe105,0xe106,0xe107,0xe108,0xe109,0xe10a,0xe10b,0xe10c,0xe10d,
+  0xe10e,0xe10f,0xe110,0xe111,0xe112,0xe113,0xe114,0xe115,0xe116,0xe117,
+  0xe118,0xe119,0xe11a,0xe11b,0xe11c,0xe11d,0xe11e,0xe11f,0xe120,0xe121,
+  0xe122,0xe123,0xe124,0xe125,0xe126,0xe127,0xe128,0xe129,0xe12a,0xe12b,
+  0xe12c,0xe12d,0xe12e,0xe12f,0xe130,0xe131,0xe132,0xe133,0xe134,0xe135,
+  0xe136,0xe137,0xe138,0xe139,0xe13a,0xe13b,0xe13c,0xe13d,0xe13e,0xe13f,
+  0xe140,0xe141,0xe142,0xe143,0xe144,0xe145,0xe146,0xe147,0xe148,0xe149,
+  0xe14a,0xe14b,0xe14c,0xe14d,0xe14e,0xe14f,0xe150,0xe151,0xe152,0xe153,
+  0xe154,0xe155,0xe156,0xe158,0xe159,0xe15a,0xe15b,0xe15c,0xe15d,0xe15e,
+  0xe15f,0xe160,0xe161,0xe162,0xe163,0xe164,0xe165,0xe166,0xe167,0xe168,
+  0xe169,0xe16a,0xe16b,0xe16c,0xe16d,0xe16e,0xe16f,0xe170,0xe171,0xe172,
+  0xe173,0xe174,0xe175,0xe176,0xe177,0xe178,0xe179,0xe17a,0xe17b,0xe17c,
+  0xe17d,0xe17e,0xe17f,0xe181,0xe182,0xe183,0xe184,0xe185,0xe186,0xe187,
+  0xe188,0xe189,0xe18a,0xe18b,0xe18c,0xe18d,0xe18e,0xe18f,0xe190,0xe191,
+  0xe192,0xe193,0xe194,0xe195,0xe196,0xe197,0xe198,0xe199,0xe19a,0xe19b,
+  0xe19c,0xe19d,0xe19e,0xe19f,0xe1a0,0xe1a1,0xe1a2,0xe1a3,0xe1a4,0xe1a5,
+  0xe1a6,0xe1a7,0xe1a8,0xe1a9,0xe1aa,0xe1ab,0xe1ac,0xe1ad,0xe1ae,0xe1af,
+  0xe1b0,0xe1b1,0xe1b2,0xe1b3,0xe1b4,0xe1b5,0xe1b6,0xe1b7,0xe1b8,0xe1b9,
+  0xe1ba,0xe1bb,0xe1bc,0xe1bd,0xe1be,0xe1bf,0xe1c0,0xe1c1,0xe1c2,0xe1c3,
+  0xe1c4,0xe1c5,0xe1c6,0xe1c7,0xe1c8,0xe1c9,0xe1ca,0xe1cb,0xe1cc,0xe1cd,
+  0xe1ce,0xe1cf,0xe1d0,0xe1d1,0xe1d2,0xe1d3,0xe1d4,0xe1d5,0xe1d6,0xe1d7,
+  0xe1d8,0xe1d9,0xe1da,0xe1db,0xe1dc,0xe1dd,0xe1de,0xe1df,0xe1e0,0xe1e1,
+  0xe1e2,0xe1e3,0xe1e4,0xe1e5,0xe1e6,0xe1e7,0xe1e8,0xe1e9,0xe1ea,0xe1eb,
+  0xe1ec,0xe1ed,0xe1ee,0xe1ef,0xe1f0,0xe1f1,0xe1f2,0xe1f3,0xe1f4,0xe1f5,
+  0xe1f6,0xe1f7,0xe1f8,0xe1f9,0xe1fa,0xe1fb,0xe1fc,0xe1fd,0xe1fe,0xe200,
+  0xe201,0xe202,0xe203,0xe204,0xe205,0xe206,0xe207,0xe208,0xe209,0xe20a,
+  0xe20b,0xe20c,0xe20d,0xe20e,0xe20f,0xe210,0xe211,0xe212,0xe213,0xe214,
+  0xe215,0xe216,0xe217,0xe218,0xe219,0xe21a,0xe21b,0xe21c,0xe21d,0xe21e,
+  0xe21f,0xe220,0xe221,0xe222,0xe223,0xe224,0xe225,0xe226,0xe227,0xe228,
+  0xe229,0xe22a,0xe22b,0xe22c,0xe22d,0xe22e,0xe22f,0xe230,0xe231,0xe232,
+  0xe233,0xe234,0xe235,0xe236,0xe239,0xe23a,0xe241,0xe242,0xe243,0xe244,
+  0xe245,0xe246,0xe247,0xe248,0xe249,0xe24a,0xe24b,0xe24c,0xe24d,0xe24e,
+  0xe24f,0xe250,0xe251,0xe252,0xe253,0xe254,0xe255,0xe256,0xe257,0xe258,
+  0xe259,0xe25a,0xe25b,0xe25c,0xe25d,0xe25e,0xe25f,0xe260,0xe261,0xe262,
+  0xe263,0xe264,0xe265,0xe266,0xe267,0xe268,0xe269,0xe26a,0xe26b,0xe26c,
+  0xe26e,0xe26f,0xe270,0xe271,0xe27e,0xe27f,0xe280,0xe281,0xe282,0xe283,
+  0xe284,0xe285,0xe286,0xe287,0xe288,0xe289,0xe28a,0xe28b,0xe28c,0xe28d,
+  0xe28e,0xe28f,0xe290,0xe291,0xe292,0xe294,0xe295,0xe296,0xe297,0xe298,
+  0xe299,0xe29b,0xe29c,0xe29d,0xe29e,0xe29f,0xe2a0,0xe2a1,0xe2a2,0xe2a3,
+  0xe2a4,0xe2a5,0xe2a6,0xe2a7,0xe2a8,0xe2a9,0xe2aa,0xe2ab,0xe2ac,0xe2ad,
+  0xe2ae,0xe2af,0xe2b0,0xe2b1,0xe2b2,0xe2b3,0xe2b4,0xe2b5,0xe2b6,0xe2b7,
+  0xe2b8,0xe2b9,0xe2ba,0xe2bb,0xe2bc,0xe2bd,0xe2be,0xe2bf,0xe2c0,0xe2c1,
+  0xe2c2,0xe2c3,0xe2c4,0xe2c5,0xe2c6,0xe2c7,0xe2c8,0xe2c9,0xe2ca,0xe2cb,
+  0xe2cc,0xe2cd,0xe2ce,0xe2cf,0xe2d0,0xe2d1,0xe2d2,0xe2d3,0xe2d4,0xe2d5,
+  0xe2d6,0xe2d7,0xe2d8,0xe2d9,0xe2da,0xe2db,0xe2dc,0xe2dd,0xe2de,0xe2df,
+  0xe2e0,0xe2e1,0xe2e2,0xe2e3,0xe2e4,0xe2e5,0xe2e6,0xe2e7,0xe2e8,0xe2e9,
+  0xe2ea,0xe2eb,0xe2ec,0xe2ed,0xe2ee,0xe2ef,0xe2f0,0xe2f1,0xe2f2,0xe2f3,
+  0xe2f4,0xe2f5,0xe2f6,0xe2f7,0xe2f8,0xe2f9,0xe2fa,0xe2fb,0xe2fc,0xe2fd,
+  0xe2fe
+];
+
+// ── State ─────────────────────────────────────────────────────────────────────
+const labels = {};   // hex → string
+let currentFilter = 'all';
+
+function hexKey(cp) {
+  return cp.toString(16).toUpperCase().padStart(4, '0');
+}
+
+// ── Build grid ────────────────────────────────────────────────────────────────
+function buildGrid() {
+  const grid = document.getElementById('grid');
+  grid.innerHTML = '';
+
+  for (const cp of CODEPOINTS) {
+    const key   = hexKey(cp);
+    const known = KNOWN[key] || '';
+    if (!(key in labels)) labels[key] = known;
+
+    const cell  = document.createElement('div');
+    cell.className = 'cell' + (labels[key] ? ' has-label' : '');
+    cell.dataset.key = key;
+
+    const glyph = document.createElement('div');
+    glyph.className = 'glyph';
+    glyph.textContent = String.fromCodePoint(cp);
+
+    const code = document.createElement('div');
+    code.className = 'code';
+    code.textContent = 'E' + key.slice(1);   // show as E000 not full 4-char
+
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'label-input' + (labels[key] ? ' filled' : '');
+    input.placeholder = '—';
+    input.value = labels[key];
+    input.addEventListener('input', () => {
+      labels[key] = input.value.trim();
+      input.classList.toggle('filled', !!labels[key]);
+      cell.classList.toggle('has-label', !!labels[key]);
+      updateStats();
+    });
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === 'Tab') {
+        // move focus to next input
+        const inputs = [...document.querySelectorAll('.label-input:not([disabled])')];
+        const idx = inputs.indexOf(input);
+        if (idx < inputs.length - 1) {
+          e.preventDefault();
+          inputs[idx + 1].focus();
+          inputs[idx + 1].select();
+        }
+      }
+    });
+
+    cell.appendChild(glyph);
+    cell.appendChild(code);
+    cell.appendChild(input);
+    grid.appendChild(cell);
+  }
+
+  applyFilter();
+  updateStats();
+}
+
+// ── Filter ────────────────────────────────────────────────────────────────────
+function setFilter(f, btn) {
+  currentFilter = f;
+  document.querySelectorAll('.filter-group button').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  applyFilter();
+}
+
+function applyFilter() {
+  document.querySelectorAll('.cell').forEach(cell => {
+    const key = cell.dataset.key;
+    const hasLabel = !!labels[key];
+    let show = true;
+    if (currentFilter === 'unknown') show = !hasLabel;
+    if (currentFilter === 'named')   show = hasLabel;
+    cell.classList.toggle('hidden', !show);
+  });
+}
+
+// ── Stats ─────────────────────────────────────────────────────────────────────
+function updateStats() {
+  const total   = CODEPOINTS.length;
+  const named   = Object.values(labels).filter(v => v).length;
+  const unknown = total - named;
+  document.getElementById('stats').textContent =
+    `${named} named · ${unknown} unknown · ${total} total`;
+}
+
+// ── Export ────────────────────────────────────────────────────────────────────
+function buildExportData() {
+  const out = {};
+  for (const cp of CODEPOINTS) {
+    const key = hexKey(cp);
+    if (labels[key]) out['U+' + key] = labels[key];
+  }
+  return JSON.stringify(out, null, 2);
+}
+
+function exportJSON() {
+  const el = document.getElementById('export-output');
+  el.textContent = buildExportData();
+  el.style.display = 'block';
+  el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function copyExport() {
+  navigator.clipboard.writeText(buildExportData()).then(() => {
+    const btn = event.target;
+    const orig = btn.textContent;
+    btn.textContent = 'Copied!';
+    setTimeout(() => btn.textContent = orig, 1500);
+  });
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+buildGrid();
+</script>
+</body>
+</html>

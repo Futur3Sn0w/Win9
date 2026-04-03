@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Photos</title>
+    <link rel="stylesheet" href="../../../css/fonts.css">
+    <link rel="stylesheet" href="./photos.css">
+</head>
+
+<body>
+    <div id="photos-app" class="photos-app">
+
+        <!-- Splash screen -->
+        <div id="photos-splash" class="photos-splash">
+            <div class="photos-splash__icon">
+                <i class="phi" style="font-size:72px">&#xE722;</i>
+            </div>
+            <div class="photos-splash__ring"></div>
+            <div class="photos-splash__text">Loading your photos...</div>
+        </div>
+
+        <!-- Navigation pane (hamburger / splitview) -->
+        <nav id="photos-nav" class="photos-nav" aria-label="Photos navigation">
+            <button id="photos-hamburger" class="photos-nav__hamburger" type="button" aria-label="Toggle navigation">
+                <i class="phi" aria-hidden="true">&#xE700;</i>
+            </button>
+            <div class="photos-nav__items">
+                <button class="photos-nav__item is-active" data-view="collection" type="button">
+                    <i class="phi photos-nav__icon">&#xE7FF;</i>
+                    <span class="photos-nav__label">Collection</span>
+                </button>
+                <button class="photos-nav__item" data-view="albums" type="button">
+                    <i class="phi photos-nav__icon">&#xE7AB;</i>
+                    <span class="photos-nav__label">Albums</span>
+                </button>
+                <button class="photos-nav__item" data-view="folders" type="button">
+                    <i class="phi photos-nav__icon">&#xE7AC;</i>
+                    <span class="photos-nav__label">Folders</span>
+                </button>
+                <div class="photos-nav__spacer"></div>
+                <button class="photos-nav__item" data-view="settings" type="button">
+                    <i class="phi photos-nav__icon">&#xE713;</i>
+                    <span class="photos-nav__label">Settings</span>
+                </button>
+            </div>
+        </nav>
+
+        <!-- Main content area -->
+        <div id="photos-content" class="photos-content">
+
+            <!-- ===== COLLECTION VIEW ===== -->
+            <section id="photos-view-collection" class="photos-view is-active" data-view="collection">
+                <header class="photos-view__header">
+                    <h1 class="photos-view__title">Collection</h1>
+                    <div class="photos-view__actions">
+                        <button id="photos-select-btn" class="photos-header-btn" type="button">Select</button>
+                    </div>
+                </header>
+                <!-- Time filter chips -->
+                <div class="photos-time-filter">
+                    <button class="photos-chip is-active" data-filter="all" type="button">All</button>
+                    <button class="photos-chip" data-filter="lastweek" type="button">Last Week</button>
+                    <button class="photos-chip" data-filter="lastmonth" type="button">Last Month</button>
+                    <button class="photos-chip" data-filter="lastyear" type="button">Last Year</button>
+                </div>
+                <!-- Riverflow photo grid -->
+                <div id="photos-collection-grid" class="photos-riverflow">
+                    <!-- Populated by JS: groups of month headers + photo rows -->
+                </div>
+                <div id="photos-collection-empty" class="photos-empty" hidden>
+                    <i class="phi" style="font-size:48px; opacity:0.3">&#xE722;</i>
+                    <p>No photos found</p>
+                    <p class="photos-empty__sub">Add folders in Settings to see your photos here</p>
+                </div>
+            </section>
+
+            <!-- ===== ALBUMS VIEW ===== -->
+            <section id="photos-view-albums" class="photos-view" data-view="albums">
+                <header class="photos-view__header">
+                    <h1 class="photos-view__title">Albums</h1>
+                </header>
+                <div id="photos-albums-grid" class="photos-albums-grid">
+                    <!-- Populated by JS -->
+                </div>
+                <div id="photos-albums-empty" class="photos-empty" hidden>
+                    <p>Albums will appear as your collection grows</p>
+                </div>
+            </section>
+
+            <!-- ===== SINGLE ALBUM VIEW ===== -->
+            <section id="photos-view-album-detail" class="photos-view" data-view="album-detail">
+                <header class="photos-view__header">
+                    <button id="photos-album-back" class="photos-back-btn" type="button">
+                        <i class="phi">&#xE72B;</i>
+                    </button>
+                    <div>
+                        <h1 id="photos-album-title" class="photos-view__title">Album</h1>
+                        <span id="photos-album-count" class="photos-view__subtitle"></span>
+                    </div>
+                </header>
+                <div id="photos-album-detail-grid" class="photos-riverflow">
+                    <!-- Populated by JS -->
+                </div>
+            </section>
+
+            <!-- ===== FOLDERS VIEW ===== -->
+            <section id="photos-view-folders" class="photos-view" data-view="folders">
+                <header class="photos-view__header">
+                    <h1 class="photos-view__title">Folders</h1>
+                </header>
+                <div class="photos-sources-panel">
+                    <h2 class="photos-sources__heading">Sources</h2>
+                    <p class="photos-sources__desc">Choose where we look for photos and videos</p>
+                    <div id="photos-sources-list" class="photos-sources-list">
+                        <!-- Populated by JS -->
+                    </div>
+                    <button id="photos-add-folder" class="photos-add-folder-btn" type="button">
+                        <i class="phi phi--sm">&#xE710;</i>
+                        Add a new source
+                    </button>
+                </div>
+            </section>
+
+            <!-- ===== SETTINGS VIEW ===== -->
+            <section id="photos-view-settings" class="photos-view" data-view="settings">
+                <header class="photos-view__header">
+                    <h1 class="photos-view__title">Settings</h1>
+                </header>
+                <div class="photos-settings-panel">
+                    <div class="photos-setting-group">
+                        <h2 class="photos-setting-group__title">View and edit</h2>
+                        <label class="photos-toggle">
+                            <span class="photos-toggle__label">Automatically enhance my photos when they can be improved</span>
+                            <input id="photos-setting-autoenhance" type="checkbox" class="photos-toggle__input">
+                            <span class="photos-toggle__switch"></span>
+                        </label>
+                        <label class="photos-toggle">
+                            <span class="photos-toggle__label">Show similar photos grouped in stacks</span>
+                            <input id="photos-setting-stacking" type="checkbox" class="photos-toggle__input">
+                            <span class="photos-toggle__switch"></span>
+                        </label>
+                        <label class="photos-toggle">
+                            <span class="photos-toggle__label">When photos have online duplicates or digital negatives, show just one</span>
+                            <input id="photos-setting-hidedupes" type="checkbox" class="photos-toggle__input">
+                            <span class="photos-toggle__switch"></span>
+                        </label>
+                    </div>
+                    <div class="photos-setting-group">
+                        <h2 class="photos-setting-group__title">Tile</h2>
+                        <p class="photos-setting-group__desc">The photos tile shows</p>
+                        <div class="photos-radio-group">
+                            <label class="photos-radio"><input type="radio" name="photos-tile-mode" value="recent" checked> Recent photos</label>
+                            <label class="photos-radio"><input type="radio" name="photos-tile-mode" value="single"> A single photo</label>
+                        </div>
+                    </div>
+                    <div class="photos-setting-group">
+                        <h2 class="photos-setting-group__title">Sources</h2>
+                        <p class="photos-setting-group__desc">Photos and videos in your collection</p>
+                        <div id="photos-settings-sources" class="photos-sources-list photos-sources-list--compact">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+                    <div class="photos-setting-group">
+                        <h2 class="photos-setting-group__title">About this app</h2>
+                        <p class="photos-setting-about">Windows Photos 1.0.1501.13126</p>
+                        <p class="photos-setting-about">&copy; 2015 Microsoft Corp.</p>
+                        <div class="photos-setting-links">
+                            <a href="#" class="photos-setting-link">Terms of Use</a>
+                            <a href="#" class="photos-setting-link">Privacy Statement</a>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- ===== PHOTO VIEWER OVERLAY ===== -->
+        <div id="photos-viewer" class="photos-viewer" hidden>
+            <div class="photos-viewer__backdrop"></div>
+            <div class="photos-viewer__stage">
+                <img id="photos-viewer-img" class="photos-viewer__image" alt="" draggable="false">
+                <img id="photos-viewer-img-next" class="photos-viewer__image photos-viewer__image--next" alt="" draggable="false">
+            </div>
+            <!-- Viewer top bar -->
+            <div class="photos-viewer__topbar">
+                <button id="photos-viewer-back" class="photos-viewer__topbtn" type="button" aria-label="Back to collection">
+                    <i class="phi">&#xE72B;</i>
+                </button>
+                <span id="photos-viewer-filename" class="photos-viewer__filename"></span>
+                <button id="photos-viewer-info-btn" class="photos-viewer__topbtn" type="button" aria-label="Properties">
+                    <i class="phi">&#xE78F;</i>
+                </button>
+            </div>
+            <!-- Viewer nav arrows -->
+            <button id="photos-viewer-prev" class="photos-viewer__arrow photos-viewer__arrow--prev" type="button" aria-label="Previous">
+                <i class="phi phi--xl">&#xE72B;</i>
+            </button>
+            <button id="photos-viewer-next" class="photos-viewer__arrow photos-viewer__arrow--next" type="button" aria-label="Next">
+                <i class="phi phi--xl">&#xE72A;</i>
+            </button>
+            <!-- Viewer bottom app bar -->
+            <div class="photos-viewer__appbar">
+                <button id="photos-viewer-share" class="photos-viewer__appbar-btn" type="button">
+                    <i class="phi phi--lg">&#xE72D;</i>
+                    <span>Share</span>
+                </button>
+                <button id="photos-viewer-slideshow" class="photos-viewer__appbar-btn" type="button">
+                    <i class="phi phi--lg">&#xE786;</i>
+                    <span>Slideshow</span>
+                </button>
+                <button id="photos-viewer-enhance" class="photos-viewer__appbar-btn" type="button">
+                    <i class="phi phi--lg">&#xE78D;</i>
+                    <span>Enhance</span>
+                </button>
+                <button id="photos-viewer-edit" class="photos-viewer__appbar-btn" type="button">
+                    <i class="phi phi--lg">&#xE70F;</i>
+                    <span>Edit</span>
+                </button>
+                <button id="photos-viewer-rotate" class="photos-viewer__appbar-btn" type="button">
+                    <i class="phi phi--lg">&#xE7AD;</i>
+                    <span>Rotate</span>
+                </button>
+                <button id="photos-viewer-crop" class="photos-viewer__appbar-btn" type="button">
+                    <i class="phi phi--lg">&#xE7A8;</i>
+                    <span>Crop</span>
+                </button>
+                <button id="photos-viewer-delete" class="photos-viewer__appbar-btn" type="button">
+                    <i class="phi phi--lg">&#xE74D;</i>
+                    <span>Delete</span>
+                </button>
+            </div>
+            <!-- Properties side panel -->
+            <div id="photos-viewer-properties" class="photos-viewer__properties" hidden>
+                <h2 class="photos-properties__title">PROPERTIES</h2>
+                <div class="photos-properties__list">
+                    <div class="photos-property">
+                        <span class="photos-property__label">File name</span>
+                        <span id="photos-prop-filename" class="photos-property__value"></span>
+                    </div>
+                    <div class="photos-property">
+                        <span class="photos-property__label">Date</span>
+                        <span id="photos-prop-date" class="photos-property__value"></span>
+                    </div>
+                    <div class="photos-property">
+                        <span class="photos-property__label">Time</span>
+                        <span id="photos-prop-time" class="photos-property__value"></span>
+                    </div>
+                    <div class="photos-property">
+                        <span class="photos-property__label">Resolution</span>
+                        <span id="photos-prop-resolution" class="photos-property__value"></span>
+                    </div>
+                    <div class="photos-property">
+                        <span class="photos-property__label">File type</span>
+                        <span id="photos-prop-filetype" class="photos-property__value"></span>
+                    </div>
+                    <div class="photos-property">
+                        <span class="photos-property__label">Size</span>
+                        <span id="photos-prop-size" class="photos-property__value"></span>
+                    </div>
+                    <div class="photos-property">
+                        <span class="photos-property__label">Source</span>
+                        <span id="photos-prop-source" class="photos-property__value"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== EDIT OVERLAY ===== -->
+        <div id="photos-editor" class="photos-editor" hidden>
+            <div class="photos-editor__topbar">
+                <button id="photos-edit-undo" class="photos-editor__topbtn" type="button" disabled>
+                    <i class="phi">&#xE7A7;</i>
+                    <span>Undo</span>
+                </button>
+                <button id="photos-edit-redo" class="photos-editor__topbtn" type="button" disabled>
+                    <i class="phi">&#xE7A6;</i>
+                    <span>Redo</span>
+                </button>
+                <button id="photos-edit-compare" class="photos-editor__topbtn" type="button">
+                    <i class="phi">&#xE7B4;</i>
+                    <span>Compare Original</span>
+                </button>
+                <div class="photos-editor__topbar-spacer"></div>
+                <button id="photos-edit-save-copy" class="photos-editor__topbtn" type="button">
+                    <i class="phi">&#xE7B5;</i>
+                    <span>Save a copy</span>
+                </button>
+                <button id="photos-edit-cancel" class="photos-editor__topbtn" type="button">
+                    <i class="phi">&#xE711;</i>
+                    <span>Cancel</span>
+                </button>
+            </div>
+            <div class="photos-editor__body">
+                <!-- Left panel: tool categories -->
+                <div class="photos-editor__left-panel">
+                    <button class="photos-editor__category is-active" data-edit-category="basic" type="button">
+                        <i class="phi phi--lg">&#xE795;</i>
+                        <span>Basic fixes</span>
+                    </button>
+                    <button class="photos-editor__category" data-edit-category="light" type="button">
+                        <i class="phi phi--lg">&#xE793;</i>
+                        <span>Light</span>
+                    </button>
+                    <button class="photos-editor__category" data-edit-category="color" type="button">
+                        <i class="phi phi--lg">&#xE790;</i>
+                        <span>Color</span>
+                    </button>
+                    <button class="photos-editor__category" data-edit-category="effects" type="button">
+                        <i class="phi phi--lg">&#xE79C;</i>
+                        <span>Effects</span>
+                    </button>
+                </div>
+                <!-- Center: image canvas -->
+                <div class="photos-editor__canvas">
+                    <img id="photos-editor-img" class="photos-editor__image" alt="" draggable="false">
+                    <!-- Crop overlay -->
+                    <div id="photos-crop-overlay" class="photos-editor__crop-overlay" hidden>
+                        <div class="photos-crop__dim photos-crop__dim--top"></div>
+                        <div class="photos-crop__dim photos-crop__dim--bottom"></div>
+                        <div class="photos-crop__dim photos-crop__dim--left"></div>
+                        <div class="photos-crop__dim photos-crop__dim--right"></div>
+                        <div class="photos-crop__box">
+                            <div class="photos-crop__handle photos-crop__handle--tl"></div>
+                            <div class="photos-crop__handle photos-crop__handle--tr"></div>
+                            <div class="photos-crop__handle photos-crop__handle--bl"></div>
+                            <div class="photos-crop__handle photos-crop__handle--br"></div>
+                            <div class="photos-crop__grid">
+                                <div class="photos-crop__gridline photos-crop__gridline--h1"></div>
+                                <div class="photos-crop__gridline photos-crop__gridline--h2"></div>
+                                <div class="photos-crop__gridline photos-crop__gridline--v1"></div>
+                                <div class="photos-crop__gridline photos-crop__gridline--v2"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Right panel: tool controls -->
+                <div id="photos-editor-right" class="photos-editor__right-panel">
+                    <!-- Basic fixes -->
+                    <div class="photos-editor__tools" data-edit-tools="basic">
+                        <button class="photos-editor__tool-btn" data-action="enhance" type="button">
+                            <i class="phi">&#xE78D;</i>
+                            Enhance
+                        </button>
+                        <button class="photos-editor__tool-btn" data-action="rotate" type="button">
+                            <i class="phi">&#xE7AD;</i>
+                            Rotate
+                        </button>
+                        <button class="photos-editor__tool-btn" data-action="crop" type="button">
+                            <i class="phi">&#xE7A8;</i>
+                            Crop
+                        </button>
+                        <button class="photos-editor__tool-btn" data-action="straighten" type="button">
+                            <i class="phi">&#xE79D;</i>
+                            Straighten
+                        </button>
+                        <button class="photos-editor__tool-btn" data-action="redeye" type="button">
+                            <i class="phi">&#xE7B3;</i>
+                            Red eye
+                        </button>
+                        <button class="photos-editor__tool-btn" data-action="retouch" type="button">
+                            <i class="phi">&#xE799;</i>
+                            Retouch
+                        </button>
+                    </div>
+                    <!-- Light adjustments -->
+                    <div class="photos-editor__tools" data-edit-tools="light" hidden>
+                        <div class="photos-editor__slider-group">
+                            <label class="photos-editor__slider-label"><i class="phi phi--sm">&#xE7A3;</i> Brightness</label>
+                            <input type="range" class="photos-editor__slider" data-filter="brightness" min="-100" max="100" value="0">
+                            <span class="photos-editor__slider-value">0</span>
+                        </div>
+                        <div class="photos-editor__slider-group">
+                            <label class="photos-editor__slider-label"><i class="phi phi--sm">&#xE793;</i> Contrast</label>
+                            <input type="range" class="photos-editor__slider" data-filter="contrast" min="-100" max="100" value="0">
+                            <span class="photos-editor__slider-value">0</span>
+                        </div>
+                        <div class="photos-editor__slider-group">
+                            <label class="photos-editor__slider-label"><i class="phi phi--sm">&#xE7A0;</i> Highlights</label>
+                            <input type="range" class="photos-editor__slider" data-filter="highlights" min="-100" max="100" value="0">
+                            <span class="photos-editor__slider-value">0</span>
+                        </div>
+                        <div class="photos-editor__slider-group">
+                            <label class="photos-editor__slider-label"><i class="phi phi--sm">&#xE79F;</i> Shadows</label>
+                            <input type="range" class="photos-editor__slider" data-filter="shadows" min="-100" max="100" value="0">
+                            <span class="photos-editor__slider-value">0</span>
+                        </div>
+                    </div>
+                    <!-- Color adjustments -->
+                    <div class="photos-editor__tools" data-edit-tools="color" hidden>
+                        <div class="photos-editor__slider-group">
+                            <label class="photos-editor__slider-label"><i class="phi phi--sm">&#xE790;</i> Temperature</label>
+                            <input type="range" class="photos-editor__slider" data-filter="temperature" min="-100" max="100" value="0">
+                            <span class="photos-editor__slider-value">0</span>
+                        </div>
+                        <div class="photos-editor__slider-group">
+                            <label class="photos-editor__slider-label"><i class="phi phi--sm">&#xE790;</i> Tint</label>
+                            <input type="range" class="photos-editor__slider" data-filter="tint" min="-100" max="100" value="0">
+                            <span class="photos-editor__slider-value">0</span>
+                        </div>
+                        <div class="photos-editor__slider-group">
+                            <label class="photos-editor__slider-label"><i class="phi phi--sm">&#xE7A1;</i> Saturation</label>
+                            <input type="range" class="photos-editor__slider" data-filter="saturation" min="-100" max="100" value="0">
+                            <span class="photos-editor__slider-value">0</span>
+                        </div>
+                    </div>
+                    <!-- Effects -->
+                    <div class="photos-editor__tools" data-edit-tools="effects" hidden>
+                        <div class="photos-editor__slider-group">
+                            <label class="photos-editor__slider-label"><i class="phi phi--sm">&#xE7B1;</i> Vignette</label>
+                            <input type="range" class="photos-editor__slider" data-filter="vignette" min="0" max="100" value="0">
+                            <span class="photos-editor__slider-value">0</span>
+                        </div>
+                        <button class="photos-editor__tool-btn" data-action="selectivefocus" type="button">
+                            <i class="phi">&#xE7A4;</i>
+                            Selective focus
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== SLIDESHOW OVERLAY ===== -->
+        <div id="photos-slideshow" class="photos-slideshow" hidden>
+            <img id="photos-slideshow-img" class="photos-slideshow__image" alt="" draggable="false">
+            <div class="photos-slideshow__controls">
+                <button id="photos-slideshow-prev" class="photos-slideshow__btn" type="button" aria-label="Previous">
+                    <i class="phi phi--xl">&#xE72B;</i>
+                </button>
+                <button id="photos-slideshow-pause" class="photos-slideshow__btn" type="button" aria-label="Pause">
+                    <i class="phi phi--xl">&#xE769;</i>
+                </button>
+                <button id="photos-slideshow-next" class="photos-slideshow__btn" type="button" aria-label="Next">
+                    <i class="phi phi--xl">&#xE72A;</i>
+                </button>
+                <button id="photos-slideshow-exit" class="photos-slideshow__btn photos-slideshow__btn--exit" type="button" aria-label="Exit slideshow">
+                    <i class="phi phi--xl">&#xE711;</i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Select mode app bar -->
+        <div id="photos-select-bar" class="photos-select-bar" hidden>
+            <span id="photos-select-count" class="photos-select-bar__count">No item selected</span>
+            <div class="photos-select-bar__actions">
+                <button id="photos-select-share" class="photos-select-bar__btn" type="button"><i class="phi phi--sm">&#xE72D;</i> Share</button>
+                <button id="photos-select-delete" class="photos-select-bar__btn" type="button"><i class="phi phi--sm">&#xE74D;</i> Delete</button>
+                <button id="photos-select-cancel" class="photos-select-bar__btn photos-select-bar__btn--cancel" type="button">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="./photos.js"></script>
+</body>
+
+</html>

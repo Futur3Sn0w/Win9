@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="../../../css/classic-controls.css">
     <link rel="stylesheet" href="../../../css/styles.css">
     <link rel="stylesheet" href="../../../css/fonts.css">
+    <link rel="stylesheet" href="../../../css/modern-ui.css">
     <link rel="stylesheet" href="https://cdn.metroui.org.ua/v4/css/metro-icons.min.css">
     <style>
         * {
@@ -19,222 +20,793 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #fff;
-            color: #000;
-            overflow-x: hidden;
+            background: #F2F2F2;
+            color: #212121;
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
         }
 
-        .store-container {
+        /* Diagonal stripe background like the real store */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: repeating-linear-gradient(135deg,
+                    transparent,
+                    transparent 50px,
+                    rgba(0, 0, 0, 0.015) 50px,
+                    rgba(0, 0, 0, 0.015) 100px);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* ============ SPLASH SCREEN ============ */
+        .store-splash {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #008A00;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.4s ease;
+        }
+
+        .store-splash.fade-out {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .store-splash-logo {
+            width: 128px;
+            height: 128px;
+            margin-bottom: 24px;
+        }
+
+        .store-splash-logo img {
+            width: 100%;
+            height: 100%;
+        }
+
+        .store-splash-spinner {
+            width: 30px;
+            height: 30px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: splash-spin 0.8s linear infinite;
+        }
+
+        @keyframes splash-spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* ============ MAIN LAYOUT ============ */
+        .store-frame {
             display: flex;
             flex-direction: column;
             height: 100vh;
+            width: 100vw;
+            position: relative;
+            z-index: 1;
         }
 
+        /* ============ HEADER ============ */
         .store-header {
-            background: #1ba1e2;
-            color: #fff;
-            padding: 20px 40px;
             display: flex;
             align-items: center;
-            gap: 20px;
-        }
-
-        .store-back-button {
-            background: transparent;
-            border: none;
-            color: #fff;
-            font-size: 24px;
-
-            padding: 5px 10px;
-            display: none;
-            transition: background 0.2s ease;
-        }
-
-        .store-back-button:hover {
-            background: rgba(255, 255, 255, 0.1);
-        }
-
-        .store-back-button.visible {
-            display: block;
-        }
-
-        .store-title {
-            font-size: 28px;
-            font-weight: 300;
-        }
-
-        .store-content {
-            flex: 1;
-            padding: 40px 60px;
-            overflow-y: auto;
-        }
-
-        .store-section-title {
-            font-size: 24px;
-            font-weight: 300;
-            margin-bottom: 30px;
-        }
-
-        .app-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 20px;
-        }
-
-        .app-card {
-            background: #f2f2f2;
-            border: 1px solid #e0e0e0;
-            padding: 20px;
-
-            transition: background 0.2s ease, transform 0.1s ease;
-        }
-
-        .app-card:hover {
-            background: #e8e8e8;
-            transform: translateY(-2px);
-        }
-
-        .app-card:active {
-            transform: translateY(0);
-        }
-
-        .app-card-header {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            margin-bottom: 15px;
-        }
-
-        .app-card-icon {
-            font-size: 40px;
-            width: 60px;
-            height: 60px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 4px;
-        }
-
-        .app-card-icon.purple {
-            background: #a020f0;
-            color: #fff;
-        }
-
-        .app-card-icon.blue {
-            background: #0078d7;
-            color: #fff;
-        }
-
-        .app-card-icon.green {
-            background: #60a917;
-            color: #fff;
-        }
-
-        .app-card-info {
-            flex: 1;
-        }
-
-        .app-card-name {
-            font-size: 18px;
-            font-weight: 400;
-            margin-bottom: 5px;
-        }
-
-        .app-card-category {
-            font-size: 13px;
-            color: #666;
-            text-transform: capitalize;
-        }
-
-        .app-card-description {
-            font-size: 14px;
-            color: #333;
-            line-height: 1.4;
-        }
-
-        /* App Detail View */
-        .app-detail {
-            display: none;
-        }
-
-        .app-detail.visible {
-            display: block;
-        }
-
-        .app-detail-header {
-            display: flex;
-            gap: 30px;
-            margin-bottom: 40px;
-            padding-bottom: 30px;
-            border-bottom: 1px solid #e0e0e0;
-        }
-
-        .app-detail-icon {
-            font-size: 80px;
-            width: 120px;
-            height: 120px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 4px;
+            padding: 35px 80px 0 80px;
+            min-height: 90px;
             flex-shrink: 0;
         }
 
-        .app-detail-info {
-            flex: 1;
-        }
-
-        .app-detail-name {
-            font-size: 32px;
-            font-weight: 300;
-            margin-bottom: 10px;
-        }
-
-        .app-detail-category {
-            font-size: 16px;
-            color: #666;
-            margin-bottom: 20px;
-            text-transform: capitalize;
-        }
-
-        .app-detail-actions {
-            display: flex;
-            gap: 15px;
-        }
-
-        .app-detail-button {
-            padding: 12px 30px;
-            font-size: 15px;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            border: none;
-
-            transition: background 0.2s ease;
-        }
-
-        .app-detail-button.primary {
-            background: #0078d7;
-            color: #fff;
-        }
-
-        .app-detail-button.primary:hover {
-            background: #005a9e;
-        }
-
-        .app-detail-button.secondary {
-            background: #e81123;
-            color: #fff;
-        }
-
-        .app-detail-button.secondary:hover {
-            background: #c50f1f;
-        }
-
-        .app-detail-description {
-            font-size: 15px;
-            line-height: 1.6;
+        .store-back-button {
+            display: none;
+            margin-right: 20px;
+            border-color: #333;
             color: #333;
         }
 
+        .store-back-button:hover {
+            background: rgba(0, 0, 0, 0.1);
+        }
+
+        .store-back-button:active {
+            background: #333;
+            color: #fff;
+        }
+
+        .store-back-button.visible {
+            display: flex;
+        }
+
+        .store-title {
+            font-size: 42pt;
+            font-weight: 200;
+            color: #000;
+            white-space: nowrap;
+            flex: 1;
+        }
+
+        /* Search box */
+        .store-search {
+            display: flex;
+            align-items: center;
+            border: 1px solid #999;
+            background: #fff;
+            height: 32px;
+            flex-shrink: 0;
+        }
+
+        .store-search input {
+            border: none;
+            outline: none;
+            font-family: inherit;
+            font-size: 12px;
+            padding: 0 10px;
+            width: 200px;
+            height: 100%;
+            background: transparent;
+            color: #333;
+        }
+
+        .store-search input::placeholder {
+            color: #999;
+        }
+
+        .store-search-btn {
+            width: 32px;
+            height: 100%;
+            border: none;
+            border-left: 1px solid #999;
+            background: #F2F2F2;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .store-search-btn:hover {
+            background: #e0e0e0;
+        }
+
+        /* ============ PANORAMIC CONTENT ============ */
+        .store-panorama {
+            flex: 1;
+            overflow-x: auto;
+            overflow-y: hidden;
+            padding: 20px 80px 30px 80px;
+            white-space: nowrap;
+        }
+
+        .store-panorama::-webkit-scrollbar {
+            height: 10px;
+        }
+
+        .store-panorama::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .store-panorama::-webkit-scrollbar-thumb {
+            background: rgba(0, 0, 0, 0.15);
+        }
+
+        .store-panorama::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        /* ============ SECTION ============ */
+        .store-section {
+            display: inline-block;
+            vertical-align: top;
+            margin-right: 50px;
+            white-space: normal;
+        }
+
+        .store-section-header {
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+            margin-bottom: 16px;
+            cursor: pointer;
+        }
+
+        .store-section-header:hover .section-title {
+            text-decoration: underline;
+        }
+
+        .section-title {
+            font-size: 18pt;
+            font-weight: 300;
+            color: #000;
+        }
+
+        .section-chevron {
+            font-size: 14pt;
+            color: #000;
+            font-weight: 300;
+        }
+
+        /* ============ APP CARDS (Home view - large image cards) ============ */
+        .app-card-grid {
+            display: grid;
+            grid-template-rows: repeat(2, auto);
+            grid-auto-flow: column;
+            gap: 24px 20px;
+        }
+
+        .app-card {
+            width: 280px;
+            cursor: pointer;
+        }
+
+        .app-card:hover .app-card-image {
+            opacity: 0.9;
+        }
+
+        .app-card:active .app-card-image {
+            opacity: 0.8;
+        }
+
+        .app-card-image {
+            width: 280px;
+            height: 156px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            transition: opacity 0.15s ease;
+        }
+
+        .app-card-image .card-icon {
+            font-size: 64px;
+            color: #fff;
+        }
+
+        .app-card-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .app-card-meta {
+            padding: 8px 0 0 0;
+        }
+
+        .app-card-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: #000;
+            margin-bottom: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .app-card-desc {
+            font-size: 12px;
+            font-weight: 300;
+            color: #555;
+            line-height: 1.35;
+            max-height: 32px;
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            margin-bottom: 4px;
+        }
+
+        .app-card-footer {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: var(--system-font-size);
+            color: #666;
+        }
+
+        .app-card-price {
+            font-weight: 400;
+            color: #000;
+        }
+
+        .app-card-stars {
+            color: #F5B400;
+            letter-spacing: -1px;
+        }
+
+        .app-card-stars .empty {
+            color: #CCC;
+        }
+
+        .app-card-rating-count {
+            color: #888;
+        }
+
+        .app-card-category {
+            color: #888;
+        }
+
+        /* ============ CATEGORY LIST VIEW (drill-down, compact cards) ============ */
+        .cat-list-grid {
+            display: grid;
+            grid-template-rows: repeat(7, auto);
+            grid-auto-flow: column;
+            gap: 6px 10px;
+        }
+
+        .cat-list-card {
+            display: flex;
+            align-items: center;
+            width: 280px;
+            height: 56px;
+            cursor: pointer;
+            overflow: hidden;
+            transition: opacity 0.15s ease;
+        }
+
+        .cat-list-card:hover {
+            opacity: 0.85;
+        }
+
+        .cat-list-card:active {
+            opacity: 0.7;
+        }
+
+        .cat-list-icon {
+            width: 56px;
+            height: 56px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .cat-list-icon .icon-font {
+            font-size: 28px;
+            color: #fff;
+        }
+
+        .cat-list-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .cat-list-info {
+            flex: 1;
+            padding: 6px 10px;
+            min-width: 0;
+        }
+
+        .cat-list-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: #fff;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .cat-list-stars {
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.85);
+            letter-spacing: -1px;
+        }
+
+        .cat-list-stars .empty {
+            color: rgba(255, 255, 255, 0.35);
+        }
+
+        .cat-list-cat {
+            font-size: var(--system-font-size);
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .cat-list-price {
+            font-size: var(--system-font-size);
+            color: #fff;
+            margin-top: 1px;
+        }
+
+        /* Color backgrounds for list cards */
+        .bg-green {
+            background: #008A00;
+        }
+
+        .bg-blue {
+            background: #2D89EF;
+        }
+
+        .bg-purple {
+            background: #7B1FA2;
+        }
+
+        .bg-red {
+            background: #E51400;
+        }
+
+        .bg-orange {
+            background: #DA532C;
+        }
+
+        .bg-teal {
+            background: #00ABA9;
+        }
+
+        .bg-dark {
+            background: #1D1D1D;
+        }
+
+        .bg-cyan {
+            background: #00BCD4;
+        }
+
+        .bg-magenta {
+            background: #E3008C;
+        }
+
+        .bg-lime {
+            background: #8CBF26;
+        }
+
+        .bg-brown {
+            background: #825A2C;
+        }
+
+        .bg-pink {
+            background: #E91E63;
+        }
+
+        .bg-default {
+            background: #2D89EF;
+        }
+
+        .bg-white {
+            background: #fff;
+        }
+
+        /* Card colors for large image cards */
+        .card-bg-green {
+            background: #008A00;
+        }
+
+        .card-bg-blue {
+            background: #2D89EF;
+        }
+
+        .card-bg-purple {
+            background: #7B1FA2;
+        }
+
+        .card-bg-red {
+            background: #E51400;
+        }
+
+        .card-bg-orange {
+            background: #DA532C;
+        }
+
+        .card-bg-teal {
+            background: #00ABA9;
+        }
+
+        .card-bg-dark {
+            background: #1D1D1D;
+        }
+
+        .card-bg-cyan {
+            background: #00BCD4;
+        }
+
+        .card-bg-magenta {
+            background: #E3008C;
+        }
+
+        .card-bg-lime {
+            background: #8CBF26;
+        }
+
+        .card-bg-brown {
+            background: #825A2C;
+        }
+
+        .card-bg-pink {
+            background: #E91E63;
+        }
+
+        .card-bg-default {
+            background: #2D89EF;
+        }
+
+        .card-bg-white {
+            background: #DFDFDF;
+        }
+
+        /* ============ SEARCH RESULTS VIEW ============ */
+        .search-results-header {
+            margin-bottom: 20px;
+        }
+
+        .search-results-title {
+            font-size: 28pt;
+            font-weight: 200;
+        }
+
+        .search-results-count {
+            font-size: 14pt;
+            font-weight: 300;
+            color: #888;
+            margin-left: 10px;
+        }
+
+        /* ============ LOADING & ERROR ============ */
+        .store-loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            gap: 16px;
+            color: #888;
+            font-size: 14px;
+            font-weight: 300;
+        }
+
+        .store-loading .spinner {
+            width: 28px;
+            height: 28px;
+            border: 3px solid #e0e0e0;
+            border-top-color: #008A00;
+            border-radius: 50%;
+            animation: splash-spin 800ms linear infinite;
+        }
+
+        .store-error {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            gap: 12px;
+            color: #333;
+            font-size: 15px;
+            font-weight: 300;
+        }
+
+        .store-error-icon {
+            font-size: 48px;
+            color: #ccc;
+            margin-bottom: 8px;
+        }
+
+        .store-error button {
+            margin-top: 8px;
+            padding: 8px 28px;
+            background: #008A00;
+            color: #fff;
+            border: none;
+            font-family: inherit;
+            font-size: 13px;
+            cursor: pointer;
+        }
+
+        .store-error button:hover {
+            background: #006D00;
+        }
+
+        /* ============ APP DETAIL VIEW ============ */
+        .store-detail {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #F2F2F2;
+            z-index: 100;
+            display: none;
+            flex-direction: column;
+        }
+
+        .store-detail::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: repeating-linear-gradient(135deg,
+                    transparent, transparent 50px,
+                    rgba(0, 0, 0, 0.015) 50px,
+                    rgba(0, 0, 0, 0.015) 100px);
+            pointer-events: none;
+        }
+
+        .store-detail.visible {
+            display: flex;
+        }
+
+        .store-detail-header {
+            display: flex;
+            align-items: center;
+            padding: 35px 80px 0 80px;
+            min-height: 90px;
+            flex-shrink: 0;
+            position: relative;
+            z-index: 1;
+        }
+
+        .store-detail-content {
+            flex: 1;
+            overflow-x: auto;
+            overflow-y: hidden;
+            padding: 20px 80px 30px 80px;
+            white-space: nowrap;
+            position: relative;
+            z-index: 1;
+        }
+
+        .store-detail-content::-webkit-scrollbar {
+            height: 10px;
+        }
+
+        .store-detail-content::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .store-detail-content::-webkit-scrollbar-thumb {
+            background: rgba(0, 0, 0, 0.15);
+        }
+
+        /* Detail: Left panel */
+        .detail-left {
+            display: inline-block;
+            vertical-align: top;
+            width: 420px;
+            white-space: normal;
+            margin-right: 60px;
+        }
+
+        .detail-install-btn {
+            display: inline-block;
+            padding: 6px 20px;
+            background: #008A00;
+            color: #fff;
+            border: 2px solid #008A00;
+            font-family: inherit;
+            font-size: 13px;
+            font-weight: 400;
+            cursor: pointer;
+            min-width: 90px;
+            text-align: center;
+            margin-bottom: 16px;
+        }
+
+        .detail-install-btn:hover {
+            background: #006D00;
+            border-color: #006D00;
+        }
+
+        .detail-install-btn:disabled {
+            background: #999;
+            border-color: #999;
+            cursor: default;
+        }
+
+        .detail-install-btn.uninstall {
+            background: transparent;
+            color: #E51400;
+            border-color: #E51400;
+        }
+
+        .detail-install-btn.uninstall:hover {
+            background: #E51400;
+            color: #fff;
+        }
+
+        .detail-progress {
+            font-size: 12px;
+            color: #008A00;
+            margin-bottom: 12px;
+            min-height: 16px;
+        }
+
+        .detail-progress.error {
+            color: #E51400;
+        }
+
+        .detail-desc-text {
+            font-size: 13px;
+            font-weight: 300;
+            color: #333;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .detail-meta-row {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 4px;
+        }
+
+        .detail-meta-row strong {
+            font-weight: 400;
+            color: #333;
+        }
+
+        /* Detail: Right panel (features) */
+        .detail-right {
+            display: inline-block;
+            vertical-align: top;
+            width: 340px;
+            white-space: normal;
+            margin-right: 40px;
+        }
+
+        .detail-section-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #000;
+            margin-bottom: 12px;
+            margin-top: 16px;
+        }
+
+        .detail-section-title:first-child {
+            margin-top: 0;
+        }
+
+        .detail-feature-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+            font-size: 13px;
+            font-weight: 300;
+            color: #333;
+        }
+
+        .detail-feature-icon {
+            color: #008A00;
+            font-size: 12px;
+            flex-shrink: 0;
+        }
+
+        .detail-info-grid {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 4px 16px;
+            font-size: 12px;
+        }
+
+        .detail-info-label {
+            color: #888;
+            font-weight: 400;
+        }
+
+        .detail-info-value {
+            color: #333;
+            font-weight: 300;
+        }
+
+        /* ============ INSTALLED BADGE ============ */
+        .installed-text {
+            font-size: var(--system-font-size);
+            color: #008A00;
+            font-weight: 400;
+        }
+
+        /* ============ UTILITY ============ */
         .hidden {
             display: none !important;
         }
@@ -242,178 +814,616 @@
 </head>
 
 <body>
-    <div class="store-container">
-        <div class="store-header">
-            <button class="store-back-button" id="backButton">
-                <span class="mif-arrow-left"></span>
-            </button>
+    <!-- Splash Screen -->
+    <div class="store-splash" id="splashScreen">
+        <div class="store-splash-logo">
+            <img src="resources/logo.png" alt="Store"
+                onerror="this.parentElement.innerHTML='<span class=\'sui-shop\' style=\'font-size:80px;color:#fff\'></span>'" />
+        </div>
+        <div class="store-splash-spinner"></div>
+    </div>
+
+    <!-- Main Frame -->
+    <div class="store-frame" id="storeFrame">
+        <!-- Header -->
+        <div class="store-header" id="mainHeader">
+            <button class="metro-back-btn store-back-button" id="backButton" title="Back"><span
+                    class="sui-back"></span></button>
             <div class="store-title" id="storeTitle">Store</div>
+            <div class="store-search">
+                <input type="text" id="searchInput" placeholder="Search for apps" />
+                <button class="store-search-btn" id="searchBtn" title="Search">
+                    <span class="sui-search"></span>
+                </button>
+            </div>
         </div>
 
-        <div class="store-content">
-            <!-- App List View -->
-            <div id="appListView">
-                <div class="store-section-title">Available Apps</div>
-                <div class="app-grid" id="appGrid">
-                    <!-- App cards will be inserted here -->
-                </div>
+        <!-- Panoramic Content -->
+        <div class="store-panorama" id="storePanorama">
+            <!-- Loading State -->
+            <div id="loadingView" class="store-loading">
+                <div class="spinner"></div>
+                <div>Loading...</div>
             </div>
 
-            <!-- App Detail View -->
-            <div id="appDetailView" class="app-detail">
-                <div class="app-detail-header">
-                    <div class="app-detail-icon" id="detailIcon"></div>
-                    <div class="app-detail-info">
-                        <div class="app-detail-name" id="detailName"></div>
-                        <div class="app-detail-category" id="detailCategory"></div>
-                        <div class="app-detail-actions">
-                            <button class="app-detail-button primary" id="installButton">Install</button>
-                            <button class="app-detail-button secondary hidden" id="uninstallButton">Uninstall</button>
-                        </div>
-                    </div>
-                </div>
-                <div class="app-detail-description" id="detailDescription"></div>
+            <!-- Error State -->
+            <div id="errorView" class="store-error hidden">
+                <div class="store-error-icon"><span class="sui-warning"></span></div>
+                <div id="errorMessage">Can't connect to the Store right now. Check your connection and try again.</div>
+                <button id="retryButton">Try again</button>
+            </div>
+
+            <!-- Home View (populated dynamically) -->
+            <div id="homeView" class="hidden"></div>
+        </div>
+
+        <!-- App Detail Overlay -->
+        <div class="store-detail" id="appDetailView">
+            <div class="store-detail-header">
+                <button class="metro-back-btn store-back-button visible" id="detailBackButton" title="Back"><span
+                        class="sui-back"></span></button>
+                <div class="store-title" id="detailTitle"></div>
+            </div>
+            <div class="store-detail-content" id="detailContent">
+                <div class="detail-left" id="detailLeft"></div>
+                <div class="detail-right" id="detailRight"></div>
             </div>
         </div>
     </div>
 
-    <!-- Include Store Manager Component -->
+    <!-- Include Registry and Market Manager -->
     <script src="../../../registry/store-registry.js"></script>
+    <script src="../../../registry/market-registry.js"></script>
+    <script src="../../../components/market/market-manager.js"></script>
     <script src="components/store-manager.js"></script>
 
     <script>
-        let currentApp = null;
+        const MARKET_BASE_URL = 'https://futur3sn0w.github.io/WinStore';
 
-        // Render app grid
-        function renderAppGrid() {
-            const appGrid = document.getElementById('appGrid');
-            appGrid.innerHTML = '';
+        // Category config
+        const CATEGORY_CONFIG = {
+            'games': { name: 'Games', order: 1 },
+            'social': { name: 'Social', order: 2 },
+            'entertainment': { name: 'Entertainment', order: 3 },
+            'video': { name: 'Photo & Video', order: 4 },
+            'photo': { name: 'Photo & Video', order: 4 },
+            'music': { name: 'Music & Video', order: 5 },
+            'news': { name: 'News & Weather', order: 6 },
+            'productivity': { name: 'Productivity', order: 7 },
+            'tools': { name: 'Tools', order: 8 },
+            'education': { name: 'Education', order: 9 },
+        };
 
-            const storeApps = window.storeManager.getStoreApps();
+        let currentManifest = null;
+        let currentView = 'home'; // 'home', 'category', 'search', 'detail'
+        let navStack = [];
 
-            storeApps.forEach(app => {
-                const card = document.createElement('div');
-                card.className = 'app-card';
-                card.onclick = () => showAppDetail(app);
+        // --- DOM refs ---
+        const splashScreen = document.getElementById('splashScreen');
+        const loadingView = document.getElementById('loadingView');
+        const errorView = document.getElementById('errorView');
+        const homeView = document.getElementById('homeView');
+        const appDetailView = document.getElementById('appDetailView');
+        const backButton = document.getElementById('backButton');
+        const storeTitle = document.getElementById('storeTitle');
 
-                const isInstalled = window.storeManager.isInstalled(app.id);
-                const statusText = isInstalled ? ' (Installed)' : '';
-
-                card.innerHTML = `
-                    <div class="app-card-header">
-                        <div class="app-card-icon ${app.color}">
-                            <span class="mif-${app.icon.replace('mif-', '')}"></span>
-                        </div>
-                        <div class="app-card-info">
-                            <div class="app-card-name">${app.name}${statusText}</div>
-                            <div class="app-card-category">${app.category}</div>
-                        </div>
-                    </div>
-                    <div class="app-card-description">
-                        ${window.storeManager.getAppDescription(app)}
-                    </div>
-                `;
-
-                appGrid.appendChild(card);
-            });
+        // --- View management ---
+        function showView(view) {
+            [loadingView, errorView, homeView].forEach(v => v.classList.add('hidden'));
+            view.classList.remove('hidden');
         }
 
-        // Show app detail view
-        function showAppDetail(app) {
-            currentApp = app;
-            const isInstalled = window.storeManager.isInstalled(app.id);
-
-            document.getElementById('appListView').classList.add('hidden');
-            document.getElementById('appDetailView').classList.add('visible');
-            document.getElementById('backButton').classList.add('visible');
-            document.getElementById('storeTitle').textContent = app.name;
-
-            const detailIcon = document.getElementById('detailIcon');
-            detailIcon.className = `app-detail-icon ${app.color}`;
-            detailIcon.innerHTML = `<span class="mif-${app.icon.replace('mif-', '')}"></span>`;
-
-            document.getElementById('detailName').textContent = app.name;
-            document.getElementById('detailCategory').textContent = app.category;
-            document.getElementById('detailDescription').textContent = window.storeManager.getAppDescription(app);
-
-            // Show/hide install/uninstall buttons
-            if (isInstalled) {
-                document.getElementById('installButton').classList.add('hidden');
-                document.getElementById('uninstallButton').classList.remove('hidden');
-            } else {
-                document.getElementById('installButton').classList.remove('hidden');
-                document.getElementById('uninstallButton').classList.add('hidden');
-            }
+        function hideSplash() {
+            splashScreen.classList.add('fade-out');
+            setTimeout(() => splashScreen.style.display = 'none', 400);
         }
 
-        // Go back to app list
+        function pushNav(state) {
+            navStack.push(state);
+            backButton.classList.add('visible');
+        }
+
         function goBack() {
-            document.getElementById('appListView').classList.remove('hidden');
-            document.getElementById('appDetailView').classList.remove('visible');
-            document.getElementById('backButton').classList.remove('visible');
-            document.getElementById('storeTitle').textContent = 'Store';
-            currentApp = null;
-        }
-
-        // Install app
-        async function installApp() {
-            if (!currentApp) return;
-
-            try {
-                const result = await window.storeManager.installApp(currentApp.id);
-
-                if (result.success) {
-                    // Update UI
-                    document.getElementById('installButton').classList.add('hidden');
-                    document.getElementById('uninstallButton').classList.remove('hidden');
-                    renderAppGrid();
-                } else {
-                    alert(result.message || 'Failed to install app. Please try again.');
+            if (appDetailView.classList.contains('visible')) {
+                appDetailView.classList.remove('visible');
+                currentManifest = null;
+                // Stay on whatever view was behind
+                if (navStack.length) navStack.pop();
+                if (!navStack.length) {
+                    backButton.classList.remove('visible');
+                    storeTitle.textContent = 'Store';
+                    storeTitle.style.fontSize = '42pt';
                 }
-            } catch (error) {
-                console.error('Failed to install app:', error);
-                alert('Failed to install app. Please try again.');
+                return;
+            }
+
+            if (navStack.length) {
+                navStack.pop();
+                if (!navStack.length) {
+                    renderHome();
+                    backButton.classList.remove('visible');
+                    storeTitle.textContent = 'Store';
+                    storeTitle.style.fontSize = '42pt';
+                } else {
+                    const prev = navStack[navStack.length - 1];
+                    if (prev.type === 'category') {
+                        renderCategoryView(prev.category, prev.title);
+                    }
+                }
             }
         }
 
-        // Uninstall app
-        async function uninstallApp() {
-            if (!currentApp) return;
+        // --- Helpers ---
+        function getIconClass(manifest) {
+            if (!manifest.icon) return 'sui-all-apps';
+            if (manifest.icon.startsWith('mif-') || manifest.icon.startsWith('sui-')) {
+                return manifest.icon;
+            }
+            return 'sui-' + manifest.icon;
+        }
 
-            const confirmed = confirm(
-                `Are you sure you want to uninstall ${currentApp.name}?\n\n` +
-                `This will remove the app and clear all of its data.`
+        function getManifestLogoUrl(manifest, file) {
+            if (manifest.files && Array.isArray(manifest.files)) {
+                const target = file || 'resources/logo.png';
+                const logoFile = manifest.files.find(f => f === target) ||
+                    manifest.files.find(f => f.match(/resources\/logo\.(png|jpg|svg)$/i));
+                if (logoFile) {
+                    return `${MARKET_BASE_URL}/apps/${manifest.id}/${logoFile}`;
+                }
+            }
+            return null;
+        }
+
+        function getManifestWideUrl(manifest) {
+            if (manifest.files && Array.isArray(manifest.files)) {
+                const wideFile = manifest.files.find(f => f.match(/tilewide\.scale-100\.(png|jpg)$/i)) ||
+                    manifest.files.find(f => f.match(/tilewide\.(png|jpg)$/i));
+                if (wideFile) {
+                    return `${MARKET_BASE_URL}/apps/${manifest.id}/${wideFile}`;
+                }
+            }
+            return null;
+        }
+
+        function renderStars(count) {
+            count = count || 4; // default rating
+            let html = '';
+            for (let i = 1; i <= 5; i++) {
+                html += i <= count ? '&#9733;' : '<span class="empty">&#9733;</span>';
+            }
+            return html;
+        }
+
+        function getCategoryName(cat) {
+            const c = CATEGORY_CONFIG[(cat || '').toLowerCase()];
+            return c ? c.name : (cat || 'Apps');
+        }
+
+        // --- HOME VIEW ---
+        function renderHome() {
+            const manifests = window.marketManager.getAllManifests();
+            homeView.innerHTML = '';
+            currentView = 'home';
+
+            // Group by category
+            const categories = {};
+            manifests.forEach(m => {
+                const cat = (m.category || 'uncategorized').toLowerCase();
+                if (!categories[cat]) categories[cat] = [];
+                categories[cat].push(m);
+            });
+
+            const sortedCats = Object.keys(categories).sort((a, b) => {
+                const oa = (CATEGORY_CONFIG[a] || { order: 99 }).order;
+                const ob = (CATEGORY_CONFIG[b] || { order: 99 }).order;
+                return oa - ob;
+            });
+
+            // "Popular now" section with ALL apps (first batch)
+            const allApps = manifests.slice(0, 8);
+            if (allApps.length > 0) {
+                homeView.appendChild(createHomeSection('Popular now', allApps, () => {
+                    renderCategoryView(null, 'Popular now');
+                    pushNav({ type: 'category', category: null, title: 'Popular now' });
+                }));
+            }
+
+            // Per-category sections
+            sortedCats.forEach(cat => {
+                const apps = categories[cat];
+                const catName = getCategoryName(cat);
+
+                homeView.appendChild(createHomeSection(catName, apps.slice(0, 4), () => {
+                    renderCategoryView(cat, catName);
+                    pushNav({ type: 'category', category: cat, title: catName });
+                }));
+            });
+
+            showView(homeView);
+        }
+
+        function createHomeSection(title, apps, onHeaderClick) {
+            const section = document.createElement('div');
+            section.className = 'store-section';
+
+            // Header
+            const header = document.createElement('div');
+            header.className = 'store-section-header';
+            header.onclick = onHeaderClick;
+            header.innerHTML = `
+                <span class="section-title">${title}</span>
+                <span class="section-chevron">&#x203A;</span>
+            `;
+            section.appendChild(header);
+
+            // Card grid
+            const grid = document.createElement('div');
+            grid.className = 'app-card-grid';
+
+            apps.forEach(manifest => {
+                grid.appendChild(createAppCard(manifest));
+            });
+
+            section.appendChild(grid);
+            return section;
+        }
+
+        function createAppCard(manifest) {
+            const card = document.createElement('div');
+            card.className = 'app-card';
+            card.onclick = () => {
+                showAppDetail(manifest);
+                pushNav({ type: 'detail' });
+            };
+
+            const logoUrl = getManifestLogoUrl(manifest);
+            const wideUrl = getManifestWideUrl(manifest);
+            const bgColor = 'card-bg-' + (manifest.color || 'default');
+            const isInstalled = window.marketManager.isInstalled(manifest.id);
+            const catName = getCategoryName(manifest.category);
+
+            // Use wide tile image if available, otherwise logo, otherwise icon
+            let imageHtml;
+            if (wideUrl) {
+                imageHtml = `<img src="${wideUrl}" alt="${manifest.name}"
+                    onerror="this.outerHTML='<span class=\\'card-icon ${getIconClass(manifest)}\\'></span>'" />`;
+            } else if (logoUrl) {
+                imageHtml = `<img src="${logoUrl}" alt="${manifest.name}" style="width:auto;height:70%;object-fit:contain;"
+                    onerror="this.outerHTML='<span class=\\'card-icon ${getIconClass(manifest)}\\'></span>'" />`;
+            } else {
+                imageHtml = `<span class="card-icon ${getIconClass(manifest)}"></span>`;
+            }
+
+            card.innerHTML = `
+                <div class="app-card-image ${bgColor}">
+                    ${imageHtml}
+                </div>
+                <div class="app-card-meta">
+                    <div class="app-card-name">${manifest.name}</div>
+                    <div class="app-card-desc">${manifest.description || ''}</div>
+                    <div class="app-card-footer">
+                        <span class="app-card-price">Free</span>
+                        <span class="app-card-stars">${renderStars(4)}</span>
+                        <span class="app-card-category">${catName}</span>
+                        ${isInstalled ? '<span class="installed-text">Installed</span>' : ''}
+                    </div>
+                </div>
+            `;
+
+            return card;
+        }
+
+        // --- CATEGORY VIEW (drill-down with compact list cards) ---
+        function renderCategoryView(cat, title) {
+            const manifests = window.marketManager.getAllManifests();
+            const apps = cat
+                ? manifests.filter(m => (m.category || '').toLowerCase() === cat)
+                : manifests;
+
+            homeView.innerHTML = '';
+            currentView = 'category';
+
+            storeTitle.textContent = title;
+            storeTitle.style.fontSize = '28pt';
+            backButton.classList.add('visible');
+
+            // Breadcrumb
+            const breadcrumb = document.createElement('div');
+            breadcrumb.style.cssText = 'font-size:12px;color:#666;margin-bottom:16px;cursor:pointer;';
+            breadcrumb.textContent = 'Home';
+            breadcrumb.onclick = () => {
+                navStack = [];
+                backButton.classList.remove('visible');
+                storeTitle.textContent = 'Store';
+                storeTitle.style.fontSize = '42pt';
+                renderHome();
+            };
+            homeView.appendChild(breadcrumb);
+
+            // Grid of compact cards
+            const grid = document.createElement('div');
+            grid.className = 'cat-list-grid';
+
+            apps.forEach(manifest => {
+                grid.appendChild(createCatListCard(manifest));
+            });
+
+            homeView.appendChild(grid);
+            showView(homeView);
+            document.getElementById('storePanorama').scrollLeft = 0;
+        }
+
+        function createCatListCard(manifest) {
+            const card = document.createElement('div');
+            const bgColor = 'bg-' + (manifest.color || 'default');
+            card.className = `cat-list-card ${bgColor}`;
+            card.onclick = () => {
+                showAppDetail(manifest);
+                pushNav({ type: 'detail' });
+            };
+
+            const logoUrl = getManifestLogoUrl(manifest);
+            const isInstalled = window.marketManager.isInstalled(manifest.id);
+            const catName = getCategoryName(manifest.category);
+
+            let iconHtml;
+            if (logoUrl) {
+                iconHtml = `<img src="${logoUrl}" alt="${manifest.name}"
+                    onerror="this.outerHTML='<span class=\\'icon-font ${getIconClass(manifest)}\\'></span>'" />`;
+            } else {
+                iconHtml = `<span class="icon-font ${getIconClass(manifest)}"></span>`;
+            }
+
+            card.innerHTML = `
+                <div class="cat-list-icon">
+                    ${iconHtml}
+                </div>
+                <div class="cat-list-info">
+                    <div class="cat-list-name">${manifest.name}</div>
+                    <div class="cat-list-stars">${renderStars(4)}</div>
+                    <div class="cat-list-cat">${catName}</div>
+                </div>
+            `;
+
+            return card;
+        }
+
+        // --- SEARCH ---
+        function doSearch(query) {
+            if (!query || !query.trim()) return;
+            query = query.trim().toLowerCase();
+
+            const manifests = window.marketManager.getAllManifests();
+            const results = manifests.filter(m =>
+                (m.name || '').toLowerCase().includes(query) ||
+                (m.description || '').toLowerCase().includes(query) ||
+                (m.category || '').toLowerCase().includes(query) ||
+                (m.id || '').toLowerCase().includes(query)
             );
 
-            if (!confirmed) return;
+            homeView.innerHTML = '';
+            currentView = 'search';
+            pushNav({ type: 'search', query });
+
+            storeTitle.textContent = 'Store';
+            storeTitle.style.fontSize = '42pt';
+
+            // Results header
+            const header = document.createElement('div');
+            header.className = 'search-results-header';
+            header.innerHTML = `
+                <span class="search-results-title">Results for &#x201C;${query}&#x201D;</span>
+                <span class="search-results-count">${results.length} app${results.length !== 1 ? 's' : ''}</span>
+            `;
+            homeView.appendChild(header);
+
+            if (results.length === 0) {
+                const empty = document.createElement('div');
+                empty.style.cssText = 'font-size:14px;color:#888;font-weight:300;padding:20px 0;';
+                empty.textContent = 'No apps found matching your search.';
+                homeView.appendChild(empty);
+            } else {
+                // Show results as large cards in a grid
+                const grid = document.createElement('div');
+                grid.className = 'app-card-grid';
+                results.forEach(m => grid.appendChild(createAppCard(m)));
+                homeView.appendChild(grid);
+            }
+
+            showView(homeView);
+            document.getElementById('storePanorama').scrollLeft = 0;
+        }
+
+        // --- APP DETAIL VIEW ---
+        function showAppDetail(manifest) {
+            currentManifest = manifest;
+            const isInstalled = window.marketManager.isInstalled(manifest.id);
+            const installMode = manifest.requirements?.installMode || 'remote';
+            const catName = getCategoryName(manifest.category);
+            const logoUrl = getManifestLogoUrl(manifest);
+
+            document.getElementById('detailTitle').textContent = manifest.name;
+            document.getElementById('detailTitle').style.fontSize = '28pt';
+
+            // Left panel
+            const left = document.getElementById('detailLeft');
+            left.innerHTML = `
+                <button class="detail-install-btn ${isInstalled ? 'uninstall' : ''}" id="detailInstallBtn">
+                    ${isInstalled ? 'Uninstall' : 'Install'}
+                </button>
+                <div class="detail-progress" id="detailProgress"></div>
+                <div class="detail-desc-text">${manifest.description || 'No description available.'}</div>
+                <div class="detail-meta-row"><strong>Publisher:</strong> ${manifest.publisher || 'Independent Developer'}</div>
+                <div class="detail-meta-row"><strong>Version:</strong> ${manifest.version || '1.0.0'}</div>
+                <div class="detail-meta-row"><strong>Category:</strong> ${catName}</div>
+            `;
+
+            // Wire up button
+            const installBtn = document.getElementById('detailInstallBtn');
+            installBtn.onclick = isInstalled ? () => uninstallApp() : () => installApp();
+
+            // Right panel
+            const right = document.getElementById('detailRight');
+            const features = [];
+
+            if (manifest.windowOptions?.minimizable) features.push('Can be minimized');
+            if (manifest.tileOptions?.allowWide) features.push('Supports wide tile');
+            if (manifest.tileOptions?.allowLarge) features.push('Supports large tile');
+            if (installMode === 'local') features.push('Downloads to device');
+            if (installMode === 'remote') features.push('Runs online (no download)');
+            if (manifest.requirements?.internet) features.push('Requires internet connection');
+            if (manifest.loadDirect) features.push('Direct loading mode');
+
+            right.innerHTML = `
+                <div class="detail-section-title">App details</div>
+                <div class="detail-info-grid">
+                    <span class="detail-info-label">Install type</span>
+                    <span class="detail-info-value">${installMode === 'local' ? 'Downloads to device' : 'Runs online'}</span>
+                    <span class="detail-info-label">App type</span>
+                    <span class="detail-info-value" style="text-transform:capitalize">${manifest.type || 'Modern'}</span>
+                    <span class="detail-info-label">Rating</span>
+                    <span class="detail-info-value">${renderStars(4)}</span>
+                    <span class="detail-info-label">Price</span>
+                    <span class="detail-info-value">Free</span>
+                </div>
+
+                ${features.length > 0 ? `
+                    <div class="detail-section-title">Features</div>
+                    ${features.map(f => `
+                        <div class="detail-feature-item">
+                            <span class="detail-feature-icon sui-accept"></span>
+                            <span>${f}</span>
+                        </div>
+                    `).join('')}
+                ` : ''}
+            `;
+
+            appDetailView.classList.add('visible');
+        }
+
+        function hideDetail() {
+            appDetailView.classList.remove('visible');
+            currentManifest = null;
+        }
+
+        // --- Install / Uninstall ---
+        async function installApp() {
+            if (!currentManifest) return;
+
+            const btn = document.getElementById('detailInstallBtn');
+            const progress = document.getElementById('detailProgress');
+
+            btn.disabled = true;
+            btn.textContent = 'Installing...';
+            progress.className = 'detail-progress';
+            progress.textContent = 'Preparing...';
 
             try {
-                const result = await window.storeManager.uninstallApp(currentApp.id);
+                const result = await window.marketManager.installApp(currentManifest.id, (stage, percent, detail) => {
+                    switch (stage) {
+                        case 'downloading':
+                            if (detail && detail.totalFiles > 1) {
+                                progress.textContent = `Downloading file ${detail.fileIndex} of ${detail.totalFiles} (${percent}%)`;
+                            } else {
+                                progress.textContent = `Downloading... ${percent}%`;
+                            }
+                            break;
+                        case 'registering':
+                            progress.textContent = 'Registering app...';
+                            break;
+                        case 'complete':
+                            progress.textContent = 'Installed successfully!';
+                            break;
+                    }
+                });
 
                 if (result.success) {
-                    // Update UI
-                    document.getElementById('installButton').classList.remove('hidden');
-                    document.getElementById('uninstallButton').classList.add('hidden');
-                    renderAppGrid();
+                    btn.textContent = 'Uninstall';
+                    btn.className = 'detail-install-btn uninstall';
+                    btn.disabled = false;
+                    btn.onclick = () => uninstallApp();
+                    setTimeout(() => { progress.textContent = ''; }, 3000);
                 } else {
-                    alert(result.message || 'Failed to uninstall app. Please try again.');
+                    btn.disabled = false;
+                    btn.textContent = 'Retry';
+                    progress.className = 'detail-progress error';
+                    progress.textContent = result.message || 'Installation failed';
                 }
             } catch (error) {
-                console.error('Failed to uninstall app:', error);
-                alert('Failed to uninstall app. Please try again.');
+                console.error('Install failed:', error);
+                btn.disabled = false;
+                btn.textContent = 'Retry';
+                progress.className = 'detail-progress error';
+                progress.textContent = `Failed: ${error.message || 'Unknown error'}`;
             }
         }
 
-        // Event listeners
-        document.getElementById('backButton').addEventListener('click', goBack);
-        document.getElementById('installButton').addEventListener('click', installApp);
-        document.getElementById('uninstallButton').addEventListener('click', uninstallApp);
+        async function uninstallApp() {
+            if (!currentManifest) return;
 
-        // Initialize store manager and load apps
-        (async function init() {
-            await window.storeManager.init();
-            renderAppGrid();
-        })();
+            const btn = document.getElementById('detailInstallBtn');
+            const progress = document.getElementById('detailProgress');
+
+            btn.disabled = true;
+            btn.textContent = 'Removing...';
+            progress.className = 'detail-progress';
+
+            try {
+                const result = await window.marketManager.uninstallApp(currentManifest.id);
+
+                if (result.success) {
+                    btn.textContent = 'Install';
+                    btn.className = 'detail-install-btn';
+                    btn.disabled = false;
+                    btn.onclick = () => installApp();
+                    progress.textContent = 'Removed successfully';
+                    setTimeout(() => { progress.textContent = ''; }, 3000);
+                } else {
+                    btn.disabled = false;
+                    btn.textContent = 'Uninstall';
+                    progress.className = 'detail-progress error';
+                    progress.textContent = result.message || 'Removal failed';
+                }
+            } catch (error) {
+                console.error('Uninstall failed:', error);
+                btn.disabled = false;
+                btn.textContent = 'Uninstall';
+                progress.className = 'detail-progress error';
+                progress.textContent = `Failed: ${error.message || 'Unknown error'}`;
+            }
+        }
+
+        // --- Event Listeners ---
+        backButton.addEventListener('click', goBack);
+        document.getElementById('detailBackButton').addEventListener('click', goBack);
+        document.getElementById('retryButton').addEventListener('click', () => initStore());
+
+        document.getElementById('searchBtn').addEventListener('click', () => {
+            doSearch(document.getElementById('searchInput').value);
+        });
+        document.getElementById('searchInput').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') doSearch(e.target.value);
+        });
+
+        // --- Init ---
+        async function initStore() {
+            showView(loadingView);
+
+            try {
+                await window.marketManager.init(MARKET_BASE_URL);
+                await window.marketManager.fetchAllManifests();
+                renderHome();
+                hideSplash();
+            } catch (error) {
+                console.error('Store initialization failed:', error);
+                document.getElementById('errorMessage').textContent =
+                    "Can't connect to the Store right now. Check your connection and try again.";
+                showView(errorView);
+                hideSplash();
+            }
+        }
+
+        initStore();
     </script>
 </body>
 

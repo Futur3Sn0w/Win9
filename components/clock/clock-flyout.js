@@ -10,11 +10,35 @@
     const CALENDAR_CELL_COUNT = 42;
     const WEEKDAY_LABEL_BASE_UTC = Date.UTC(2023, 0, 1);
 
-    let currentMonth = new Date().getMonth();
-    let currentYear = new Date().getFullYear();
+    const initialNow = new Date();
+    let currentMonth = initialNow.getMonth();
+    let currentYear = initialNow.getFullYear();
     let clockUpdateInterval = null;
+    let timeBankUnsubscribe = null;
     let canvasContext = null;
     let initialized = false;
+    let latestSnapshot = null;
+    let lastCalendarDayKey = getDayKey(initialNow);
+
+    function getNow(snapshot) {
+        if (snapshot && snapshot.now instanceof Date) {
+            return new Date(snapshot.now.getTime());
+        }
+
+        if (latestSnapshot && latestSnapshot.now instanceof Date) {
+            return new Date(latestSnapshot.now.getTime());
+        }
+
+        return new Date();
+    }
+
+    function getDayKey(date) {
+        return [
+            date.getFullYear(),
+            date.getMonth(),
+            date.getDate()
+        ].join('-');
+    }
 
     function init() {
         if (initialized) {
@@ -51,10 +75,14 @@
         bindNoopLink('clock-settings-link');
 
         renderWeekdays();
-        updateClock();
         renderCalendar();
+        updateClock({ now: initialNow });
 
-        clockUpdateInterval = setInterval(updateClock, 1000);
+        if (window.TimeBank && typeof window.TimeBank.subscribe === 'function') {
+            timeBankUnsubscribe = window.TimeBank.subscribe(handleTimeSnapshot, { immediate: true });
+        } else {
+            clockUpdateInterval = setInterval(updateClock, 1000);
+        }
     }
 
     function bindNoopLink(id) {
@@ -95,7 +123,7 @@
         });
     }
 
-    function updateDateHeader(now = new Date()) {
+    function updateDateHeader(now = getNow()) {
         const header = document.getElementById('clock-flyout-date-header');
         if (!header) {
             return;
@@ -129,7 +157,7 @@
         const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
         const daysInPrevMonth = new Date(currentYear, currentMonth, 0).getDate();
 
-        const today = new Date();
+        const today = getNow();
         const isCurrentMonth = today.getMonth() === currentMonth && today.getFullYear() === currentYear;
         const todayDate = today.getDate();
 
@@ -191,8 +219,20 @@
         renderCalendar();
     }
 
-    function updateClock() {
-        const now = new Date();
+    function handleTimeSnapshot(snapshot) {
+        latestSnapshot = snapshot;
+        updateClock(snapshot);
+
+        const now = getNow(snapshot);
+        const dayKey = getDayKey(now);
+        if (dayKey !== lastCalendarDayKey) {
+            lastCalendarDayKey = dayKey;
+            renderCalendar();
+        }
+    }
+
+    function updateClock(snapshot) {
+        const now = getNow(snapshot);
         updateDateHeader(now);
         updateDigitalTime(now);
         updateModernTime(now);
@@ -358,6 +398,11 @@
         if (clockUpdateInterval) {
             clearInterval(clockUpdateInterval);
             clockUpdateInterval = null;
+        }
+
+        if (timeBankUnsubscribe) {
+            timeBankUnsubscribe();
+            timeBankUnsubscribe = null;
         }
     }
 

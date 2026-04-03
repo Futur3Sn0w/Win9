@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Chrome Beta</title>
+    <link rel="stylesheet" href="../../../css/classic-windows.css">
+    <link rel="stylesheet" href="../../../css/classic-controls.css">
+    <link rel="stylesheet" href="../../../css/styles.css">
+    <link rel="stylesheet" href="../../../css/fonts.css">
+    <link rel="stylesheet" href="chrome.css">
+</head>
+
+<body>
+        <div class="chrome-app">
+        <div class="chrome-shell">
+            <header class="chrome-frame">
+                <div class="chrome-toolbar">
+                    <div class="chrome-nav-buttons">
+                        <button class="chrome-nav-button" id="backButton" type="button" title="Back" aria-label="Back">
+                            <span aria-hidden="true">&#x2039;</span>
+                        </button>
+                        <button class="chrome-nav-button" id="forwardButton" type="button" title="Forward" aria-label="Forward">
+                            <span aria-hidden="true">&#x203A;</span>
+                        </button>
+                        <button class="chrome-nav-button chrome-refresh-button" id="refreshButton" type="button" title="Reload this page" aria-label="Reload this page">
+                            <span aria-hidden="true">&#x21bb;</span>
+                        </button>
+                        <button class="chrome-nav-button chrome-home-button" id="homeButton" type="button" title="Home" aria-label="Home">
+                            <span aria-hidden="true">&#x2302;</span>
+                        </button>
+                    </div>
+
+                    <form class="chrome-address-shell" id="addressForm" autocomplete="off">
+                        <span class="chrome-address-border" aria-hidden="true">
+                            <span class="chrome-address-slice chrome-address-top-left"></span>
+                            <span class="chrome-address-slice chrome-address-top"></span>
+                            <span class="chrome-address-slice chrome-address-top-right"></span>
+                            <span class="chrome-address-slice chrome-address-left"></span>
+                            <span class="chrome-address-slice chrome-address-right"></span>
+                            <span class="chrome-address-slice chrome-address-bottom-left"></span>
+                            <span class="chrome-address-slice chrome-address-bottom"></span>
+                            <span class="chrome-address-slice chrome-address-bottom-right"></span>
+                        </span>
+                        <span class="chrome-address-fill" aria-hidden="true"></span>
+                        <span class="chrome-address-content">
+                            <span class="chrome-security-badge" id="securityBadge" aria-hidden="true"></span>
+                            <span class="chrome-address-display" id="addressDisplay" aria-hidden="true"></span>
+                            <input
+                                class="chrome-address-input"
+                                id="addressInput"
+                                type="text"
+                                spellcheck="false"
+                                aria-label="Address and search bar"
+                            >
+                            <button class="chrome-zoom-indicator" id="zoomIndicator" type="button" title="Zoom" aria-label="Zoom" hidden></button>
+                            <button class="chrome-star-button" id="favoriteButton" type="button" title="Bookmark this page" aria-label="Bookmark this page">
+                                <span aria-hidden="true">&#x2606;</span>
+                            </button>
+                        </span>
+                    </form>
+
+                    <div class="chrome-toolbar-actions" id="toolbarActions" aria-hidden="true"></div>
+
+                    <button class="chrome-menu-button" id="menuButton" type="button" title="Customize and control Google Chrome Beta" aria-label="Customize and control Google Chrome Beta">
+                        <span class="chrome-menu-glyph" aria-hidden="true">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </span>
+                    </button>
+                </div>
+
+                <nav class="chrome-bookmarks-bar" id="bookmarkBar" aria-label="Bookmarks bar"></nav>
+            </header>
+
+            <main class="chrome-content-area">
+                <div class="chrome-page-host" id="pageHost"></div>
+                <div class="chrome-status-pill" id="statusPill" hidden></div>
+            </main>
+        </div>
+    </div>
+
+    <div class="chrome-app-menu" id="appMenu" hidden>
+        <button class="chrome-app-menu-item" type="button" data-menu-action="new-tab">New tab</button>
+        <button class="chrome-app-menu-item" type="button" data-menu-action="duplicate-tab">Duplicate tab</button>
+        <button class="chrome-app-menu-item" type="button" data-menu-action="settings">Settings</button>
+        <button class="chrome-app-menu-item" type="button" data-menu-action="downloads">Downloads</button>
+        <button class="chrome-app-menu-item" type="button" data-menu-action="welcome">About this beta build</button>
+    </div>
+
+    <script src="chrome.js"></script>
+</body>
+
+</html>

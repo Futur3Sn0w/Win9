@@ -89,6 +89,160 @@ span.metro-symbol {
     font-family: 'Segoe UI Symbol';
 }
 
+/* Segoe UI Symbol icon classes — replaces MIF for supported glyphs */
+[class^="sui-"]::before,
+[class*=" sui-"]::before {
+    font-family: 'Segoe UI Symbol';
+    font-style: normal;
+    speak: none;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+.wd-windows::before {
+    content: "\00FF";
+    font-family: 'Wingdings';
+    font-style: normal;
+    speak: none;
+}
+
+/* Navigation */
+.sui-chevron-thin-left::before  { content: "\E012"; } /* Chevron thin left */
+.sui-chevron-thin-right::before { content: "\E013"; } /* Chevron thin right */
+.sui-chevron-thin-up::before    { content: "\E014"; } /* Chevron thin up */
+.sui-chevron-thin-down::before  { content: "\E015"; } /* Chevron thin down */
+.sui-chevron-left::before       { content: "\E016"; } /* Chevron left */
+.sui-chevron-right::before      { content: "\E017"; } /* Chevron right */
+.sui-chevron-up::before         { content: "\E018"; } /* Chevron up */
+.sui-chevron-down::before       { content: "\E019"; } /* Chevron down */
+.sui-up::before        { content: "\E110"; } /* Up */
+.sui-forward::before   { content: "\E111"; } /* Forward */
+.sui-back::before      { content: "\E112"; } /* Back */
+.sui-arrow-down::before { content: "\E1FC"; } /* Arrow down */
+.sui-arrow-up::before   { content: "\E1FE"; } /* Arrow up */
+.sui-arrow-left::before { content: "\E2B6"; } /* Arrow left */
+.sui-arrow-right::before { content: "\E2B7"; } /* Arrow right */
+
+/* Commands */
+.sui-play::before      { content: "\E102"; } /* Play */
+.sui-cancel::before    { content: "\E10A"; } /* Cancel */
+.sui-accept::before    { content: "\E10B"; } /* Accept */
+.sui-more::before      { content: "\E10C"; } /* More */
+.sui-more-vertical::before { content: "\E0C2"; } /* Ellipsis vertical */
+.sui-more-horizontal::before { content: "\E0C3"; } /* Ellipsis horizontal */
+.sui-setting::before   { content: "\E115"; } /* Setting */
+.sui-settings::before  { content: "\E115"; } /* Setting */
+.sui-sync::before      { content: "\E117"; } /* Sync */
+.sui-download::before  { content: "\E118"; } /* Download */
+.sui-save::before      { content: "\E105"; } /* Save */
+.sui-delete::before    { content: "\E107"; } /* Delete */
+.sui-remove::before    { content: "\E108"; } /* Remove */
+.sui-add::before       { content: "\E109"; } /* Add */
+.sui-redo::before      { content: "\E10D"; } /* Redo */
+.sui-undo::before      { content: "\E10E"; } /* Undo */
+.sui-help::before      { content: "\E11B"; } /* Help */
+
+/* Search */
+.sui-search::before    { content: "\E11A"; } /* Find */
+
+/* Status & content */
+.sui-dev-tools::before   { content: "\E0F3"; } /* Display and toolbox */
+.sui-clock::before      { content: "\E121"; } /* Clock */
+.sui-user::before       { content: "\E168"; } /* Account */
+.sui-people::before     { content: "\E125"; } /* People */
+.sui-flag::before       { content: "\E129"; } /* Flag */
+.sui-globe::before      { content: "\E12B"; } /* Globe */
+.sui-document::before   { content: "\E130"; } /* Document */
+.sui-view-all::before   { content: "\E138"; } /* ViewAll */
+.sui-map-pin::before    { content: "\E139"; } /* MapPin */
+.sui-refresh::before    { content: "\E149"; } /* Refresh */
+.sui-list::before       { content: "\E14C"; } /* List */
+.sui-shop::before       { content: "\E14D"; } /* Shop */
+.sui-table::before      { content: "\E14E"; } /* Table */
+.sui-tools::before      { content: "\E15E"; } /* Repair / tools */
+.sui-pictures::before   { content: "\E158"; } /* Pictures */
+.sui-link::before       { content: "\E167"; } /* Link */
+.sui-warning::before    { content: "\E171"; } /* Important / warning */
+.sui-all-apps::before   { content: "\E179"; } /* AllApps */
+.sui-list-bulleted::before { content: "\E179"; } /* AllApps / bulleted list */
+.sui-accessibility::before { content: "\E07F"; } /* Ease of access */
+.sui-brightness::before { content: "\E284"; } /* Sun / brightness */
+.sui-folder::before     { content: "\E188"; } /* Folder */
+.sui-folder-open::before { content: "\E19C"; } /* Open folder */
+.sui-audio::before      { content: "\E189"; } /* Audio */
+.sui-key::before        { content: "\E192"; } /* Permissions / key */
+.sui-pencil::before     { content: "\E1C2"; } /* Pencil */
+.sui-font-size::before  { content: "\E1C8"; } /* FontSize */
+.sui-cell-phone::before { content: "\E1C9"; } /* CellPhone */
+.sui-share::before      { content: "\E2FD"; } /* Share */
+.sui-microphone::before { content: "\E1D6"; } /* Microphone */
+.sui-star-filled::before { content: "\E1CE"; } /* Filled star */
+.sui-star-outline::before { content: "\E1CF"; } /* Empty star */
+.sui-contract::before   { content: "\E1D8"; } /* BackToWindow */
+.sui-expand::before     { content: "\E1D9"; } /* FullScreen */
+.sui-mouse::before      { content: "\E2D4"; } /* Mouse */
+.sui-display::before    { content: "\E2C8"; } /* Display (hardware monitor) */
+.sui-computer::before   { content: "\E211"; } /* Computer */
+.sui-lock::before       { content: "\E1F6"; } /* Locked */
+.sui-unlock::before     { content: "\E1F7"; } /* Unlocked */
+.sui-notifications::before { content: "\E1FA"; } /* Notifications enabled */
+.sui-notifications-off::before { content: "\E1FB"; } /* Notifications disabled */
+.sui-history::before    { content: "\E2AD"; } /* Clock / history */
+.sui-drive::before      { content: "\E2DB"; } /* Drive */
+.sui-printer::before    { content: "\E2E1"; } /* Printer */
+.sui-power::before      { content: "\E07D"; } /* Power */
+.sui-palette::before    { content: "\E2B1"; } /* Palette */
+.sui-enter-tablet::before { content: "\E2B4"; } /* Expand up/right */
+.sui-exit-tablet::before  { content: "\E2B3"; } /* Contract down/left */
+
+/* Volume */
+.sui-volume-high::before,
+.sui-volume-medium::before,
+.sui-volume-low::before   { content: "\E15D"; } /* Volume */
+.sui-volume-mute::before,
+.sui-volume-mute2::before { content: "\E198"; } /* Mute */
+
+/* Quick settings */
+.sui-keyboard::before  { content: "\E144"; } /* Keyboard */
+
+/* MIF aliases — mif-* names mapped to existing sui-* codepoints */
+.sui-cogs::before,
+.sui-wrench::before,
+.sui-bug::before          { content: "\E15E"; } /* Repair */
+.sui-more-horiz::before   { content: "\E10C"; } /* More */
+.sui-checkmark::before    { content: "\E10B"; } /* Accept */
+.sui-star-full::before    { content: "\E1CF"; } /* SolidStar */
+.sui-file-text::before    { content: "\E130"; } /* Document */
+.sui-image::before        { content: "\E158"; } /* Pictures */
+.sui-location::before     { content: "\E139"; } /* MapPin */
+.sui-mic::before          { content: "\E1D6"; } /* Microphone */
+.sui-alarm::before        { content: "\E121"; } /* Clock */
+.sui-security::before,
+.sui-shield::before       { content: "\E1F6"; } /* Locked */
+.sui-key::before          { content: "\E1F6"; } /* Locked */
+.sui-windows::before      { content: "\E1E4"; } /* GoToStart */
+.sui-apps::before         { content: "\E179"; } /* AllApps */
+.sui-notification::before { content: "\E1FA"; } /* Notifications */
+.sui-earth::before,
+.sui-ie::before           { content: "\E12B"; } /* Globe */
+.sui-mobile::before       { content: "\E1C9"; } /* CellPhone */
+.sui-laptop::before       { content: "\E211"; } /* Computer */
+.sui-pointer::before      { content: "\E1E3"; } /* TouchPointer */
+.sui-settings-power::before { content: "\E2F9"; } /* Settings charm */
+.sui-cross::before        { content: "\2717"; } /* BALLOT X */
+
+/* Device / hardware icons */
+.sui-headphones::before,
+.sui-headset::before      { content: "\E2EB"; } /* Headphones */
+.sui-chip::before,
+.sui-cpu::before          { content: "\E2EC"; } /* Chip */
+.sui-usb::before          { content: "\E2D8"; } /* USB drive */
+.sui-sd-card::before      { content: "\E2E9"; } /* SD card */
+.sui-speaker::before      { content: "\E2E3"; } /* Speaker */
+.sui-speaker-mute::before { content: "\E2C1"; } /* Speaker muted */
+.sui-game-controller::before { content: "\E2D2"; } /* Game controller */
+.sui-xbox::before         { content: "\E2E8"; } /* Xbox */
+
 span.metro-emoji {
     font-family: 'Segoe UI Emoji';
 }

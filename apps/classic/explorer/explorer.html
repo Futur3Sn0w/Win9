@@ -29,13 +29,13 @@
         <div class="explorer-nav-bar">
             <div class="explorer-nav-buttons">
                 <button class="explorer-nav-btn" id="backBtn" disabled title="Back">
-                    <span class="mif-arrow-left"></span>
+                    <span class="sui-back"></span>
                 </button>
                 <button class="explorer-nav-btn" id="forwardBtn" disabled title="Forward">
-                    <span class="mif-arrow-right"></span>
+                    <span class="sui-forward"></span>
                 </button>
                 <button class="explorer-nav-btn" id="upBtn" disabled title="Up one level">
-                    <span class="mif-arrow-up"></span>
+                    <span class="sui-up"></span>
                 </button>
             </div>
             <div class="explorer-address-bar">
@@ -47,7 +47,7 @@
             </div>
             <div class="explorer-search-box">
                 <input type="text" id="searchInput" placeholder="Search Home" />
-                <span class="mif-search"></span>
+                <span class="sui-search"></span>
             </div>
         </div>
 
@@ -167,24 +167,25 @@
             <div class="explorer-status-selected" id="statusSelected" style="display: none;">0 items selected</div>
             <div class="explorer-status-view-controls">
                 <button class="explorer-view-btn" title="Extra large icons" data-view="extra-large">
-                    <span class="mif-apps"></span>
+                    <span class="sui-view-all"></span>
                 </button>
                 <button class="explorer-view-btn active" title="Large icons" data-view="large">
-                    <span class="mif-apps"></span>
+                    <span class="sui-view-all"></span>
                 </button>
                 <button class="explorer-view-btn" title="Medium icons" data-view="medium">
-                    <span class="mif-apps"></span>
+                    <span class="sui-view-all"></span>
                 </button>
                 <button class="explorer-view-btn" title="List" data-view="list">
-                    <span class="mif-list"></span>
+                    <span class="sui-list"></span>
                 </button>
                 <button class="explorer-view-btn" title="Details" data-view="details">
-                    <span class="mif-list2"></span>
+                    <span class="sui-list-bulleted"></span>
                 </button>
             </div>
         </div>
     </div>
 
+    <script src="../../../components/explorer/known-folders.js"></script>
     <script>
         const APP_ID = 'explorer';
         const os = require('os');
@@ -202,16 +203,17 @@
             'desktop': [16, 20, 24, 32, 40, 48, 64, 80, 96, 256, 512, 768],
             'dll': [16, 32, 48, 256],
             'external_drive': [16, 20, 24, 32, 40, 48, 64, 80, 96, 256, 512, 768],
-            'folder_documents': [16, 24, 32, 48, 256],
-            'folder_downloads': [16, 24, 32, 48, 256],
+            'folder_documents': [16, 32, 48, 96],
+            'folder_downloads': [16, 32, 48, 96],
             'folder_favorites': [16, 20, 24, 32, 40, 48, 64, 80, 96, 256, 512, 768],
             'folder_home': [16, 20, 24, 32, 40, 48, 64, 80, 96, 768],
-            'folder_music': [16, 24, 32, 48, 64, 256],
-            'folder_pictures': [16, 24, 32, 48, 256],
+            'folder_music': [16, 32, 48, 96],
+            'folder_pictures': [16, 32, 48, 96],
             'folder_recent-places': [16, 20, 24, 32, 40, 48, 64, 80, 96],
-            'folder_videos': [16, 24, 32, 48, 256],
-            'generic_file': [16, 32, 48, 256],
-            'generic_folder': [16, 32, 48],
+            'folder_videos': [16, 32, 48, 96],
+            'generic_file': [16, 20, 24, 32, 40, 48, 64, 256],
+            'generic_folder': [16, 32, 48, 96],
+            'folder_of_folders': [16, 32, 48, 96],
             'generic_program': [16, 20, 24, 32, 40, 48, 64, 256],
             'homegroup': [16, 20, 24, 32, 40, 48, 64, 80, 96, 256, 512, 768],
             'image/jpg': [16, 32, 48],
@@ -224,12 +226,12 @@
             'recycle_bin/full': [16, 20, 24, 32, 40, 48, 64, 80, 96, 128, 256],
             'network': [16, 20, 24, 32, 40, 48, 64, 80, 96, 256, 512, 768],
             'rich_text_document': [16, 24, 48],
-            'text_document': [16, 32, 48],
+            'text_document': [16, 20, 24, 32, 40, 48, 64, 256],
             'this_pc': [16, 20, 24, 32, 40, 48, 64, 80, 96, 256, 512, 768],
             'video': [16, 32, 48],
-            'zip': [16, 32, 48]
+            'zip': [16, 32, 48, 256]
         };
-        const SPECIAL_FOLDER_DEFINITIONS = [
+        const FALLBACK_SPECIAL_FOLDER_DEFINITIONS = [
             { id: 'desktop', name: 'Desktop', icon: 'desktop', relativePath: ['Desktop'], sidebarLocation: 'desktop', thisPcLocation: 'desktop-folder' },
             { id: 'documents', name: 'Documents', icon: 'folder_documents', relativePath: ['Documents'], sidebarLocation: 'documents', thisPcLocation: 'documents' },
             { id: 'downloads', name: 'Downloads', icon: 'folder_downloads', relativePath: ['Downloads'], sidebarLocation: 'downloads', thisPcLocation: 'downloads-folder' },
@@ -237,6 +239,9 @@
             { id: 'pictures', name: 'Pictures', icon: 'folder_pictures', relativePath: ['Pictures'], sidebarLocation: 'pictures', thisPcLocation: 'pictures' },
             { id: 'videos', name: 'Videos', icon: 'folder_videos', relativePath: ['Videos'], sidebarLocation: 'videos', thisPcLocation: 'videos' }
         ];
+        const SPECIAL_FOLDER_DEFINITIONS = window.KnownFolders && typeof window.KnownFolders.getDefinitions === 'function'
+            ? window.KnownFolders.getDefinitions()
+            : FALLBACK_SPECIAL_FOLDER_DEFINITIONS;
 
         // Window ID for multi-window support
         let windowId = null;
@@ -327,6 +332,204 @@
             originY: 0,
             overlay: null
         };
+        let pendingSelectionPath = null;
+        let explorerRenameState = null;
+        let renderedEntryElementsByPath = new Map();
+        let favoriteFolderPathsCache = [];
+        const itemEntryMap = new WeakMap();
+        let explorerHostRequestSequence = 0;
+        const pendingExplorerHostRequests = new Map();
+
+        function getSharedExplorerEngine() {
+            const candidates = [window, window.parent, window.top];
+
+            for (const candidate of candidates) {
+                try {
+                    if (candidate && candidate.ExplorerEngine) {
+                        return candidate.ExplorerEngine;
+                    }
+                } catch (_error) {
+                    // Ignore cross-context access failures.
+                }
+            }
+
+            return null;
+        }
+
+        function getSystemDialogApi() {
+            const candidates = [window, window.parent, window.top];
+
+            for (const candidate of candidates) {
+                try {
+                    if (candidate && candidate.systemDialog) {
+                        return candidate.systemDialog;
+                    }
+                } catch (_error) {
+                    // Ignore cross-context access failures.
+                }
+            }
+
+            return null;
+        }
+
+        function isHiddenShellEntry(name) {
+            const sharedExplorerEngine = getSharedExplorerEngine();
+            if (sharedExplorerEngine && typeof sharedExplorerEngine.isHiddenEntryName === 'function') {
+                return sharedExplorerEngine.isHiddenEntryName(name);
+            }
+
+            if (typeof name !== 'string' || !name) {
+                return false;
+            }
+
+            if (name.startsWith('.')) {
+                return true;
+            }
+
+            const normalized = name.toLowerCase();
+            return path.extname(normalized) === '.ini'
+                || normalized === 'desktop.ini'
+                || normalized === 'thumbs.db'
+                || normalized === 'ehthumbs.db'
+                || normalized === '.ds_store'
+                || normalized === 'icon\r';
+        }
+
+        function setPendingSelectionPath(targetPath) {
+            pendingSelectionPath = typeof targetPath === 'string' && targetPath ? targetPath : null;
+        }
+
+        function requestExplorerHost(action, payload = {}) {
+            return new Promise((resolve, reject) => {
+                if (!window.sendToParent) {
+                    reject(new Error('Explorer host messaging is unavailable.'));
+                    return;
+                }
+
+                explorerHostRequestSequence += 1;
+                const requestId = `explorer-host-${Date.now()}-${explorerHostRequestSequence}`;
+
+                pendingExplorerHostRequests.set(requestId, { resolve, reject });
+                window.sendToParent('explorerHostRequest', {
+                    requestId,
+                    hostAction: action,
+                    payload
+                });
+            });
+        }
+
+        async function canPasteToDirectory(targetPath) {
+            if (!targetPath) {
+                return false;
+            }
+
+            const sharedExplorerEngine = getSharedExplorerEngine();
+            if (sharedExplorerEngine && typeof sharedExplorerEngine.canPasteToDirectory === 'function') {
+                return sharedExplorerEngine.canPasteToDirectory(targetPath);
+            }
+
+            try {
+                return Boolean(await requestExplorerHost('canPasteToDirectory', { targetPath }));
+            } catch (_error) {
+                return false;
+            }
+        }
+
+        async function getFavoriteFolderPaths() {
+            const sharedExplorerEngine = getSharedExplorerEngine();
+            if (sharedExplorerEngine && typeof sharedExplorerEngine.getFavoriteFolderPaths === 'function') {
+                return sharedExplorerEngine.getFavoriteFolderPaths();
+            }
+
+            try {
+                const paths = await requestExplorerHost('getFavoriteFolderPaths');
+                return Array.isArray(paths) ? paths : [];
+            } catch (_error) {
+                return [];
+            }
+        }
+
+        async function isFavoriteFolderPath(folderPath) {
+            if (!folderPath) {
+                return false;
+            }
+
+            const sharedExplorerEngine = getSharedExplorerEngine();
+            if (sharedExplorerEngine && typeof sharedExplorerEngine.isFavoriteFolderPath === 'function') {
+                return sharedExplorerEngine.isFavoriteFolderPath(folderPath);
+            }
+
+            try {
+                return Boolean(await requestExplorerHost('isFavoriteFolderPath', { folderPath }));
+            } catch (_error) {
+                return false;
+            }
+        }
+
+        async function addFavoriteFolderPath(folderPath) {
+            const sharedExplorerEngine = getSharedExplorerEngine();
+            if (sharedExplorerEngine && typeof sharedExplorerEngine.addFavoriteFolderPath === 'function') {
+                return sharedExplorerEngine.addFavoriteFolderPath(folderPath);
+            }
+
+            return requestExplorerHost('addFavoriteFolderPath', { folderPath });
+        }
+
+        async function removeFavoriteFolderPath(folderPath) {
+            const sharedExplorerEngine = getSharedExplorerEngine();
+            if (sharedExplorerEngine && typeof sharedExplorerEngine.removeFavoriteFolderPath === 'function') {
+                return sharedExplorerEngine.removeFavoriteFolderPath(folderPath);
+            }
+
+            return requestExplorerHost('removeFavoriteFolderPath', { folderPath });
+        }
+
+        async function copyPathsToClipboard(paths) {
+            const sharedExplorerEngine = getSharedExplorerEngine();
+            if (sharedExplorerEngine && typeof sharedExplorerEngine.copyPathsToClipboard === 'function') {
+                sharedExplorerEngine.copyPathsToClipboard(paths);
+                return;
+            }
+
+            await requestExplorerHost('copyPathsToClipboard', { paths });
+        }
+
+        async function cutPathsToClipboard(paths) {
+            const sharedExplorerEngine = getSharedExplorerEngine();
+            if (sharedExplorerEngine && typeof sharedExplorerEngine.cutPathsToClipboard === 'function') {
+                sharedExplorerEngine.cutPathsToClipboard(paths);
+                return;
+            }
+
+            await requestExplorerHost('cutPathsToClipboard', { paths });
+        }
+
+        async function pasteClipboardToDirectoryViaHost(targetPath) {
+            const sharedExplorerEngine = getSharedExplorerEngine();
+            if (sharedExplorerEngine && typeof sharedExplorerEngine.pasteClipboardToDirectory === 'function') {
+                return sharedExplorerEngine.pasteClipboardToDirectory(targetPath);
+            }
+
+            return requestExplorerHost('pasteClipboardToDirectory', { targetPath });
+        }
+
+        async function renameEntryPathViaHost(entryPath, nextName) {
+            const sharedExplorerEngine = getSharedExplorerEngine();
+            if (sharedExplorerEngine && typeof sharedExplorerEngine.renameEntryPath === 'function') {
+                return sharedExplorerEngine.renameEntryPath(entryPath, nextName);
+            }
+
+            return requestExplorerHost('renameEntryPath', { entryPath, nextName });
+        }
+
+        async function movePathsToRecycleBinViaHost(paths) {
+            const sharedExplorerEngine = getSharedExplorerEngine();
+            if (sharedExplorerEngine && typeof sharedExplorerEngine.movePathsToRecycleBin === 'function') {
+                return sharedExplorerEngine.movePathsToRecycleBin(paths);
+            }
+
+            return requestExplorerHost('movePathsToRecycleBin', { paths });
+        }
 
         // Initialize on load (use 'load' instead of 'DOMContentLoaded' to ensure launchOptions are set)
         window.addEventListener('load', initialize);
@@ -373,6 +576,23 @@
 
             if (command.action === 'resetForPreload') {
                 await resetForPreload();
+                return;
+            }
+
+            if (command.action === 'explorer-host-response' && command.requestId) {
+                const pendingRequest = pendingExplorerHostRequests.get(command.requestId);
+                if (!pendingRequest) {
+                    return;
+                }
+
+                pendingExplorerHostRequests.delete(command.requestId);
+
+                if (command.error) {
+                    pendingRequest.reject(new Error(command.error));
+                    return;
+                }
+
+                pendingRequest.resolve(command.result);
             }
         }
 
@@ -405,6 +625,13 @@
         function resolveSpecialFolderPath(folderId) {
             if (typeof folderId !== 'string' || !folderId) {
                 return null;
+            }
+
+            if (window.KnownFolders && typeof window.KnownFolders.resolvePath === 'function') {
+                const resolvedPath = window.KnownFolders.resolvePath(folderId);
+                if (resolvedPath) {
+                    return resolvedPath;
+                }
             }
 
             const folder = SPECIAL_FOLDER_DEFINITIONS.find(entry => entry.id === folderId);
@@ -692,6 +919,14 @@
                 return;
             }
 
+            if (location && location.startsWith('favorite:')) {
+                const favoritePath = item.dataset.favoritePath || '';
+                if (favoritePath) {
+                    navigateToPath(favoritePath);
+                }
+                return;
+            }
+
             const specialFolder = getSpecialFolderByLocation(location);
             if (specialFolder) {
                 navigateToPath(specialFolder.path);
@@ -743,6 +978,35 @@
             });
         }
 
+        async function renderFavoritesSidebar() {
+            const container = document.querySelector('.explorer-sidebar-children[data-parent="favorites"]');
+            if (!container) {
+                return;
+            }
+
+            const favorites = await getFavoriteFolderEntries();
+            container.innerHTML = '';
+
+            favorites.forEach(favorite => {
+                const item = document.createElement('div');
+                item.className = 'explorer-sidebar-item explorer-sidebar-item--nested';
+                item.dataset.location = favorite.sidebarLocation;
+                item.dataset.favoritePath = favorite.path;
+
+                const icon = document.createElement('img');
+                icon.src = resolveIconPath(favorite.icon, 16, 'generic_folder');
+                icon.className = 'explorer-sidebar-icon';
+
+                const label = document.createElement('span');
+                label.textContent = favorite.name;
+
+                item.appendChild(icon);
+                item.appendChild(label);
+                item.addEventListener('click', handleSidebarClick);
+                container.appendChild(item);
+            });
+        }
+
         function getKnownFolderEntries() {
             return SPECIAL_FOLDER_DEFINITIONS.map(definition => ({
                 ...definition,
@@ -786,6 +1050,55 @@
 
         function findContainingSpecialFolder(targetPath) {
             return getKnownFolderEntries().find(entry => pathsMatch(entry.path, targetPath) || isPathInside(entry.path, targetPath)) || null;
+        }
+
+        function getFavoriteLocationKey(folderPath) {
+            return `favorite:${normalizePathValue(folderPath)}`;
+        }
+
+        function getFavoriteDisplayMetadata(folderPath) {
+            const exactKnownFolder = findSpecialFolderByPath(folderPath);
+            if (exactKnownFolder) {
+                return {
+                    name: exactKnownFolder.name,
+                    icon: exactKnownFolder.icon,
+                    location: getFavoriteLocationKey(folderPath)
+                };
+            }
+
+            return {
+                name: path.basename(folderPath) || folderPath,
+                icon: 'generic_folder',
+                location: getFavoriteLocationKey(folderPath)
+            };
+        }
+
+        async function getFavoriteFolderEntries() {
+            const favoritePaths = await getFavoriteFolderPaths();
+            favoriteFolderPathsCache = Array.isArray(favoritePaths) ? favoritePaths.slice() : [];
+            const results = [];
+
+            for (const favoritePath of favoritePaths) {
+                try {
+                    const stats = await fs.stat(favoritePath);
+                    if (!stats.isDirectory()) {
+                        continue;
+                    }
+
+                    const metadata = getFavoriteDisplayMetadata(favoritePath);
+                    results.push({
+                        id: metadata.location,
+                        name: metadata.name,
+                        icon: metadata.icon,
+                        path: favoritePath,
+                        sidebarLocation: metadata.location
+                    });
+                } catch (_error) {
+                    // Skip inaccessible favorites.
+                }
+            }
+
+            return results;
         }
 
         async function getAccessibleSpecialFolders(folderIds) {
@@ -981,41 +1294,57 @@
             return currentPath ? path.basename(currentPath) : 'File Explorer';
         }
 
-        function getActiveSidebarLocation() {
+        function getActiveSidebarLocations() {
             if (currentLocation === HOME_LOCATION) {
-                return HOME_LOCATION;
+                return [HOME_LOCATION];
             }
 
             if (currentLocation === THIS_PC_LOCATION) {
-                return THIS_PC_LOCATION;
+                return [THIS_PC_LOCATION];
             }
 
             if (currentLocation === RECYCLE_BIN_LOCATION) {
-                return RECYCLE_BIN_LOCATION;
+                return [RECYCLE_BIN_LOCATION];
             }
 
             const specialFolder = findContainingSpecialFolder(currentPath);
             if (specialFolder) {
-                return HOME_FAVORITE_LOCATIONS.includes(specialFolder.id)
-                    ? specialFolder.sidebarLocation
-                    : (specialFolder.thisPcLocation || specialFolder.sidebarLocation || specialFolder.id);
+                const activeLocations = [
+                    specialFolder.id,
+                    specialFolder.sidebarLocation,
+                    specialFolder.thisPcLocation
+                ].filter(Boolean);
+                activeLocations.push(getFavoriteLocationKey(specialFolder.path));
+                return activeLocations;
             }
 
-            return THIS_PC_LOCATION;
+            if (currentPath) {
+                const containingFavoritePath = favoriteFolderPathsCache.find(folderPath =>
+                    pathsMatch(folderPath, currentPath) || isPathInside(folderPath, currentPath)
+                );
+
+                return [
+                    containingFavoritePath ? getFavoriteLocationKey(containingFavoritePath) : getFavoriteLocationKey(currentPath),
+                    THIS_PC_LOCATION
+                ];
+            }
+
+            return [THIS_PC_LOCATION];
         }
 
         function syncSidebarActiveState() {
-            const activeLocation = getActiveSidebarLocation();
+            const activeLocations = new Set(getActiveSidebarLocations());
             document.querySelectorAll('.explorer-sidebar-item').forEach(item => item.classList.remove('active'));
 
-            if (!activeLocation) {
+            if (!activeLocations.size) {
                 return;
             }
 
-            const activeItem = document.querySelector(`.explorer-sidebar-item[data-location="${activeLocation}"]`);
-            if (activeItem) {
-                activeItem.classList.add('active');
-            }
+            document.querySelectorAll('.explorer-sidebar-item').forEach(item => {
+                if (activeLocations.has(item.dataset.location)) {
+                    item.classList.add('active');
+                }
+            });
         }
 
         function handleSectionHeaderClick(event) {
@@ -1157,8 +1486,10 @@
         async function updateView() {
             const content = document.getElementById('content');
             hideExplorerContextMenu();
+            cancelInlineRename();
             content.innerHTML = '';
             clearSelection();
+            renderedEntryElementsByPath = new Map();
             recycleBinState = await loadRecycleBinState();
 
             if (currentLocation === HOME_LOCATION) {
@@ -1171,6 +1502,7 @@
                 await renderFolderView(currentPath);
             }
 
+            await renderFavoritesSidebar();
             updateRecycleBinSidebarIcon();
             syncRecycleBinPolling();
             syncSidebarActiveState();
@@ -1178,6 +1510,7 @@
             updateBreadcrumbs();
             updateSearchPlaceholder();
             updateTitlebar();
+            applyPendingSelection();
         }
 
         function formatDriveCapacity(bytes) {
@@ -1372,7 +1705,7 @@
             const container = document.createElement('div');
             container.className = 'explorer-home';
 
-            const favoriteFolders = await getAccessibleSpecialFolders(HOME_FAVORITE_LOCATIONS);
+            const favoriteFolders = await getFavoriteFolderEntries();
             const frequentFolders = await getAccessibleSpecialFolders(HOME_FREQUENT_LOCATIONS);
             const recentFiles = await getRecentFiles(HOME_RECENT_FILE_LIMIT);
 
@@ -1448,7 +1781,9 @@
             await Promise.all(frequentFolders.map(async folder => {
                 try {
                     const entries = await fs.readdir(folder.path, { withFileTypes: true });
-                    const visibleFiles = entries.filter(entry => entry.isFile() && !entry.name.startsWith('.')).slice(0, 100);
+                    const visibleFiles = entries
+                        .filter(entry => entry.isFile() && !isHiddenShellEntry(entry.name))
+                        .slice(0, 100);
 
                     await Promise.all(visibleFiles.map(async entry => {
                         const filePath = path.join(folder.path, entry.name);
@@ -1484,24 +1819,53 @@
                 .slice(0, limit);
         }
 
-        async function createIconItem(entry, type = 'file') {
-            const item = document.createElement('div');
-            item.className = 'explorer-icon-item';
-            if (typeof entry.path === 'string' && entry.path) {
-                item.dataset.path = entry.path;
+        function getShortcutInfoForEntry(entry, type = 'file') {
+            if (type !== 'file' || !entry || !entry.name) {
+                return null;
             }
-            if (entry.id) {
-                item.dataset.entryId = entry.id;
+
+            const extension = path.extname(entry.name).slice(1).toLowerCase();
+            if (extension !== 'ink' && extension !== 'lnk') {
+                return null;
             }
-            item.dataset.type = type;
 
-            const iconSize = getIconSizeForView(currentView);
+            const baseWithoutShortcut = entry.name.replace(/\.(ink|lnk)$/i, '').replace(/\s*-\s*Shortcut$/i, '');
+            const targetExtension = path.extname(baseWithoutShortcut).slice(1).toLowerCase();
 
-            const icon = document.createElement('div');
-            icon.className = 'explorer-icon-item__icon';
+            return {
+                targetExtension
+            };
+        }
 
-            // Check if we should show a thumbnail
-            if (type === 'file' && entry.path && isDisplayableMedia(entry.path)) {
+        function getEffectiveEntryExtension(entry, type = 'file') {
+            const shortcutInfo = getShortcutInfoForEntry(entry, type);
+            return shortcutInfo?.targetExtension || (typeof entry?.extension === 'string' ? entry.extension.toLowerCase() : '');
+        }
+
+        function getShortcutBadgePath(iconSize) {
+            const availableSizes = [8, 16, 24, 32, 48];
+            const desiredSize = Math.max(8, Math.round((iconSize || 16) * 0.5));
+            const exactSize = availableSizes.find(size => size === desiredSize);
+            const largerSize = availableSizes.find(size => size > desiredSize);
+            const smallerSize = availableSizes.slice().reverse().find(size => size < desiredSize);
+            const selectedSize = exactSize || largerSize || smallerSize || 16;
+            return `../../../resources/images/icons/explorer/shortcut_badge/${selectedSize}.png`;
+        }
+
+        function appendShortcutBadge(icon, iconSize) {
+            const badge = document.createElement('img');
+            badge.src = getShortcutBadgePath(iconSize);
+            badge.alt = '';
+            badge.className = 'explorer-icon-item__shortcut-badge';
+            badge.draggable = false;
+            icon.appendChild(badge);
+        }
+
+        function populateExplorerIcon(icon, entry, type, iconSize) {
+            const shortcutInfo = getShortcutInfoForEntry(entry, type);
+            const effectiveExtension = getEffectiveEntryExtension(entry, type);
+
+            if (type === 'file' && entry.path && !shortcutInfo && isDisplayableMedia(entry.path)) {
                 const img = document.createElement('img');
                 img.src = `file://${entry.path}`;
                 img.className = 'explorer-icon-item__icon-image explorer-icon-item__icon-image--thumbnail';
@@ -1512,9 +1876,38 @@
                 const fallbackIcon = type === 'folder' || type === 'recycle-bin-folder'
                     ? 'generic_folder'
                     : (type === 'drive' ? 'main_drive' : 'generic_file');
-                const iconPath = resolveIconPath(entry.icon, iconSize, fallbackIcon);
-                icon.innerHTML = `<img src="${iconPath}" alt="${entry.name}" />`;
+                const iconKey = type === 'folder' || type === 'drive'
+                    ? entry.icon
+                    : getIconTypeForExtension(effectiveExtension || entry.extension);
+                const img = document.createElement('img');
+                img.src = resolveIconPath(iconKey, iconSize, fallbackIcon);
+                img.alt = entry.name || '';
+                img.draggable = false;
+                icon.appendChild(img);
             }
+
+            if (shortcutInfo) {
+                appendShortcutBadge(icon, iconSize);
+            }
+        }
+
+        async function createIconItem(entry, type = 'file') {
+            const item = document.createElement('div');
+            item.className = 'explorer-icon-item';
+            if (typeof entry.path === 'string' && entry.path) {
+                item.dataset.path = entry.path;
+            }
+            if (entry.id) {
+                item.dataset.entryId = entry.id;
+            }
+            item.dataset.type = type;
+            itemEntryMap.set(item, entry);
+
+            const iconSize = getIconSizeForView(currentView);
+
+            const icon = document.createElement('div');
+            icon.className = 'explorer-icon-item__icon';
+            populateExplorerIcon(icon, entry, type, iconSize);
 
             const labelContainer = document.createElement('div');
             labelContainer.className = 'explorer-icon-item__label-container';
@@ -1561,6 +1954,9 @@
 
             // Selection handling
             item.addEventListener('click', (e) => handleItemClick(e, item));
+            item.addEventListener('contextmenu', (e) => handleItemContextMenu(e, item, entry, type));
+            item.addEventListener('mouseenter', () => handleItemMouseEnter(item));
+            item.addEventListener('mouseleave', () => handleItemMouseLeave(item));
             item.addEventListener('dblclick', (e) => {
                 e.stopPropagation();
                 if (type === 'folder' || type === 'drive') {
@@ -1571,6 +1967,8 @@
                     openFile(entry.path);
                 }
             });
+
+            registerRenderedItem(item, entry);
 
             return item;
         }
@@ -1600,12 +1998,14 @@
         function addToSelection(item) {
             selectedItems.add(item);
             item.classList.add('is-selected');
+            updateSelectionHighlight(item);
             updateSelectedItemsDisplay();
         }
 
         function removeFromSelection(item) {
             selectedItems.delete(item);
-            item.classList.remove('is-selected');
+            item.classList.remove('is-selected', 'is-hovered');
+            item.style.removeProperty('--label-extra-height');
             updateSelectedItemsDisplay();
         }
 
@@ -1616,7 +2016,8 @@
 
         function clearSelection() {
             selectedItems.forEach(item => {
-                item.classList.remove('is-selected');
+                item.classList.remove('is-selected', 'is-hovered');
+                item.style.removeProperty('--label-extra-height');
             });
             selectedItems.clear();
 
@@ -1642,6 +2043,589 @@
             }
         }
 
+        function registerRenderedItem(item, entry) {
+            if (!entry || !entry.path) {
+                return;
+            }
+
+            renderedEntryElementsByPath.set(normalizePathValue(entry.path), item);
+            updateItemTooltip(item);
+        }
+
+        function applyPendingSelection() {
+            if (!pendingSelectionPath) {
+                return;
+            }
+
+            const item = renderedEntryElementsByPath.get(normalizePathValue(pendingSelectionPath));
+            pendingSelectionPath = null;
+
+            if (!item) {
+                return;
+            }
+
+            selectExclusive(item);
+        }
+
+        function getSelectedEntryPaths(fallbackEntry = null) {
+            const paths = Array.from(selectedItems)
+                .map(item => ({
+                    entry: itemEntryMap.get(item),
+                    type: item.dataset.type
+                }))
+                .filter(({ entry, type }) => canCopyContextEntry(entry, type))
+                .map(({ entry }) => entry.path);
+
+            if (paths.length) {
+                return paths;
+            }
+
+            return canCopyContextEntry(fallbackEntry, null) && fallbackEntry && fallbackEntry.path
+                ? [fallbackEntry.path]
+                : [];
+        }
+
+        function updateSelectionHighlight(item) {
+            if (!item || !item.classList.contains('is-selected')) {
+                if (item) {
+                    item.style.removeProperty('--label-extra-height');
+                }
+                return;
+            }
+
+            const labelContainer = item.querySelector('.explorer-icon-item__label-container');
+            const truncatedLabel = labelContainer ? labelContainer.querySelector('.explorer-icon-item__label--truncated') : null;
+            const fullLabel = labelContainer ? labelContainer.querySelector('.explorer-icon-item__label--full') : null;
+
+            if (!labelContainer || !truncatedLabel || !fullLabel) {
+                item.style.removeProperty('--label-extra-height');
+                return;
+            }
+
+            const truncatedHeight = truncatedLabel.offsetHeight || 0;
+            const fullHeight = fullLabel.scrollHeight || 0;
+            const extraHeight = Math.max(fullHeight - truncatedHeight, 0);
+            item.style.setProperty('--label-extra-height', `${extraHeight}px`);
+        }
+
+        function updateItemTooltip(item) {
+            if (!item) {
+                return;
+            }
+
+            const truncatedLabel = item.querySelector('.explorer-icon-item__label--truncated');
+            if (!truncatedLabel) {
+                item.removeAttribute('title');
+                return;
+            }
+
+            const text = truncatedLabel.textContent || '';
+            if (!text) {
+                item.removeAttribute('title');
+                return;
+            }
+
+            const overflow = truncatedLabel.scrollWidth > (truncatedLabel.clientWidth + 0.5);
+            if (overflow) {
+                item.setAttribute('title', text);
+            } else {
+                item.removeAttribute('title');
+            }
+        }
+
+        function handleItemMouseEnter(item) {
+            if (!item.classList.contains('is-selected')) {
+                return;
+            }
+
+            item.classList.add('is-hovered');
+            updateSelectionHighlight(item);
+        }
+
+        function handleItemMouseLeave(item) {
+            item.classList.remove('is-hovered');
+        }
+
+        function canRenameContextEntry(entry, type) {
+            return Boolean(entry && entry.path && !entry.isDrive && type !== 'recycle-bin-folder' && type !== 'recycle-bin-item');
+        }
+
+        function canRecycleContextEntry(entry, type) {
+            return Boolean(entry && entry.path && !entry.isDrive && type !== 'recycle-bin-folder' && type !== 'recycle-bin-item');
+        }
+
+        function canCopyContextEntry(entry, type) {
+            return Boolean(entry && entry.path && !entry.isDrive && type !== 'recycle-bin-folder' && type !== 'recycle-bin-item');
+        }
+
+        function canFavoriteContextEntry(entry, type) {
+            return Boolean(entry && entry.path && type === 'folder' && !entry.isDrive);
+        }
+
+        async function openParentFolderForEntry(entry) {
+            if (!entry || !entry.path) {
+                return;
+            }
+
+            const parentPath = path.dirname(entry.path);
+            if (!parentPath || parentPath === entry.path) {
+                return;
+            }
+
+            setPendingSelectionPath(entry.path);
+            navigateToPath(parentPath);
+        }
+
+        async function toggleFavoriteFolder(entry) {
+            if (!entry || !entry.path) {
+                return;
+            }
+
+            if (await isFavoriteFolderPath(entry.path)) {
+                await removeFavoriteFolderPath(entry.path);
+            } else {
+                await addFavoriteFolderPath(entry.path);
+            }
+
+            await updateView();
+        }
+
+        function resolvePasteTargetPath(entry, type) {
+            if (entry && type === 'folder' && entry.path) {
+                return entry.path;
+            }
+
+            return currentPath;
+        }
+
+        function positionExplorerContextMenu(menu, x, y) {
+            const menuWidth = menu.offsetWidth;
+            const menuHeight = menu.offsetHeight;
+            const viewportWidth = window.innerWidth;
+            const viewportHeight = window.innerHeight;
+            const left = Math.min(Math.max(8, x), Math.max(8, viewportWidth - menuWidth - 8));
+            const top = Math.min(Math.max(8, y), Math.max(8, viewportHeight - menuHeight - 8));
+
+            menu.style.left = `${left}px`;
+            menu.style.top = `${top}px`;
+        }
+
+        function appendContextMenuAction(menu, config) {
+            if (config.type === 'separator') {
+                const separator = document.createElement('div');
+                separator.className = 'classic-context-menu-separator';
+                menu.appendChild(separator);
+                return;
+            }
+
+            const button = document.createElement('div');
+            button.className = 'classic-context-menu-item desktop-item-context-menu-button';
+            button.setAttribute('data-action', config.action);
+
+            if (config.disabled) {
+                button.classList.add('is-disabled');
+            }
+
+            if (config.bold) {
+                button.style.fontWeight = 'bold';
+            }
+
+            const icon = document.createElement('span');
+            icon.className = 'classic-context-menu-item-icon';
+            icon.appendChild(document.createElement('span'));
+
+            const text = document.createElement('span');
+            text.className = 'classic-context-menu-item-text';
+            text.textContent = config.label;
+
+            button.appendChild(icon);
+            button.appendChild(text);
+
+            button.addEventListener('click', async (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+
+                if (config.disabled || typeof config.handler !== 'function') {
+                    return;
+                }
+
+                hideExplorerContextMenu();
+                try {
+                    await config.handler();
+                } catch (error) {
+                    console.error('[File Explorer] Context menu action failed:', error);
+                }
+            });
+
+            menu.appendChild(button);
+        }
+
+        function handleItemContextMenu(event, item, entry, type) {
+            event.preventDefault();
+            event.stopPropagation();
+
+            if (type === 'recycle-bin-folder' || type === 'recycle-bin-item') {
+                return;
+            }
+
+            if (!selectedItems.has(item)) {
+                selectExclusive(item);
+            }
+
+            void showExplorerItemContextMenu(item, entry, type, event.clientX, event.clientY);
+        }
+
+        async function showExplorerItemContextMenu(item, entry, type, x, y) {
+            hideExplorerContextMenu();
+
+            const selectionPaths = getSelectedEntryPaths(entry);
+            const pasteTargetPath = resolvePasteTargetPath(entry, type);
+            const canPaste = await canPasteToDirectory(pasteTargetPath);
+            const canFavorite = canFavoriteContextEntry(entry, type);
+            const isFavorite = canFavorite ? await isFavoriteFolderPath(entry.path) : false;
+
+            const isHomeRecentFileItem = Boolean(item.closest('.explorer-section-content[data-section="recent-files"]'));
+            const canShowInParentFolder = isHomeRecentFileItem && Boolean(entry && entry.path && type === 'file');
+
+            const menu = document.createElement('div');
+            menu.className = 'classic-context-menu desktop-item-context-menu explorer-context-menu';
+            menu.style.position = 'fixed';
+            menu.style.zIndex = '5000';
+
+            const actions = [];
+
+            if (type === 'file' && entry.path) {
+                actions.push({
+                    action: 'open',
+                    label: 'Open',
+                    bold: true,
+                    handler: async () => openFile(entry.path)
+                });
+                actions.push({
+                    action: 'open-with',
+                    label: 'Open with...',
+                    handler: async () => openFileWithChooser(entry.path)
+                });
+                actions.push({ type: 'separator' });
+            } else if ((type === 'folder' || type === 'drive') && entry.path) {
+                actions.push({
+                    action: 'open',
+                    label: 'Open',
+                    bold: true,
+                    handler: async () => navigateToPath(entry.path)
+                });
+                actions.push({ type: 'separator' });
+            }
+
+            if (!isHomeRecentFileItem) {
+                actions.push({
+                    action: 'rename',
+                    label: 'Rename',
+                    disabled: !canRenameContextEntry(entry, type),
+                    handler: async () => beginInlineRename(item, entry)
+                });
+            }
+
+            if (canShowInParentFolder) {
+                actions.push({
+                    action: 'show-in-parent-folder',
+                    label: 'Show in parent folder',
+                    handler: async () => openParentFolderForEntry(entry)
+                });
+            }
+
+            actions.push({
+                action: 'toggle-favorite',
+                label: isFavorite ? 'Remove from Favorites' : 'Add to Favorites',
+                disabled: !canFavorite,
+                handler: async () => toggleFavoriteFolder(entry)
+            });
+
+            if (!isHomeRecentFileItem) {
+                actions.push({
+                    action: 'delete',
+                    label: 'Delete',
+                    disabled: !canRecycleContextEntry(entry, type) || selectionPaths.length === 0,
+                    handler: async () => deleteSelectedEntries(entry)
+                });
+            }
+
+            actions.push({ type: 'separator' });
+            actions.push({
+                action: 'copy',
+                label: 'Copy',
+                disabled: selectionPaths.length === 0,
+                handler: async () => {
+                    await copyPathsToClipboard(selectionPaths);
+                }
+            });
+            actions.push({
+                action: 'cut',
+                label: 'Cut',
+                disabled: selectionPaths.length === 0 || !canRecycleContextEntry(entry, type),
+                handler: async () => {
+                    await cutPathsToClipboard(selectionPaths);
+                }
+            });
+            actions.push({
+                action: 'paste',
+                label: 'Paste',
+                disabled: !canPaste,
+                handler: async () => pasteIntoPath(pasteTargetPath)
+            });
+
+            actions.forEach(action => appendContextMenuAction(menu, action));
+
+            menu.addEventListener('contextmenu', (menuEvent) => {
+                menuEvent.preventDefault();
+                menuEvent.stopPropagation();
+            });
+
+            document.body.appendChild(menu);
+            positionExplorerContextMenu(menu, x, y);
+            explorerContextMenu = menu;
+            scheduleExplorerContextMenuDismiss();
+        }
+
+        async function showFolderBackgroundContextMenu(x, y) {
+            hideExplorerContextMenu();
+
+            const canPaste = await canPasteToDirectory(currentPath);
+
+            const menu = document.createElement('div');
+            menu.className = 'classic-context-menu desktop-item-context-menu explorer-context-menu';
+            menu.style.position = 'fixed';
+            menu.style.zIndex = '5000';
+
+            appendContextMenuAction(menu, {
+                action: 'paste',
+                label: 'Paste',
+                disabled: !canPaste,
+                handler: async () => pasteIntoPath(currentPath)
+            });
+
+            menu.addEventListener('contextmenu', (menuEvent) => {
+                menuEvent.preventDefault();
+                menuEvent.stopPropagation();
+            });
+
+            document.body.appendChild(menu);
+            positionExplorerContextMenu(menu, x, y);
+            explorerContextMenu = menu;
+            scheduleExplorerContextMenuDismiss();
+        }
+
+        async function pasteIntoPath(targetPath) {
+            if (!targetPath) {
+                return;
+            }
+
+            try {
+                const result = await pasteClipboardToDirectoryViaHost(targetPath);
+                if (Array.isArray(result?.createdPaths) && result.createdPaths.length) {
+                    setPendingSelectionPath(result.createdPaths[result.createdPaths.length - 1]);
+                }
+                await updateView();
+            } catch (error) {
+                console.error('[File Explorer] Paste failed:', error);
+                const systemDialog = getSystemDialogApi();
+                if (systemDialog && typeof systemDialog.error === 'function') {
+                    systemDialog.error(error && error.message ? error.message : 'Unable to paste item.', 'Paste');
+                }
+            }
+        }
+
+        async function deleteSelectedEntries(fallbackEntry = null) {
+            const selectionPaths = getSelectedEntryPaths(fallbackEntry);
+
+            if (!selectionPaths.length) {
+                return;
+            }
+
+            try {
+                await movePathsToRecycleBinViaHost(selectionPaths);
+                setPendingSelectionPath(null);
+                await updateView();
+            } catch (error) {
+                console.error('[File Explorer] Delete failed:', error);
+                const systemDialog = getSystemDialogApi();
+                if (systemDialog && typeof systemDialog.error === 'function') {
+                    systemDialog.error('Unable to move one or more items to the Recycle Bin.', 'Recycle Bin');
+                }
+            }
+        }
+
+        function getPrimarySelectedItem() {
+            const selected = Array.from(selectedItems);
+            return selected.length === 1 ? selected[0] : null;
+        }
+
+        function beginInlineRename(item, entry) {
+            if (!canRenameContextEntry(entry, item?.dataset?.type)) {
+                return;
+            }
+
+            if (explorerRenameState && explorerRenameState.commitInProgress) {
+                return;
+            }
+
+            cancelInlineRename();
+            hideExplorerContextMenu();
+
+            const labelContainer = item.querySelector('.explorer-icon-item__label-container');
+            if (!labelContainer) {
+                return;
+            }
+
+            item.removeAttribute('title');
+
+            const truncatedLabel = labelContainer.querySelector('.explorer-icon-item__label--truncated');
+            const fullLabel = labelContainer.querySelector('.explorer-icon-item__label--full');
+            const currentName = truncatedLabel ? truncatedLabel.textContent : (entry.name || path.basename(entry.path));
+
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.className = 'explorer-icon-item__rename-input';
+            input.value = currentName;
+            input.setAttribute('spellcheck', 'false');
+
+            if (truncatedLabel) {
+                truncatedLabel.style.display = 'none';
+            }
+            if (fullLabel) {
+                fullLabel.style.display = 'none';
+            }
+
+            labelContainer.appendChild(input);
+
+            explorerRenameState = {
+                item,
+                entry,
+                input,
+                truncatedLabel,
+                fullLabel,
+                originalName: currentName,
+                commitInProgress: false
+            };
+
+            input.addEventListener('keydown', handleRenameInputKeydown);
+            input.addEventListener('blur', handleRenameInputBlur);
+
+            requestAnimationFrame(() => {
+                input.focus();
+                input.select();
+            });
+        }
+
+        function handleRenameInputKeydown(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                void commitInlineRename();
+                return;
+            }
+
+            if (event.key === 'Escape') {
+                event.preventDefault();
+                cancelInlineRename();
+            }
+        }
+
+        function handleRenameInputBlur() {
+            if (!explorerRenameState || explorerRenameState.commitInProgress) {
+                return;
+            }
+
+            void commitInlineRename();
+        }
+
+        function finishInlineRename(labelText) {
+            if (!explorerRenameState) {
+                return;
+            }
+
+            const { item, input, truncatedLabel, fullLabel, originalName } = explorerRenameState;
+            const resolvedLabel = typeof labelText === 'string' && labelText.length ? labelText : originalName;
+
+            input.removeEventListener('keydown', handleRenameInputKeydown);
+            input.removeEventListener('blur', handleRenameInputBlur);
+
+            if (input.parentNode) {
+                input.parentNode.removeChild(input);
+            }
+
+            if (truncatedLabel) {
+                truncatedLabel.style.display = '';
+                truncatedLabel.textContent = resolvedLabel;
+            }
+
+            if (fullLabel) {
+                fullLabel.style.display = '';
+                fullLabel.textContent = resolvedLabel;
+            }
+
+            explorerRenameState = null;
+            updateItemTooltip(item);
+            updateSelectionHighlight(item);
+        }
+
+        function cancelInlineRename() {
+            if (!explorerRenameState || explorerRenameState.commitInProgress) {
+                return;
+            }
+
+            finishInlineRename(explorerRenameState.originalName);
+        }
+
+        async function commitInlineRename() {
+            if (!explorerRenameState || explorerRenameState.commitInProgress) {
+                return;
+            }
+
+            const { entry, input, originalName } = explorerRenameState;
+            const nextName = typeof input.value === 'string' ? input.value.trim() : '';
+            const systemDialog = getSystemDialogApi();
+
+            if (!nextName) {
+                if (systemDialog && typeof systemDialog.error === 'function') {
+                    systemDialog.error('Please enter a name.', 'Rename');
+                }
+                requestAnimationFrame(() => {
+                    input.focus();
+                    input.select();
+                });
+                return;
+            }
+
+            if (nextName === originalName) {
+                finishInlineRename(originalName);
+                return;
+            }
+
+            explorerRenameState.commitInProgress = true;
+            input.disabled = true;
+
+            try {
+                const destinationPath = await renameEntryPathViaHost(entry.path, nextName);
+                entry.path = destinationPath;
+                entry.name = nextName;
+                setPendingSelectionPath(destinationPath);
+                finishInlineRename(nextName);
+                await updateView();
+            } catch (error) {
+                explorerRenameState.commitInProgress = false;
+                input.disabled = false;
+
+                if (systemDialog && typeof systemDialog.error === 'function') {
+                    systemDialog.error(error && error.message ? error.message : 'Unable to rename this item.', 'Rename');
+                }
+
+                requestAnimationFrame(() => {
+                    input.focus();
+                    input.select();
+                });
+            }
+        }
+
         function handleContentMouseDown(event) {
             if (event.button !== 0) {
                 return;
@@ -1658,22 +2642,79 @@
         }
 
         function handleContentContextMenu(event) {
-            if (currentLocation !== RECYCLE_BIN_LOCATION) {
-                return;
-            }
-
             if (event.target.closest('.explorer-icon-item')) {
                 return;
             }
 
             event.preventDefault();
             clearSelection();
-            showRecycleBinContextMenu(event.clientX, event.clientY);
+
+            if (currentLocation === RECYCLE_BIN_LOCATION) {
+                showRecycleBinContextMenu(event.clientX, event.clientY);
+                return;
+            }
+
+            if (!currentPath) {
+                return;
+            }
+
+            void showFolderBackgroundContextMenu(event.clientX, event.clientY);
         }
 
         function handleExplorerContextMenuKeydown(event) {
             if (event.key === 'Escape') {
                 hideExplorerContextMenu();
+                cancelInlineRename();
+                return;
+            }
+
+            if (explorerRenameState) {
+                return;
+            }
+
+            const activeElement = document.activeElement;
+            const isTextInputFocused = activeElement && (
+                activeElement.tagName === 'INPUT'
+                || activeElement.tagName === 'TEXTAREA'
+                || activeElement.isContentEditable
+            );
+
+            if (isTextInputFocused) {
+                return;
+            }
+
+            const primarySelectedItem = getPrimarySelectedItem();
+            const primaryEntry = primarySelectedItem ? itemEntryMap.get(primarySelectedItem) : null;
+            const selectionPaths = getSelectedEntryPaths(primaryEntry);
+            const modifierPressed = event.ctrlKey || event.metaKey;
+
+            if (modifierPressed && event.key.toLowerCase() === 'c' && selectionPaths.length) {
+                event.preventDefault();
+                void copyPathsToClipboard(selectionPaths);
+                return;
+            }
+
+            if (modifierPressed && event.key.toLowerCase() === 'x' && selectionPaths.length) {
+                event.preventDefault();
+                void cutPathsToClipboard(selectionPaths);
+                return;
+            }
+
+            if (modifierPressed && event.key.toLowerCase() === 'v' && currentPath) {
+                event.preventDefault();
+                void pasteIntoPath(currentPath);
+                return;
+            }
+
+            if (event.key === 'Delete' && selectionPaths.length) {
+                event.preventDefault();
+                void deleteSelectedEntries(primaryEntry);
+                return;
+            }
+
+            if (event.key === 'F2' && primarySelectedItem && primaryEntry) {
+                event.preventDefault();
+                beginInlineRename(primarySelectedItem, primaryEntry);
             }
         }
 
@@ -1814,7 +2855,7 @@
 
                 // Filter and sort entries
                 const visibleEntries = entries
-                    .filter(entry => !entry.name.startsWith('.'))
+                    .filter(entry => !isHiddenShellEntry(entry.name))
                     .sort((a, b) => {
                         if (a.isDirectory() && !b.isDirectory()) return -1;
                         if (!a.isDirectory() && b.isDirectory()) return 1;
@@ -1826,10 +2867,22 @@
                     const isDirectory = entry.isDirectory();
                     const extension = !isDirectory ? path.extname(entry.name).slice(1).toLowerCase() : '';
 
+                    let folderIcon = 'generic_folder';
+                    if (isDirectory) {
+                        try {
+                            const subEntries = await fs.readdir(itemPath);
+                            const visibleSub = subEntries.filter(name => !isHiddenShellEntry(name));
+                            if (visibleSub.length > 0) {
+                                folderIcon = 'folder_of_folders';
+                            }
+                        } catch (_) {}
+                    }
+
                     const itemData = {
                         name: entry.name,
                         path: itemPath,
-                        icon: isDirectory ? 'generic_folder' : getIconTypeForExtension(extension),
+                        extension,
+                        icon: isDirectory ? folderIcon : getIconTypeForExtension(extension),
                         isDrive: false
                     };
 
@@ -1964,14 +3017,14 @@
             hideExplorerContextMenu();
 
             const menu = document.createElement('div');
-            menu.className = 'classic-context-menu explorer-context-menu';
+            menu.className = 'classic-context-menu desktop-item-context-menu explorer-context-menu';
             menu.style.position = 'fixed';
             menu.style.left = `${x}px`;
             menu.style.top = `${y}px`;
             menu.style.zIndex = '5000';
 
             const button = document.createElement('div');
-            button.className = 'classic-context-menu-item';
+            button.className = 'classic-context-menu-item desktop-item-context-menu-button';
             if (!recycleBinState.available) {
                 button.classList.add('is-disabled');
             }
@@ -2250,12 +3303,10 @@
         }
 
         async function openFile(filePath) {
-            // Use the file associations system if available
-            if (window.FileAssociations && typeof window.FileAssociations.openPath === 'function') {
-                await window.FileAssociations.openPath(filePath, 'file');
-            } else if (window.parent && window.parent.FileAssociations && typeof window.parent.FileAssociations.openPath === 'function') {
-                await window.parent.FileAssociations.openPath(filePath, 'file');
-            } else {
+            try {
+                await requestExplorerHost('openFile', { filePath });
+            } catch (error) {
+                console.error('[File Explorer] Failed to open file via host:', error);
                 // Fallback to external opening
                 const { shell } = require('electron');
                 if (typeof shell.openPath === 'function') {
@@ -2264,6 +3315,15 @@
                         console.error('Failed to open file:', result);
                     }
                 }
+            }
+        }
+
+        async function openFileWithChooser(filePath) {
+            try {
+                await requestExplorerHost('openFileWithChooser', { filePath });
+            } catch (error) {
+                console.error('[File Explorer] Failed to show open-with via host:', error);
+                await openFile(filePath);
             }
         }
     </script>

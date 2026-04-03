@@ -1,0 +1,94 @@
+html,
+body {
+    height: 100%;
+}
+
+body {
+    margin: 0;
+    background: #ffffff;
+    color: #1f1f1f;
+    font-family: "Segoe UI", Tahoma, sans-serif;
+    overflow: hidden;
+}
+
+.msinfo-shell {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.msinfo-body {
+    display: grid;
+    grid-template-columns: 240px minmax(0, 1fr);
+    flex: 1;
+    min-height: 0;
+}
+
+.msinfo-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 12px;
+    border-right: 1px solid #d9d9d9;
+    background: #f5f7fa;
+}
+
+.msinfo-tree-item {
+    border: 1px solid transparent;
+    background: transparent;
+    color: inherit;
+    text-align: left;
+    padding: 7px 10px;
+    font: inherit;
+}
+
+.msinfo-tree-item:hover,
+.msinfo-tree-item:focus-visible {
+    border-color: #b8c7d8;
+    background: #ffffff;
+    outline: none;
+}
+
+.msinfo-tree-item.is-active {
+    border-color: #8ab5e1;
+    background: #e7f1fb;
+}
+
+.msinfo-panel {
+    padding: 20px 24px;
+    overflow: auto;
+}
+
+.msinfo-header h1 {
+    margin: 0;
+    font-size: 21px;
+    font-weight: 600;
+}
+
+.msinfo-header p {
+    margin: 8px 0 18px;
+    color: #5f6b78;
+    font-size: 13px;
+}
+
+.msinfo-card {
+    display: grid;
+    grid-template-columns: 220px minmax(0, 1fr);
+    gap: 14px;
+    padding: 10px 12px;
+    border: 1px solid #d9e2ec;
+    background: #ffffff;
+}
+
+.msinfo-card + .msinfo-card {
+    margin-top: 10px;
+}
+
+.msinfo-card__label {
+    color: #44515e;
+    font-weight: 600;
+}
+
+.msinfo-card__value {
+    color: #1f1f1f;
+}

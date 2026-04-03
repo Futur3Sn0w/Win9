@@ -22,6 +22,7 @@
     "@ffmpeg-installer/ffmpeg": "^1.1.0",
     "drivelist": "^12.0.2",
     "electron-store": "^8.1.0",
+    "googleapis": "^171.4.0",
     "network": "^0.7.0",
     "node-wifi": "^2.0.16",
     "trash": "^10.0.0"

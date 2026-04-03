@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reader</title>
+    <link rel="stylesheet" href="../../../css/fonts.css">
+    <link rel="stylesheet" href="reader.css">
+</head>
+<body>
+    <div id="reader-app" class="reader-app">
+
+        <!-- MRU (Most Recently Used) Landing Screen -->
+        <div id="reader-mru" class="reader-mru">
+            <div class="reader-mru-header">
+                <div class="reader-mru-title-area">
+                    <h1 class="reader-mru-title">Reader</h1>
+                    <button id="reader-browse-btn" class="reader-browse-button" type="button">
+                        <span class="reader-browse-icon">&#xE1C1;</span>
+                        <span class="reader-browse-label">Browse</span>
+                    </button>
+                </div>
+            </div>
+            <div class="reader-mru-body">
+                <div id="reader-mru-list" class="reader-mru-list"></div>
+                <div id="reader-mru-empty" class="reader-mru-empty">
+                    <p class="reader-mru-empty-text">You don't have any recent files.<br>Tap Browse to open a file.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Document Viewer -->
+        <div id="reader-viewer" class="reader-viewer" hidden>
+            <!-- Top bar (shown on click/tap) -->
+            <div id="reader-topbar" class="reader-topbar">
+                <button id="reader-back-btn" class="reader-topbar-btn" type="button" title="Back">
+                    <svg viewBox="0 0 20 20" width="16" height="16"><path d="M12.5 3L5 10l7.5 7" stroke="currentColor" stroke-width="2" fill="none"/></svg>
+                </button>
+                <span id="reader-filename" class="reader-topbar-title"></span>
+                <div class="reader-topbar-right">
+                    <span id="reader-page-indicator" class="reader-page-indicator"></span>
+                </div>
+            </div>
+
+            <!-- Page canvas area -->
+            <div id="reader-canvas" class="reader-canvas">
+                <div id="reader-pages" class="reader-pages"></div>
+                <div id="reader-loading" class="reader-loading" hidden>
+                    <div class="reader-loading-spinner"></div>
+                    <div class="reader-loading-text">Opening document...</div>
+                </div>
+                <div id="reader-error" class="reader-error" hidden>
+                    <div class="reader-error-icon">&#xE7BA;</div>
+                    <div id="reader-error-text" class="reader-error-text">Unable to open this document.</div>
+                    <button id="reader-error-back" class="reader-error-back-btn" type="button">Go back</button>
+                </div>
+            </div>
+
+            <!-- Bottom command bar (shown on click/tap) -->
+            <div id="reader-commandbar" class="reader-commandbar">
+                <div class="reader-commandbar-left">
+                    <button id="reader-cmd-find" class="reader-cmd-btn" type="button" title="Find">
+                        <svg viewBox="0 0 20 20" width="18" height="18"><circle cx="8" cy="8" r="5.5" stroke="currentColor" stroke-width="1.5" fill="none"/><line x1="12" y1="12" x2="17" y2="17" stroke="currentColor" stroke-width="1.5"/></svg>
+                        <span>Find</span>
+                    </button>
+                </div>
+                <div class="reader-commandbar-right">
+                    <button id="reader-cmd-continuous" class="reader-cmd-btn reader-cmd-active" type="button" title="Continuous view">
+                        <svg viewBox="0 0 20 20" width="18" height="18"><rect x="3" y="1" width="14" height="7" rx="1" stroke="currentColor" stroke-width="1.2" fill="none"/><rect x="3" y="12" width="14" height="7" rx="1" stroke="currentColor" stroke-width="1.2" fill="none"/><line x1="10" y1="8" x2="10" y2="12" stroke="currentColor" stroke-width="1.2"/></svg>
+                        <span>Continuous</span>
+                    </button>
+                    <button id="reader-cmd-onepage" class="reader-cmd-btn" type="button" title="One page view">
+                        <svg viewBox="0 0 16 20" width="16" height="18"><path d="M1 1h8l5 5v13H1z" stroke="currentColor" stroke-width="1.2" fill="none"/><path d="M9 1v5h5" stroke="currentColor" stroke-width="1.2" fill="none"/></svg>
+                        <span>One page</span>
+                    </button>
+                    <button id="reader-cmd-twopage" class="reader-cmd-btn" type="button" title="Two page view">
+                        <svg viewBox="0 0 24 20" width="22" height="18"><rect x="1" y="1" width="10" height="18" rx="1" stroke="currentColor" stroke-width="1.2" fill="none"/><rect x="13" y="1" width="10" height="18" rx="1" stroke="currentColor" stroke-width="1.2" fill="none"/></svg>
+                        <span>Two pages</span>
+                    </button>
+                    <div class="reader-cmd-separator"></div>
+                    <button id="reader-cmd-save" class="reader-cmd-btn" type="button" title="Save a copy" disabled>
+                        <svg viewBox="0 0 18 18" width="16" height="16"><path d="M3 1h10l3 3v13H3z" stroke="currentColor" stroke-width="1.2" fill="none"/><rect x="5" y="1" width="6" height="6" stroke="currentColor" stroke-width="1" fill="none"/><rect x="7" y="11" width="5" height="6" stroke="currentColor" stroke-width="1" fill="none"/></svg>
+                        <span>Save</span>
+                    </button>
+                    <button id="reader-cmd-info" class="reader-cmd-btn" type="button" title="Document info">
+                        <svg viewBox="0 0 20 20" width="16" height="16"><circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="1.2" fill="none"/><line x1="10" y1="9" x2="10" y2="15" stroke="currentColor" stroke-width="1.5"/><circle cx="10" cy="6" r="1" fill="currentColor"/></svg>
+                        <span>Info</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Find bar -->
+            <div id="reader-findbar" class="reader-findbar" hidden>
+                <input id="reader-find-input" class="reader-find-input" type="text" placeholder="Find in document...">
+                <span id="reader-find-count" class="reader-find-count"></span>
+                <button id="reader-find-prev" class="reader-find-nav-btn" type="button" title="Previous">&#x25B2;</button>
+                <button id="reader-find-next" class="reader-find-nav-btn" type="button" title="Next">&#x25BC;</button>
+                <button id="reader-find-close" class="reader-find-close-btn" type="button" title="Close">&times;</button>
+            </div>
+
+            <!-- Document info panel -->
+            <div id="reader-info-panel" class="reader-info-panel" hidden>
+                <div class="reader-info-header">
+                    <h2>Document properties</h2>
+                    <button id="reader-info-close" class="reader-find-close-btn" type="button">&times;</button>
+                </div>
+                <div id="reader-info-body" class="reader-info-body"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="reader.js"></script>
+</body>
+</html>

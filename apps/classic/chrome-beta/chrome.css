@@ -1,0 +1,2785 @@
+body {
+    margin: 0;
+    overflow: hidden;
+    background: #ffffff;
+    color: #1d1d1d;
+    font-family: "Segoe UI", Tahoma, sans-serif;
+}
+
+.chrome-app,
+.chrome-shell {
+    width: 100%;
+    height: 100vh;
+}
+
+.chrome-shell {
+    display: flex;
+    flex-direction: column;
+    background: linear-gradient(180deg, #d8e7f5 0, #cad9e8 32px, #eff1f4 33px, #eff1f4 100%);
+}
+
+.chrome-hosted-top-spacer {
+    flex: 0 0 auto;
+    height: 0;
+    min-height: 0;
+}
+
+.chrome-frame {
+    position: relative;
+    flex: 0 0 auto;
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.72) 0, rgba(255, 255, 255, 0.36) 34px, rgba(255, 255, 255, 0) 35px),
+        linear-gradient(180deg, #d6e5f4 0, #c5d5e4 100%);
+    border-bottom: 1px solid #aab5c1;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.65);
+}
+
+.chrome-shell.has-hosted-tabstrip .chrome-frame {
+    /* Slice 2/3 of the unified toolbar gradient — continues from the tab strip */
+    background: linear-gradient(180deg, #d2dfec 0%, #c9d6e1 100%);
+    box-shadow: none;
+}
+
+.chrome-shell.has-hosted-tabstrip .chrome-toolbar {
+    position: relative;
+    z-index: 2;
+    margin-top: -1px;
+    padding-top: 3px;
+    border-top: none;
+}
+
+.chrome-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 8px 5px;
+    border-top: 1px solid rgba(255, 255, 255, 0.35);
+    border-bottom: 1px solid #ccd4db;
+    background: linear-gradient(180deg, #edf0f3 0, #dfe4e8 100%);
+}
+
+.chrome-nav-buttons {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex: 0 0 auto;
+}
+
+.chrome-nav-button,
+.chrome-menu-button,
+.chrome-star-button {
+    display: grid;
+    place-items: center;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    background: transparent;
+    color: #56636f;
+    font-size: 18px;
+}
+
+.chrome-nav-button:hover:not(:disabled),
+.chrome-menu-button:hover,
+.chrome-star-button:hover {
+    border-color: #b3bcc4;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0, rgba(231, 236, 241, 0.95) 100%);
+}
+
+.chrome-nav-button:disabled {
+    opacity: 0.42;
+}
+
+.chrome-refresh-button {
+    font-size: 15px;
+}
+
+.chrome-home-button {
+    font-size: 15px;
+}
+
+.chrome-address-shell {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex: 1;
+    min-width: 0;
+    height: 28px;
+    padding: 0 6px 0 8px;
+    border: 1px solid #aeb5bc;
+    border-radius: 3px;
+    background: linear-gradient(180deg, #fdfdfd 0, #f5f5f5 100%);
+    box-shadow:
+        inset 0 1px 2px rgba(0, 0, 0, 0.09),
+        0 1px 0 rgba(255, 255, 255, 0.85);
+}
+
+.chrome-address-shell:focus-within {
+    border-color: #77a3d1;
+    box-shadow:
+        inset 0 1px 2px rgba(0, 0, 0, 0.09),
+        0 0 0 1px rgba(141, 185, 230, 0.75);
+}
+
+.chrome-security-badge {
+    position: relative;
+    width: 11px;
+    height: 12px;
+    border-radius: 2px 2px 3px 3px;
+    background: linear-gradient(180deg, #8ec655 0, #6dad39 100%);
+    box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.12);
+    flex: 0 0 auto;
+}
+
+.chrome-security-badge::before {
+    content: "";
+    position: absolute;
+    left: 2px;
+    top: -5px;
+    width: 5px;
+    height: 6px;
+    border: 2px solid #8ec655;
+    border-bottom: none;
+    border-radius: 5px 5px 0 0;
+}
+
+.chrome-security-badge.is-neutral {
+    background: linear-gradient(180deg, #bfc8d0 0, #aab4be 100%);
+}
+
+.chrome-security-badge.is-neutral::before {
+    border-color: #bfc8d0;
+}
+
+.chrome-address-input {
+    flex: 1;
+    min-width: 0;
+    border: none;
+    background: transparent;
+    color: #24292e;
+    font-size: 12px;
+    outline: none;
+}
+
+.chrome-bookmarks-bar {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    min-height: 29px;
+    padding: 0 8px;
+    /* Slice 3/3 of the unified toolbar gradient — continues from the toolbar */
+    background: linear-gradient(180deg, #c9d6e1 0%, #c2ced9 100%);
+    border-top: none;
+}
+
+.chrome-bookmark {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 23px;
+    padding: 0 10px;
+    border: 1px solid transparent;
+    border-radius: 3px;
+    background: transparent;
+    color: #4d5863;
+    font-size: 12px;
+}
+
+.chrome-bookmark::before {
+    content: "";
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+    background: linear-gradient(180deg, #ffffff 0, #f7e26f 100%);
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.14);
+}
+
+.chrome-bookmark:hover {
+    border-color: #c4cbd2;
+    background: rgba(255, 255, 255, 0.58);
+}
+
+.chrome-content-area {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+    background: #ffffff;
+    overflow: hidden;
+}
+
+.chrome-page-host {
+    height: 100%;
+    overflow: auto;
+    background:
+        linear-gradient(180deg, rgba(214, 225, 235, 0.28) 0, rgba(214, 225, 235, 0) 220px),
+        #ffffff;
+}
+
+
+.chrome-page {
+    min-height: 100%;
+}
+
+.chrome-page.chrome-page--document {
+    padding: 28px 34px 40px;
+}
+
+.chrome-page.chrome-page--google {
+    display: flex;
+    flex-direction: column;
+    min-height: 100%;
+    padding: 18px 18px 24px;
+    background: #ffffff;
+}
+
+.chrome-page-toplinks {
+    display: flex;
+    justify-content: flex-end;
+    gap: 22px;
+    font-size: 12px;
+    color: #55606d;
+}
+
+.chrome-page-toplinks span {
+    cursor: default;
+}
+
+.chrome-google-center {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 22px;
+    padding-bottom: 48px;
+}
+
+.chrome-google-logo {
+    display: inline-flex;
+    align-items: flex-end;
+    gap: 2px;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: clamp(58px, 8vw, 92px);
+    line-height: 0.9;
+}
+
+.chrome-google-logo .blue {
+    color: #2f68d8;
+}
+
+.chrome-google-logo .red {
+    color: #db4437;
+}
+
+.chrome-google-logo .yellow {
+    color: #f4b400;
+}
+
+.chrome-google-logo .green {
+    color: #0f9d58;
+}
+
+.chrome-google-logo small {
+    margin-left: 6px;
+    margin-bottom: 10px;
+    color: #5d6670;
+    font-size: 0.22em;
+    letter-spacing: 0.06em;
+}
+
+.chrome-google-search {
+    display: flex;
+    align-items: center;
+    width: min(570px, 88%);
+    height: 32px;
+    padding: 0 10px;
+    border: 1px solid #cfd3d7;
+    box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.05);
+}
+
+.chrome-google-search input {
+    flex: 1;
+    border: none;
+    font-size: 15px;
+    outline: none;
+}
+
+.chrome-google-search span {
+    color: #8f959b;
+    font-size: 19px;
+}
+
+.chrome-google-actions {
+    display: flex;
+    gap: 12px;
+}
+
+.chrome-google-action {
+    padding: 7px 14px;
+    border: 1px solid #d0d5da;
+    border-radius: 2px;
+    background: linear-gradient(180deg, #fefefe 0, #f2f2f2 100%);
+    color: #444c55;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.chrome-google-footer {
+    display: flex;
+    justify-content: space-between;
+    padding: 0 16px;
+    color: #61707d;
+    font-size: 12px;
+}
+
+.chrome-document-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 26px;
+    color: #4c5b6a;
+}
+
+.chrome-document-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+}
+
+.chrome-document-brand-mark {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, #fef7d2 0, #fef7d2 16%, transparent 17%),
+        conic-gradient(from 30deg, #db4437 0 25%, #f4b400 25% 50%, #0f9d58 50% 75%, #4285f4 75% 100%);
+}
+
+.chrome-document-links {
+    display: flex;
+    gap: 26px;
+    font-size: 12px;
+}
+
+.chrome-document-links span {
+    position: relative;
+}
+
+.chrome-document-links span::after {
+    content: "";
+    position: absolute;
+    right: -11px;
+    top: 50%;
+    width: 0;
+    height: 0;
+    border-left: 3px solid transparent;
+    border-right: 3px solid transparent;
+    border-top: 4px solid #6b7784;
+    transform: translateY(-10%);
+}
+
+.chrome-hero {
+    width: min(860px, 100%);
+    margin: 0 auto;
+    padding: 22px 24px 34px;
+    background: #f6f6f6;
+    border: 1px solid #dfe4e9;
+}
+
+.chrome-hero h1 {
+    margin: 0 0 20px;
+    font-weight: 300;
+    font-size: clamp(30px, 4vw, 46px);
+    color: #252b31;
+}
+
+.chrome-modal-card {
+    width: min(560px, 92%);
+    margin: 0 auto;
+    padding: 28px 34px 40px;
+    background: rgba(255, 255, 255, 0.96);
+    border: 1px solid #d7dce1;
+    box-shadow: 0 18px 34px rgba(0, 0, 0, 0.12);
+}
+
+.chrome-legal-box {
+    height: 124px;
+    margin: 18px 0 12px;
+    padding: 14px;
+    overflow: auto;
+    border: 1px solid #ced4da;
+    background: linear-gradient(180deg, #fafafa 0, #f2f2f2 100%);
+    font-size: 12px;
+    line-height: 1.45;
+    color: #424b53;
+}
+
+.chrome-checklist {
+    display: grid;
+    gap: 10px;
+    margin-top: 16px;
+    color: #505b66;
+    font-size: 12px;
+}
+
+.chrome-primary-action {
+    margin-top: 18px;
+    margin-left: auto;
+    display: inline-flex;
+    padding: 7px 16px;
+    border: 1px solid #2a7ece;
+    border-radius: 2px;
+    background: linear-gradient(180deg, #48a8f0 0, #2382d9 100%);
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.chrome-columns {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 24px;
+    width: min(860px, 100%);
+    margin: 32px auto 0;
+    color: #5a6672;
+}
+
+.chrome-columns h2 {
+    margin: 0 0 10px;
+    font-size: 28px;
+    font-weight: 300;
+    color: #37414a;
+}
+
+.chrome-columns p {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.55;
+}
+
+.chrome-welcome-grid,
+.chrome-ntp-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 16px;
+    width: min(860px, 100%);
+}
+
+.chrome-panel {
+    padding: 18px;
+    border: 1px solid #d7dde4;
+    border-radius: 4px;
+    background: linear-gradient(180deg, #ffffff 0, #f7f9fb 100%);
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.chrome-panel h2,
+.chrome-panel h3 {
+    margin: 0 0 10px;
+    font-weight: 500;
+    color: #2e3943;
+}
+
+.chrome-panel p,
+.chrome-panel li {
+    margin: 0;
+    color: #56636f;
+    font-size: 13px;
+    line-height: 1.55;
+}
+
+.chrome-panel ul {
+    margin: 10px 0 0 18px;
+    padding: 0;
+}
+
+.chrome-link-button {
+    display: inline-flex;
+    margin-top: 12px;
+    padding: 6px 11px;
+    border: 1px solid #c4ccd4;
+    border-radius: 3px;
+    background: linear-gradient(180deg, #fefefe 0, #eff2f5 100%);
+    color: #41505f;
+    font-size: 12px;
+}
+
+.chrome-downloads-list {
+    display: grid;
+    gap: 12px;
+}
+
+.chrome-download-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 14px;
+    border: 1px solid #d9dfe5;
+    border-radius: 4px;
+    background: #ffffff;
+}
+
+.chrome-download-meta {
+    display: grid;
+    gap: 3px;
+}
+
+.chrome-download-meta strong {
+    font-size: 13px;
+    color: #2c3540;
+}
+
+.chrome-download-meta span {
+    font-size: 12px;
+    color: #63717f;
+}
+
+.chrome-download-state {
+    color: #1f7a2d;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.chrome-webview-host {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+}
+
+.chrome-tab-webview {
+    width: 100%;
+    height: 100%;
+    border: none;
+    display: none;
+}
+
+
+.chrome-status-pill {
+    position: absolute;
+    left: -1px;
+    bottom: -1px;
+    max-width: 240px;
+    box-sizing: border-box;
+    padding: 3px 4px 4px;
+    border-radius: 0 4px 0 0;
+    background: rgb(223, 223, 223);
+    color: rgb(111, 111, 111);
+    font-size: 12px;
+    line-height: 1.25;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.12);
+    opacity: 0;
+    transform: translateY(0px);
+    transition: opacity 120ms linear;
+    pointer-events: none;
+}
+
+.chrome-status-pill.is-visible {
+    opacity: 1;
+}
+
+.chrome-status-pill:not(.is-visible) {
+    transition-duration: 200ms;
+}
+
+.chrome-app-menu {
+    position: fixed;
+    right: 18px;
+    top: 64px;
+    width: 210px;
+    padding: 6px;
+    border: 1px solid #b4bcc4;
+    border-radius: 4px;
+    background: linear-gradient(180deg, #fafbfc 0, #eff3f6 100%);
+    box-shadow: 0 16px 32px rgba(0, 0, 0, 0.2);
+    z-index: 100;
+}
+
+.chrome-app-menu-item {
+    width: 100%;
+    padding: 8px 10px;
+    border: none;
+    border-radius: 3px;
+    background: transparent;
+    color: #41505f;
+    text-align: left;
+    font-size: 12px;
+}
+
+.chrome-app-menu-item:hover {
+    background: rgba(203, 218, 232, 0.7);
+}
+
+/* Chromium v43-inspired top chrome overrides. */
+.chrome-shell {
+    --chrome-toolbar-theme-fill: #dfdfdf;
+    --chrome-toolbar-theme-image: url("./assets/chrome43/theme_toolbar_default.png");
+    --chrome-toolbar-theme-offset-y: 35px;
+    --chrome-toolbar-border: #b8c1cb;
+    --chrome-tab-overlap: 26px;
+    --chrome-tab-render-width: 218px;
+    --chrome-tab-stroke: #97a3ae;
+    --chrome-tab-fill-top: #e4edf6;
+    --chrome-tab-fill-bottom: #ccd8e5;
+    --chrome-tab-active-top: #ffffff;
+    --chrome-tab-active-bottom: #edf1f5;
+    background: #eef2f5;
+}
+
+.chrome-frame {
+    background-color: var(--chrome-toolbar-theme-fill);
+    background-image: var(--chrome-toolbar-theme-image);
+    background-repeat: repeat-x;
+    background-position: left calc(var(--chrome-toolbar-theme-offset-y) * -1);
+    border-bottom-color: #bcc7d2;
+    box-shadow: none;
+}
+
+.chrome-shell.has-hosted-tabstrip .chrome-frame {
+    background-color: var(--chrome-toolbar-theme-fill);
+    background-image: var(--chrome-toolbar-theme-image);
+    background-repeat: repeat-x;
+    background-position: left calc(var(--chrome-toolbar-theme-offset-y) * -1);
+}
+
+.chrome-shell.has-hosted-tabstrip .chrome-toolbar {
+    margin-top: -1px;
+    padding-top: 4px;
+    border-top: none;
+}
+
+.chrome-toolbar {
+    gap: 0;
+    min-height: 35px;
+    padding: 4px 2px 5px 3px;
+    border-top-color: rgba(255, 255, 255, 0.55);
+    border-bottom-color: var(--chrome-toolbar-border);
+    background: transparent;
+}
+
+.chrome-nav-buttons {
+    gap: 0;
+}
+
+.chrome-nav-button,
+.chrome-menu-button,
+.chrome-star-button {
+    width: 28px;
+    height: 28px;
+    font-size: 16px;
+}
+
+.chrome-nav-button,
+.chrome-star-button {
+    border-radius: 14px;
+}
+
+.chrome-nav-button:hover:not(:disabled),
+.chrome-menu-button:hover,
+.chrome-star-button:hover {
+    border-color: #b5bec8;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0, rgba(227, 234, 240, 0.98) 100%);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.65);
+}
+
+.chrome-home-button {
+    margin-right: 3px;
+}
+
+.chrome-toolbar-actions {
+    flex: 0 0 auto;
+    width: 0;
+    min-height: 28px;
+}
+
+.chrome-menu-glyph {
+    display: grid;
+    gap: 2px;
+}
+
+.chrome-menu-glyph span {
+    display: block;
+    width: 12px;
+    height: 2px;
+    border-radius: 1px;
+    background: #5e6872;
+}
+
+.chrome-address-shell {
+    gap: 0;
+    height: 29px;
+    padding: 0 3px 0 5px;
+    border-color: #9da7b1;
+    border-radius: 2px;
+    background: linear-gradient(180deg, #fdfefe 0, #f3f4f5 100%);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.95),
+        inset 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+.chrome-address-shell:focus-within {
+    border-color: #6e9bc9;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.95),
+        inset 0 1px 2px rgba(0, 0, 0, 0.08),
+        0 0 0 1px rgba(133, 174, 217, 0.65);
+}
+
+.chrome-security-badge {
+    width: 12px;
+    height: 12px;
+    margin: 0 6px 0 1px;
+    background: linear-gradient(180deg, #8dc95b 0, #69a93d 100%);
+}
+
+.chrome-security-badge::before {
+    left: 2px;
+    width: 4px;
+    height: 5px;
+    border-color: #8dc95b;
+}
+
+.chrome-security-badge.is-neutral {
+    background: linear-gradient(180deg, #c4ccd4 0, #aeb7c1 100%);
+}
+
+.chrome-security-badge.is-neutral::before {
+    border-color: #c4ccd4;
+}
+
+.chrome-address-input {
+    color: #1f252b;
+    font: 13px Arial, sans-serif;
+}
+
+.chrome-bookmarks-bar {
+    gap: 0;
+    padding: 0 1px 2px;
+    margin-top: -1px;
+    background: transparent;
+    border-top: 1px solid rgba(255, 255, 255, 0.65);
+    border-bottom: 1px solid #cad2da;
+}
+
+.chrome-bookmark {
+    gap: 5px;
+    height: 24px;
+    padding: 0 8px 0 6px;
+    border-radius: 2px;
+}
+
+.chrome-bookmark::before {
+    width: 16px;
+    height: 16px;
+    background: linear-gradient(180deg, #fff3a2 0, #e1b739 100%);
+}
+
+.chrome-bookmark:hover {
+    border-color: #c6ced6;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.8) 0, rgba(233, 238, 243, 0.9) 100%);
+}
+
+.is-hidden {
+    display: none !important;
+}
+
+@media (max-width: 820px) {
+    .chrome-toolbar {
+        gap: 5px;
+        padding: 4px 5px 5px;
+    }
+
+    .chrome-bookmarks-bar {
+        overflow-x: auto;
+        white-space: nowrap;
+    }
+
+    .chrome-columns {
+        grid-template-columns: 1fr;
+    }
+
+    .chrome-document-header {
+        flex-direction: column;
+    }
+}
+
+.chrome-page--ntp {
+    min-height: 100%;
+    background: #fff;
+    padding: 0;
+}
+
+.chrome-ntp-shell {
+    --chrome-ntp-grid-width: min(688px, calc(100% - 16px));
+    --chrome-ntp-fakebox-wing-size: 0px;
+    --chrome-ntp-fakebox-subtract: 18px;
+    box-sizing: border-box;
+    min-height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0 0 56px;
+    font-family: Arial, sans-serif;
+}
+
+.chrome-ntp-logo {
+    width: 269px;
+    height: 95px;
+    margin-top: 157px;
+    margin-bottom: 24px;
+    background: url("./assets/chrome43/ntp_google_logo.png") no-repeat center / 269px 95px;
+}
+
+.chrome-ntp-shell.is-icon-ntp {
+    --chrome-ntp-grid-width: min(433px, calc(100% - 16px));
+    --chrome-ntp-fakebox-wing-size: 132px;
+    --chrome-ntp-fakebox-subtract: 26px;
+}
+
+.chrome-ntp-fakebox {
+    -webkit-transform: translate3d(0, 0, 0);
+    transition: transform 100ms linear, border-color 100ms linear;
+    width: calc(var(--chrome-ntp-grid-width) - var(--chrome-ntp-fakebox-subtract) + (var(--chrome-ntp-fakebox-wing-size) * 2));
+    max-width: calc(672px - var(--chrome-ntp-fakebox-subtract) + (var(--chrome-ntp-fakebox-wing-size) * 2));
+    height: 36px;
+    line-height: 36px;
+    border: 1px solid #b9b9b9;
+    border-top-color: #a0a0a0;
+    border-radius: 1px;
+    background: #fff;
+    position: relative;
+    cursor: text;
+    font-size: 18px;
+}
+
+.chrome-ntp-fakebox:hover {
+    border-color: #a9a9a9;
+    border-top-color: #909090;
+}
+
+.chrome-ntp-fakebox:focus-within,
+.chrome-ntp-fakebox.is-focused {
+    border-color: #4d90fe;
+}
+
+.chrome-ntp-fakebox input {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    box-sizing: border-box;
+    width: 100%;
+    height: 100%;
+    border: none;
+    background: transparent;
+    opacity: 0;
+    outline: none;
+    margin: 0;
+    padding: 0 9px 0 8px;
+}
+
+.chrome-ntp-fakebox-text {
+    position: absolute;
+    top: 0;
+    left: 9px;
+    right: 9px;
+    bottom: 0;
+    color: #bbb;
+    font: 16px Arial, sans-serif;
+    line-height: 36px;
+    margin-top: 1px;
+    overflow: hidden;
+    text-align: initial;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.chrome-ntp-fakebox-cursor {
+    position: absolute;
+    top: 5px;
+    bottom: 5px;
+    left: 9px;
+    width: 1px;
+    background: #333;
+    visibility: hidden;
+}
+
+.chrome-ntp-fakebox.is-focused .chrome-ntp-fakebox-text {
+    visibility: hidden;
+}
+
+.chrome-ntp-fakebox.is-drag-focused .chrome-ntp-fakebox-text {
+    visibility: hidden;
+}
+
+.chrome-ntp-fakebox.is-drag-focused .chrome-ntp-fakebox-cursor {
+    visibility: inherit;
+}
+
+.chrome-ntp-fakebox.is-focused .chrome-ntp-fakebox-cursor {
+    visibility: inherit;
+    animation: chrome-ntp-fakebox-blink 1.3s step-end infinite;
+}
+
+@keyframes chrome-ntp-fakebox-blink {
+    0% {
+        opacity: 1;
+    }
+
+    61.55% {
+        opacity: 0;
+    }
+}
+
+.chrome-ntp-shortcuts {
+    width: var(--chrome-ntp-grid-width);
+    margin-top: 64px;
+    font-size: 0;
+    text-align: left;
+}
+
+.chrome-ntp-shell.is-icon-ntp .chrome-ntp-shortcuts {
+    text-align: center;
+}
+
+.chrome-ntp-tile {
+    box-sizing: border-box;
+    position: relative;
+    display: inline-block;
+    vertical-align: top;
+    width: 156px;
+    height: 130px;
+    margin: 0 8px 16px;
+    padding: 0;
+    appearance: none;
+    border: 1px solid transparent;
+    border-radius: 2px;
+    background: rgb(242, 242, 242);
+    color: #323232;
+    overflow: hidden;
+    text-align: left;
+    font: 12px Arial, sans-serif;
+    line-height: 100%;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: transform 200ms, border 200ms, box-shadow 200ms, margin 200ms, opacity 200ms, width 200ms;
+}
+
+.chrome-ntp-tile.is-blacklisting {
+    transform: scale(0, 0);
+    transform-origin: 0 41px;
+    border: none;
+    margin-left: 0;
+    margin-right: 0;
+    opacity: 0;
+    width: 0;
+}
+
+.chrome-ntp-tile:hover {
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1), 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.chrome-ntp-tile:focus-visible {
+    outline: none;
+    filter: brightness(0.86);
+}
+
+.chrome-ntp-tile--icon {
+    border: none;
+    border-radius: 2px;
+    width: 84px;
+    height: 108px;
+    margin: 0 12px 4px;
+    background: transparent;
+    overflow: visible;
+    text-align: center;
+}
+
+.chrome-ntp-tile--icon:hover {
+    box-shadow: none;
+}
+
+.chrome-ntp-tile--icon:focus-visible {
+    filter: none;
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.chrome-ntp-tile-favicon {
+    position: absolute;
+    top: 7px;
+    left: 7px;
+    width: 16px;
+    height: 16px;
+}
+
+.chrome-ntp-tile-favicon-image {
+    width: 16px;
+    height: 16px;
+    object-fit: contain;
+}
+
+.chrome-ntp-tile-title {
+    -webkit-mask-image: linear-gradient(to right, #000, #000 100px, transparent);
+    mask-image: linear-gradient(to right, #000, #000 100px, transparent);
+    position: absolute;
+    top: 8px;
+    left: 31px;
+    width: 120px;
+    height: 15px;
+    line-height: 14px;
+    overflow: hidden;
+    text-overflow: clip;
+    color: #323232;
+}
+
+.chrome-ntp-tile--icon .chrome-ntp-tile-title {
+    -webkit-mask-image: none;
+    mask-image: none;
+    top: 76px;
+    left: 0;
+    width: 100%;
+    height: 28px;
+    line-height: 117%;
+    text-align: center;
+    white-space: normal;
+    word-wrap: break-word;
+}
+
+.chrome-ntp-tile-icon {
+    position: absolute;
+    top: 18px;
+    left: 50%;
+    width: 48px;
+    height: 48px;
+    margin-left: -24px;
+    background: transparent;
+}
+
+.chrome-ntp-tile-icon-image {
+    width: 48px;
+    height: 48px;
+    object-fit: contain;
+    border-radius: 4px;
+}
+
+.chrome-ntp-tile-thumb {
+    position: absolute;
+    left: 3px;
+    top: 31px;
+    width: 148px;
+    height: 94px;
+    overflow: hidden;
+    background: #fff;
+}
+
+.chrome-ntp-tile-preview {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    grid-template-rows: 15px 1fr;
+}
+
+.chrome-ntp-tile-preview-top {
+    background: rgba(255, 255, 255, 0.92);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.chrome-ntp-tile-preview-body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 12px;
+}
+
+.chrome-ntp-tile-preview-badge {
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+}
+
+.chrome-ntp-tile-preview-lines {
+    display: grid;
+    gap: 6px;
+    width: 62px;
+}
+
+.chrome-ntp-tile-preview-lines span {
+    display: block;
+    height: 6px;
+    border-radius: 3px;
+    background: rgba(255, 255, 255, 0.78);
+}
+
+.chrome-ntp-tile-preview-lines span:nth-child(2) {
+    width: 84%;
+}
+
+.chrome-ntp-tile-preview-lines span:nth-child(3) {
+    width: 68%;
+}
+
+.chrome-ntp-tile.is-google .chrome-ntp-tile-preview-body {
+    background: linear-gradient(180deg, #5f99f5 0, #3f78d5 100%);
+}
+
+.chrome-ntp-tile.is-google .chrome-ntp-tile-preview-badge {
+    background: #2f5fbb;
+}
+
+.chrome-ntp-tile.is-youtube .chrome-ntp-tile-preview-body {
+    background: linear-gradient(180deg, #ff5c6c 0, #d93043 100%);
+}
+
+.chrome-ntp-tile.is-youtube .chrome-ntp-tile-preview-badge {
+    background: #b5162a;
+}
+
+.chrome-ntp-tile.is-wikipedia .chrome-ntp-tile-preview-body {
+    background: linear-gradient(180deg, #8c939a 0, #636970 100%);
+}
+
+.chrome-ntp-tile.is-wikipedia .chrome-ntp-tile-preview-badge {
+    background: #4a4f55;
+}
+
+.chrome-ntp-tile.is-github .chrome-ntp-tile-preview-body {
+    background: linear-gradient(180deg, #4b5561 0, #2b3038 100%);
+}
+
+.chrome-ntp-tile.is-github .chrome-ntp-tile-preview-badge {
+    background: #1f2328;
+}
+
+.chrome-ntp-tile.is-chromium .chrome-ntp-tile-preview-body {
+    background: linear-gradient(180deg, #70bbff 0, #3b8de0 100%);
+}
+
+.chrome-ntp-tile.is-chromium .chrome-ntp-tile-preview-badge {
+    background: #236eb9;
+}
+
+.chrome-ntp-tile.is-gmail .chrome-ntp-tile-preview-body {
+    background: linear-gradient(180deg, #f48d86 0, #d6564e 100%);
+}
+
+.chrome-ntp-tile.is-gmail .chrome-ntp-tile-preview-badge {
+    background: #be3b34;
+}
+
+.chrome-ntp-tile.is-downloads .chrome-ntp-tile-preview-body {
+    background: linear-gradient(180deg, #86b8ff 0, #5a8fdf 100%);
+}
+
+.chrome-ntp-tile.is-downloads .chrome-ntp-tile-preview-badge {
+    background: #3468c9;
+}
+
+.chrome-ntp-tile.is-settings .chrome-ntp-tile-preview-body {
+    background: linear-gradient(180deg, #b5bac2 0, #8b9098 100%);
+}
+
+.chrome-ntp-tile.is-settings .chrome-ntp-tile-preview-badge {
+    background: #636971;
+}
+
+.chrome-ntp-tile-close {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 40px;
+    height: 30px;
+    opacity: 0;
+    transition: opacity 150ms;
+    pointer-events: auto;
+    background: linear-gradient(to left, rgb(242, 242, 242) 60%, transparent);
+}
+
+.chrome-ntp-tile--icon .chrome-ntp-tile-close {
+    top: 10px;
+    right: 10px;
+    width: 16px;
+    height: 16px;
+    background: none;
+}
+
+.chrome-ntp-tile-close::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 32px;
+    height: 32px;
+    background-color: rgba(90, 90, 90, 0.7);
+    -webkit-mask-image: url("./assets/chrome43/close_3_mask.png");
+    -webkit-mask-repeat: no-repeat;
+    -webkit-mask-position: 12px 10px;
+    -webkit-mask-size: 10px 10px;
+    mask-image: url("./assets/chrome43/close_3_mask.png");
+    mask-repeat: no-repeat;
+    mask-position: 12px 10px;
+    mask-size: 10px 10px;
+}
+
+.chrome-ntp-tile--icon .chrome-ntp-tile-close::after {
+    top: 0;
+    right: 0;
+    width: 16px;
+    height: 16px;
+    background-color: transparent;
+    background-image: url("./assets/chrome49/close_4_button.png");
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 16px 16px;
+    -webkit-mask: none;
+    mask: none;
+}
+
+.chrome-ntp-tile-close:hover::after {
+    background-color: rgb(90, 90, 90);
+}
+
+.chrome-ntp-tile-close:active::after {
+    background-color: rgb(66, 133, 244);
+}
+
+.chrome-ntp-tile--icon .chrome-ntp-tile-close:hover::after,
+.chrome-ntp-tile--icon .chrome-ntp-tile-close:active::after {
+    background-color: transparent;
+}
+
+.chrome-ntp-tile:hover .chrome-ntp-tile-close {
+    transition-delay: 500ms;
+    opacity: 1;
+}
+
+.chrome-ntp-tile--icon:hover .chrome-ntp-tile-close {
+    transition-delay: 800ms;
+}
+
+.chrome-webui {
+    min-height: 100%;
+    padding: 0 0 40px;
+    background: #fff;
+    color: #222;
+    font-family: Arial, sans-serif;
+}
+
+.chrome-webui-header {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    min-width: 400px;
+    padding: 16px 12px 0;
+}
+
+.chrome-webui-header h1 {
+    flex: 1;
+    margin: 0;
+    font-size: 1.5em;
+    font-weight: 400;
+    line-height: 1;
+}
+
+.chrome-webui-header--stacked {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.chrome-webui-subtitle {
+    color: #6b6f74;
+    font-size: 12px;
+}
+
+.chrome-webui-search {
+    flex: none;
+}
+
+.chrome-webui-search input {
+    width: 220px;
+    height: 28px;
+    padding: 4px 8px;
+    border: 1px solid #c8c8c8;
+    font: 13px Arial, sans-serif;
+}
+
+.chrome-downloads-summary {
+    display: flex;
+    gap: 18px;
+    align-items: center;
+    padding: 7px 10px;
+    margin-top: 12px;
+    background-color: rgb(235, 239, 249);
+    border-top: 1px solid rgb(156, 194, 239);
+    white-space: nowrap;
+}
+
+.chrome-downloads-summary-text {
+    flex: 1;
+    font-weight: 700;
+}
+
+.chrome-downloads-summary-actions {
+    display: flex;
+    gap: 12px;
+}
+
+.chrome-inline-link {
+    border: none;
+    background: transparent;
+    padding: 0;
+    color: #2f5bb7;
+    font: inherit;
+}
+
+.chrome-inline-link:disabled {
+    color: #999;
+}
+
+.chrome-downloads-pane {
+    max-width: 880px;
+    padding: 16px 10px 0;
+}
+
+.chrome-download-row {
+    display: grid;
+    grid-template-columns: 110px minmax(0, 1fr);
+    gap: 0 16px;
+    margin-top: 10px;
+}
+
+.chrome-download-date {
+    display: grid;
+    gap: 2px;
+    align-content: start;
+    color: #666;
+    font-size: 12px;
+}
+
+.chrome-download-period {
+    color: #111;
+}
+
+.chrome-download-card {
+    position: relative;
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    min-height: 48px;
+    padding: 4px 0 14px;
+    border-bottom: 1px solid #ececec;
+}
+
+.chrome-download-icon {
+    display: grid;
+    place-items: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+}
+
+.chrome-download-icon--exe {
+    background: linear-gradient(180deg, #4b8ef7 0, #3468c9 100%);
+}
+
+.chrome-download-icon--image {
+    background: linear-gradient(180deg, #49a66b 0, #2f7e4d 100%);
+}
+
+.chrome-download-icon--pdf {
+    background: linear-gradient(180deg, #d4544f 0, #b3302f 100%);
+}
+
+.chrome-download-content {
+    display: grid;
+    gap: 4px;
+}
+
+.chrome-download-name,
+.chrome-download-source {
+    border: none;
+    background: transparent;
+    padding: 0;
+    text-align: left;
+    font: inherit;
+}
+
+.chrome-download-name {
+    color: #111;
+    font-size: 14px;
+}
+
+.chrome-download-source {
+    color: rgb(85, 102, 221);
+    font-size: 12px;
+}
+
+.chrome-download-meta {
+    display: flex;
+    gap: 10px;
+    color: #777;
+    font-size: 12px;
+}
+
+.chrome-download-status {
+    color: #1a7f37;
+}
+
+.chrome-downloads-empty {
+    padding: 26px 4px 0;
+}
+
+.chrome-downloads-empty h2 {
+    margin: 0 0 8px;
+    font-size: 22px;
+    font-weight: 400;
+}
+
+.chrome-downloads-empty p {
+    margin: 0;
+    color: #666;
+    font-size: 13px;
+}
+
+.chrome-settings-layout {
+    display: block;
+}
+
+.chrome-settings-action,
+.chrome-settings-primary {
+    min-height: 2em;
+    padding: 6px 12px;
+    border: 1px solid hsla(0, 0%, 0%, 0.25);
+    border-radius: 2px;
+    background-image: linear-gradient(hsl(0, 0%, 93%), hsl(0, 0%, 93%) 38%, hsl(0, 0%, 87%));
+    color: hsl(0, 0%, 27%);
+    font-size: 12px;
+}
+
+.chrome-settings-primary {
+    border-color: #2b78d6;
+    background-image: linear-gradient(#4da3ff, #2e78d7);
+    color: #fff;
+}
+
+.chrome-webui--settings,
+.chrome-webui--history,
+.chrome-webui--extensions,
+.chrome-webui--about {
+    box-sizing: border-box;
+    width: min(738px, 100%);
+    min-width: min(600px, 100%);
+    padding: 0 24px 48px 0;
+    font: 13px "Segoe UI", Tahoma, sans-serif;
+    line-height: 1.4;
+}
+
+.chrome-settings-shell {
+    display: grid;
+    grid-template-columns: 155px minmax(0, 1fr);
+    align-items: start;
+    min-height: 100%;
+}
+
+.chrome-settings-sidebar {
+    position: sticky;
+    top: 0;
+    align-self: start;
+    max-height: 100vh;
+    padding-top: 20px;
+    overflow: hidden;
+}
+
+.chrome-settings-sidebar h1 {
+    margin: 21px 0 1em 23px;
+    color: rgb(92, 97, 102);
+    font-size: 23px;
+    font-weight: 400;
+}
+
+.chrome-settings-sidebar-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.chrome-settings-sidebar-list li {
+    border-left: 6px solid transparent;
+    padding-left: 18px;
+    user-select: none;
+}
+
+.chrome-settings-sidebar-list li:hover {
+    color: #777;
+}
+
+.chrome-settings-sidebar-list li.selected {
+    border-left-color: rgb(78, 87, 100);
+    cursor: default;
+    pointer-events: none;
+}
+
+.chrome-settings-sidebar-list button {
+    margin: 6px 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: #999;
+    font: inherit;
+    line-height: 1.417em;
+    cursor: pointer;
+}
+
+.chrome-settings-sidebar-list li.selected button {
+    color: rgb(70, 78, 90);
+}
+
+.chrome-settings-sidebar-list li:not([hidden])~li:not([hidden])~li:last-child {
+    margin-top: 27px;
+}
+
+.chrome-settings-page-header {
+    min-width: 400px;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background-image: linear-gradient(white, white 40%, rgba(255, 255, 255, 0.92));
+    padding: 0 0 14px;
+}
+
+.chrome-settings-page-header h1 {
+    margin: 0;
+    padding: 21px 0 13px 23px;
+    min-width: 400px;
+    font-size: 24px;
+    font-weight: 400;
+}
+
+.chrome-settings-page-header h1::after {
+    content: "";
+    display: block;
+    position: relative;
+    top: 13px;
+    height: 1px;
+    margin-right: 20px;
+    background-color: #eee;
+}
+
+.chrome-settings-page-body {
+    display: block;
+}
+
+.chrome-settings-section {
+    max-width: 600px;
+    padding: 0 0 20px 18px;
+}
+
+.chrome-settings-section h3 {
+    margin: 0 0 10px 0;
+    color: #222;
+    font-size: 16px;
+    font-weight: 400;
+}
+
+.chrome-settings-row,
+.chrome-settings-toggle,
+.chrome-settings-choice,
+.chrome-settings-subrow,
+.chrome-settings-label,
+.chrome-settings-state {
+    margin: 0.65em 0;
+    font-size: 13px;
+}
+
+.chrome-settings-radio-group {
+    display: grid;
+    gap: 2px;
+}
+
+.chrome-settings-radio-group--nested {
+    gap: 6px;
+}
+
+.chrome-settings-choice {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    color: #222;
+}
+
+.chrome-settings-choice>label {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+}
+
+.chrome-settings-choice--linked {
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.chrome-settings-choice--stacked {
+    display: grid;
+    gap: 6px;
+}
+
+.chrome-settings-toggle {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+}
+
+.chrome-settings-subrow {
+    margin-left: 24px;
+    color: #666;
+}
+
+.chrome-settings-subrow.is-hidden {
+    display: none;
+}
+
+.chrome-settings-muted-label {
+    color: #666;
+    margin-right: 8px;
+}
+
+.chrome-settings-link {
+    border: none;
+    background: transparent;
+    padding: 0;
+    color: #2f5bb7;
+    font: inherit;
+    cursor: pointer;
+}
+
+.chrome-settings-label {
+    color: #444;
+}
+
+.chrome-settings-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.chrome-settings-homepage-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-left: 24px;
+}
+
+.chrome-settings-homepage-row.is-disabled {
+    opacity: 0.55;
+}
+
+.chrome-settings-homepage-input {
+    width: 320px;
+    height: 28px;
+    padding: 4px 8px;
+    border: 1px solid #c8c8c8;
+    background: #fff;
+    color: #222;
+    font: inherit;
+}
+
+.chrome-settings-row--buttons {
+    gap: 8px;
+}
+
+.chrome-settings-row--search {
+    gap: 8px;
+}
+
+.chrome-settings-row--search select {
+    min-width: 240px;
+    height: 28px;
+    padding: 4px 8px;
+    border: 1px solid #c8c8c8;
+    background: #fff;
+    color: #222;
+    font: inherit;
+}
+
+.chrome-settings-default-browser {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding-top: 6px;
+}
+
+.chrome-settings-default-browser-icon {
+    width: 58px;
+    height: 55px;
+    flex: 0 0 auto;
+}
+
+.chrome-settings-default-browser-copy {
+    display: grid;
+    gap: 6px;
+}
+
+.chrome-settings-inline-value {
+    color: #222;
+}
+
+.chrome-settings-state {
+    color: #666;
+}
+
+.chrome-settings-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 14px;
+    color: #666;
+    font-size: 12px;
+}
+
+.chrome-search-engine-list {
+    display: grid;
+    gap: 8px;
+    margin-top: 14px;
+}
+
+.chrome-search-engine-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 10px 12px;
+    border: 1px solid #dadada;
+    border-radius: 2px;
+    background: #fff;
+    color: #222;
+}
+
+.chrome-search-engine-copy {
+    display: grid;
+    gap: 3px;
+}
+
+.chrome-search-engine-name {
+    color: #222;
+}
+
+.chrome-search-engine-url {
+    color: #777;
+    font-size: 12px;
+}
+
+.chrome-about-page {
+    min-width: 400px;
+    padding: 10px 0 48px 23px;
+}
+
+.chrome-about-hero {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.chrome-about-hero img {
+    width: 32px;
+    height: 32px;
+    flex: 0 0 32px;
+}
+
+.chrome-about-hero-copy {
+    display: grid;
+    gap: 3px;
+}
+
+.chrome-about-hero-copy h2 {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 400;
+}
+
+.chrome-about-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 16px;
+}
+
+.chrome-about-version {
+    display: grid;
+    gap: 10px;
+    margin-top: 30px;
+}
+
+.chrome-about-version-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.chrome-about-version-label {
+    min-width: 62px;
+    color: #666;
+}
+
+.chrome-about-version-copy {
+    color: #222;
+}
+
+.chrome-about-footer {
+    margin-top: 200px;
+    line-height: 1.8;
+    color: #444;
+}
+
+.chrome-about-footer-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.chrome-page--version {
+    background: #fff;
+    color: #000;
+    font-family: Arial, sans-serif;
+}
+
+.chrome-version-outer {
+    width: min(800px, calc(100% - 32px));
+    margin: 10px auto 0;
+}
+
+.chrome-version-logo {
+    float: right;
+    width: 180px;
+    margin-left: 40px;
+    text-align: right;
+}
+
+.chrome-version-logo img {
+    width: 132px;
+    height: auto;
+}
+
+.chrome-version-company,
+.chrome-version-copyright {
+    font-size: 11px;
+}
+
+.chrome-version-table {
+    width: 550px;
+    padding-top: 10px;
+}
+
+.chrome-version-label {
+    padding-right: 5px;
+    font-size: 0.9em;
+    font-weight: 700;
+    text-align: right;
+    vertical-align: top;
+    white-space: nowrap;
+}
+
+.chrome-version-label::after {
+    content: ":";
+}
+
+.chrome-version-value {
+    max-width: 430px;
+    padding-left: 5px;
+    vertical-align: bottom;
+    font-family: monospace;
+    word-break: break-word;
+}
+
+.chrome-page--history,
+.chrome-page--extensions,
+.chrome-page--about,
+.chrome-page--flags {
+    background: #fff;
+    color: rgb(48, 57, 66);
+}
+
+.chrome-history-page,
+.chrome-extensions-page {
+    min-width: 576px;
+    max-width: 738px;
+    padding: 0 24px 20px 0;
+}
+
+.chrome-history-header,
+.chrome-extensions-header {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    min-width: 400px;
+    padding: 21px 0 13px;
+    background-image: linear-gradient(white, white 40%, rgba(255, 255, 255, 0.92));
+}
+
+.chrome-history-header h1,
+.chrome-extensions-header h1 {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 400;
+}
+
+.chrome-history-header::after,
+.chrome-extensions-header::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 20px;
+    bottom: 0;
+    height: 1px;
+    background: #eee;
+}
+
+.chrome-history-search {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.chrome-history-search input[type='search'] {
+    width: 220px;
+    height: 28px;
+    padding: 4px 8px;
+    border: 1px solid #c8c8c8;
+    font: 13px Arial, sans-serif;
+}
+
+.chrome-history-search input[type='submit'],
+.chrome-history-editing-controls button,
+.chrome-extensions-dev-buttons button,
+.chrome-flags-section-header button,
+.chrome-flags-restart button {
+    min-height: 2em;
+    padding: 4px 10px;
+    border: 1px solid rgba(0, 0, 0, 0.25);
+    border-radius: 2px;
+    background-image: linear-gradient(rgb(241, 241, 241), rgb(241, 241, 241) 38%, rgb(230, 230, 230));
+    color: rgb(68, 68, 68);
+    font-size: 12px;
+}
+
+.chrome-history-topbar {
+    margin-top: 16px;
+    overflow: hidden;
+}
+
+.chrome-history-editing-controls {
+    float: left;
+    display: flex;
+    gap: 8px;
+    white-space: nowrap;
+}
+
+.chrome-history-results {
+    max-width: 718px;
+    margin-top: 16px;
+}
+
+.chrome-history-group {
+    margin-bottom: 20px;
+}
+
+.chrome-history-group h3 {
+    margin: 0 0 10px;
+    font-size: 16px;
+    font-weight: 400;
+    color: #222;
+}
+
+.chrome-history-entry {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 2em;
+    margin-bottom: 6px;
+    padding-bottom: 1px;
+    max-width: 100%;
+    overflow: hidden;
+}
+
+.chrome-history-entry input[type='checkbox'] {
+    margin: 0;
+}
+
+.chrome-history-gap {
+    width: 25px;
+}
+
+.chrome-history-entry-favicon {
+    width: 16px;
+    height: 16px;
+    object-fit: contain;
+}
+
+.chrome-history-entry-favicon--fallback {
+    display: inline-block;
+    background: url("./assets/chrome43/default_favicon.png") no-repeat center / 16px 16px;
+}
+
+.chrome-history-entry-main {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    min-width: 0;
+    flex: 1;
+}
+
+.chrome-history-entry-title {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: #15c;
+    font: inherit;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.chrome-history-entry-domain,
+.chrome-history-entry-time {
+    color: rgb(115, 119, 122);
+    font-size: 13px;
+}
+
+.chrome-history-entry-domain {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.chrome-history-empty {
+    margin: 64px 0;
+    text-align: center;
+}
+
+.chrome-history-empty h2 {
+    margin: 0 0 10px;
+    font-size: 22px;
+    font-weight: 400;
+}
+
+.chrome-history-empty p {
+    margin: 0;
+    color: #666;
+}
+
+.chrome-extensions-header-controls {
+    position: relative;
+    right: 0;
+}
+
+.chrome-extensions-page {
+    max-width: 738px;
+}
+
+.chrome-extensions-dev-toggle {
+    font-size: 13px;
+}
+
+.chrome-extensions-dev-controls {
+    height: 0;
+    overflow: hidden;
+}
+
+.chrome-extensions-dev-controls.is-visible {
+    height: auto;
+    border-bottom: 1px solid #eee;
+}
+
+.chrome-extensions-dev-buttons,
+.chrome-extensions-promo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 3px;
+}
+
+.chrome-extensions-dev-spacer {
+    flex: 1;
+}
+
+.chrome-extensions-promo {
+    border-top: 1px solid #eee;
+    font-size: 13px;
+}
+
+.chrome-extensions-promo img {
+    margin: -5px 0 -5px -5px;
+}
+
+.chrome-extensions-list {
+    margin-top: 23px;
+}
+
+.chrome-extension-card {
+    display: flex;
+    min-height: 48px;
+    margin: 23px 0;
+    background-repeat: no-repeat;
+}
+
+.chrome-extension-card.is-inactive .chrome-extension-title,
+.chrome-extension-card.is-inactive .chrome-extension-description,
+.chrome-extension-card.is-inactive .chrome-extension-version {
+    color: rgb(115, 119, 122);
+}
+
+.chrome-extension-icon {
+    width: 48px;
+    height: 48px;
+    flex: 0 0 48px;
+    border-radius: 10px;
+    background: linear-gradient(180deg, #73a9ff 0, #3e78dd 100%);
+    position: relative;
+}
+
+.chrome-extension-icon::after {
+    content: "";
+    position: absolute;
+    inset: 12px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.92);
+}
+
+.chrome-extension-icon--drive {
+    background: linear-gradient(180deg, #68c36d 0, #3c9c52 100%);
+}
+
+.chrome-extension-icon--tools {
+    background: linear-gradient(180deg, #9da5af 0, #6b737d 100%);
+}
+
+.chrome-extension-details {
+    flex: 1;
+    padding-left: 12px;
+}
+
+.chrome-extension-heading {
+    display: flex;
+    align-items: baseline;
+    gap: 7px;
+}
+
+.chrome-extension-title {
+    color: rgb(48, 57, 66);
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.chrome-extension-version,
+.chrome-extension-description {
+    color: rgb(115, 119, 122);
+    font-size: 13px;
+}
+
+.chrome-extension-description {
+    margin: 5px 0;
+}
+
+.chrome-extension-links {
+    margin-bottom: 0.5em;
+}
+
+.chrome-extension-links .chrome-inline-link {
+    margin-right: 1em;
+}
+
+.chrome-extension-controls {
+    color: rgb(115, 119, 122);
+    font-size: 13px;
+}
+
+.chrome-page--bookmarks {
+    background: #fff;
+    color: #000;
+}
+
+.chrome-bookmark-manager-page {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    min-width: 400px;
+    font: 13px Arial, sans-serif;
+    position: relative;
+}
+
+.chrome-bookmark-manager-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 400px;
+    padding: 0 12px;
+}
+
+.chrome-bookmark-manager-header h1 {
+    flex: 1;
+    margin: 15px 0;
+    font-size: 1.5em;
+    font-weight: 400;
+    line-height: 1;
+}
+
+.chrome-bookmark-manager-search {
+    flex: none;
+}
+
+.chrome-bookmark-manager-search input[type='search'] {
+    width: 220px;
+    height: 28px;
+    padding: 4px 8px;
+    border: 1px solid #c8c8c8;
+    font: inherit;
+}
+
+.chrome-bookmark-manager-main {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+    border-top: 1px solid rgb(156, 194, 239);
+}
+
+.chrome-bookmark-manager-pane,
+.chrome-bookmark-manager-splitter {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.chrome-bookmark-manager-pane--tree {
+    width: 200px;
+    min-width: 150px;
+    max-width: 50%;
+}
+
+.chrome-bookmark-manager-pane--list {
+    flex: 1;
+}
+
+.chrome-bookmark-manager-pane-header {
+    flex: none;
+    padding: 5px 10px;
+    background: rgb(235, 239, 249);
+    white-space: nowrap;
+}
+
+.chrome-bookmark-manager-pane-header--list {
+    padding-left: 0;
+}
+
+.chrome-bookmark-manager-header-button {
+    min-height: 24px;
+    padding: 2px 10px;
+    border: 1px solid #c4c9d6;
+    border-radius: 2px;
+    background: linear-gradient(#fbfbfb, #f0f0f0);
+    color: #444;
+    font: 12px Arial, sans-serif;
+}
+
+.chrome-bookmark-manager-splitter {
+    flex: 0 0 15px;
+    background: linear-gradient(to right, rgba(0, 0, 0, 0.08), rgba(0, 0, 0, 0.08)) center/1px 100% no-repeat;
+}
+
+.chrome-bookmark-manager-tree,
+.chrome-bookmark-manager-list {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+}
+
+.chrome-bookmark-manager-tree {
+    padding: 4px 0;
+}
+
+.chrome-bookmark-manager-tree-item {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    min-height: 26px;
+    padding: 0 8px 0 calc(8px + (var(--bookmark-tree-depth, 0) * 16px));
+    border: 0;
+    background: transparent;
+    color: #000;
+    text-align: left;
+    font: 13px Arial, sans-serif;
+}
+
+.chrome-bookmark-manager-tree-item:hover {
+    background: #f2f5fb;
+}
+
+.chrome-bookmark-manager-tree-item.is-selected {
+    background: rgb(220, 235, 255);
+}
+
+.chrome-bookmark-manager-tree-icon {
+    width: 16px;
+    height: 16px;
+    margin-right: 6px;
+    flex: 0 0 16px;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+}
+
+.chrome-bookmark-manager-tree-icon--root,
+.chrome-bookmark-manager-tree-icon--folder {
+    background-image: url("./assets/chrome43/bookmark_bar_folder.png");
+}
+
+.chrome-bookmark-manager-tree-icon--search {
+    background-size: 16px 16px;
+}
+
+.chrome-bookmark-manager-tree-label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.chrome-bookmark-manager-list-item {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+    min-height: 26px;
+    padding: 0 26px 0 7px;
+    border: 0;
+    background: transparent;
+    color: #000;
+    text-align: left;
+    font: 13px Arial, sans-serif;
+}
+
+.chrome-bookmark-manager-list-item:hover {
+    background: #f2f5fb;
+}
+
+.chrome-bookmark-manager-list-icon {
+    width: 16px;
+    height: 16px;
+    margin-right: 8px;
+    flex: 0 0 16px;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 16px 16px;
+}
+
+.chrome-bookmark-manager-list-icon.is-folder {
+    background-image: url("./assets/chrome43/bookmark_bar_folder.png");
+}
+
+.chrome-bookmark-manager-list-copy {
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    min-width: 0;
+    flex: 1;
+}
+
+.chrome-bookmark-manager-list-title,
+.chrome-bookmark-manager-list-meta {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.chrome-bookmark-manager-list-title {
+    min-width: 140px;
+    color: #000;
+}
+
+.chrome-bookmark-manager-list-meta {
+    color: hsl(0, 0%, 55%);
+    flex: 1;
+}
+
+.chrome-bookmark-manager-list-arrow {
+    position: absolute;
+    right: 10px;
+    width: 0;
+    height: 0;
+    border-top: 4px solid transparent;
+    border-bottom: 4px solid transparent;
+    border-left: 5px solid #7d7d7d;
+}
+
+.chrome-bookmark-manager-empty {
+    padding: 36px 24px;
+    color: #666;
+}
+
+.chrome-bookmark-manager-empty h2 {
+    margin: 0 0 8px;
+    color: #333;
+    font-size: 18px;
+    font-weight: 400;
+}
+
+.chrome-bookmark-manager-empty p {
+    margin: 0;
+}
+
+.chrome-bookmark-manager-page .chrome-bookmark-manager-context-menu {
+    position: absolute;
+    z-index: 6;
+    min-width: 198px;
+    padding: 4px 0;
+    border: 1px solid #b6b6b6;
+    background: #fff;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.75),
+        0 2px 7px rgba(0, 0, 0, 0.22);
+    color: #202428;
+    font: 12px "Segoe UI", Tahoma, sans-serif;
+}
+
+.chrome-bookmark-manager-page .chrome-bookmark-manager-context-menu[hidden] {
+    display: none;
+}
+
+.chrome-bookmark-manager-page .chrome-hosted-bookmark-context-item {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+    min-height: 24px;
+    padding: 0 12px 0 28px;
+    border: none;
+    background: transparent;
+    color: inherit;
+    text-align: left;
+    font: 12px "Segoe UI", Tahoma, sans-serif;
+    cursor: default;
+}
+
+.chrome-bookmark-manager-page .chrome-hosted-bookmark-context-item:hover,
+.chrome-bookmark-manager-page .chrome-hosted-bookmark-context-item:focus-visible {
+    background: linear-gradient(180deg, #eef6ff 0%, #dcecff 100%);
+    color: #000000;
+    outline: none;
+}
+
+.chrome-bookmark-manager-page .chrome-hosted-bookmark-context-item:disabled,
+.chrome-bookmark-manager-page .chrome-hosted-bookmark-context-item:disabled:hover {
+    background: transparent;
+    color: #8a939c;
+}
+
+.chrome-bookmark-manager-page .chrome-hosted-bookmark-context-check {
+    position: absolute;
+    left: 10px;
+    width: 10px;
+    height: 10px;
+}
+
+.chrome-bookmark-manager-page .chrome-hosted-bookmark-context-item.is-checkbox.is-checked .chrome-hosted-bookmark-context-check::before {
+    content: "";
+    position: absolute;
+    inset: 1px 1px 2px 1px;
+    border-left: 2px solid #4d5863;
+    border-bottom: 2px solid #4d5863;
+    transform: rotate(-45deg);
+}
+
+.chrome-bookmark-manager-page .chrome-hosted-bookmark-context-label {
+    flex: 1;
+    min-width: 0;
+}
+
+.chrome-bookmark-manager-page .chrome-hosted-bookmark-context-separator {
+    height: 1px;
+    margin: 4px 1px;
+    background: #dcdcdc;
+}
+
+.chrome-flags-page {
+    box-sizing: border-box;
+    min-width: 47em;
+    margin: 10px 10px 0;
+    padding-bottom: 75px;
+    font-family: Arial, sans-serif;
+}
+
+.chrome-flags-header {
+    box-sizing: border-box;
+    display: table;
+    min-height: 67px;
+    margin-bottom: 1.05em;
+    padding-left: 75px;
+    background: url("./assets/chrome43/flags_section.png") no-repeat left center;
+}
+
+.chrome-flags-title-spacer {
+    display: table-cell;
+    vertical-align: middle;
+}
+
+.chrome-flags-header h1 {
+    margin: 0;
+    font-size: 156%;
+    font-weight: 700;
+}
+
+.chrome-flags-blurb {
+    padding-bottom: 1.5em;
+    font-size: 120%;
+}
+
+.chrome-flags-warning {
+    color: red;
+    font-weight: 700;
+}
+
+.chrome-flags-section {
+    margin-bottom: 10px;
+}
+
+.chrome-flags-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 2px 5px 3px;
+    background: rgb(235, 239, 249);
+    border-top: 1px solid rgb(181, 199, 222);
+    font-size: 99%;
+}
+
+.chrome-flags-section-title {
+    font-weight: 700;
+    line-height: 200%;
+}
+
+.chrome-flags-list {
+    font-size: 88%;
+}
+
+.chrome-flag-row {
+    border-bottom: 1px solid #cdcdcd;
+    padding: 5px 5px 8px;
+}
+
+.chrome-flag-row.is-disabled,
+.chrome-flag-row.is-unsupported {
+    background: #f0f0f0;
+    color: #a0a0a0;
+}
+
+.chrome-flag-name {
+    font-weight: 700;
+    color: #000;
+}
+
+.chrome-flag-platforms {
+    display: inline;
+    margin-left: 8px;
+    color: inherit;
+}
+
+.chrome-flag-description {
+    margin-top: 4px;
+}
+
+.chrome-flag-permalink {
+    color: #a0a0a0;
+}
+
+.chrome-flag-actions {
+    margin-top: 6px;
+}
+
+.chrome-flags-restart {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+    height: 70px;
+    padding: 15px 15px 25px;
+    background: #fff;
+    border-top: 1px solid rgb(181, 199, 222);
+    box-sizing: border-box;
+}
+
+.chrome-flags-restart.is-visible {
+    display: flex;
+}
+
+@media (max-width: 720px) {
+    .chrome-download-row {
+        grid-template-columns: 1fr;
+    }
+
+    .chrome-download-date {
+        margin-bottom: 4px;
+    }
+
+    .chrome-ntp-shell {
+        padding: 0 12px 40px;
+    }
+
+    .chrome-ntp-logo {
+        margin-top: 96px;
+        width: min(269px, 84vw);
+        height: calc(min(269px, 84vw) * 95 / 269);
+        background-size: contain;
+    }
+
+    .chrome-ntp-fakebox {
+        width: min(326px, calc(100% - 18px));
+    }
+
+    .chrome-webui--settings,
+    .chrome-webui--history,
+    .chrome-webui--extensions,
+    .chrome-webui--about {
+        min-width: 0;
+        width: 100%;
+        padding-left: 0;
+        padding-right: 18px;
+    }
+
+    .chrome-settings-shell {
+        grid-template-columns: 1fr;
+    }
+
+    .chrome-settings-sidebar {
+        padding: 12px 18px 4px;
+    }
+
+    .chrome-settings-sidebar h1 {
+        margin: 12px 0 10px;
+    }
+
+    .chrome-settings-sidebar-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+
+    .chrome-settings-sidebar-list li,
+    .chrome-settings-sidebar-list li.selected {
+        border-left: 0;
+        padding-left: 0;
+        margin-top: 0;
+    }
+
+    .chrome-settings-page-header h1 {
+        min-width: 0;
+        padding-left: 18px;
+    }
+
+    .chrome-about-page {
+        min-width: 0;
+        padding-left: 18px;
+    }
+
+    .chrome-settings-section {
+        padding-left: 0;
+    }
+
+    .chrome-settings-section h3 {
+        margin-left: 0;
+    }
+
+    .chrome-settings-choice--linked,
+    .chrome-settings-row,
+    .chrome-settings-default-browser,
+    .chrome-history-header,
+    .chrome-extensions-header,
+    .chrome-flags-restart {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .chrome-history-page,
+    .chrome-extensions-page,
+    .chrome-flags-page,
+    .chrome-version-outer {
+        min-width: 0;
+        width: calc(100% - 20px);
+        margin-left: 10px;
+        margin-right: 10px;
+    }
+
+    .chrome-version-logo {
+        float: none;
+        width: auto;
+        margin: 0 0 18px;
+        text-align: left;
+    }
+
+    .chrome-version-table {
+        width: 100%;
+    }
+
+    .chrome-history-header,
+    .chrome-extensions-header {
+        min-width: 0;
+    }
+
+    .chrome-history-header::after,
+    .chrome-extensions-header::after {
+        right: 0;
+    }
+
+    .chrome-history-search {
+        width: 100%;
+    }
+
+    .chrome-history-search input[type='search'] {
+        width: 100%;
+    }
+
+    .chrome-history-entry {
+        align-items: flex-start;
+        flex-wrap: wrap;
+    }
+
+    .chrome-history-entry-time {
+        margin-left: 49px;
+    }
+
+    .chrome-extensions-dev-buttons,
+    .chrome-extensions-promo {
+        flex-wrap: wrap;
+    }
+
+    .chrome-flags-page {
+        min-width: 0;
+        padding-bottom: 90px;
+    }
+
+    .chrome-flags-header {
+        padding-left: 0;
+        background-position: right top;
+        background-size: 44px auto;
+    }
+}

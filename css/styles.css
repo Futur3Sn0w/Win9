@@ -3,11 +3,13 @@
     padding: 0;
     box-sizing: border-box;
     user-select: none;
+    -webkit-user-drag: none;
 }
 
 :root {
     --system-brightness-factor: 1;
     --ui-wall-text-contrast: #ffffff;
+    --system-font-size: 12px;
 }
 
 body {

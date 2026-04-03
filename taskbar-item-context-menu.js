@@ -11,11 +11,36 @@
     let currentAppId = null;
     let currentAppData = null;
     let hideTimeoutId = null;
+    let revealProgress = 1;
+    let gestureControlled = false;
     const TASKBAR_CONTEXT_ICON_SIZES = {
         close: [16, 20, 24, 32],
         pin: [16, 20, 24, 32, 40, 48, 64, 80, 96, 128, 256],
         unpin: [16, 20, 24, 32, 40, 48, 64, 80, 96, 128, 256]
     };
+
+    function clamp(value, min, max) {
+        return Math.min(Math.max(value, min), max);
+    }
+
+    function resetRevealStyles() {
+        revealProgress = 1;
+        gestureControlled = false;
+        $contextMenu.css({
+            opacity: '',
+            transform: ''
+        });
+        $contextMenu.removeClass('gesture-controlled');
+    }
+
+    function applyRevealProgress(progress) {
+        revealProgress = clamp(progress, 0, 1);
+
+        $contextMenu.css({
+            opacity: revealProgress,
+            transform: `translateY(${Math.round((1 - revealProgress) * 20)}px)`
+        });
+    }
 
     function getTaskbarContextIconPath(iconName, desiredSize = 16) {
         const sizes = TASKBAR_CONTEXT_ICON_SIZES[iconName];
@@ -34,8 +59,12 @@
     /**
      * Show the context menu for a taskbar item
      */
-    function showContextMenu(appId, $taskbarIcon) {
+    function showContextMenu(appId, $taskbarIcon, options = {}) {
         console.log('[CONTEXT MENU] showContextMenu called for:', appId);
+        const {
+            gestureControlled: shouldGestureControl = false,
+            revealProgress: initialRevealProgress = 1
+        } = options;
 
         // Close all taskbar popups and menus first (mutual exclusion)
         if (typeof window.closeAllTaskbarPopupsAndMenus === 'function') {
@@ -86,18 +115,24 @@
             });
         });
 
+        $contextMenu.removeClass('visible exiting gesture-controlled');
+        resetRevealStyles();
+        $contextMenu.css('display', 'flex');
+
         // Position menu centered above the taskbar icon
         positionMenu($taskbarIcon);
 
         // Disable pointer events on all iframes and webviews
         $('.classic-window-iframe, .modern-app-iframe, webview').css('pointer-events', 'none');
 
-        // Show menu with animation
-        $contextMenu.removeClass('exiting');
-        $contextMenu.css('display', 'flex');
-        // Trigger reflow to ensure the transition happens
-        $contextMenu[0].offsetHeight;
-        $contextMenu.addClass('visible');
+        if (shouldGestureControl) {
+            gestureControlled = true;
+            $contextMenu.addClass('gesture-controlled');
+            applyRevealProgress(initialRevealProgress);
+        } else {
+            $contextMenu[0].offsetHeight;
+            $contextMenu.addClass('visible');
+        }
 
         console.log('[CONTEXT MENU] Menu visible, buttons in DOM:', $contextMenu.find('.taskbar-item-context-menu-item').length);
     }
@@ -105,7 +140,11 @@
     /**
      * Hide the context menu
      */
-    function hideContextMenu() {
+    function hideContextMenu(options = {}) {
+        const { immediate = false } = typeof options === 'boolean'
+            ? { immediate: options }
+            : options;
+
         if (hideTimeoutId) {
             clearTimeout(hideTimeoutId);
             hideTimeoutId = null;
@@ -118,8 +157,19 @@
             return;
         }
 
+        if (immediate) {
+            $contextMenu.css('display', 'none');
+            $contextMenu.removeClass('visible exiting gesture-controlled');
+            resetRevealStyles();
+            $('.classic-window-iframe, .modern-app-iframe, webview').css('pointer-events', 'auto');
+            currentAppId = null;
+            currentAppData = null;
+            return;
+        }
+
         // Animate out
-        $contextMenu.removeClass('visible').addClass('exiting');
+        $contextMenu.removeClass('visible gesture-controlled').addClass('exiting');
+        resetRevealStyles();
 
         // Re-enable pointer events on all iframes and webviews
         $('.classic-window-iframe, .modern-app-iframe, webview').css('pointer-events', 'auto');
@@ -128,10 +178,38 @@
         hideTimeoutId = setTimeout(() => {
             $contextMenu.css('display', 'none');
             $contextMenu.removeClass('exiting');
+            resetRevealStyles();
             currentAppId = null;
             currentAppData = null;
             hideTimeoutId = null;
         }, 150); // Match the CSS transition duration
+    }
+
+    function setRevealProgress(progress) {
+        if ($contextMenu.css('display') === 'none' || !gestureControlled) {
+            return;
+        }
+
+        applyRevealProgress(progress);
+    }
+
+    function commitGestureMenu() {
+        if ($contextMenu.css('display') === 'none' || !gestureControlled) {
+            return;
+        }
+
+        gestureControlled = false;
+        $contextMenu.removeClass('gesture-controlled exiting');
+        $contextMenu.css({
+            opacity: '',
+            transform: ''
+        });
+        $contextMenu[0].offsetHeight;
+        $contextMenu.addClass('visible');
+    }
+
+    function isVisible() {
+        return $contextMenu.css('display') !== 'none';
     }
 
     /**
@@ -498,6 +576,9 @@
     window.TaskbarItemContextMenu = {
         showContextMenu,
         hideContextMenu,
-        loadPinnedTaskbarApps
+        loadPinnedTaskbarApps,
+        setRevealProgress,
+        commitGestureMenu,
+        isVisible
     };
 })();

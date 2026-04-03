@@ -37,7 +37,7 @@ body {
     align-items: center;
     justify-content: center;
     color: #808080;
-    font-size: 11px;
+    font-size: var(--system-font-size);
     transition: all 0.5s;
 }
 
@@ -93,7 +93,7 @@ body {
 }
 
 .cp-breadcrumbs {
-    font-size: 11px;
+    font-size: var(--system-font-size);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -141,7 +141,7 @@ body {
     height: 22px;
     padding: 5px 22px 5px 8px;
     border: 1px solid rgb(217, 217, 217);
-    font-size: 11px;
+    font-size: var(--system-font-size);
 }
 
 .cp-search-box input:focus {
@@ -149,9 +149,10 @@ body {
     border-color: #0078d7;
 }
 
-.cp-search-box .mif-search {
+.cp-search-box .mif-search,
+.cp-search-box .sui-search {
     position: absolute;
-    font-size: 11px;
+    font-size: var(--system-font-size);
     right: 8px;
     top: 50%;
     transform: translateY(-50%) rotateY(180deg);
@@ -304,7 +305,7 @@ body {
     margin-bottom: 2px;
     color: #0066cc;
     text-decoration: none;
-    font-size: 11px;
+    font-size: var(--system-font-size);
     border-radius: 2px;
     transition: background 0.1s;
 }
@@ -385,7 +386,7 @@ body {
 .cp-category-section-link {
     color: #0066cc;
     text-decoration: none;
-    font-size: 11px;
+    font-size: var(--system-font-size);
     line-height: 1.6;
     display: inline-block;
 }
@@ -440,7 +441,7 @@ body {
 
 .cp-applet-link-description {
     margin: 4px 0 0 0;
-    font-size: 11px;
+    font-size: var(--system-font-size);
     color: #666;
     line-height: 1.5;
 }
@@ -505,7 +506,7 @@ body {
 }
 
 .cp-icon-label {
-    font-size: 11px;
+    font-size: var(--system-font-size);
     color: #1e1e1e;
     word-wrap: break-word;
 }

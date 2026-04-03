@@ -7,38 +7,77 @@ let path = null;
 let fsPromises = null;
 let decodeTextBuffer = null;
 
-try {
-    ({ ipcRenderer } = require('electron'));
-    path = require('path');
-    fsPromises = require('fs').promises;
-    ({ decodeTextBuffer } = require('../../../components/explorer/file-openability.js'));
-} catch (error) {
+function resolveRequire() {
+    if (typeof require === 'function') {
+        return require;
+    }
+
     if (typeof window !== 'undefined' && typeof window.require === 'function') {
-        try {
-            ({ ipcRenderer } = window.require('electron'));
-            path = window.require('path');
-            fsPromises = window.require('fs').promises;
-            ({ decodeTextBuffer } = window.require('../../../components/explorer/file-openability.js'));
-        } catch (nestedError) {
-            console.warn('Electron APIs are not available in Notepad:', nestedError);
+        return window.require.bind(window);
+    }
+
+    try {
+        if (window?.parent && window.parent !== window && typeof window.parent.require === 'function') {
+            return window.parent.require.bind(window.parent);
         }
-    } else {
+    } catch (error) {
+        // ignore cross-origin or unavailable parent
+    }
+
+    try {
+        if (window?.top && window.top !== window && typeof window.top.require === 'function') {
+            return window.top.require.bind(window.top);
+        }
+    } catch (error) {
+        // ignore cross-origin or unavailable top
+    }
+
+    return null;
+}
+
+function resolveElectronIpc() {
+    const requireFn = resolveRequire();
+    if (!requireFn) {
+        return null;
+    }
+
+    try {
+        return requireFn('electron').ipcRenderer;
+    } catch (error) {
+        return null;
+    }
+}
+
+const requireFn = resolveRequire();
+if (requireFn) {
+    try {
+        ipcRenderer = requireFn('electron').ipcRenderer;
+        path = requireFn('path');
+        fsPromises = requireFn('fs').promises;
+        ({ decodeTextBuffer } = requireFn('../../../components/explorer/file-openability.js'));
+    } catch (error) {
         console.warn('Electron APIs are not available in Notepad:', error);
     }
+} else {
+    console.warn('Electron APIs are not available in Notepad: require function missing');
 }
 
 let getRegistry = null;
 let RegistryTypeConst = null;
 
-try {
-    const registryModule = require('../../../registry/registry.js');
-    ({ getRegistry, RegistryType: RegistryTypeConst } = registryModule);
-} catch (registryError) {
-    console.warn('Notepad: registry module unavailable:', registryError);
-    if (typeof window !== 'undefined' && window.RegistryAPI) {
-        getRegistry = window.RegistryAPI.getRegistry || null;
-        RegistryTypeConst = window.RegistryAPI.RegistryType || null;
+const registryRequireFn = requireFn;
+if (registryRequireFn) {
+    try {
+        const registryModule = registryRequireFn('../../../registry/registry.js');
+        ({ getRegistry, RegistryType: RegistryTypeConst } = registryModule);
+    } catch (registryError) {
+        console.warn('Notepad: registry module unavailable:', registryError);
     }
+}
+
+if (!getRegistry && typeof window !== 'undefined' && window.RegistryAPI) {
+    getRegistry = window.RegistryAPI.getRegistry || null;
+    RegistryTypeConst = window.RegistryAPI.RegistryType || null;
 }
 
 const NOTEPAD_REGISTRY_PATH = 'HKCU\\Software\\Microsoft\\Notepad';
@@ -92,36 +131,42 @@ class Notepad {
     }
 
     ensureHostAccess() {
-        const requireCandidates = [];
+        const requireFn = resolveRequire();
 
-        if (typeof require === 'function') {
-            requireCandidates.push(require);
+        if (!requireFn) {
+            return;
         }
 
-        if (typeof window !== 'undefined' && typeof window.require === 'function') {
-            requireCandidates.push(window.require.bind(window));
-        }
-
-        for (const requireFn of requireCandidates) {
-            try {
-                if (!this.ipcRenderer) {
-                    ({ ipcRenderer: this.ipcRenderer } = requireFn('electron'));
-                }
-
-                if (!this.path) {
-                    this.path = requireFn('path');
-                }
-
-                if (!this.fsPromises) {
-                    this.fsPromises = requireFn('fs').promises;
-                }
-
-                if (typeof this.decodeTextBuffer !== 'function') {
-                    ({ decodeTextBuffer: this.decodeTextBuffer } = requireFn('../../../components/explorer/file-openability.js'));
-                }
-            } catch (error) {
-                // Keep trying the next candidate.
+        try {
+            if (!this.ipcRenderer) {
+                ({ ipcRenderer: this.ipcRenderer } = requireFn('electron'));
             }
+        } catch (error) {
+            // no-op
+        }
+
+        try {
+            if (!this.path) {
+                this.path = requireFn('path');
+            }
+        } catch (error) {
+            // no-op
+        }
+
+        try {
+            if (!this.fsPromises) {
+                this.fsPromises = requireFn('fs').promises;
+            }
+        } catch (error) {
+            // no-op
+        }
+
+        try {
+            if (typeof this.decodeTextBuffer !== 'function') {
+                ({ decodeTextBuffer: this.decodeTextBuffer } = requireFn('../../../components/explorer/file-openability.js'));
+            }
+        } catch (error) {
+            // no-op
         }
     }
 

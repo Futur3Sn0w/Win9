@@ -124,7 +124,12 @@ function getWallTextContrastColor(color) {
         return '#ffffff';
     }
 
-    return getRelativeLuminance(channels.r, channels.g, channels.b) > 0.5
+    // Match the main theme contrast logic and prefer black on ties.
+    const luminance = getRelativeLuminance(channels.r, channels.g, channels.b);
+    const whiteContrast = 1.05 / (luminance + 0.05);
+    const blackContrast = (luminance + 0.05) / 0.05;
+
+    return blackContrast >= whiteContrast
         ? '#000000'
         : '#ffffff';
 }

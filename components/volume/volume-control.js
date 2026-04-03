@@ -452,15 +452,15 @@ async function getVolumeState() {
  */
 function getVolumeIcon(volume, muted) {
     if (muted) {
-        return 'mif-volume-mute2'; // Muted state
+        return 'sui-volume-mute2'; // Muted state
     } else if (volume === 0) {
-        return 'mif-volume-mute'; // Volume at 0
+        return 'sui-volume-mute'; // Volume at 0
     } else if (volume <= 33) {
-        return 'mif-volume-low';
+        return 'sui-volume-low';
     } else if (volume <= 66) {
-        return 'mif-volume-medium';
+        return 'sui-volume-medium';
     } else {
-        return 'mif-volume-high';
+        return 'sui-volume-high';
     }
 }
 

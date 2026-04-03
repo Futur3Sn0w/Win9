@@ -1,20 +1,32 @@
-const { app, BrowserWindow, ipcMain, dialog, globalShortcut, Menu } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, globalShortcut, Menu, shell } = require('electron');
 const Store = require('electron-store');
 const volumeControl = require('./components/volume/volume-control');
+const brightnessControl = require('./components/brightness/brightness-control');
 const networkControl = require('./components/network/network-control');
+const bluetoothControl = require('./components/bluetooth/bluetooth-control');
 const batteryControl = require('./components/battery/battery-control');
 const USBMonitor = require('./components/device_connectivity/usb-monitor');
 const { setupRecycleBinHandlers } = require('./components/recycle_bin');
 const { decodeTextBuffer } = require('./components/explorer/file-openability');
+const DevicePostureMonitor = require('./components/continuum/device-posture-monitor');
 const { spawn } = require('child_process');
 const crypto = require('crypto');
+const https = require('https');
 const fs = require('fs/promises');
+const fsSync = require('fs');
 const path = require('path');
 const { pathToFileURL } = require('url');
 const ffmpegInstaller = require('@ffmpeg-installer/ffmpeg');
 const { applyDefaultRegistryState } = require('./setup-registry');
 const { getHostUserProfile } = require('./components/shell/host-user-profile');
 const { getHostWallpaper } = require('./components/shell/host-wallpaper-source');
+const { registerGoogleWorkspaceHandlers } = require('./services/google-workspace');
+
+if (process.platform === 'win32' && typeof brightnessControl.prewarm === 'function') {
+  brightnessControl.prewarm().catch((error) => {
+    console.warn('Brightness control prewarm failed:', error);
+  });
+}
 
 // Initialize electron-store
 // This will be used as the new storage backend, replacing localStorage
@@ -24,6 +36,8 @@ const store = new Store({
   // For now, allow any data structure during migration
 });
 
+registerGoogleWorkspaceHandlers();
+
 // Keep a global reference of the window object
 let mainWindow;
 let installWindow;
@@ -31,11 +45,13 @@ let installWindow;
 let appWindows = new Map();
 // USB Monitor instance
 let usbMonitor = null;
+let devicePostureMonitor = null;
 let resetInProgress = false;
 
 const RESET_FLAG = '--reset-setup';
 const SKIP_SETUP_FLAG = '--skip-setup';
 const SKIP_BOOT_FLAG = '--skip-boot';
+const FULLSCREEN_FLAG = '--fullscreen';
 
 const MUSIC_FILE_EXTENSIONS = new Set([
   '.aac',
@@ -75,6 +91,7 @@ const musicTranscodeJobs = new Map();
 const resetModeEnabled = process.argv.includes(RESET_FLAG);
 const skipBootSequenceEnabled = process.argv.includes(SKIP_BOOT_FLAG);
 const skipSetupSequenceEnabled = skipBootSequenceEnabled || process.argv.includes(SKIP_SETUP_FLAG);
+const startFullscreenEnabled = process.argv.includes(FULLSCREEN_FLAG);
 
 function hideWindowMenuBar(window) {
   if (!window || window.isDestroyed()) {
@@ -92,6 +109,385 @@ function sendFullscreenState(window) {
 
   window.webContents.send('fullscreen-state-changed', window.isFullScreen());
 }
+
+function enterStartupFullscreen(window) {
+  if (!startFullscreenEnabled || !window || window.isDestroyed()) {
+    return;
+  }
+
+  setTimeout(() => {
+    if (!window || window.isDestroyed() || window.isFullScreen()) {
+      return;
+    }
+
+    window.setFullScreen(true);
+  }, 0);
+}
+
+const chromeBetaDownloadItems = new Map();
+let chromeBetaDownloadCounter = 0;
+
+function getChromeBetaDownloadId() {
+  chromeBetaDownloadCounter += 1;
+  return `chrome-beta-download-${Date.now()}-${chromeBetaDownloadCounter}`;
+}
+
+function getUniqueDownloadPath(basePath) {
+  if (!basePath) {
+    return '';
+  }
+
+  if (!fsSync.existsSync(basePath)) {
+    return basePath;
+  }
+
+  const parsed = path.parse(basePath);
+  let attempt = 1;
+  while (attempt < 1000) {
+    const nextPath = path.join(parsed.dir, `${parsed.name} (${attempt})${parsed.ext}`);
+    if (!fsSync.existsSync(nextPath)) {
+      return nextPath;
+    }
+    attempt += 1;
+  }
+
+  return path.join(parsed.dir, `${parsed.name}-${Date.now()}${parsed.ext}`);
+}
+
+function inferChromeBetaDownloadKind(fileName, mimeType = '') {
+  const extension = path.extname(fileName || '').toLowerCase();
+  const normalizedMime = String(mimeType || '').toLowerCase();
+
+  if (normalizedMime.startsWith('image/') || ['.png', '.jpg', '.jpeg', '.gif', '.bmp', '.webp', '.svg', '.ico'].includes(extension)) {
+    return 'image';
+  }
+
+  if (normalizedMime === 'application/pdf' || extension === '.pdf') {
+    return 'pdf';
+  }
+
+  if (['.exe', '.msi', '.bat', '.cmd'].includes(extension)) {
+    return 'exe';
+  }
+
+  if (['.zip', '.rar', '.7z', '.tar', '.gz'].includes(extension)) {
+    return 'archive';
+  }
+
+  if (['.doc', '.docx', '.txt', '.rtf', '.md'].includes(extension)) {
+    return 'document';
+  }
+
+  return 'file';
+}
+
+function getChromeBetaDownloadState(item, terminalState = '') {
+  if (terminalState === 'completed') {
+    return 'completed';
+  }
+
+  if (terminalState === 'cancelled') {
+    return 'cancelled';
+  }
+
+  if (terminalState === 'interrupted') {
+    return 'interrupted';
+  }
+
+  if (!item || typeof item.isPaused !== 'function') {
+    return 'in-progress';
+  }
+
+  return item.isPaused() ? 'paused' : 'in-progress';
+}
+
+function serializeChromeBetaDownloadItem(item, overrides = {}) {
+  if (!item) {
+    return null;
+  }
+
+  let address = '';
+  try {
+    address = typeof item.getURL === 'function' ? item.getURL() : '';
+  } catch (_error) {
+    address = '';
+  }
+
+  let domain = '';
+  try {
+    domain = address ? new URL(address).host : '';
+  } catch (_error) {
+    domain = '';
+  }
+
+  let filePath = '';
+  try {
+    filePath = typeof item.getSavePath === 'function' ? item.getSavePath() : '';
+  } catch (_error) {
+    filePath = '';
+  }
+
+  const name = typeof item.getFilename === 'function' ? item.getFilename() : (overrides.name || 'Download');
+  const mimeType = typeof item.getMimeType === 'function' ? item.getMimeType() : '';
+  const totalBytes = Math.max(0, Number(typeof item.getTotalBytes === 'function' ? item.getTotalBytes() : 0) || 0);
+  const receivedBytes = Math.max(0, Number(typeof item.getReceivedBytes === 'function' ? item.getReceivedBytes() : 0) || 0);
+  const rawPercent = Number(typeof item.getPercentComplete === 'function' ? item.getPercentComplete() : -1);
+  const percentComplete = Number.isFinite(rawPercent) && rawPercent >= 0
+    ? rawPercent
+    : (totalBytes > 0 ? Math.max(0, Math.min(100, Math.round((receivedBytes / totalBytes) * 100))) : -1);
+
+  return {
+    downloadId: overrides.downloadId || item.__chromeBetaDownloadId || '',
+    name,
+    address,
+    domain,
+    mimeType,
+    kind: overrides.kind || inferChromeBetaDownloadKind(name, mimeType),
+    totalBytes,
+    receivedBytes,
+    percentComplete,
+    filePath: overrides.filePath || filePath,
+    state: overrides.state || getChromeBetaDownloadState(item),
+    startedAt: overrides.startedAt || item.__chromeBetaStartedAt || new Date().toISOString()
+  };
+}
+
+function installChromeBetaDownloadHandler(downloadSession, appWindow) {
+  if (!downloadSession || downloadSession.__chromeBetaDownloadHandlerInstalled) {
+    return;
+  }
+
+  downloadSession.__chromeBetaDownloadHandlerInstalled = true;
+  downloadSession.on('will-download', (event, item, sourceWebContents) => {
+    if (!item || !sourceWebContents || sourceWebContents.isDestroyed()) {
+      return;
+    }
+
+    if (!appWindow || appWindow.isDestroyed()) {
+      return;
+    }
+
+    const downloadId = getChromeBetaDownloadId();
+    const fileName = typeof item.getFilename === 'function' ? item.getFilename() : 'download';
+    const defaultPath = getUniqueDownloadPath(path.join(app.getPath('downloads'), fileName));
+    item.__chromeBetaDownloadId = downloadId;
+    item.__chromeBetaStartedAt = new Date().toISOString();
+
+    if (defaultPath && typeof item.setSavePath === 'function') {
+      item.setSavePath(defaultPath);
+    }
+
+    chromeBetaDownloadItems.set(downloadId, item);
+    if (typeof item.pause === 'function') {
+      item.pause();
+    }
+
+    const emitDownloadEvent = (payload) => {
+      if (!appWindow || appWindow.isDestroyed()) {
+        return;
+      }
+
+      appWindow.webContents.send('chrome-beta:download-event', payload);
+    };
+
+    emitDownloadEvent({
+      type: 'prompt',
+      ...serializeChromeBetaDownloadItem(item, {
+        downloadId,
+        filePath: defaultPath,
+        state: 'pending'
+      })
+    });
+
+    item.on('updated', (_downloadEvent, state) => {
+      emitDownloadEvent({
+        type: 'updated',
+        ...serializeChromeBetaDownloadItem(item, {
+          downloadId,
+          filePath: defaultPath,
+          state: state === 'interrupted' ? 'interrupted' : getChromeBetaDownloadState(item)
+        })
+      });
+    });
+
+    item.on('done', (_downloadEvent, state) => {
+      emitDownloadEvent({
+        type: 'done',
+        ...serializeChromeBetaDownloadItem(item, {
+          downloadId,
+          filePath: defaultPath,
+          state: getChromeBetaDownloadState(item, state)
+        })
+      });
+    });
+  });
+}
+
+function setupChromeBetaPopupRouting(appWindow) {
+  if (!appWindow || appWindow.isDestroyed()) {
+    return;
+  }
+
+  const forwardPopupToTab = (details = {}) => {
+    if (!details.url) {
+      return { action: 'deny' };
+    }
+
+    appWindow.webContents.send('chrome-beta:open-url-in-tab', {
+      url: details.url,
+      disposition: details.disposition || 'new-window'
+    });
+
+    return { action: 'deny' };
+  };
+
+  if (typeof appWindow.webContents.setWindowOpenHandler === 'function') {
+    appWindow.webContents.setWindowOpenHandler((details) => forwardPopupToTab(details));
+  }
+
+  installChromeBetaDownloadHandler(appWindow.webContents.session, appWindow);
+
+  appWindow.webContents.on('did-attach-webview', (_event, guestWebContents) => {
+    if (!guestWebContents || guestWebContents.isDestroyed()) {
+      return;
+    }
+
+    installChromeBetaDownloadHandler(guestWebContents.session, appWindow);
+
+    if (typeof guestWebContents.setWindowOpenHandler === 'function') {
+      guestWebContents.setWindowOpenHandler((details) => forwardPopupToTab(details));
+    }
+
+    guestWebContents.on('new-window', (event, url, _frameName, disposition) => {
+      event.preventDefault();
+      forwardPopupToTab({ url, disposition });
+    });
+
+    guestWebContents.on('context-menu', (_event, params = {}) => {
+      if (!appWindow || appWindow.isDestroyed()) {
+        return;
+      }
+
+      appWindow.webContents.send('chrome-beta:webview-context-menu', {
+        x: Number.isFinite(params.x) ? params.x : 0,
+        y: Number.isFinite(params.y) ? params.y : 0,
+        pageURL: typeof params.pageURL === 'string' ? params.pageURL : '',
+        frameURL: typeof params.frameURL === 'string' ? params.frameURL : '',
+        linkURL: typeof params.linkURL === 'string' ? params.linkURL : '',
+        linkText: typeof params.linkText === 'string' ? params.linkText : '',
+        srcURL: typeof params.srcURL === 'string' ? params.srcURL : '',
+        selectionText: typeof params.selectionText === 'string' ? params.selectionText : '',
+        titleText: typeof params.titleText === 'string' ? params.titleText : '',
+        mediaType: typeof params.mediaType === 'string' ? params.mediaType : 'none',
+        isEditable: !!params.isEditable,
+        inputFieldType: typeof params.inputFieldType === 'string' ? params.inputFieldType : '',
+        misspelledWord: typeof params.misspelledWord === 'string' ? params.misspelledWord : '',
+        dictionarySuggestions: Array.isArray(params.dictionarySuggestions)
+          ? params.dictionarySuggestions.filter((item) => typeof item === 'string')
+          : [],
+        editFlags: {
+          canUndo: !!params.editFlags?.canUndo,
+          canRedo: !!params.editFlags?.canRedo,
+          canCut: !!params.editFlags?.canCut,
+          canCopy: !!params.editFlags?.canCopy,
+          canPaste: !!params.editFlags?.canPaste,
+          canDelete: !!params.editFlags?.canDelete,
+          canSelectAll: !!params.editFlags?.canSelectAll
+        }
+      });
+    });
+  });
+}
+
+ipcMain.handle('chrome-beta:download-action', async (_event, payload = {}) => {
+  const downloadId = typeof payload.downloadId === 'string' ? payload.downloadId : '';
+  const action = typeof payload.action === 'string' ? payload.action : '';
+  if (!action) {
+    return { success: false, error: 'Missing download action payload.' };
+  }
+
+  try {
+    switch (action) {
+      case 'open-downloads-folder':
+        await shell.openPath(app.getPath('downloads'));
+        return { success: true };
+    }
+
+    if (!downloadId) {
+      return { success: false, error: 'Download item not found.' };
+    }
+
+    const item = chromeBetaDownloadItems.get(downloadId);
+    if (!item) {
+      return { success: false, error: 'Download item not found.' };
+    }
+
+    const filePath = typeof item.getSavePath === 'function' ? item.getSavePath() : '';
+
+    switch (action) {
+      case 'accept-save':
+        if (typeof item.resume === 'function') {
+          item.resume();
+        }
+        return {
+          success: true,
+          download: serializeChromeBetaDownloadItem(item, {
+            downloadId,
+            state: 'in-progress'
+          })
+        };
+      case 'open':
+        if (!filePath) {
+          throw new Error('Download has no saved file path.');
+        }
+        await shell.openPath(filePath);
+        return { success: true };
+      case 'show-in-folder':
+        if (!filePath) {
+          throw new Error('Download has no saved file path.');
+        }
+        shell.showItemInFolder(filePath);
+        return { success: true };
+      case 'pause':
+        if (typeof item.pause === 'function') {
+          item.pause();
+        }
+        return {
+          success: true,
+          download: serializeChromeBetaDownloadItem(item, {
+            downloadId,
+            state: getChromeBetaDownloadState(item)
+          })
+        };
+      case 'resume':
+        if (typeof item.resume === 'function') {
+          item.resume();
+        }
+        return {
+          success: true,
+          download: serializeChromeBetaDownloadItem(item, {
+            downloadId,
+            state: getChromeBetaDownloadState(item)
+          })
+        };
+      case 'cancel':
+        if (typeof item.cancel === 'function') {
+          item.cancel();
+        }
+        return {
+          success: true,
+          download: serializeChromeBetaDownloadItem(item, {
+            downloadId,
+            state: 'cancelled'
+          })
+        };
+      default:
+        return { success: false, error: `Unsupported download action: ${action}` };
+    }
+  } catch (error) {
+    return { success: false, error: error?.message || 'Download action failed.' };
+  }
+});
 
 function clearSetupData() {
   store.delete('setup');
@@ -491,6 +887,35 @@ function createMainWindow(options = {}) {
   });
 
   hideWindowMenuBar(mainWindow);
+  setupChromeBetaPopupRouting(mainWindow);
+  if (!devicePostureMonitor) {
+    devicePostureMonitor = new DevicePostureMonitor(mainWindow);
+  } else {
+    devicePostureMonitor.attachWindow(mainWindow);
+  }
+  devicePostureMonitor.start().catch((error) => {
+    console.warn('[DevicePosture] Failed to start monitor:', error);
+  });
+  mainWindow.on('app-command', (_event, command) => {
+    if (!mainWindow || mainWindow.isDestroyed()) {
+      return;
+    }
+
+    if (command === 'browser-backward' || command === 'browser-forward') {
+      mainWindow.webContents.send('chrome-beta:navigate-history', { command });
+    }
+  });
+  mainWindow.on('swipe', (_event, direction) => {
+    if (!mainWindow || mainWindow.isDestroyed()) {
+      return;
+    }
+
+    if (direction === 'right' || direction === 'left') {
+      mainWindow.webContents.send('chrome-beta:navigate-history', {
+        command: direction === 'right' ? 'browser-backward' : 'browser-forward'
+      });
+    }
+  });
   mainWindow.on('enter-full-screen', () => {
     hideWindowMenuBar(mainWindow);
     sendFullscreenState(mainWindow);
@@ -515,6 +940,7 @@ function createMainWindow(options = {}) {
 
   // Show window when ready to avoid visual flash
   mainWindow.once('ready-to-show', () => {
+    mainWindow.once('show', () => enterStartupFullscreen(mainWindow));
     mainWindow.show();
 
     if (!usbMonitor) {
@@ -535,6 +961,9 @@ function createMainWindow(options = {}) {
 
   // Emitted when the window is closed
   mainWindow.on('closed', () => {
+    if (devicePostureMonitor) {
+      devicePostureMonitor.detachWindow();
+    }
     mainWindow = null;
     if (usbMonitor) {
       usbMonitor.mainWindow = null;
@@ -656,7 +1085,102 @@ if (!gotTheLock) {
         console.warn('[Setup] Failed to register global reset shortcut');
       }
     }
+
+    // Register globalShortcut fallbacks for Win+key combos
+    // These work even without AHK, but only for combos (not Win-alone)
+    const winShortcuts = {
+      'Super+C': 'c',
+      'Super+I': 'i',
+      'Super+R': 'r',
+      'Super+E': 'e',
+      'Super+L': 'l',
+      'Super+X': 'x',
+      'Super+Left': 'ArrowLeft',
+      'Super+Right': 'ArrowRight',
+      'Super+Up': 'ArrowUp',
+      'Super+Down': 'ArrowDown',
+      // Windows remaps bare Win to F24 through AHK, so bridge the arrow combos
+      // through a synthetic accelerator that globalShortcut can observe reliably.
+      'Control+Alt+Shift+Left': 'ArrowLeft',
+      'Control+Alt+Shift+Right': 'ArrowRight',
+      'Control+Alt+Shift+Up': 'ArrowUp',
+      'Control+Alt+Shift+Down': 'ArrowDown'
+    };
+
+    for (const [accelerator, key] of Object.entries(winShortcuts)) {
+      const registered = globalShortcut.register(accelerator, () => {
+        if (mainWindow && !mainWindow.isDestroyed() && mainWindow.isFocused()) {
+          mainWindow.webContents.send('win-shortcut', key);
+        }
+      });
+      if (!registered) {
+        console.warn(`[Keyboard] Failed to register global shortcut: ${accelerator}`);
+      }
+    }
+
+    // Auto-launch AHK key remapping script (remaps Win key to F24 when app is focused)
+    launchAhkKeymap();
   });
+}
+
+// ===== AHK Key Remapping =====
+let ahkProcess = null;
+
+function launchAhkKeymap() {
+  if (process.platform !== 'win32') return;
+
+  const scriptPath = path.join(__dirname, 'resources', 'helpers', 'win8-keymap.ahk');
+  if (!fsSync.existsSync(scriptPath)) {
+    console.warn('[Keyboard] AHK script not found:', scriptPath);
+    return;
+  }
+
+  // Search for AHK v2 in common locations
+  const ahkPaths = [
+    'C:\\Program Files\\AutoHotkey\\v2\\AutoHotkey64.exe',
+    'C:\\Program Files\\AutoHotkey\\v2\\AutoHotkey32.exe',
+    'C:\\Program Files\\AutoHotkey\\v2\\AutoHotkey.exe',
+    'C:\\Program Files\\AutoHotkey\\AutoHotkey.exe'
+  ];
+
+  const ahkExe = ahkPaths.find(p => fsSync.existsSync(p));
+  if (!ahkExe) {
+    console.warn('[Keyboard] AutoHotkey not found. Win key remapping unavailable.');
+    console.warn('[Keyboard] Install AHK v2 from https://www.autohotkey.com/ for full Win key support.');
+    return;
+  }
+
+  try {
+    ahkProcess = spawn(ahkExe, [scriptPath], {
+      detached: false,
+      stdio: 'ignore',
+      windowsHide: true
+    });
+
+    ahkProcess.on('error', (err) => {
+      console.error('[Keyboard] Failed to launch AHK:', err.message);
+      ahkProcess = null;
+    });
+
+    ahkProcess.on('exit', (code) => {
+      if (code !== null && code !== 0) {
+        console.warn('[Keyboard] AHK process exited with code:', code);
+      }
+      ahkProcess = null;
+    });
+
+    console.log('[Keyboard] AHK key remapping active (Win → F24 when focused)');
+  } catch (err) {
+    console.error('[Keyboard] Failed to launch AHK:', err.message);
+  }
+}
+
+function killAhkKeymap() {
+  if (ahkProcess && !ahkProcess.killed) {
+    ahkProcess.kill();
+    ahkProcess = null;
+    console.log('[Keyboard] AHK key remapping stopped');
+  }
 }
 
 // Quit when all windows are closed (including on macOS)
@@ -668,7 +1192,11 @@ app.on('window-all-closed', () => {
 });
 
 app.on('will-quit', () => {
+  killAhkKeymap();
   globalShortcut.unregisterAll();
+  if (devicePostureMonitor) {
+    devicePostureMonitor.stop();
+  }
 });
 
 // ===== Setup Flow IPC =====
@@ -800,6 +1328,61 @@ ipcMain.handle('shell:get-host-wallpaper', async (_event, options = {}) => {
   }
 });
 
+ipcMain.handle('device-posture:get-state', async () => {
+  if (!devicePostureMonitor) {
+    devicePostureMonitor = new DevicePostureMonitor(mainWindow || null);
+  }
+
+  return devicePostureMonitor.getState();
+});
+
+ipcMain.handle('chrome-beta:fetch-search-suggestions', async (_event, payload = {}) => {
+  const requestUrl = typeof payload?.url === 'string' ? payload.url : '';
+  if (!requestUrl) {
+    return null;
+  }
+
+  let parsedUrl;
+  try {
+    parsedUrl = new URL(requestUrl);
+  } catch (_error) {
+    return null;
+  }
+
+  const allowedHosts = new Set([
+    'www.google.com',
+    'suggestqueries.google.com',
+    'api.bing.com',
+    'duckduckgo.com'
+  ]);
+
+  if (parsedUrl.protocol !== 'https:' || !allowedHosts.has(parsedUrl.hostname)) {
+    return null;
+  }
+
+  return new Promise((resolve) => {
+    const request = https.get(parsedUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 ChromeBetaWin8/1.0',
+        'Accept': 'application/json, text/plain, */*'
+      }
+    }, (response) => {
+      let raw = '';
+      response.setEncoding('utf8');
+      response.on('data', (chunk) => {
+        raw += chunk;
+      });
+      response.on('end', () => resolve(raw || null));
+    });
+
+    request.setTimeout(1800, () => {
+      request.destroy();
+      resolve(null);
+    });
+    request.on('error', () => resolve(null));
+  });
+});
+
 // ===== Notepad File Operations =====
 
 async function readNotepadFile(filePath) {
@@ -889,10 +1472,56 @@ ipcMain.handle('notepad-save-file-as', async (event, { defaultPath, content }) =
   }
 });
 
+// --- Reader IPC handlers ---
+
+ipcMain.handle('reader-open-file', async () => {
+  try {
+    const { canceled, filePaths } = await dialog.showOpenDialog({
+      properties: ['openFile'],
+      filters: [
+        { name: 'Supported Documents', extensions: ['pdf', 'xps', 'oxps', 'tiff', 'tif'] },
+        { name: 'PDF Files', extensions: ['pdf'] },
+        { name: 'All Files', extensions: ['*'] }
+      ]
+    });
+
+    if (canceled || !filePaths || filePaths.length === 0) {
+      return { canceled: true };
+    }
+
+    return { canceled: false, filePath: filePaths[0] };
+  } catch (error) {
+    console.error('Failed to open file dialog for Reader:', error);
+    return { canceled: true, error: error.message };
+  }
+});
+
+ipcMain.handle('reader-read-file', async (event, filePath) => {
+  try {
+    const buffer = await fs.readFile(filePath);
+    return { success: true, data: buffer };
+  } catch (error) {
+    console.error('Failed to read file for Reader:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('reader-file-stat', async (event, filePath) => {
+  try {
+    const stats = await fs.stat(filePath);
+    return { success: true, size: stats.size };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
 // Clean up USB monitoring on quit
 app.on('before-quit', () => {
   if (usbMonitor) {
     usbMonitor.stop();
+  }
+  if (devicePostureMonitor) {
+    devicePostureMonitor.stop();
   }
 });
 
@@ -935,6 +1564,10 @@ ipcMain.handle('launch-app', async (event, appData) => {
     });
 
     hideWindowMenuBar(appWindow);
+
+    if (appData.id === 'chrome-beta') {
+      setupChromeBetaPopupRouting(appWindow);
+    }
 
     // Load the app content
     if (appData.path) {
@@ -1079,6 +1712,38 @@ ipcMain.handle('get-volume-icon', async (event, volume, muted) => {
   return volumeControl.getVolumeIcon(volume, muted);
 });
 
+// ===== BRIGHTNESS CONTROL =====
+
+// Get current brightness state
+ipcMain.handle('get-brightness-state', async () => {
+  try {
+    return await brightnessControl.getBrightnessState();
+  } catch (error) {
+    console.error('Error getting brightness state:', error);
+    return {
+      success: false,
+      supported: false,
+      brightness: brightnessControl.DEFAULT_BRIGHTNESS,
+      error: error.message || 'Failed to query brightness state.'
+    };
+  }
+});
+
+// Set brightness
+ipcMain.handle('set-brightness', async (_event, brightness) => {
+  try {
+    return await brightnessControl.setBrightness(brightness);
+  } catch (error) {
+    console.error('Error setting brightness:', error);
+    return {
+      success: false,
+      supported: false,
+      brightness: brightnessControl.clampBrightness(brightness),
+      error: error.message || 'Failed to set brightness.'
+    };
+  }
+});
+
 // ===== NETWORK CONTROL =====
 
 // Get current network status
@@ -1126,7 +1791,100 @@ ipcMain.handle('stop-network-monitoring', async () => {
   return { success: true };
 });
 
+// Scan for available Wi-Fi networks
+ipcMain.handle('scan-wifi-networks', async () => {
+  try {
+    const networks = await networkControl.scanAvailableNetworks();
+    return { success: true, networks };
+  } catch (error) {
+    console.error('Error scanning Wi-Fi networks:', error);
+    return { success: false, networks: [] };
+  }
+});
+
+ipcMain.handle('set-wifi-enabled', async (_event, enabled) => {
+  try {
+    const status = await networkControl.setWifiEnabled(enabled);
+    return { success: true, ...status };
+  } catch (error) {
+    console.error('Error setting Wi-Fi enabled state:', error);
+    return { success: false, error: error.message };
+  }
+});
+
 // ===== BATTERY CONTROL =====
+
+// ===== BLUETOOTH CONTROL =====
+
+ipcMain.handle('bluetooth:get-state', async () => {
+  try {
+    console.log('[Main] bluetooth:get-state invoked');
+    const state = await bluetoothControl.getState();
+    console.log('[Main] bluetooth:get-state resolved:', {
+      available: state.available,
+      enabled: state.enabled,
+      searching: state.searching
+    });
+    return { success: true, ...state };
+  } catch (error) {
+    console.error('Error getting Bluetooth state:', error);
+    return {
+      success: false,
+      error: error.message,
+      available: false,
+      enabled: false,
+      searching: false,
+      connectedDevices: [],
+      discoveredDevices: []
+    };
+  }
+});
+
+ipcMain.handle('bluetooth:set-enabled', async (_event, enabled) => {
+  try {
+    console.log('[Main] bluetooth:set-enabled invoked:', enabled);
+    const state = await bluetoothControl.setEnabled(enabled);
+    console.log('[Main] bluetooth:set-enabled resolved:', {
+      requestedEnabled: enabled,
+      available: state.available,
+      enabled: state.enabled
+    });
+    return { success: true, ...state };
+  } catch (error) {
+    console.error('Error setting Bluetooth enabled state:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('bluetooth:connect-device', async (_event, deviceId) => {
+  try {
+    const state = await bluetoothControl.connectDevice(deviceId);
+    return { success: true, ...state };
+  } catch (error) {
+    console.error('Error connecting Bluetooth device:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('bluetooth:disconnect-device', async (_event, deviceId) => {
+  try {
+    const state = await bluetoothControl.disconnectDevice(deviceId);
+    return { success: true, ...state };
+  } catch (error) {
+    console.error('Error disconnecting Bluetooth device:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('bluetooth:remove-device', async (_event, deviceId) => {
+  try {
+    const state = await bluetoothControl.removeDevice(deviceId);
+    return { success: true, ...state };
+  } catch (error) {
+    console.error('Error removing Bluetooth device:', error);
+    return { success: false, error: error.message };
+  }
+});
 
 // Get current battery status
 ipcMain.handle('get-battery-status', async () => {
@@ -1201,7 +1959,7 @@ ipcMain.handle('get-usb-devices', async () => {
   }
 
   try {
-    const devices = await usbMonitor.getDevices();
+    const devices = await usbMonitor.getDrives();
     return { success: true, devices };
   } catch (error) {
     console.error('Error getting USB devices:', error);
@@ -1225,43 +1983,27 @@ ipcMain.on('get-drive-list', async (event) => {
 
     console.log(`[MAIN] Found ${drives.length} total drives`);
 
-    let usbDriveCount = 0;
+    let trayEligibleDriveCount = 0;
 
-    // Send each mounted USB drive as a connection event
+    // Send each mounted external/removable drive as a connection event
     drives.forEach(drive => {
-      const hasMountpoints = drive.mountpoints && drive.mountpoints.length > 0;
+      const hasMountpoints = usbMonitor.hasMountpoints(drive);
+      const trayEligible = usbMonitor.isExternalRemovableDrive(drive);
 
-      console.log(`[MAIN] Drive: ${drive.device}, isUSB: ${drive.isUSB}, isSystem: ${drive.isSystem}, hasMountpoints: ${hasMountpoints}`);
+      console.log(`[MAIN] Drive: ${drive.device}, busType: ${drive.busType}, isUSB: ${drive.isUSB}, isRemovable: ${drive.isRemovable}, isSystem: ${drive.isSystem}, hasMountpoints: ${hasMountpoints}, trayEligible: ${trayEligible}`);
 
-      // Only send non-system USB drives that are mounted
-      if (drive.isUSB && !drive.isSystem && hasMountpoints) {
-        usbDriveCount++;
+      // Only send mounted drives that should appear in the tray.
+      if (trayEligible && hasMountpoints) {
+        trayEligibleDriveCount++;
         const devicePath = drive.device || drive.devicePath;
+        const payload = usbMonitor.buildDrivePayload(drive, true);
 
-        // Format the drive data similar to usb-monitor.js
-        const driveName = usbMonitor.getDriveName(drive);
-        const driveType = 'USB Drive';
-        const formattedSize = usbMonitor.formatSize(drive.size);
-        const driveIcon = usbMonitor.getDriveIcon(drive);
-
-        console.log(`[MAIN] Sending drive-connected for: ${driveName} (${devicePath})`);
-
-        event.sender.send('drive-connected', {
-          name: driveName,
-          description: `${driveType} • ${formattedSize}`,
-          icon: driveIcon,
-          device: devicePath,
-          devicePath: devicePath,
-          mountpoints: drive.mountpoints,
-          isUSB: drive.isUSB,
-          isRemovable: drive.isRemovable,
-          isSystem: drive.isSystem,
-          suppressNotification: true // Suppress notifications for manually requested drive list
-        });
+        console.log(`[MAIN] Sending drive-connected for: ${payload.name} (${devicePath})`);
+        event.sender.send('drive-connected', payload);
       }
     });
 
-    console.log(`[MAIN] Sent ${usbDriveCount} USB drives to renderer`);
+    console.log(`[MAIN] Sent ${trayEligibleDriveCount} tray-eligible drives to renderer`);
   } catch (error) {
     console.error('[MAIN] Error getting drive list:', error);
     console.error('[MAIN] Error stack:', error.stack);
@@ -1555,5 +2297,83 @@ ipcMain.handle('music-library-resolve-playback-source', async (_event, track = {
       success: false,
       error: error.message
     };
+  }
+});
+
+// ===== MARKET APP MANAGEMENT =====
+
+/**
+ * Get the local install path for a market app.
+ * Apps are installed to: <appData>/market-apps/<appId>/
+ */
+ipcMain.handle('market-get-app-path', async (_event, appId) => {
+  const appDir = path.join(app.getPath('userData'), 'market-apps', appId);
+  await fs.mkdir(appDir, { recursive: true });
+  return appDir;
+});
+
+/**
+ * Save a downloaded file for a market app.
+ * Receives the file data as a byte array and writes it to the app directory.
+ */
+ipcMain.handle('market-save-file', async (_event, { appId, filePath: relPath, data }) => {
+  try {
+    const appDir = path.join(app.getPath('userData'), 'market-apps', appId);
+    const fullPath = path.join(appDir, relPath);
+
+    // Prevent path traversal
+    const resolvedPath = path.resolve(fullPath);
+    const resolvedBase = path.resolve(appDir);
+    if (!resolvedPath.startsWith(resolvedBase)) {
+      throw new Error('Invalid file path: attempted path traversal');
+    }
+
+    // Ensure parent directory exists
+    await fs.mkdir(path.dirname(fullPath), { recursive: true });
+
+    // Write file
+    const buffer = Buffer.from(data);
+    await fs.writeFile(fullPath, buffer);
+
+    return { success: true, path: fullPath };
+  } catch (error) {
+    console.error('[Market] Failed to save file:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+/**
+ * Remove all files for an uninstalled market app.
+ */
+// ===== PHOTOS APP =====
+
+ipcMain.handle('photos-select-folder', async () => {
+  try {
+    const { canceled, filePaths } = await dialog.showOpenDialog({
+      properties: ['openDirectory'],
+      title: 'Choose a folder to add to your collection'
+    });
+    return { canceled: canceled || !filePaths || filePaths.length === 0, filePaths: filePaths || [] };
+  } catch (error) {
+    return { canceled: true, filePaths: [], error: error.message };
+  }
+});
+
+ipcMain.handle('market-remove-app', async (_event, appId) => {
+  try {
+    const appDir = path.join(app.getPath('userData'), 'market-apps', appId);
+
+    // Prevent path traversal
+    const resolvedPath = path.resolve(appDir);
+    const resolvedBase = path.resolve(path.join(app.getPath('userData'), 'market-apps'));
+    if (!resolvedPath.startsWith(resolvedBase)) {
+      throw new Error('Invalid app ID: attempted path traversal');
+    }
+
+    await fs.rm(appDir, { recursive: true, force: true });
+    return { success: true };
+  } catch (error) {
+    console.error('[Market] Failed to remove app files:', error);
+    return { success: false, error: error.message };
   }
 });

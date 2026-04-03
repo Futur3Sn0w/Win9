@@ -47,6 +47,7 @@ const START_MENU_PATH = 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Exp
 const START_MENU_PINS_VALUE = 'StartMenuPinnedApps';
 const START_MENU_RECENTS_VALUE = 'StartMenuRecentApps';
 const START_MENU_TILE_ROWS_VALUE = 'StartMenuTileRows';
+const START_MENU_FULLSCREEN_VALUE = 'StartMenuFullscreen';
 
 function getRegistrySafe() {
   if (typeof getRegistryFn !== 'function') {
@@ -228,6 +229,42 @@ function saveStartMenuTileRows(rowCount) {
   );
 
   return savedValue;
+}
+
+function loadStartMenuFullscreenPreference() {
+  const registry = getRegistrySafe();
+  if (!registry) {
+    return null;
+  }
+
+  const value = registry.getValue(START_MENU_PATH, START_MENU_FULLSCREEN_VALUE, null);
+  if (value == null) {
+    return null;
+  }
+
+  return Number(value) === 1;
+}
+
+function saveStartMenuFullscreenPreference(enabled) {
+  const registry = getRegistrySafe();
+  if (!registry) {
+    return null;
+  }
+
+  if (enabled == null) {
+    registry.deleteValue(START_MENU_PATH, START_MENU_FULLSCREEN_VALUE);
+    return null;
+  }
+
+  const normalized = enabled ? 1 : 0;
+  registry.setValue(
+    START_MENU_PATH,
+    START_MENU_FULLSCREEN_VALUE,
+    normalized,
+    REG_DWORD
+  );
+
+  return normalized === 1;
 }
 
 function loadTileSizes() {
@@ -450,6 +487,8 @@ const api = {
   saveStartMenuRecents,
   loadStartMenuTileRows,
   saveStartMenuTileRows,
+  loadStartMenuFullscreenPreference,
+  saveStartMenuFullscreenPreference,
   loadTaskbarOrder,
   saveTaskbarOrder,
   loadTrayOrder,

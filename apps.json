@@ -8,6 +8,7 @@
       "pinned": true,
       "category": "system",
       "showInStart": true,
+      "showInSearch": false,
       "type": "meta",
       "tileOptions": {
         "allowWide": true,
@@ -27,7 +28,7 @@
     {
       "id": "search",
       "name": "Search",
-      "icon": "mif-search",
+      "icon": "sui-search",
       "color": "purple",
       "size": "normal",
       "pinned": false,
@@ -35,6 +36,15 @@
       "type": "modern",
       "path": "apps/modern/search/index.html",
       "showInStart": false,
+      "showInSearch": false,
+      "logoImages": {
+        "54": "apps/modern/search/resources/logo.scale-180.png",
+        "256": "apps/modern/search/resources/logo.scale-853.png"
+      },
+      "splashImages": {
+        "54": "apps/modern/search/resources/logo.scale-180.png",
+        "256": "apps/modern/search/resources/logo.scale-853.png"
+      },
       "logoImage": "apps/modern/search/resources/logo.png",
       "splashImage": "apps/modern/search/resources/logo.scale-180.png",
       "runCommands": [
@@ -44,12 +54,13 @@
     {
       "id": "taskbar-properties",
       "name": "Taskbar and Start Menu properties",
-      "icon": "mif-wrench",
+      "icon": "sui-tools",
       "color": "blue",
       "size": "normal",
       "pinned": false,
       "category": "system",
       "type": "meta-classic",
+      "folder": "Windows System",
       "path": "apps/meta-classic/taskbar/taskbar.cpl.html",
       "iconImages": {
         "16": "resources/images/icons/control panel applets/Taskbar Properties/16.png",
@@ -76,12 +87,13 @@
     {
       "id": "run",
       "name": "Run",
-      "icon": "mif-play",
+      "icon": "sui-play",
       "color": "blue",
       "size": "small",
       "pinned": false,
       "category": "system",
       "type": "meta-classic",
+      "folder": "Windows System",
       "path": "apps/meta-classic/run/run.exe.html",
       "iconImages": {
         "16": "apps/meta-classic/run/icons/16.png",
@@ -111,12 +123,12 @@
     {
       "id": "winver",
       "name": "About Windows",
-      "icon": "mif-windows",
       "color": "blue",
       "size": "small",
       "pinned": false,
       "category": "system",
       "type": "meta-classic",
+      "folder": "Windows System",
       "path": "apps/meta-classic/winver/winver.exe.html",
       "showInStart": false,
       "windowOptions": {
@@ -137,21 +149,23 @@
     {
       "id": "control-panel",
       "name": "Control Panel",
-      "icon": "mif-cogs",
+      "icon": "sui-settings",
       "color": "blue",
       "size": "normal",
       "pinned": true,
       "category": "system",
       "type": "classic",
+      "folder": "Windows System",
       "path": "apps/classic/control/control-panel.html",
       "iconImages": {
         "16": "apps/classic/control/icons/16.png",
         "20": "apps/classic/control/icons/20.png",
         "24": "apps/classic/control/icons/24.png",
         "32": "apps/classic/control/icons/32.png",
-        "40": "apps/classic/control/icons/40.png",
-        "48": "apps/classic/control/icons/48.png",
-        "64": "apps/classic/control/icons/64.png",
+        "40": "apps/classic/control/icons/128.png",
+        "48": "apps/classic/control/icons/128.png",
+        "64": "apps/classic/control/icons/128.png",
+        "128": "apps/classic/control/icons/128.png",
         "256": "apps/classic/control/icons/256.png"
       },
       "showInStart": true,
@@ -173,7 +187,7 @@
     {
       "id": "personalization",
       "name": "Personalization",
-      "icon": "mif-paint",
+      "icon": "sui-pencil",
       "color": "teal",
       "size": "normal",
       "pinned": false,
@@ -198,12 +212,13 @@
     {
       "id": "test-window",
       "name": "Debug App",
-      "icon": "mif-bug",
+      "icon": "sui-dev-tools",
       "color": "green",
       "size": "normal",
       "pinned": false,
       "category": "system",
       "type": "classic",
+      "folder": "Windows Accessories/System Tools",
       "path": "apps/classic/test-window/index.html",
       "showInStart": true,
       "windowOptions": {
@@ -217,9 +232,31 @@
       }
     },
     {
+      "id": "xbox-music",
+      "name": "Music",
+      "color": "red",
+      "size": "wide",
+      "pinned": true,
+      "category": "music",
+      "type": "modern",
+      "path": "apps/modern/xbox-music/index.html",
+      "loadDirect": true,
+      "logoImage": "apps/modern/xbox-music/resources/logo.png",
+      "splashImage": "apps/modern/xbox-music/resources/splash.png",
+      "tileOptions": {
+        "allowWide": true,
+        "allowLarge": true
+      },
+      "runCommands": [
+        "music",
+        "xboxmusic",
+        "zunemusic"
+      ]
+    },
+    {
       "id": "msstore",
-      "name": "Store",
-      "color": "green",
+      "name": "Store (Beta)",
+      "color": "grey",
       "size": "wide",
       "pinned": true,
       "category": "system",
@@ -243,6 +280,46 @@
       "loadDirect": true
     },
     {
+      "id": "chrome-beta",
+      "name": "Google Chrome Beta",
+      "color": "grey",
+      "size": "normal",
+      "pinned": false,
+      "pinnedToTaskbar": false,
+      "category": "internet",
+      "type": "classic",
+      "path": "apps/classic/chrome-beta/chrome.html",
+      "allowMultipleWindows": true,
+      "iconImages": {
+        "16": "apps/classic/chrome-beta/resources/icons/16.png",
+        "24": "apps/classic/chrome-beta/resources/icons/24.png",
+        "32": "apps/classic/chrome-beta/resources/icons/32.png",
+        "40": "apps/classic/chrome-beta/resources/icons/48.png",
+        "48": "apps/classic/chrome-beta/resources/icons/48.png",
+        "256": "apps/classic/chrome-beta/resources/icons/256.png"
+      },
+      "showInStart": true,
+      "windowOptions": {
+        "width": 1120,
+        "height": 760,
+        "resizable": true,
+        "minimizable": true,
+        "maximizable": true,
+        "alwaysOnTop": false,
+        "showInTaskbar": true,
+        "showIcon": false,
+        "showTitle": false,
+        "hostStylesheet": "apps/classic/chrome-beta/chrome-host.css",
+        "customTitlebarStyle": "chrome",
+        "customTitlebarInteractiveSelector": ".chrome-hosted-tabstrip .chrome-tab, .chrome-hosted-tabstrip .chrome-tab *, .chrome-hosted-tabstrip .chrome-new-tab-button, .chrome-hosted-tabstrip .chrome-new-tab-button *"
+      },
+      "runCommands": [
+        "chrome beta",
+        "chrome-beta",
+        "google chrome beta"
+      ]
+    },
+    {
       "id": "calculator-modern",
       "name": "Calculator",
       "color": "green",
@@ -256,52 +333,113 @@
       "variant": "modern"
     },
     {
-      "id": "music",
-      "name": "Music",
-      "color": "red",
-      "size": "wide",
-      "pinned": true,
-      "category": "music",
-      "type": "modern",
-      "path": "apps/modern/music/index.html",
-      "loadDirect": true,
-      "showInStart": true,
-      "tileOptions": {
-        "allowWide": true,
-        "allowLarge": true
-      }
-    },
-    {
-      "id": "youtube",
-      "name": "YouTube",
-      "icon": "mif-play",
+      "id": "alarms",
+      "name": "Alarms",
       "color": "red",
       "size": "normal",
       "pinned": false,
-      "category": "video",
+      "category": "accessories",
       "type": "modern",
-      "path": "apps/modern/youtube/index.html",
-      "loadDirect": true,
-      "logoImage": "apps/modern/youtube/resources/logo.png",
-      "splashImage": "apps/modern/youtube/resources/logo.png",
+      "path": "apps/modern/alarms/index.html",
+      "showInStart": true,
+      "logoImage": "apps/modern/alarms/resources/logo.png",
       "windowOptions": {
         "minimizable": true,
         "showIcon": true
       },
       "tileOptions": {
+        "allowWide": true
+      },
+      "runCommands": [
+        "alarms",
+        "alarm",
+        "clock"
+      ]
+    },
+    {
+      "id": "mail",
+      "name": "Mail",
+      "color": "sky",
+      "size": "wide",
+      "pinned": true,
+      "category": "internet",
+      "type": "modern",
+      "path": "apps/modern/mail/index.html",
+      "loadDirect": true,
+      "showInStart": true,
+      "splashImage": "apps/modern/mail/resources/splash.png",
+      "tileOptions": {
         "allowWide": true,
         "allowLarge": true
-      }
+      },
+      "runCommands": [
+        "mail",
+        "windows mail",
+        "microsoft.windowslive.mail",
+        "ms-mail",
+        "mailto"
+      ]
+    },
+    {
+      "id": "calendar",
+      "name": "Calendar",
+      "color": "purple",
+      "size": "wide",
+      "pinned": true,
+      "category": "accessories",
+      "type": "modern",
+      "path": "apps/modern/calendar/index.html",
+      "loadDirect": true,
+      "showInStart": true,
+      "splashImage": "apps/modern/calendar/resources/splash.png",
+      "tileOptions": {
+        "allowWide": true,
+        "allowLarge": true
+      },
+      "runCommands": [
+        "calendar",
+        "windows calendar",
+        "microsoft.windowslive.calendar",
+        "wlcalendar"
+      ]
+    },
+    {
+      "id": "reader",
+      "name": "Reader",
+      "color": "red",
+      "size": "normal",
+      "pinned": true,
+      "category": "accessories",
+      "type": "modern",
+      "path": "apps/modern/reader/index.html",
+      "loadDirect": true,
+      "logoImage": "apps/modern/reader/resources/logo.png",
+      "showInStart": true,
+      "fileAssociations": [
+        ".pdf"
+      ],
+      "compatibleFileAssociations": [
+        ".xps",
+        ".oxps",
+        ".tiff",
+        ".tif"
+      ],
+      "runCommands": [
+        "reader",
+        "glcnd",
+        "glcnd.exe"
+      ]
     },
     {
       "id": "notepad",
       "name": "Notepad",
-      "icon": "mif-file-text",
+      "icon": "sui-document",
       "color": "teal",
       "size": "normal",
       "pinned": true,
       "category": "accessories",
       "type": "classic",
+      "folder": "Windows Accessories",
       "path": "apps/classic/notepad/notepad.html",
       "allowMultipleWindows": true,
       "iconImages": {
@@ -346,12 +484,13 @@
     {
       "id": "photo-viewer",
       "name": "Windows Photo Viewer",
-      "icon": "mif-image",
+      "icon": "sui-pictures",
       "color": "blue",
       "size": "normal",
       "pinned": false,
       "category": "accessories",
       "type": "classic",
+      "folder": "Windows Accessories",
       "path": "apps/classic/photo-viewer/photo-viewer.exe.html",
       "allowMultipleWindows": true,
       "iconImages": {
@@ -384,9 +523,96 @@
       ]
     },
     {
+      "id": "command-prompt",
+      "name": "Command Prompt",
+      "color": "olive",
+      "size": "normal",
+      "pinned": false,
+      "category": "system",
+      "type": "classic",
+      "folder": "Windows System",
+      "path": "apps/classic/command-prompt/cmd.exe.html",
+      "allowMultipleWindows": true,
+      "showInStart": true,
+      "windowOptions": {
+        "width": 760,
+        "height": 500,
+        "resizable": true,
+        "minimizable": true,
+        "maximizable": true,
+        "alwaysOnTop": false,
+        "showInTaskbar": true
+      },
+      "runCommands": [
+        "command-prompt",
+        "cmd",
+        "cmd.exe",
+        "command prompt"
+      ]
+    },
+    {
+      "id": "msinfo32",
+      "name": "System Information",
+      "color": "blue",
+      "size": "normal",
+      "pinned": false,
+      "category": "system",
+      "type": "classic",
+      "folder": "Windows Administrative Tools",
+      "path": "apps/classic/msinfo32/msinfo32.exe.html",
+      "showInStart": true,
+      "windowOptions": {
+        "width": 940,
+        "height": 640,
+        "resizable": true,
+        "minimizable": true,
+        "maximizable": true,
+        "alwaysOnTop": false,
+        "showInTaskbar": true
+      },
+      "runCommands": [
+        "msinfo32",
+        "msinfo32.exe",
+        "system information"
+      ]
+    },
+    {
+      "id": "task-manager",
+      "name": "Task Manager",
+      "color": "green",
+      "size": "normal",
+      "pinned": false,
+      "category": "system",
+      "type": "classic",
+      "folder": "Windows System",
+      "path": "apps/classic/taskmgr/taskmgr.exe.html",
+      "iconImages": {
+        "16": "resources/images/icons/task manager/16.png",
+        "24": "resources/images/icons/task manager/24.png",
+        "32": "resources/images/icons/task manager/32.png",
+        "48": "resources/images/icons/task manager/48.png"
+      },
+      "showInStart": true,
+      "windowOptions": {
+        "width": 860,
+        "height": 580,
+        "resizable": true,
+        "minimizable": true,
+        "maximizable": true,
+        "alwaysOnTop": false,
+        "showInTaskbar": true
+      },
+      "runCommands": [
+        "task-manager",
+        "task manager",
+        "taskmgr",
+        "taskmgr.exe"
+      ]
+    },
+    {
       "id": "explorer",
       "name": "File Explorer",
-      "icon": "mif-folder-open",
+      "icon": "sui-folder-open",
       "color": "orange",
       "size": "normal",
       "pinned": true,
@@ -451,6 +677,7 @@
         "768": "resources/images/icons/explorer/this_pc/768.png"
       },
       "showInStart": true,
+      "showInSearch": false,
       "launchTargetAppId": "explorer",
       "launchOptions": {
         "openSpecialFolderId": "this-pc"
@@ -478,12 +705,12 @@
       "useWebview": true,
       "iconImages": {
         "16": "resources/images/icons/explorer/folder_documents/16.png",
-        "24": "resources/images/icons/explorer/folder_documents/24.png",
         "32": "resources/images/icons/explorer/folder_documents/32.png",
         "48": "resources/images/icons/explorer/folder_documents/48.png",
-        "256": "resources/images/icons/explorer/folder_documents/256.png"
+        "96": "resources/images/icons/explorer/folder_documents/96.png"
       },
       "showInStart": true,
+      "showInSearch": false,
       "launchTargetAppId": "explorer",
       "launchOptions": {
         "openSpecialFolderId": "documents"
@@ -550,12 +777,12 @@
       "useWebview": true,
       "iconImages": {
         "16": "resources/images/icons/explorer/folder_pictures/16.png",
-        "24": "resources/images/icons/explorer/folder_pictures/24.png",
         "32": "resources/images/icons/explorer/folder_pictures/32.png",
         "48": "resources/images/icons/explorer/folder_pictures/48.png",
-        "256": "resources/images/icons/explorer/folder_pictures/256.png"
+        "96": "resources/images/icons/explorer/folder_pictures/96.png"
       },
       "showInStart": true,
+      "showInSearch": false,
       "launchTargetAppId": "explorer",
       "launchOptions": {
         "openSpecialFolderId": "pictures"
@@ -569,6 +796,49 @@
         "alwaysOnTop": false,
         "showInTaskbar": true
       }
+    },
+    {
+      "id": "weather",
+      "name": "Weather",
+      "color": "sky",
+      "size": "wide",
+      "pinned": true,
+      "category": "weather",
+      "type": "modern",
+      "path": "apps/modern/weather/index.html",
+      "loadDirect": true,
+      "logoImage": "apps/modern/weather/resources/logo.png",
+      "tileOptions": {
+        "allowWide": true,
+        "allowLarge": true
+      },
+      "runCommands": [
+        "weather",
+        "bingweather"
+      ]
+    },
+    {
+      "id": "photos",
+      "name": "Photos",
+      "color": "teal",
+      "size": "wide",
+      "pinned": true,
+      "category": "photos",
+      "type": "modern",
+      "path": "apps/modern/photos/index.html",
+      "loadDirect": true,
+      "logoImage": "apps/modern/photos/resources/logo.png",
+      "tileOptions": {
+        "allowWide": true,
+        "allowLarge": true
+      },
+      "windowOptions": {
+        "minimizable": true,
+        "showIcon": true
+      },
+      "runCommands": [
+        "photos"
+      ]
     }
   ]
 }

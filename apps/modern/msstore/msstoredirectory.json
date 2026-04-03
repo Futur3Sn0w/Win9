@@ -3,12 +3,13 @@
     {
       "id": "connections",
       "name": "Connections",
-      "icon": "mif-table",
+      "icon": "sui-table",
       "color": "purple",
       "size": "normal",
       "pinned": false,
       "category": "games",
       "type": "modern",
+      "path": "apps/modern/nyt-games/index.html?title=Connections&url=https%3A%2F%2Fwww.nytimes.com%2Fgames%2Fconnections&partition=persist%3Anytgames",
       "webview": {
         "enabled": true,
         "url": "https://www.nytimes.com/games/connections",
@@ -22,12 +23,13 @@
     {
       "id": "strands",
       "name": "Strands",
-      "icon": "mif-link",
+      "icon": "sui-link",
       "color": "blue",
       "size": "normal",
       "pinned": false,
       "category": "games",
       "type": "modern",
+      "path": "apps/modern/nyt-games/index.html?title=Strands&url=https%3A%2F%2Fwww.nytimes.com%2Fgames%2Fstrands&partition=persist%3Anytgames",
       "webview": {
         "enabled": true,
         "url": "https://www.nytimes.com/games/strands",
@@ -41,12 +43,13 @@
     {
       "id": "mini-crossword",
       "name": "The Mini",
-      "icon": "mif-apps",
+      "icon": "sui-all-apps",
       "color": "green",
       "size": "normal",
       "pinned": false,
       "category": "games",
       "type": "modern",
+      "path": "apps/modern/nyt-games/index.html?title=The%20Mini&url=https%3A%2F%2Fwww.nytimes.com%2Fcrosswords%2Fgame%2Fmini&partition=persist%3Anytgames",
       "webview": {
         "enabled": true,
         "url": "https://www.nytimes.com/crosswords/game/mini",

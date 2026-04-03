@@ -35,7 +35,7 @@
         // Add 2s delay for realism (sound plays immediately, notification is delayed)
         if (window.notificationManager) {
             window.notificationManager.show({
-                icon: driveData.icon || 'mif-usb',
+                icon: driveData.icon || 'sui-usb',
                 title: driveData.name || 'New Drive Connected',
                 description: driveData.description || 'Drive connected',
                 onClick: () => {

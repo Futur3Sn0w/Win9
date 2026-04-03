@@ -4,6 +4,7 @@
  */
 
 const STORE_DIRECTORY_PATH = 'apps/modern/msstore/msstoredirectory.json';
+const MARKET_BASE_URL = 'https://futur3sn0w.github.io/WinStore';
 const { pathToFileURL: appsManagerPathToFileURL } = require('url');
 const RECYCLE_BIN_APP_ID = 'recycle-bin';
 const RECYCLE_BIN_ICON_SIZES = [16, 20, 24, 32, 40, 48, 64, 80, 96, 128, 256];
@@ -30,6 +31,10 @@ function toAssetUrl(path) {
 }
 
 let appsData = null;
+
+function isGlyphIconClass(icon) {
+    return typeof icon === 'string' && (icon.startsWith('mif-') || icon.startsWith('sui-'));
+}
 
 function buildRecycleBinIconImages(isEmpty) {
     const iconVariant = isEmpty ? 'empty' : 'full';
@@ -66,7 +71,9 @@ async function loadApps() {
         const data = await response.json();
         appsData = Array.isArray(data.apps) ? data.apps : [];
 
+        migrateStoreToMarket();
         await mergeInstalledStoreApps();
+        await mergeInstalledMarketApps();
 
         applySavedPinState();
         applySavedTaskbarPinState();
@@ -76,6 +83,84 @@ async function loadApps() {
     } catch (error) {
         console.error('Error loading apps:', error);
         return [];
+    }
+}
+
+// Reload apps from JSON file with cache-busting (used by shell hot-reload).
+// Caller is responsible for passing a cache-busted URL so this module
+// doesn't need to know about the cache-buster utility in app.js.
+async function reloadApps(cacheBustedUrl = 'apps.json') {
+    try {
+        const response = await fetch(cacheBustedUrl, { cache: 'no-store' });
+        const data = await response.json();
+        appsData = Array.isArray(data.apps) ? data.apps : [];
+
+        migrateStoreToMarket();
+        await mergeInstalledStoreApps();
+        await mergeInstalledMarketApps();
+
+        applySavedPinState();
+        applySavedTaskbarPinState();
+        loadTileSizes();
+
+        return appsData;
+    } catch (error) {
+        console.error('[Shell Restart] Error reloading apps:', error);
+        return [];
+    }
+}
+
+/**
+ * One-time migration: move apps installed via the old StoreRegistry
+ * into the MarketRegistry, then clear them from StoreRegistry so they
+ * don't conflict. Runs on every startup but only acts once (when there
+ * are old store entries that aren't yet in the market registry).
+ */
+function migrateStoreToMarket() {
+    const storeReg = window.StoreRegistry;
+    const marketReg = window.MarketRegistry;
+
+    if (!storeReg || typeof storeReg.loadInstalledStoreApps !== 'function') return;
+    if (!marketReg || typeof marketReg.loadInstalledMarketApps !== 'function') return;
+
+    let oldIds = [];
+    try {
+        oldIds = storeReg.loadInstalledStoreApps();
+    } catch (e) {
+        return;
+    }
+
+    if (!Array.isArray(oldIds) || oldIds.length === 0) return;
+
+    // Load current market installs
+    let marketIds = [];
+    try {
+        marketIds = marketReg.loadInstalledMarketApps();
+    } catch (e) {
+        marketIds = [];
+    }
+
+    const marketSet = new Set(Array.isArray(marketIds) ? marketIds : []);
+    let migrated = false;
+
+    oldIds.forEach(appId => {
+        if (!marketSet.has(appId)) {
+            marketSet.add(appId);
+            migrated = true;
+            console.log('[AppsManager] Migrating store app to market:', appId);
+        }
+    });
+
+    if (migrated) {
+        marketReg.saveInstalledMarketApps(Array.from(marketSet));
+    }
+
+    // Clear old store registry entries so they don't load via the legacy path
+    try {
+        storeReg.saveInstalledStoreApps([]);
+        console.log('[AppsManager] Cleared legacy store registry after migration');
+    } catch (e) {
+        console.warn('[AppsManager] Failed to clear legacy store registry:', e);
     }
 }
 
@@ -113,8 +198,22 @@ async function mergeInstalledStoreApps() {
         return;
     }
 
+    // Build a set of market-managed app IDs to avoid conflicts
+    const marketReg = window.MarketRegistry;
+    let marketIds = new Set();
+    if (marketReg && typeof marketReg.loadInstalledMarketApps === 'function') {
+        try {
+            const ids = marketReg.loadInstalledMarketApps();
+            marketIds = new Set(Array.isArray(ids) ? ids : []);
+        } catch (e) { /* ignore */ }
+    }
+
     installedIds.forEach(appId => {
+        // Skip if already registered or managed by market
         if (appsData.some(app => app.id === appId)) {
+            return;
+        }
+        if (marketIds.has(appId)) {
             return;
         }
 
@@ -130,6 +229,170 @@ async function mergeInstalledStoreApps() {
         }
         appsData.push(hydratedApp);
     });
+}
+
+/**
+ * Merge installed market apps into the main apps array.
+ * Uses cached manifest data from the MarketRegistry so we don't need
+ * to fetch from the remote catalog at startup. If a cached manifest is
+ * missing (e.g. migrated from old StoreRegistry), attempts to fetch it
+ * from the remote market repo and cache it for future startups.
+ * Orphaned app IDs that can't be resolved are automatically cleaned up.
+ */
+async function mergeInstalledMarketApps() {
+    if (!appsData) {
+        appsData = [];
+    }
+
+    const marketRegistry = window.MarketRegistry;
+    if (!marketRegistry || typeof marketRegistry.loadInstalledMarketApps !== 'function') {
+        return;
+    }
+
+    let installedIds = [];
+    try {
+        installedIds = marketRegistry.loadInstalledMarketApps();
+    } catch (error) {
+        console.error('[AppsManager] Failed to load installed market apps:', error);
+        return;
+    }
+
+    if (!Array.isArray(installedIds) || installedIds.length === 0) {
+        return;
+    }
+
+    // Fetch the remote directory index once if any manifests need healing
+    let remoteDirectory = null;
+    async function getRemoteDirectory() {
+        if (remoteDirectory !== null) return remoteDirectory;
+        try {
+            const resp = await fetch(`${MARKET_BASE_URL}/directory.json`);
+            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+            const data = await resp.json();
+            remoteDirectory = Array.isArray(data.apps) ? data.apps : [];
+        } catch (error) {
+            console.warn('[AppsManager] Could not fetch remote market directory:', error);
+            remoteDirectory = [];
+        }
+        return remoteDirectory;
+    }
+
+    const orphanedIds = [];
+
+    for (const appId of installedIds) {
+        // Skip if already registered
+        if (appsData.some(app => app.id === appId)) {
+            continue;
+        }
+
+        // Load cached manifest from registry
+        let manifest = marketRegistry.loadMarketAppData(appId);
+
+        // Self-heal: if no cached manifest, try fetching from remote
+        if (!manifest) {
+            console.log('[AppsManager] No cached manifest for market app:', appId, '— attempting remote fetch');
+            const directory = await getRemoteDirectory();
+            const entry = directory.find(e => e.id === appId);
+
+            if (entry && entry.manifestUrl) {
+                try {
+                    const resp = await fetch(`${MARKET_BASE_URL}/${entry.manifestUrl}`);
+                    if (resp.ok) {
+                        manifest = await resp.json();
+                        // Cache it so we don't need to fetch again next startup
+                        if (typeof marketRegistry.saveMarketAppData === 'function') {
+                            marketRegistry.saveMarketAppData(appId, manifest);
+                        }
+                        console.log('[AppsManager] Healed manifest for market app:', appId);
+                    }
+                } catch (fetchError) {
+                    console.warn('[AppsManager] Failed to fetch manifest for', appId, ':', fetchError);
+                }
+            }
+
+            if (!manifest) {
+                console.warn('[AppsManager] Could not resolve market app:', appId, '— marking as orphaned');
+                orphanedIds.push(appId);
+                continue;
+            }
+        }
+
+        const installMode = manifest.requirements?.installMode || 'remote';
+
+        const appDef = {
+            id: manifest.id,
+            name: manifest.name,
+            icon: manifest.icon,
+            color: manifest.color || 'blue',
+            size: manifest.size || 'normal',
+            pinned: false,
+            category: manifest.category || 'apps',
+            type: manifest.type || 'modern',
+            source: 'market',
+            installMode: installMode
+        };
+
+        if (installMode === 'local') {
+            // Reconstruct the local install path
+            let localAppPath = `market-apps/${manifest.id}`;
+            try {
+                const { ipcRenderer } = require('electron');
+                localAppPath = (await ipcRenderer.invoke('market-get-app-path', manifest.id)).replace(/\\/g, '/');
+            } catch (e) { /* use relative fallback */ }
+
+            appDef.path = `${localAppPath}/${manifest.entryPoint || 'index.html'}`;
+
+            // Reconstruct resource paths for logos and tiles
+            const files = manifest.files || [];
+            const resourceFiles = files.filter(f => f.startsWith('resources/'));
+            if (resourceFiles.length > 0) {
+                appDef._marketResourceBase = `${localAppPath}/resources`;
+            }
+            if (resourceFiles.includes('resources/logo.png')) {
+                appDef.logoImage = `${localAppPath}/resources/logo.png`;
+                appDef.splashImage = `${localAppPath}/resources/logo.png`;
+            }
+        } else {
+            // Build the remote URL from the directory entry
+            const directory = await getRemoteDirectory();
+            const entry = directory.find(e => e.id === appId);
+            const manifestDir = entry?.manifestUrl
+                ? entry.manifestUrl.substring(0, entry.manifestUrl.lastIndexOf('/'))
+                : `apps/${manifest.id}`;
+            appDef.path = `${MARKET_BASE_URL}/${manifestDir}/${manifest.entryPoint || 'index.html'}`;
+        }
+
+        if (manifest.loadDirect) {
+            appDef.loadDirect = true;
+        }
+
+        if (manifest.webview && manifest.webview.enabled) {
+            appDef.webview = { ...manifest.webview };
+        }
+
+        if (manifest.windowOptions) {
+            appDef.windowOptions = { ...manifest.windowOptions };
+        }
+
+        if (manifest.tileOptions) {
+            appDef.tileOptions = { ...manifest.tileOptions };
+        }
+
+        appsData.push(appDef);
+        console.log('[AppsManager] Merged market app:', appId, '(mode:', installMode + ')');
+    }
+
+    // Clean up orphaned app IDs that couldn't be resolved
+    if (orphanedIds.length > 0) {
+        const validIds = installedIds.filter(id => !orphanedIds.includes(id));
+        marketRegistry.saveInstalledMarketApps(validIds);
+        orphanedIds.forEach(id => {
+            if (typeof marketRegistry.removeMarketAppData === 'function') {
+                marketRegistry.removeMarketAppData(id);
+            }
+        });
+        console.log('[AppsManager] Cleaned up orphaned market app IDs:', orphanedIds);
+    }
 }
 
 function applySavedPinState() {
@@ -253,7 +516,7 @@ function getIconImage(app, desiredSize) {
         const icons = app.iconImages;
         const exactMatch = icons[String(desiredSize)];
         if (exactMatch) {
-            return exactMatch;
+            return toAssetUrl(exactMatch);
         }
 
         const availableSizes = Object.keys(icons)
@@ -272,13 +535,14 @@ function getIconImage(app, desiredSize) {
                 }
             });
 
-            return icons[String(closestSize)] || null;
+            const candidate = icons[String(closestSize)] || null;
+            return candidate ? toAssetUrl(candidate) : null;
         }
     }
 
-    // No iconImages found - check if this is a classic or meta_classic app
+    // No iconImages found - check if this is a classic or meta-classic app
     // If so, use generic_program icon as fallback (MIF icons don't apply here)
-    if (app.type === 'classic' || app.type === 'meta_classic') {
+    if (app.type === 'classic' || app.type === 'meta-classic' || app.type === 'meta_classic') {
         // Map desiredSize to closest available generic_program icon size
         const availableSizes = [16, 20, 24, 32, 40, 48, 64, 256];
         let closestSize = availableSizes[0];
@@ -292,10 +556,51 @@ function getIconImage(app, desiredSize) {
             }
         });
 
-        return `resources/images/icons/explorer/generic_program/${closestSize}.png`;
+        return toAssetUrl(`resources/images/icons/explorer/generic_program/${closestSize}.png`);
     }
 
     return null;
+}
+
+function getSizedImageVariant(images, desiredSize) {
+    if (!images || typeof images !== 'object') {
+        return null;
+    }
+
+    const entries = Object.entries(images)
+        .map(([size, path]) => ({
+            size: parseInt(size, 10),
+            path
+        }))
+        .filter(entry => Number.isFinite(entry.size) && typeof entry.path === 'string')
+        .sort((a, b) => a.size - b.size);
+
+    if (!entries.length) {
+        return null;
+    }
+
+    if (!Number.isFinite(desiredSize) || desiredSize <= 0) {
+        return entries[entries.length - 1].path;
+    }
+
+    const largeEnoughEntry = entries.find(entry => entry.size >= desiredSize);
+    if (largeEnoughEntry) {
+        return largeEnoughEntry.path;
+    }
+
+    return entries[entries.length - 1].path;
+}
+
+function isGenericProgramFallbackIcon(app, iconImage) {
+    if (!app || !iconImage || typeof iconImage !== 'string') {
+        return false;
+    }
+
+    if (app.iconImages && Object.keys(app.iconImages).length > 0) {
+        return false;
+    }
+
+    return iconImage.startsWith('resources/images/icons/explorer/generic_program/');
 }
 
 // Get tile image path for real tile icons
@@ -333,6 +638,14 @@ function getTileImage(app, tileSize) {
         imageName = 'tilesmall';
     }
 
+    // Market-sourced apps: use downloaded resource base if available, otherwise skip
+    if (app.source === 'market') {
+        if (app._marketResourceBase) {
+            return toAssetUrl(`${app._marketResourceBase}/${imageName}.scale-${scale}.png`);
+        }
+        return null;
+    }
+
     // Construct the path based on app type and ID
     let basePath;
     if (app.type === 'modern') {
@@ -347,15 +660,28 @@ function getTileImage(app, tileSize) {
 
     // We could check if the file exists, but for performance we'll just return the path
     // The browser will handle missing images gracefully
-    return imagePath;
+    return toAssetUrl(imagePath);
 }
 
 // Get app list logo image path
-function getAppListLogo(app) {
+function getAppListLogo(app, desiredSize) {
     if (!app) return null;
 
+    const variantLogo = getSizedImageVariant(app.logoImages, desiredSize);
+    if (variantLogo) {
+        return variantLogo;
+    }
+
     if (app.logoImage) {
-        return app.logoImage;
+        return toAssetUrl(app.logoImage);
+    }
+
+    // Market-sourced apps: use downloaded resource base if available, otherwise skip
+    if (app.source === 'market') {
+        if (app._marketResourceBase) {
+            return toAssetUrl(`${app._marketResourceBase}/logo.png`);
+        }
+        return null;
     }
 
     // Construct the path based on app type and ID
@@ -368,13 +694,18 @@ function getAppListLogo(app) {
         basePath = `apps/${app.id}/resources`;
     }
 
-    return `${basePath}/logo.png`;
+    return toAssetUrl(`${basePath}/logo.png`);
 }
 
 // Get largest available tile image for splash screens and animations
 // Returns the largest size in order: large -> wide -> small (medium)
-function getTileLargeSplash(app) {
+function getTileLargeSplash(app, desiredSize) {
     if (!app) return null;
+
+    const variantSplash = getSizedImageVariant(app.splashImages, desiredSize);
+    if (variantSplash) {
+        return variantSplash;
+    }
 
     if (app.splashImage) {
         return app.splashImage;
@@ -383,6 +714,20 @@ function getTileLargeSplash(app) {
     // Determine if we're in compact mode
     const isCompact = document.body.classList.contains('tiles-compact');
     const scale = isCompact ? '80' : '100';
+
+    if (app.source === 'market') {
+        if (app._marketResourceBase) {
+            const tileOptions = app.tileOptions || {};
+            if (tileOptions.allowLarge) {
+                return toAssetUrl(`${app._marketResourceBase}/tilelarge.scale-${scale}.png`);
+            } else if (tileOptions.allowWide) {
+                return toAssetUrl(`${app._marketResourceBase}/tilewide.scale-${scale}.png`);
+            } else {
+                return toAssetUrl(`${app._marketResourceBase}/tilesmall.scale-${scale}.png`);
+            }
+        }
+        return null;
+    }
 
     // Construct the path based on app type and ID
     let basePath;
@@ -399,21 +744,35 @@ function getTileLargeSplash(app) {
     const tileOptions = app.tileOptions || {};
 
     if (tileOptions.allowLarge) {
-        return `${basePath}/tilelarge.scale-${scale}.png`;
+        return toAssetUrl(`${basePath}/tilelarge.scale-${scale}.png`);
     } else if (tileOptions.allowWide) {
-        return `${basePath}/tilewide.scale-${scale}.png`;
+        return toAssetUrl(`${basePath}/tilewide.scale-${scale}.png`);
     } else {
         // Default to medium size (tilesmall) as it should always be available
-        return `${basePath}/tilesmall.scale-${scale}.png`;
+        return toAssetUrl(`${basePath}/tilesmall.scale-${scale}.png`);
     }
 }
 
 // Get the guaranteed medium tile image for splash screens and animations
-function getTileMediumSplash(app) {
+function getTileMediumSplash(app, desiredSize) {
     if (!app) return null;
+
+    const variantSplash = getSizedImageVariant(app.splashImages, desiredSize);
+    if (variantSplash) {
+        return variantSplash;
+    }
 
     if (app.splashImage) {
         return app.splashImage;
+    }
+
+    if (app.source === 'market') {
+        if (app._marketResourceBase) {
+            const isCompact = document.body.classList.contains('tiles-compact');
+            const scale = isCompact ? '80' : '100';
+            return toAssetUrl(`${app._marketResourceBase}/tilesmall.scale-${scale}.png`);
+        }
+        return null;
     }
 
     const isCompact = document.body.classList.contains('tiles-compact');
@@ -428,7 +787,7 @@ function getTileMediumSplash(app) {
         basePath = `apps/${app.id}/resources`;
     }
 
-    return `${basePath}/tilesmall.scale-${scale}.png`;
+    return toAssetUrl(`${basePath}/tilesmall.scale-${scale}.png`);
 }
 
 // Get all apps
@@ -719,22 +1078,31 @@ function generateTileHTML(app) {
             <span>${app.name}</span>
         `;
     } else {
-        // Check if app has MIF icon class - this determines the fallback hierarchy
-        const hasMifIcon = app.icon && app.icon.startsWith('mif-');
+        // Check if app has a font icon class - this determines the fallback hierarchy
+        const hasGlyphIcon = isGlyphIconClass(app.icon);
 
-        if (hasMifIcon) {
-            // App has MIF icon - use icon font or iconImages as fallback
-            const iconImage = getIconImage(app, 64);
-            const iconHTML = iconImage
-                ? `<img src="${iconImage}" alt="">`
-                : `<span class="${app.icon}"></span>`;
+        if (hasGlyphIcon) {
+            // For wide/large tiles, prefer tile images over font icons
+            const tileImage = (app.size === 'wide' || app.size === 'large') ? getTileImage(app, app.size) : null;
+            if (tileImage) {
+                tileContent = `
+                    <div class="tiles__tile-image" style="background-image: url('${tileImage}'); background-size: cover; background-position: center;"></div>
+                    <span>${app.name}</span>
+                `;
+            } else {
+                // App has a font icon - use the icon font or iconImages as fallback
+                const iconImage = getIconImage(app, 64);
+                const iconHTML = iconImage
+                    ? `<img src="${iconImage}" alt="">`
+                    : `<span class="${app.icon}"></span>`;
 
-            tileContent = `
-                <i class="${iconImage ? 'tile-icon-image' : ''}">${iconHTML}</i>
-                <span>${app.name}</span>
-            `;
+                tileContent = `
+                    <i class="${iconImage ? 'tile-icon-image' : ''}">${iconHTML}</i>
+                    <span>${app.name}</span>
+                `;
+            }
         } else {
-            // No MIF icon - check if we have iconImages or need generic_program fallback
+            // No font icon - check if we have iconImages or need generic_program fallback
             const iconImage = getIconImage(app, 64);
 
             if (iconImage) {
@@ -754,8 +1122,10 @@ function generateTileHTML(app) {
         }
     }
 
+    const typeClass = (app.type === 'classic' || app.type === 'meta-classic' || app.type === 'meta_classic') ? 'tiles__tile--classic' : '';
+
     return `
-        <a href="" class="tiles__tile ${sizeClass} ${colorClass} ${imageClass}" data-app="${app.id}" draggable="false">
+        <a href="" class="tiles__tile ${sizeClass} ${colorClass} ${imageClass} ${typeClass}" data-app="${app.id}" draggable="false">
             ${tileContent}
         </a>
     `;
@@ -763,37 +1133,38 @@ function generateTileHTML(app) {
 
 // Generate app list item HTML (for All Apps view)
 function generateAppListItemHTML(app) {
-    // Check if app has MIF icon class - this determines the fallback hierarchy
-    const hasMifIcon = app.icon && app.icon.startsWith('mif-');
+    // Check if app has a font icon class - this determines the fallback hierarchy
+    const hasGlyphIcon = isGlyphIconClass(app.icon);
 
     let iconHTML;
     let colorClass = '';
 
-    // Determine color plate class for all apps
-    if (app.color) {
-        colorClass = `app-icon-plate--${app.color}`;
-    } else {
-        colorClass = 'app-icon-plate--accent';
-    }
-
-    if (hasMifIcon) {
-        // App has MIF icon - use icon font or iconImages as fallback
+    if (hasGlyphIcon) {
+        // App has a font icon - use the icon font or iconImages as fallback
         const iconImage = getIconImage(app, 40);
         if (iconImage) {
+            if (!isGenericProgramFallbackIcon(app, iconImage)) {
+                colorClass = app.color ? `app-icon-plate--${app.color}` : 'app-icon-plate--accent';
+            }
             iconHTML = `<img src="${iconImage}" alt="">`;
         } else {
+            colorClass = app.color ? `app-icon-plate--${app.color}` : 'app-icon-plate--accent';
             iconHTML = `<span class="${app.icon}"></span>`;
         }
     } else {
-        // No MIF icon - check if we have iconImages or need generic_program fallback
+        // No font icon - check if we have iconImages or need generic_program fallback
         const iconImage = getIconImage(app, 40);
 
         if (iconImage) {
+            if (!isGenericProgramFallbackIcon(app, iconImage)) {
+                colorClass = app.color ? `app-icon-plate--${app.color}` : 'app-icon-plate--accent';
+            }
             // Use PNG icon (either from iconImages or generic_program fallback)
             iconHTML = `<img src="${iconImage}" alt="" style="object-fit: cover; width: 100%; height: 100%; padding: 4px;">`;
         } else {
             // Use logo.png from resources
             const logoImage = getAppListLogo(app);
+            colorClass = app.color ? `app-icon-plate--${app.color}` : 'app-icon-plate--accent';
             iconHTML = `<img src="${logoImage}" alt="" style="object-fit: cover; width: 100%; height: 100%; padding: 4px;">`;
         }
     }
@@ -1021,9 +1392,21 @@ function getAppWindowIds(appId) {
     return appWindows.get(appId) ? Array.from(appWindows.get(appId)) : [];
 }
 
-// Check if app has any running windows
+// Check if app has any running windows (visible on current desktop)
 function isAppRunning(appId) {
     return getVisibleAppWindows(appId).length > 0;
+}
+
+// Check if app has any running windows on ANY desktop (ignores vd-hidden)
+function isAppRunningAnywhere(appId) {
+    const windowIds = appWindows.get(appId);
+    if (!windowIds || windowIds.size === 0) return false;
+    // At least one non-background window
+    for (const windowId of windowIds) {
+        const wd = runningWindows.get(windowId);
+        if (wd && !isBackgroundWindow(wd)) return true;
+    }
+    return false;
 }
 
 // Get window count for an app
@@ -1177,6 +1560,26 @@ function setupTaskbarGlowEffect($taskbarIcon, app) {
     }
 }
 
+// Generate layered background HTML based on window count
+function generateTaskbarBackgroundLayers(windowCount) {
+    if (windowCount <= 1) {
+        return '<div class="taskbar-app-background"></div>';
+    }
+
+    // For 2+ windows, create main + additional layers
+    let html = '<div class="taskbar-app-background taskbar-app-background-main"></div>';
+
+    if (windowCount >= 2) {
+        html += '<div class="taskbar-app-background taskbar-app-background-layer-1"></div>';
+    }
+
+    if (windowCount >= 3) {
+        html += '<div class="taskbar-app-background taskbar-app-background-layer-2"></div>';
+    }
+
+    return html;
+}
+
 // Update taskbar to show running apps AND pinned apps
 function updateTaskbar() {
     const $taskbarApps = $('.taskbar-apps');
@@ -1324,47 +1727,57 @@ function updateTaskbar() {
                 const windows = getVisibleAppWindows(appId);
                 const isActive = isRunning && windows.some(w => w.state === 'active');
 
-                // Check if app has MIF icon class - this determines the fallback hierarchy
-                const hasMifIcon = app.icon && app.icon.startsWith('mif-');
+                // Check if app has a font icon class - this determines the fallback hierarchy
+                const hasGlyphIcon = isGlyphIconClass(app.icon);
                 const modernLogo = app.type === 'modern' ? getAppListLogo(app) : null;
+                const shouldUseTaskbarPlate = app.type === 'modern';
 
                 let iconHTML;
                 let plateClass = '';
 
                 if (modernLogo) {
-                    plateClass = app.color ? `taskbar-icon-plate--${app.color}` : '';
+                    plateClass = shouldUseTaskbarPlate && app.color ? `taskbar-icon-plate--${app.color}` : '';
                     iconHTML = `<img src="${modernLogo}" alt="" style="object-fit: contain; width: 100%; height: 100%;">`;
-                } else if (hasMifIcon) {
-                    // App has MIF icon - use icon font or iconImages as fallback
+                } else if (hasGlyphIcon) {
+                    // App has a font icon - use the icon font or iconImages as fallback
                     const iconImage = getIconImage(app, 40);
                     if (iconImage) {
                         iconHTML = `<img src="${iconImage}" alt="">`;
                     } else {
-                        // Add color plate for apps with MIF icons
-                        plateClass = app.color ? `taskbar-icon-plate--${app.color}` : '';
+                        // Only modern apps should render with a taskbar color plate.
+                        plateClass = shouldUseTaskbarPlate && app.color ? `taskbar-icon-plate--${app.color}` : '';
                         iconHTML = `<span class="${app.icon}"></span>`;
                     }
                 } else {
-                    // No MIF icon - check if we have iconImages or need generic_program fallback
+                    // No font icon - check if we have iconImages or need generic_program fallback
                     const iconImage = getIconImage(app, 40);
 
                     if (iconImage) {
                         // Use PNG icon (either from iconImages or generic_program fallback)
-                        plateClass = app.color ? `taskbar-icon-plate--${app.color}` : '';
+                        if (shouldUseTaskbarPlate && !isGenericProgramFallbackIcon(app, iconImage)) {
+                            plateClass = app.color ? `taskbar-icon-plate--${app.color}` : '';
+                        }
                         iconHTML = `<img src="${iconImage}" alt="" style="object-fit: cover; width: 100%; height: 100%;">`;
                     } else {
                         // Use logo.png from resources with color plate
                         const logoImage = getAppListLogo(app);
-                        plateClass = app.color ? `taskbar-icon-plate--${app.color}` : '';
+                        plateClass = shouldUseTaskbarPlate && app.color ? `taskbar-icon-plate--${app.color}` : '';
                         iconHTML = `<img src="${logoImage}" alt="" style="object-fit: cover; width: 100%; height: 100%;">`;
                     }
                 }
+
+                const windowCount = getAppWindowCount(appId);
+                const backgroundLayersHTML = generateTaskbarBackgroundLayers(windowCount);
 
                 const $taskbarIcon = $(`
                     <div class="taskbar-app taskbar-app-enter ${isActive ? 'active' : ''}"
                          data-app-id="${appId}"
                          data-running="${isRunning}"
+                         data-window-count="${windowCount}"
                          title="${app.name}">
+                        <div class="taskbar-app-background-layers">
+                            ${backgroundLayersHTML}
+                        </div>
                         <div class="taskbar-app-glow"></div>
                         <span class="taskbar-app-icon ${plateClass}">${iconHTML}</span>
                     </div>
@@ -1407,10 +1820,23 @@ function updateTaskbar() {
             const isActive = isRunning && windows.some(w => w.state === 'active');
             const wasRunning = $existingIcon.attr('data-running') === 'true';
 
+            // Check if window count changed
+            const windowCount = getAppWindowCount(appId);
+            const previousWindowCount = parseInt($existingIcon.attr('data-window-count') || '0', 10);
+            const windowCountChanged = windowCount !== previousWindowCount;
+
             // Update active class
             $existingIcon.toggleClass('active', isActive);
             // Update data-running attribute
             $existingIcon.attr('data-running', isRunning);
+            // Update window count
+            $existingIcon.attr('data-window-count', windowCount);
+
+            // If window count changed, regenerate background layers
+            if (windowCountChanged) {
+                const backgroundLayersHTML = generateTaskbarBackgroundLayers(windowCount);
+                $existingIcon.find('.taskbar-app-background-layers').html(backgroundLayersHTML);
+            }
 
             // If running state changed, update glow effect
             if (wasRunning !== isRunning) {
@@ -1428,6 +1854,25 @@ function updateTaskbar() {
         }
     });
 
+    // Virtual desktop presence pass — set data attributes for cross-desktop indicators
+    if (window.VirtualDesktops && window.VirtualDesktops.getDesktopCount() > 1) {
+        taskbarAppsToShow.forEach(appId => {
+            const $icon = $taskbarApps.find(`.taskbar-app[data-app-id="${appId}"]`);
+            if (!$icon.length) return;
+
+            const onCurrent = window.VirtualDesktops.isAppOnCurrentDesktop(appId);
+            const onOther = window.VirtualDesktops.isAppOnOtherDesktop(appId);
+
+            $icon.attr('data-on-current-desktop', String(onCurrent));
+            $icon.attr('data-on-other-desktop', String(onOther));
+        });
+    } else {
+        // Single desktop — clean up any stale attributes
+        $taskbarApps.find('.taskbar-app[data-on-other-desktop]').each(function () {
+            $(this).removeAttr('data-on-current-desktop').removeAttr('data-on-other-desktop');
+        });
+    }
+
     // Update current taskbar apps set
     currentTaskbarApps = new Set(taskbarAppsToShow);
 
@@ -1437,9 +1882,11 @@ function updateTaskbar() {
 // Export functions
 window.AppsManager = {
     loadApps,
+    reloadApps,
     getAllApps,
     getPinnedApps,
     getAppById,
+    isGlyphIconClass,
     addOrUpdateApp,
     getIconImage,
     getTileImage,
@@ -1473,6 +1920,8 @@ window.AppsManager = {
     getPrimaryAppWindow,
     getAppWindowIds,
     getAppWindowCount,
+    isAppRunningAnywhere,
+    isBackgroundWindow,
     setWindowState,
     getWindowState,
     notifyRunningWindowUpdated,

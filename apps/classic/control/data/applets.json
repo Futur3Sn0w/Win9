@@ -3,7 +3,7 @@
     {
       "id": "action-center",
       "name": "Action Center",
-      "icon": "mif-flag",
+      "icon": "sui-flag",
       "category": "system-security",
       "description": "Review recent messages and resolve problems with your computer.",
       "navigationType": "page"
@@ -11,7 +11,7 @@
     {
       "id": "add-features-to-windows",
       "name": "Add features to Windows 8.1",
-      "icon": "mif-windows",
+      "icon": "wd-windows",
       "category": "system-security",
       "description": "A convenient and affordable way to add features to Windows",
       "navigationType": "window"
@@ -19,7 +19,7 @@
     {
       "id": "admin-tools",
       "name": "Administrative Tools",
-      "icon": "mif-wrench",
+      "icon": "sui-tools",
       "category": "system-security",
       "description": "Configure administrative settings for your computer.",
       "navigationType": "window"
@@ -27,7 +27,7 @@
     {
       "id": "autoplay",
       "name": "AutoPlay",
-      "icon": "mif-play",
+      "icon": "sui-play",
       "category": "hardware-sound",
       "description": "Change default settings for CDs, DVDs, and devices so that you can automatically play music, view, pictures, install software, and play games.",
       "navigationType": "page"
@@ -35,7 +35,7 @@
     {
       "id": "color-management",
       "name": "Color Management",
-      "icon": "mif-palette",
+      "icon": "sui-palette",
       "category": "appearance",
       "description": "Change advanced color management settings for displays, scanners, and printers.",
       "navigationType": "window"
@@ -43,7 +43,7 @@
     {
       "id": "credential-manager",
       "name": "Credential Manager",
-      "icon": "mif-key",
+      "icon": "sui-key",
       "category": "user-accounts",
       "description": "Manage your Windows credentials.",
       "navigationType": "page"
@@ -51,7 +51,7 @@
     {
       "id": "date-time",
       "name": "Date and Time",
-      "icon": "mif-alarm",
+      "icon": "sui-clock",
       "category": "clock-region",
       "description": "Set the date, time, and time zone for your computer.",
       "navigationType": "window"
@@ -59,7 +59,7 @@
     {
       "id": "default-programs",
       "name": "Default Programs",
-      "icon": "mif-star-full",
+      "icon": "sui-star-filled",
       "category": "programs",
       "description": "Choose which programs you want Windows to use for activities like web, browsing, editing photos, sending e-mail, and playing music.",
       "navigationType": "page"
@@ -67,7 +67,7 @@
     {
       "id": "device-manager",
       "name": "Device Manager",
-      "icon": "mif-chip",
+      "icon": "sui-chip",
       "category": "hardware-sound",
       "description": "View and update your hardware's settings and driver software.",
       "navigationType": "window"
@@ -75,7 +75,7 @@
     {
       "id": "devices-printers",
       "name": "Devices and Printers",
-      "icon": "mif-printer",
+      "icon": "sui-printer",
       "category": "hardware-sound",
       "description": "View and manage devices, printers, and print jobs",
       "navigationType": "page"
@@ -83,7 +83,7 @@
     {
       "id": "display",
       "name": "Display",
-      "icon": "mif-display",
+      "icon": "sui-display",
       "category": "appearance",
       "description": "Change your display settings and make it easier to read what's on the desktop.",
       "navigationType": "page"
@@ -91,7 +91,7 @@
     {
       "id": "screen-resolution",
       "name": "Screen Resolution",
-      "icon": "mif-display",
+      "icon": "sui-display",
       "category": "appearance",
       "description": "Adjust your screen resolution and preview how browser zoom maps to the desktop.",
       "navigationType": "page"
@@ -99,7 +99,7 @@
     {
       "id": "ease-of-access-center",
       "name": "Ease of Access Center",
-      "icon": "mif-accessibility",
+      "icon": "sui-accessibility",
       "category": "ease-of-access",
       "description": "Make your computer easier to use.",
       "navigationType": "page"
@@ -107,7 +107,7 @@
     {
       "id": "family-safety",
       "name": "Family Safety",
-      "icon": "mif-users",
+      "icon": "sui-people",
       "category": "user-accounts",
       "description": "Change Family Safety settings.",
       "navigationType": "page"
@@ -115,7 +115,7 @@
     {
       "id": "file-history",
       "name": "File History",
-      "icon": "mif-folder-open",
+      "icon": "sui-folder-open",
       "category": "system-security",
       "description": "Keep a history of your files.",
       "navigationType": "page"
@@ -123,7 +123,7 @@
     {
       "id": "folder-options",
       "name": "Folder Options",
-      "icon": "mif-folder",
+      "icon": "sui-folder",
       "category": "appearance",
       "description": "Customize the display of files and folders.",
       "navigationType": "window"
@@ -131,7 +131,7 @@
     {
       "id": "fonts",
       "name": "Fonts",
-      "icon": "mif-font-size",
+      "icon": "sui-font-size",
       "category": "appearance",
       "description": "Add, change, and manage fonts on your computer.",
       "navigationType": "page"
@@ -139,7 +139,7 @@
     {
       "id": "indexing-options",
       "name": "Indexing Options",
-      "icon": "mif-search",
+      "icon": "sui-search",
       "category": "system-security",
       "description": "Change how Windows indexes to search faster.",
       "navigationType": "window"
@@ -147,7 +147,7 @@
     {
       "id": "internet-options",
       "name": "Internet Options",
-      "icon": "mif-ie",
+      "icon": "sui-globe",
       "category": "network-internet",
       "description": "Configure your Internet display and connection settings.",
       "navigationType": "window"
@@ -155,7 +155,7 @@
     {
       "id": "keyboard",
       "name": "Keyboard",
-      "icon": "mif-keyboard",
+      "icon": "sui-keyboard",
       "category": "hardware-sound",
       "description": "Customize your keyboard settings, such as the cursor blink rate and the character repeat rate.",
       "navigationType": "window"
@@ -163,7 +163,7 @@
     {
       "id": "location-settings",
       "name": "Location Settings",
-      "icon": "mif-location",
+      "icon": "sui-map-pin",
       "category": "system-security",
       "description": "Configure your sensor settings.",
       "navigationType": "page"
@@ -171,7 +171,7 @@
     {
       "id": "mouse",
       "name": "Mouse",
-      "icon": "mif-pointer",
+      "icon": "sui-mouse",
       "category": "hardware-sound",
       "description": "Customize your mouse settings, such as the button configuration, double click speed, mouse pointers, and motion speed.",
       "navigationType": "window"
@@ -179,7 +179,7 @@
     {
       "id": "network-sharing",
       "name": "Network and Sharing Center",
-      "icon": "mif-share",
+      "icon": "sui-share",
       "category": "network-internet",
       "description": "Change network status, change network settings and set preferences for sharing files and printers",
       "navigationType": "page"
@@ -187,7 +187,7 @@
     {
       "id": "notification-area-icons",
       "name": "Notification Area Icons",
-      "icon": "mif-notification",
+      "icon": "sui-notifications",
       "category": "appearance",
       "description": "Select which icons and notifications appear in the notification area.",
       "navigationType": "window"
@@ -195,7 +195,7 @@
     {
       "id": "personalization",
       "name": "Personalization",
-      "icon": "mif-paint",
+      "icon": "sui-pencil",
       "category": "appearance",
       "description": "Change the pictures, colors, and sounds for this computer.",
       "navigationType": "page"
@@ -203,7 +203,7 @@
     {
       "id": "power-options",
       "name": "Power Options",
-      "icon": "mif-power",
+      "icon": "sui-power",
       "category": "hardware-sound",
       "description": "Conserve energy or maximize performance by choosing how your computer manages power.",
       "navigationType": "page"
@@ -211,7 +211,7 @@
     {
       "id": "programs-features",
       "name": "Programs and Features",
-      "icon": "mif-apps",
+      "icon": "sui-all-apps",
       "category": "programs",
       "description": "Uninstall or change programs on your computer.",
       "navigationType": "page"
@@ -219,7 +219,7 @@
     {
       "id": "recovery",
       "name": "Recovery",
-      "icon": "mif-history",
+      "icon": "sui-history",
       "category": "system-security",
       "description": "Recovery",
       "navigationType": "page"
@@ -227,7 +227,7 @@
     {
       "id": "region",
       "name": "Region",
-      "icon": "mif-earth",
+      "icon": "sui-globe",
       "category": "clock-region",
       "description": "Customize settings for the display of languages, numbers, times, and dates.",
       "navigationType": "window"
@@ -235,7 +235,7 @@
     {
       "id": "sound",
       "name": "Sound",
-      "icon": "mif-volume-high",
+      "icon": "sui-volume-high",
       "category": "hardware-sound",
       "description": "Configure your audio devices or change the sound scheme for your computer.",
       "navigationType": "window"
@@ -243,7 +243,7 @@
     {
       "id": "speech-recognition",
       "name": "Speech Recognition",
-      "icon": "mif-mic",
+      "icon": "sui-microphone",
       "category": "ease-of-access",
       "description": "Configure how speech recognition works on your computer.",
       "navigationType": "page"
@@ -251,7 +251,7 @@
     {
       "id": "sync-center",
       "name": "Sync Center",
-      "icon": "mif-sync",
+      "icon": "sui-sync",
       "category": "network-internet",
       "description": "Sync files between your computer and network folders.",
       "navigationType": "page"
@@ -259,7 +259,7 @@
     {
       "id": "system",
       "name": "System",
-      "icon": "mif-display",
+      "icon": "sui-display",
       "category": "system-security",
       "description": "View information about your computer, and change settings for hardware, performance, and remote desktop.",
       "navigationType": "page"
@@ -267,7 +267,7 @@
     {
       "id": "taskbar",
       "name": "Taskbar and Navigation",
-      "icon": "mif-apps",
+      "icon": "sui-all-apps",
       "category": "appearance",
       "description": "Customize the taskbar, such as the types of items to be displayed, and how they should appear.",
       "navigationType": "window"
@@ -275,7 +275,7 @@
     {
       "id": "troubleshooting",
       "name": "Troubleshooting",
-      "icon": "mif-tools",
+      "icon": "sui-tools",
       "category": "system-security",
       "description": "Troubleshoot and fix common computer problems.",
       "navigationType": "page"
@@ -283,7 +283,7 @@
     {
       "id": "user-accounts",
       "name": "User Accounts",
-      "icon": "mif-user",
+      "icon": "sui-user",
       "category": "user-accounts",
       "description": "Change user account settings and passwords for people who share this computer",
       "navigationType": "page"
@@ -291,7 +291,7 @@
     {
       "id": "windows-defender",
       "name": "Windows Defender",
-      "icon": "mif-shield",
+      "icon": "sui-shield",
       "category": "system-security",
       "description": "Helps protect users from malware and other potentially unwanted software",
       "navigationType": "page"
@@ -299,7 +299,7 @@
     {
       "id": "windows-firewall",
       "name": "Windows Firewall",
-      "icon": "mif-shield",
+      "icon": "sui-shield",
       "category": "system-security",
       "description": "Check firewall status.",
       "navigationType": "page"
@@ -307,7 +307,7 @@
     {
       "id": "windows-mobility-center",
       "name": "Windows Mobility Center",
-      "icon": "mif-laptop",
+      "icon": "sui-computer",
       "category": "hardware-sound",
       "description": "Adjust display brightness, volume, power options, and other commonly used mobile PC settings.",
       "navigationType": "window"
@@ -315,7 +315,7 @@
     {
       "id": "windows-update",
       "name": "Windows Update",
-      "icon": "mif-download",
+      "icon": "sui-download",
       "category": "system-security",
       "description": "Check for software and driver updates, choose automatic updating settings, or view installed updates.",
       "navigationType": "page"

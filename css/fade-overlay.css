@@ -1,0 +1,30 @@
+/* ===== FADE TO BLACK OVERLAY ===== */
+/* Loaded separately with data-no-reload so it survives shell hot-reloads */
+#fade-to-black {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #000;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 999998;
+    transition: opacity 0.25s ease;
+}
+
+/* State: Boot transition - fade-to-black above lockscreen to reveal it */
+#fade-to-black.boot-transition {
+    z-index: 999999;
+    transition: opacity 0.25s ease-out;
+}
+
+/* State: Below interstitial - so interstitial is visible */
+#fade-to-black.below-interstitial {
+    z-index: 999990;
+}
+
+#fade-to-black.visible {
+    opacity: 1;
+    pointer-events: none;
+}

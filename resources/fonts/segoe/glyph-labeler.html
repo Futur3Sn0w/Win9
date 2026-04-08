@@ -125,7 +125,7 @@
 <body>
 
 <h1>Segoe UI Symbol — Glyph Labeler</h1>
-<p class="subtitle">641 PUA glyphs · E000–E2FE · Type a label, then Export when done.</p>
+<p class="subtitle">649 PUA glyphs · E000–F013 · Type a label, then Export when done.</p>
 
 <div class="toolbar">
   <label>Filter:</label>
@@ -212,11 +212,13 @@ const KNOWN = {
   'E1E8': 'ThreeBars',      'E1E9': 'FourBars',        'E294': 'Scan',
   'E295': 'Preview',
   // Supplemental mappings from symbol-map.md
+  'E000': 'Search',
   'E012': 'ChevronThinLeft', 'E013': 'ChevronThinRight',
   'E014': 'ChevronThinUp',   'E015': 'ChevronThinDown',
   'E016': 'ChevronLeft',     'E017': 'ChevronRight',
   'E018': 'ChevronUp',       'E019': 'ChevronDown',
-  'E07D': 'Power',           'E07F': 'Accessibility',
+  'E052': 'WindowsHelloEye',
+  'E07D': 'Power',           'E07E': 'DualMonitor',    'E07F': 'Accessibility',
   'E0C2': 'EllipsisVertical','E0C3': 'EllipsisHorizontal',
   'E0CF': 'Drive',           'E0F3': 'DevTools',
   'E1C2': 'Pencil',          'E1F6': 'Locked',
@@ -225,8 +227,27 @@ const KNOWN = {
   'E1FE': 'ArrowUp',         'E211': 'Computer',
   'E284': 'Brightness',      'E2AD': 'History',
   'E2B1': 'Palette',         'E2B3': 'ExitTablet',
-  'E2B4': 'EnterTablet',     'E2B6': 'ArrowLeft',
-  'E2B7': 'ArrowRight',
+  'E2B4': 'EnterTablet',     'E2B6': 'ArrowLeft',      'E2B7': 'ArrowRight',
+  // App commands / UI chrome
+  'E24C': 'Exit Fullscreen (App Commands)', 'E24D': 'Enter Fullscreen (App Commands)',
+  // Device & Hardware icons
+  'E2C1': 'SpeakerMute',     'E2C2': 'DeskMicrophone',
+  'E2C4': 'Headset',         'E2C5': 'MobilePhone',     'E2C6': 'DevicePhone',
+  'E2C8': 'Display',         'E2CA': 'Projector',       'E2CB': 'TV',
+  'E2CD': 'Camcorder',       'E2CE': 'DeviceCamera',    'E2CF': 'Scanner',
+  'E2D0': 'Webcam',          'E2D1': 'MouseKeyboard',   'E2D2': 'GameController',
+  'E2D3': 'DeviceKeyboard',  'E2D4': 'Mouse',           'E2D5': 'RemoteControl',
+  'E2D6': 'SimCard',         'E2D7': 'NetworkServer',   'E2D8': 'UsbDrive',
+  'E2D9': 'OpticalDisc',     'E2DB': 'HardDrive',       'E2E0': 'NetworkServerBridge',
+  'E2E1': 'Print (App Commands)', 'E2E3': 'Speaker',    'E2E8': 'Xbox',
+  'E2E9': 'SdCard',          'E2EB': 'Headphones',      'E2EC': 'Chip',
+  'E2EF': 'OlderXbox',
+  'E2F0': 'Hide keyboard',              'E2F1': 'Hide handwriting keyboard',
+  'E2F2': 'Hide split keyboard',        'E2F3': 'Hide traditional keyboard',
+  'E2F6': 'Printer',
+  'E2F8': 'Share (App Commands)',       'E2F9': 'Settings (App Commands)',
+  'E2FA': 'Devices (App Commands)',     'E2FB': 'Search (App Commands)',
+  'E2FD': 'Share',           'E2FE': 'DisplayWithSpeaker',
 };
 
 // ── All 641 codepoints from the font's cmap ──────────────────────────────────
@@ -295,7 +316,9 @@ const CODEPOINTS = [
   0xe2e0,0xe2e1,0xe2e2,0xe2e3,0xe2e4,0xe2e5,0xe2e6,0xe2e7,0xe2e8,0xe2e9,
   0xe2ea,0xe2eb,0xe2ec,0xe2ed,0xe2ee,0xe2ef,0xe2f0,0xe2f1,0xe2f2,0xe2f3,
   0xe2f4,0xe2f5,0xe2f6,0xe2f7,0xe2f8,0xe2f9,0xe2fa,0xe2fb,0xe2fc,0xe2fd,
-  0xe2fe
+  0xe2fe,
+  // v6.15 additions
+  0xf006,0xf007,0xf008,0xf009,0xf010,0xf011,0xf012,0xf013
 ];
 
 // ── State ─────────────────────────────────────────────────────────────────────

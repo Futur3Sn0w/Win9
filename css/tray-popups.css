@@ -17,12 +17,6 @@ body {
     --threshold-desktop-popup-close-duration: 0.22s;
 }
 
-body.modern-window-styling-disabled {
-    --threshold-desktop-popup-border-color: #00000044;
-    --threshold-desktop-popup-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
-    --threshold-desktop-popup-shadow-soft: 0 0 4px rgba(0, 0, 0, 0.1);
-    --threshold-desktop-popup-shadow-hidden: 0 0 4px rgba(0, 0, 0, 0);
-}
 
 @keyframes thresholdDesktopPopupClose {
     0% {
@@ -624,10 +618,6 @@ body.taskbar-small-icons .tray-overflow-items .system-icon {
     align-items: center;
 }
 
-.volume-flyout-modern-header {
-    display: none;
-}
-
 .volume-icon-display {
     border: none;
     background: transparent;
@@ -719,7 +709,7 @@ body.taskbar-small-icons .tray-overflow-items .system-icon {
     }
 }
 
-body.taskbar-modern-volume-popup-enabled .volume-flyout {
+.volume-flyout {
     display: flex;
     visibility: hidden;
     width: 220px;
@@ -739,14 +729,14 @@ body.taskbar-modern-volume-popup-enabled .volume-flyout {
     z-index: var(--threshold-desktop-popup-z-index);
 }
 
-body.taskbar-modern-volume-popup-enabled .volume-flyout.visible {
+.volume-flyout.visible {
     opacity: 1;
     visibility: visible;
     pointer-events: auto;
     transform: translateY(0);
 }
 
-body.taskbar-modern-volume-popup-enabled .volume-flyout.closing {
+.volume-flyout.closing {
     display: flex;
     opacity: 1;
     visibility: visible;
@@ -755,25 +745,25 @@ body.taskbar-modern-volume-popup-enabled .volume-flyout.closing {
     animation: thresholdDesktopPopupClose var(--threshold-desktop-popup-close-duration) cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
-body.taskbar-modern-volume-popup-enabled .volume-flyout::after {
+.volume-flyout::after {
     display: none;
 }
 
-body.taskbar-modern-volume-popup-enabled .volume-flyout .classic-flyout-content {
+.volume-flyout .classic-flyout-content {
     background: #1d1d1d;
     box-shadow: none;
     height: auto;
     padding: 10px 12px 12px;
 }
 
-body.taskbar-modern-volume-popup-enabled .volume-flyout-body {
+.volume-flyout-body {
     flex-direction: row;
     align-items: center;
     gap: 10px;
     flex: 0 0 auto;
 }
 
-body.taskbar-modern-volume-popup-enabled .volume-flyout-modern-header {
+.volume-flyout-modern-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -785,20 +775,20 @@ body.taskbar-modern-volume-popup-enabled .volume-flyout-modern-header {
     line-height: 1.2;
 }
 
-body.taskbar-modern-volume-popup-enabled .volume-flyout-device-name {
+.volume-flyout-device-name {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
     flex: 1;
 }
 
-body.taskbar-modern-volume-popup-enabled .volume-flyout-device-chevron {
+.volume-flyout-device-chevron {
     color: #d4d4d4;
     font-size: 14px;
     line-height: 1;
 }
 
-body.taskbar-modern-volume-popup-enabled .volume-icon-display {
+.volume-icon-display {
     width: 14px;
     min-width: 14px;
     padding: 0;
@@ -806,13 +796,13 @@ body.taskbar-modern-volume-popup-enabled .volume-icon-display {
     font-size: 14px;
 }
 
-body.taskbar-modern-volume-popup-enabled .volume-slider-container {
+.volume-slider-container {
     flex: 1;
     align-items: stretch;
     gap: 0;
 }
 
-body.taskbar-modern-volume-popup-enabled .volume-slider {
+.volume-slider {
     -webkit-appearance: none;
     appearance: none;
     width: 154px;
@@ -822,19 +812,19 @@ body.taskbar-modern-volume-popup-enabled .volume-slider {
     margin: 0;
 }
 
-body.taskbar-modern-volume-popup-enabled .volume-slider::-webkit-slider-runnable-track {
+.volume-slider::-webkit-slider-runnable-track {
     height: 10px;
     background: transparent;
 }
 
-body.taskbar-modern-volume-popup-enabled .volume-slider::-moz-range-track {
+.volume-slider::-moz-range-track {
     height: 10px;
     background: #414141;
     border: none;
     border-radius: 0;
 }
 
-body.taskbar-modern-volume-popup-enabled .volume-slider::-webkit-slider-thumb {
+.volume-slider::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
     width: 11px;
@@ -845,11 +835,11 @@ body.taskbar-modern-volume-popup-enabled .volume-slider::-webkit-slider-thumb {
     box-shadow: none;
 }
 
-body.taskbar-modern-volume-popup-enabled .volume-slider::-webkit-slider-thumb:hover {
+.volume-slider::-webkit-slider-thumb:hover {
     background: #fff;
 }
 
-body.taskbar-modern-volume-popup-enabled .volume-slider::-moz-range-thumb {
+.volume-slider::-moz-range-thumb {
     width: 11px;
     height: 10px;
     background: #fff;
@@ -858,18 +848,18 @@ body.taskbar-modern-volume-popup-enabled .volume-slider::-moz-range-thumb {
     box-shadow: none;
 }
 
-body.taskbar-modern-volume-popup-enabled .volume-slider::-moz-range-thumb:hover {
+.volume-slider::-moz-range-thumb:hover {
     background: #fff;
 }
 
-body.taskbar-modern-volume-popup-enabled .volume-slider::-moz-range-progress {
+.volume-slider::-moz-range-progress {
     height: 10px;
     background: var(--ui-accent);
     border-radius: 0;
 }
 
-body.taskbar-modern-volume-popup-enabled .volume-level-display,
-body.taskbar-modern-volume-popup-enabled .volume-flyout .mixer {
+.volume-level-display,
+.volume-flyout .mixer {
     display: none;
 }
 
@@ -877,10 +867,6 @@ body.taskbar-modern-volume-popup-enabled .volume-flyout .mixer {
 .clock-flyout {
     width: 352px;
     height: 263px;
-}
-
-.clock-flyout-modern-shell {
-    display: none;
 }
 
 .clock-flyout .classic-flyout-content {
@@ -1021,25 +1007,6 @@ body.taskbar-modern-volume-popup-enabled .volume-flyout .mixer {
     border-color: #249CE4;
 }
 
-.clock-flyout-analog {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    height: 165px;
-}
-
-.analog-clock-canvas {
-    display: block;
-}
-
-.digital-time {
-    font-size: 13px;
-    color: #000;
-    text-align: center;
-}
-
 .clock-flyout-footer {
     border-top: 1px solid #DBDBDB;
     background-color: #F6F6F6;
@@ -1062,7 +1029,7 @@ body.taskbar-modern-volume-popup-enabled .volume-flyout .mixer {
     text-decoration: underline;
 }
 
-body.taskbar-modern-clock-popup-enabled .clock-flyout {
+.clock-flyout {
     display: flex;
     visibility: hidden;
     width: 288px;
@@ -1082,14 +1049,14 @@ body.taskbar-modern-clock-popup-enabled .clock-flyout {
     z-index: var(--threshold-desktop-popup-z-index);
 }
 
-body.taskbar-modern-clock-popup-enabled .clock-flyout.visible {
+.clock-flyout.visible {
     opacity: 1;
     visibility: visible;
     pointer-events: auto;
     transform: translateY(0);
 }
 
-body.taskbar-modern-clock-popup-enabled .clock-flyout.closing {
+.clock-flyout.closing {
     display: flex;
     opacity: 1;
     visibility: visible;
@@ -1098,25 +1065,25 @@ body.taskbar-modern-clock-popup-enabled .clock-flyout.closing {
     animation: thresholdDesktopPopupClose var(--threshold-desktop-popup-close-duration) cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
-body.taskbar-modern-clock-popup-enabled .clock-flyout::after {
+.clock-flyout::after {
     display: none;
 }
 
-body.taskbar-modern-clock-popup-enabled .clock-flyout .classic-flyout-content {
+.clock-flyout .classic-flyout-content {
     background: #fff;
     box-shadow: none;
     height: auto;
     padding: 24px 26px 22px;
 }
 
-body.taskbar-modern-clock-popup-enabled .clock-flyout-modern-shell {
+.clock-flyout-modern-shell {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
     width: 236px;
 }
 
-body.taskbar-modern-clock-popup-enabled .clock-flyout-modern-time {
+.clock-flyout-modern-time {
     display: flex;
     align-items: baseline;
     gap: 5px;
@@ -1126,12 +1093,12 @@ body.taskbar-modern-clock-popup-enabled .clock-flyout-modern-time {
     line-height: 1;
 }
 
-body.taskbar-modern-clock-popup-enabled .clock-flyout-modern-time-value {
+.clock-flyout-modern-time-value {
     font-size: 22px;
     letter-spacing: -0.02em;
 }
 
-body.taskbar-modern-clock-popup-enabled .clock-flyout-modern-time-period {
+.clock-flyout-modern-time-period {
     margin-top: 0;
     font-size: 13px;
     font-family: 'Segoe UI', sans-serif;
@@ -1140,7 +1107,7 @@ body.taskbar-modern-clock-popup-enabled .clock-flyout-modern-time-period {
     line-height: 1;
 }
 
-body.taskbar-modern-clock-popup-enabled .clock-flyout-modern-link {
+.clock-flyout-modern-link {
     margin-top: 34px;
     color: #2d4f85;
     text-decoration: none;
@@ -1148,18 +1115,18 @@ body.taskbar-modern-clock-popup-enabled .clock-flyout-modern-link {
     line-height: 1.2;
 }
 
-body.taskbar-modern-clock-popup-enabled .clock-flyout-modern-link:hover {
+.clock-flyout-modern-link:hover {
     text-decoration: underline;
 }
 
-body.taskbar-modern-clock-popup-enabled .clock-flyout-modern-divider {
+.clock-flyout-modern-divider {
     width: 236px;
     height: 1px;
     margin-top: 21px;
     background: #a6a6a6;
 }
 
-body.taskbar-modern-clock-popup-enabled .clock-flyout-date-header {
+.clock-flyout-date-header {
     align-self: flex-start;
     width: 236px;
     justify-content: flex-start;
@@ -1172,18 +1139,18 @@ body.taskbar-modern-clock-popup-enabled .clock-flyout-date-header {
     line-height: 1.2;
 }
 
-body.taskbar-modern-clock-popup-enabled .clock-flyout-main {
+.clock-flyout-main {
     display: block;
     height: auto;
 }
 
-body.taskbar-modern-clock-popup-enabled .clock-flyout-calendar {
+.clock-flyout-calendar {
     width: 236px;
     height: auto;
     justify-content: flex-start;
 }
 
-body.taskbar-modern-clock-popup-enabled .calendar-header {
+.calendar-header {
     height: 40px;
     margin-bottom: 0;
     border: 1px solid #dcdcdc;
@@ -1191,7 +1158,7 @@ body.taskbar-modern-clock-popup-enabled .calendar-header {
     background: #fdfdfd;
 }
 
-body.taskbar-modern-clock-popup-enabled .calendar-month-year {
+.calendar-month-year {
     order: 0;
     flex: 1;
     padding-left: 12px;
@@ -1202,7 +1169,7 @@ body.taskbar-modern-clock-popup-enabled .calendar-month-year {
     line-height: 1;
 }
 
-body.taskbar-modern-clock-popup-enabled .calendar-nav-button {
+.calendar-nav-button {
     width: 32px;
     height: 40px;
     padding: 0;
@@ -1212,15 +1179,15 @@ body.taskbar-modern-clock-popup-enabled .calendar-nav-button {
     justify-content: center;
 }
 
-body.taskbar-modern-clock-popup-enabled .calendar-prev {
+.calendar-prev {
     order: 1;
 }
 
-body.taskbar-modern-clock-popup-enabled .calendar-next {
+.calendar-next {
     order: 2;
 }
 
-body.taskbar-modern-clock-popup-enabled .calendar-nav-button::before {
+.calendar-nav-button::before {
     content: '';
     width: 10px;
     height: 10px;
@@ -1229,23 +1196,23 @@ body.taskbar-modern-clock-popup-enabled .calendar-nav-button::before {
     font-size: 0;
 }
 
-body.taskbar-modern-clock-popup-enabled .calendar-prev::before {
+.calendar-prev::before {
     transform: translateY(4px) rotate(-45deg);
 }
 
-body.taskbar-modern-clock-popup-enabled .calendar-next::before {
+.calendar-next::before {
     transform: translateY(-4px) rotate(135deg);
 }
 
-body.taskbar-modern-clock-popup-enabled .calendar-nav-button:hover {
+.calendar-nav-button:hover {
     background: #f2f2f2;
 }
 
-body.taskbar-modern-clock-popup-enabled .calendar-nav-button:active {
+.calendar-nav-button:active {
     background: #e9e9e9;
 }
 
-body.taskbar-modern-clock-popup-enabled .calendar-weekdays {
+.calendar-weekdays {
     margin-bottom: 0;
     border: 1px solid #dcdcdc;
     border-top: none;
@@ -1253,18 +1220,18 @@ body.taskbar-modern-clock-popup-enabled .calendar-weekdays {
     padding: 8px 0 7px;
 }
 
-body.taskbar-modern-clock-popup-enabled .calendar-weekday {
+.calendar-weekday {
     color: #3f3f3f;
     font-size: var(--system-font-size);
 }
 
-body.taskbar-modern-clock-popup-enabled .calendar-days {
+.calendar-days {
     grid-template-rows: repeat(6, calc(236px / 7));
     border-left: 1px solid #dcdcdc;
     border-top: 1px solid #dcdcdc;
 }
 
-body.taskbar-modern-clock-popup-enabled .calendar-day {
+.calendar-day {
     width: auto;
     aspect-ratio: 1 / 1;
     height: auto;
@@ -1277,30 +1244,30 @@ body.taskbar-modern-clock-popup-enabled .calendar-day {
     font-weight: 400;
 }
 
-body.taskbar-modern-clock-popup-enabled .calendar-day:hover {
+.calendar-day:hover {
     background: #f7f7f7;
     border-color: #dcdcdc;
 }
 
-body.taskbar-modern-clock-popup-enabled .calendar-day.other-month {
+.calendar-day.other-month {
     background: #f3f3f3;
     color: #6e6e6e;
     opacity: 1;
     font-weight: 300;
 }
 
-body.taskbar-modern-clock-popup-enabled .calendar-day.today {
+.calendar-day.today {
     background: #edf4ff;
     color: #3c5b8d;
     border-color: #dcdcdc;
 }
 
-body.taskbar-modern-clock-popup-enabled .calendar-day.today:hover {
+.calendar-day.today:hover {
     background: #edf4ff;
 }
 
-body.taskbar-modern-clock-popup-enabled .clock-flyout-analog,
-body.taskbar-modern-clock-popup-enabled .clock-flyout-footer {
+.clock-flyout-analog,
+.clock-flyout-footer {
     display: none;
 }
 
@@ -1466,4 +1433,12 @@ body.threshold-modern-logonui .usertile-panel-photo-image {
 .battery-flyout {
     width: 249px;
     height: 207px;
+    padding: 7px .5px .5px .5px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    overflow: hidden;
+}
+
+.battery-flyout::after {
+    top: 0;
+    background-color: rgba(198, 198, 198, 0.3);
 }

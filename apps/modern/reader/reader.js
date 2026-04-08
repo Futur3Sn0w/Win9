@@ -1,6 +1,6 @@
 /**
- * Microsoft Reader – Windows 8.1 Modern App
- * PDF and document reader for the Win8 Electron simulator.
+ * Microsoft Reader – Windows 9 Modern App
+ * PDF and document reader for the Win9 Electron simulator.
  *
  * Uses Mozilla pdf.js (loaded via CDN) for PDF rendering.
  * Handles .pdf, .xps, .tiff, .tif file associations.

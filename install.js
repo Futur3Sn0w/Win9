@@ -475,7 +475,7 @@ function generateLicenseBlurb() {
   return [
     'By using the simulator you agree to the Microsoft Software License Terms as reproduced for this educational experience.',
     '',
-    'This limited recreation mirrors the Windows 8/8.1 setup experience. No actual changes are made to your device. All data entered here remains within the simulator environment.',
+    'This limited recreation mirrors the Windows 9/8.1 setup experience. No actual changes are made to your device. All data entered here remains within the simulator environment.',
     '',
     'If you accept these terms, select the checkbox below. Selecting “I do not accept the license terms” will cancel setup.'
   ].join('\n');

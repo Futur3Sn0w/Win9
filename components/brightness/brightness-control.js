@@ -16,6 +16,8 @@ const WINDOWS_POWERSHELL_PATH = path.join(
     'powershell.exe'
 );
 const WINDOWS_RESULT_MARKER = '__WIN8_BRIGHTNESS_RESULT__';
+const WINDOWS_BRIGHTNESS_BRIDGE_STARTUP_TIMEOUT_MS = 2000;
+const WINDOWS_BRIGHTNESS_REQUEST_TIMEOUT_MS = 2000;
 
 const WINDOWS_BRIGHTNESS_BRIDGE = `
 $ErrorActionPreference = 'Stop'
@@ -147,9 +149,20 @@ function normalizeResult(result, fallbackBrightness = DEFAULT_BRIGHTNESS) {
 }
 
 function resetWindowsBrightnessBridge(error) {
-    if (windowsBrightnessBridge) {
-        for (const pendingRequest of windowsBrightnessBridge.pending.values()) {
+    const bridge = windowsBrightnessBridge;
+    if (bridge) {
+        for (const pendingRequest of bridge.pending.values()) {
             pendingRequest.reject(error);
+        }
+
+        bridge.pending.clear();
+
+        if (bridge.child && !bridge.child.killed) {
+            try {
+                bridge.child.kill();
+            } catch (killError) {
+                console.warn('Brightness Control: Failed to terminate Windows brightness bridge:', killError);
+            }
         }
     }
 
@@ -180,6 +193,10 @@ function ensureWindowsBrightnessBridge() {
         const stdout = readline.createInterface({ input: child.stdout });
         const stderr = readline.createInterface({ input: child.stderr });
         const startupErrors = [];
+        let startupSettled = false;
+        const startupTimeout = setTimeout(() => {
+            failStartup(new Error('Windows brightness bridge startup timed out.'));
+        }, WINDOWS_BRIGHTNESS_BRIDGE_STARTUP_TIMEOUT_MS);
 
         windowsBrightnessBridge = {
             child,
@@ -187,6 +204,12 @@ function ensureWindowsBrightnessBridge() {
         };
 
         const failStartup = (error) => {
+            if (startupSettled) {
+                return;
+            }
+
+            startupSettled = true;
+            clearTimeout(startupTimeout);
             stdout.close();
             stderr.close();
             resetWindowsBrightnessBridge(error);
@@ -195,6 +218,12 @@ function ensureWindowsBrightnessBridge() {
 
         stdout.on('line', (line) => {
             if (line === `${WINDOWS_RESULT_MARKER}ready`) {
+                if (startupSettled) {
+                    return;
+                }
+
+                startupSettled = true;
+                clearTimeout(startupTimeout);
                 resolve(windowsBrightnessBridge);
                 return;
             }
@@ -232,7 +261,7 @@ function ensureWindowsBrightnessBridge() {
         });
 
         child.on('error', (error) => {
-            if (windowsBrightnessBridgePromise) {
+            if (!startupSettled) {
                 failStartup(error);
             } else {
                 resetWindowsBrightnessBridge(error);
@@ -245,7 +274,7 @@ function ensureWindowsBrightnessBridge() {
                 `Windows brightness bridge exited unexpectedly (code ${code}, signal ${signal || 'none'})`
             );
 
-            if (windowsBrightnessBridgePromise) {
+            if (!startupSettled) {
                 failStartup(error);
             } else {
                 resetWindowsBrightnessBridge(error);
@@ -263,10 +292,31 @@ async function runWindowsBrightnessRequest(action, value) {
 
     return new Promise((resolve, reject) => {
         const id = ++windowsBrightnessRequestId;
-        bridge.pending.set(id, { resolve, reject });
+        const timeoutId = setTimeout(() => {
+            if (!bridge.pending.has(id)) {
+                return;
+            }
+
+            bridge.pending.delete(id);
+            const error = new Error('Windows brightness request timed out.');
+            resetWindowsBrightnessBridge(error);
+            reject(error);
+        }, WINDOWS_BRIGHTNESS_REQUEST_TIMEOUT_MS);
+
+        bridge.pending.set(id, {
+            resolve(result) {
+                clearTimeout(timeoutId);
+                resolve(result);
+            },
+            reject(error) {
+                clearTimeout(timeoutId);
+                reject(error);
+            }
+        });
 
         const request = JSON.stringify({ id, action, value });
         bridge.child.stdin.write(`${request}\n`, (error) => {
+            clearTimeout(timeoutId);
             if (!error) {
                 return;
             }
@@ -332,7 +382,10 @@ async function prewarm() {
     brightnessPrewarmPromise = (async () => {
         await ensureWindowsBrightnessBridge();
         return getBrightnessState();
-    })();
+    })().catch((error) => {
+        brightnessPrewarmPromise = null;
+        throw error;
+    });
 
     return brightnessPrewarmPromise;
 }

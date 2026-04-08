@@ -1,21 +1,6 @@
 {
   "apps": [
     {
-      "id": "desktop",
-      "name": "Desktop",
-      "color": "purple",
-      "size": "normal",
-      "pinned": true,
-      "category": "system",
-      "showInStart": true,
-      "showInSearch": false,
-      "type": "meta",
-      "tileOptions": {
-        "allowWide": true,
-        "allowLarge": true
-      }
-    },
-    {
       "id": "settings",
       "name": "PC settings",
       "color": "purple",
@@ -50,39 +35,6 @@
       "runCommands": [
         "search"
       ]
-    },
-    {
-      "id": "taskbar-properties",
-      "name": "Taskbar and Start Menu properties",
-      "icon": "sui-tools",
-      "color": "blue",
-      "size": "normal",
-      "pinned": false,
-      "category": "system",
-      "type": "meta-classic",
-      "folder": "Windows System",
-      "path": "apps/meta-classic/taskbar/taskbar.cpl.html",
-      "iconImages": {
-        "16": "resources/images/icons/control panel applets/Taskbar Properties/16.png",
-        "20": "resources/images/icons/control panel applets/Taskbar Properties/20.png",
-        "24": "resources/images/icons/control panel applets/Taskbar Properties/24.png",
-        "32": "resources/images/icons/control panel applets/Taskbar Properties/32.png",
-        "40": "resources/images/icons/control panel applets/Taskbar Properties/40.png",
-        "48": "resources/images/icons/control panel applets/Taskbar Properties/48.png",
-        "64": "resources/images/icons/control panel applets/Taskbar Properties/64.png",
-        "96": "resources/images/icons/control panel applets/Taskbar Properties/96.png",
-        "128": "resources/images/icons/control panel applets/Taskbar Properties/128.png"
-      },
-      "showInStart": false,
-      "windowOptions": {
-        "width": 460,
-        "height": 540,
-        "resizable": false,
-        "minimizable": false,
-        "maximizable": false,
-        "alwaysOnTop": false,
-        "showInTaskbar": true
-      }
     },
     {
       "id": "run",
@@ -241,8 +193,6 @@
       "type": "modern",
       "path": "apps/modern/xbox-music/index.html",
       "loadDirect": true,
-      "logoImage": "apps/modern/xbox-music/resources/logo.png",
-      "splashImage": "apps/modern/xbox-music/resources/splash.png",
       "tileOptions": {
         "allowWide": true,
         "allowLarge": true
@@ -265,6 +215,13 @@
       "tileOptions": {
         "allowWide": true,
         "allowLarge": true
+      },
+      "tileSpecs": {
+        "mode": "live",
+        "contentType": "data",
+        "dataSource": "local",
+        "moveSpeed": 7500,
+        "refreshIntervalMinutes": 60
       }
     },
     {
@@ -372,6 +329,13 @@
         "allowWide": true,
         "allowLarge": true
       },
+      "tileSpecs": {
+        "mode": "live",
+        "contentType": "data",
+        "dataSource": "aggregated",
+        "moveSpeed": 6500,
+        "refreshIntervalMinutes": 30
+      },
       "runCommands": [
         "mail",
         "windows mail",
@@ -395,6 +359,13 @@
       "tileOptions": {
         "allowWide": true,
         "allowLarge": true
+      },
+      "tileSpecs": {
+        "mode": "live",
+        "contentType": "data",
+        "dataSource": "aggregated",
+        "moveSpeed": 7200,
+        "refreshIntervalMinutes": 30
       },
       "runCommands": [
         "calendar",
@@ -428,6 +399,51 @@
         "reader",
         "glcnd",
         "glcnd.exe"
+      ]
+    },
+    {
+      "id": "mspaint",
+      "name": "Paint",
+      "color": "teal",
+      "size": "normal",
+      "pinned": true,
+      "category": "accessories",
+      "type": "classic",
+      "folder": "Windows Accessories",
+      "path": "apps/classic/mspaint/mspaint.exe.html",
+      "allowMultipleWindows": true,
+      "iconImages": {
+        "16": "apps/classic/mspaint/icons/16.png",
+        "24": "apps/classic/mspaint/icons/24.png",
+        "32": "apps/classic/mspaint/icons/32.png",
+        "48": "apps/classic/mspaint/icons/48.png",
+        "64": "apps/classic/mspaint/icons/64.png",
+        "256": "apps/classic/mspaint/icons/256.png"
+      },
+      "showInStart": true,
+      "windowOptions": {
+        "width": 900,
+        "height": 640,
+        "minWidth": 560,
+        "minHeight": 400,
+        "resizable": true,
+        "minimizable": true,
+        "maximizable": true,
+        "alwaysOnTop": false,
+        "showInTaskbar": true
+      },
+      "fileAssociations": [
+        ".png",
+        ".jpg",
+        ".jpeg",
+        ".bmp",
+        ".gif",
+        ".dib"
+      ],
+      "runCommands": [
+        "mspaint",
+        "mspaint.exe",
+        "paint"
       ]
     },
     {
@@ -482,6 +498,39 @@
       ]
     },
     {
+      "id": "charmap",
+      "name": "Character Map",
+      "icon": "sui-font",
+      "color": "teal",
+      "size": "normal",
+      "pinned": false,
+      "category": "accessories",
+      "type": "classic",
+      "folder": "Windows Accessories",
+      "path": "apps/classic/charmap/charmap.exe.html",
+      "allowMultipleWindows": false,
+      "iconImages": {
+        "16": "apps/classic/charmap/icons/16.png",
+        "32": "apps/classic/charmap/icons/32.png",
+        "48": "apps/classic/charmap/icons/48.png",
+        "256": "apps/classic/charmap/icons/256.png"
+      },
+      "showInStart": true,
+      "windowOptions": {
+        "width": 480,
+        "height": 440,
+        "resizable": false,
+        "minimizable": true,
+        "maximizable": false,
+        "alwaysOnTop": false,
+        "showInTaskbar": true
+      },
+      "runCommands": [
+        "charmap",
+        "charmap.exe"
+      ]
+    },
+    {
       "id": "photo-viewer",
       "name": "Windows Photo Viewer",
       "icon": "sui-pictures",
@@ -525,13 +574,22 @@
     {
       "id": "command-prompt",
       "name": "Command Prompt",
-      "color": "olive",
+      "color": "grey",
       "size": "normal",
       "pinned": false,
       "category": "system",
       "type": "classic",
       "folder": "Windows System",
       "path": "apps/classic/command-prompt/cmd.exe.html",
+      "iconImages": {
+        "16": "apps/classic/command-prompt/resources/icons/16.png",
+        "20": "apps/classic/command-prompt/resources/icons/20.png",
+        "24": "apps/classic/command-prompt/resources/icons/24.png",
+        "32": "apps/classic/command-prompt/resources/icons/32.png",
+        "40": "apps/classic/command-prompt/resources/icons/40.png",
+        "48": "apps/classic/command-prompt/resources/icons/48.png",
+        "64": "apps/classic/command-prompt/resources/icons/64.png"
+      },
       "allowMultipleWindows": true,
       "showInStart": true,
       "windowOptions": {
@@ -587,15 +645,19 @@
       "folder": "Windows System",
       "path": "apps/classic/taskmgr/taskmgr.exe.html",
       "iconImages": {
-        "16": "resources/images/icons/task manager/16.png",
-        "24": "resources/images/icons/task manager/24.png",
-        "32": "resources/images/icons/task manager/32.png",
-        "48": "resources/images/icons/task manager/48.png"
+        "16": "apps/classic/taskmgr/resources/icons/16.png",
+        "20": "apps/classic/taskmgr/resources/icons/20.png",
+        "24": "apps/classic/taskmgr/resources/icons/24.png",
+        "32": "apps/classic/taskmgr/resources/icons/32.png",
+        "40": "apps/classic/taskmgr/resources/icons/40.png",
+        "48": "apps/classic/taskmgr/resources/icons/48.png",
+        "64": "apps/classic/taskmgr/resources/icons/64.png",
+        "256": "apps/classic/taskmgr/resources/icons/256.png"
       },
       "showInStart": true,
       "windowOptions": {
-        "width": 860,
-        "height": 580,
+        "width": 980,
+        "height": 720,
         "resizable": true,
         "minimizable": true,
         "maximizable": true,
@@ -619,6 +681,7 @@
       "pinnedToTaskbar": true,
       "category": "system",
       "type": "classic",
+      "folder": "Windows System",
       "path": "apps/classic/explorer/explorer.html",
       "allowMultipleWindows": true,
       "useWebview": true,
@@ -659,6 +722,7 @@
       "pinned": false,
       "category": "system",
       "type": "classic",
+      "folder": "Windows System",
       "path": "apps/classic/explorer/explorer.html",
       "allowMultipleWindows": true,
       "useWebview": true,
@@ -812,6 +876,13 @@
         "allowWide": true,
         "allowLarge": true
       },
+      "tileSpecs": {
+        "mode": "live",
+        "contentType": "data",
+        "dataSource": "aggregated",
+        "moveSpeed": 7800,
+        "refreshIntervalMinutes": 30
+      },
       "runCommands": [
         "weather",
         "bingweather"
@@ -831,6 +902,13 @@
       "tileOptions": {
         "allowWide": true,
         "allowLarge": true
+      },
+      "tileSpecs": {
+        "mode": "live",
+        "contentType": "media",
+        "dataSource": "local",
+        "moveSpeed": 8200,
+        "refreshIntervalMinutes": 30
       },
       "windowOptions": {
         "minimizable": true,

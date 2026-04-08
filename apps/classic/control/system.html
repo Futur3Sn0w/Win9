@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System</title>
+    <link rel="stylesheet" href="../../../css/classic-windows.css">
+    <link rel="stylesheet" href="../../../css/classic-controls.css">
+    <link rel="stylesheet" href="../../../css/styles.css">
+    <link rel="stylesheet" href="../../../css/fonts.css">
+    <link rel="stylesheet" href="system.css">
+</head>
+
+<body>
+    <div class="system-page">
+        <h1 class="system-page-title">View basic information about your computer</h1>
+
+        <!-- Windows Edition -->
+        <section class="system-section">
+            <div class="system-section-header">
+                <h2 class="system-section-title">Windows edition</h2>
+                <div class="system-section-rule"></div>
+            </div>
+            <div class="system-section-body">
+                <div class="system-edition-info">
+                    <div id="windowsEdition">Windows 9</div>
+                    <div>&#169; 2025 Microsoft Corporation. All rights reserved.</div>
+                </div>
+                <div class="system-edition-logo-frame">
+                    <img class="system-edition-logo" src="../../../resources/images/logo_wm.svg" alt="Windows logo">
+                </div>
+            </div>
+        </section>
+
+        <!-- System -->
+        <section class="system-section">
+            <div class="system-section-header">
+                <h2 class="system-section-title">System</h2>
+                <div class="system-section-rule"></div>
+            </div>
+            <div class="system-section-body">
+                <div class="system-info-grid">
+                    <div class="system-info-row">
+                        <span class="system-info-label">Manufacturer:</span>
+                        <span class="system-info-value" id="manufacturer">Unknown</span>
+                    </div>
+                    <div class="system-info-row">
+                        <span class="system-info-label">Model:</span>
+                        <span class="system-info-value" id="model">Unknown</span>
+                    </div>
+                    <div class="system-info-row">
+                        <span class="system-info-label">Processor:</span>
+                        <span class="system-info-value" id="processor">Unknown</span>
+                    </div>
+                    <div class="system-info-row">
+                        <span class="system-info-label">Installed memory (RAM):</span>
+                        <span class="system-info-value" id="installedMemory">Unknown</span>
+                    </div>
+                    <div class="system-info-row">
+                        <span class="system-info-label">System type:</span>
+                        <span class="system-info-value" id="systemType">Unknown</span>
+                    </div>
+                    <div class="system-info-row">
+                        <span class="system-info-label">Pen and Touch:</span>
+                        <span class="system-info-value" id="penAndTouch">Not available</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Computer Name, Domain, Workgroup Settings -->
+        <section class="system-section">
+            <div class="system-section-header">
+                <h2 class="system-section-title">Computer name, domain, and workgroup settings</h2>
+                <div class="system-section-rule"></div>
+            </div>
+            <div class="system-section-body">
+                <div class="system-info-grid">
+                    <div class="system-info-row">
+                        <span class="system-info-label">Computer name:</span>
+                        <span class="system-info-value" id="computerName">Unknown</span>
+                    </div>
+                    <div class="system-info-row">
+                        <span class="system-info-label">Full computer name:</span>
+                        <span class="system-info-value" id="fullComputerName">Unknown</span>
+                    </div>
+                    <div class="system-info-row">
+                        <span class="system-info-label">Computer description:</span>
+                        <span class="system-info-value" id="computerDescription">Not Available</span>
+                    </div>
+                    <div class="system-info-row">
+                        <span class="system-info-label">Workgroup:</span>
+                        <span class="system-info-value" id="workgroup">Not Available</span>
+                    </div>
+                </div>
+                <button type="button" class="system-link-button" id="changeSettingsButton">Change settings</button>
+            </div>
+        </section>
+
+        <!-- Windows Activation -->
+        <section class="system-section">
+            <div class="system-section-header">
+                <h2 class="system-section-title">Windows activation</h2>
+                <div class="system-section-rule"></div>
+            </div>
+            <div class="system-section-body">
+                <div class="system-activation-lines">
+                    <div><span id="activationStatus">Windows is activated</span> <a href="#" id="activationLink">Read the Microsoft Software License Terms</a></div>
+                    <div>Product ID: <span id="productId">00186-50022-29585-AAOEM</span></div>
+                </div>
+                <button type="button" class="system-link-button" id="changeProductKeyButton">Change product key</button>
+            </div>
+        </section>
+    </div>
+
+    <script src="system.js"></script>
+</body>
+
+</html>

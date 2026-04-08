@@ -20,7 +20,7 @@ const {
 
 /**
  * Apply baseline registry values that simulate a pristine Windows install.
- * Values derived from stock Windows 8 defaults unless overridden by setup data.
+ * Values derived from stock Windows 9 defaults unless overridden by setup data.
  *
  * @param {Object} [options]
  * @param {Object} [options.profile] - Selected options captured during setup.

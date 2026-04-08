@@ -8,6 +8,11 @@
 const BATTERY_ICON_SIZES = [16, 24, 32];
 const BATTERY_BASE_RENDER_SIZE = 16;
 const BATTERY_SPRITE_FRAME_COUNT = 44;
+
+// Charms/TDBN battery sprite sheet constants
+const CHARMS_BATTERY_SPRITE_FRAME_COUNT = 32;
+const CHARMS_BATTERY_NORMAL_FRAMES  = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];   // 10 normal states
+const CHARMS_BATTERY_CHARGING_FRAMES = [10, 11, 12, 13, 14, 15, 16, 17, 18]; // 9 charging states
 const BATTERY_FRAME_MAP = {
     unpluggedLevels: [0, 1, 2, 3, 4, 5, 6, 7, 8],
     warning: 18,
@@ -85,7 +90,7 @@ class BatteryMonitor {
     setupViewportListeners() {
         window.addEventListener('resize', this.handleViewportChange);
         window.addEventListener('load', this.handleViewportChange, { once: true });
-        window.addEventListener('win8-display-settings-changed', this.handleDisplaySettingsChange);
+        window.addEventListener('win9-display-settings-changed', this.handleDisplaySettingsChange);
     }
 
     handleViewportChange() {
@@ -279,6 +284,66 @@ class BatteryMonitor {
     }
 
     /**
+     * Calculate the sprite frame index for the charms/TDBN battery sheet.
+     * Normal states: frames 0–9 (10 levels, 0 = empty … 9 = full)
+     * Charging states: frames 10–18 (9 levels, 10 = lowest … 18 = full)
+     */
+    getCharmsBatteryFrameIndex() {
+        const { level, charging, batteryPresent } = this.currentStatus;
+
+        if (!batteryPresent || level === null || level === undefined) {
+            return null; // caller should hide the icon
+        }
+
+        const percentage = Math.round(level * 100);
+
+        // Map percentage to a 0–9 normal level index
+        let normalIndex;
+        if (percentage <= 5)       normalIndex = 0;
+        else if (percentage <= 15) normalIndex = 1;
+        else if (percentage <= 25) normalIndex = 2;
+        else if (percentage <= 35) normalIndex = 3;
+        else if (percentage <= 45) normalIndex = 4;
+        else if (percentage <= 55) normalIndex = 5;
+        else if (percentage <= 65) normalIndex = 6;
+        else if (percentage <= 75) normalIndex = 7;
+        else if (percentage <= 85) normalIndex = 8;
+        else                       normalIndex = 9;
+
+        if (charging) {
+            // Charging has 9 frames; clamp the top of the normal range down by one
+            const chargingIndex = Math.min(normalIndex, CHARMS_BATTERY_CHARGING_FRAMES.length - 1);
+            return CHARMS_BATTERY_CHARGING_FRAMES[chargingIndex];
+        }
+
+        return CHARMS_BATTERY_NORMAL_FRAMES[normalIndex];
+    }
+
+    /**
+     * Update the battery sprite in the TDBN panel
+     */
+    updateTdbnBatteryIcon() {
+        const tdbnBattery = document.getElementById('tdbn-battery-icon');
+        if (!tdbnBattery) return;
+
+        const frameIndex = this.getCharmsBatteryFrameIndex();
+
+        if (frameIndex === null) {
+            tdbnBattery.style.display = 'none';
+            return;
+        }
+
+        const renderSize = 32;
+        const backgroundOffsetX = frameIndex * -renderSize;
+        const backgroundWidth = renderSize * CHARMS_BATTERY_SPRITE_FRAME_COUNT;
+
+        tdbnBattery.style.display = '';
+        tdbnBattery.style.backgroundImage = `url('resources/images/icons/charms/TDBN/bat/44.png')`;
+        tdbnBattery.style.backgroundPosition = `${backgroundOffsetX}px 0`;
+        tdbnBattery.style.backgroundSize = `${backgroundWidth}px ${renderSize}px`;
+    }
+
+    /**
      * Updates the battery icon using CSS background-position for sprite sheet
      */
     updateBatteryIcon() {
@@ -311,6 +376,9 @@ class BatteryMonitor {
 
         // Update popup if visible
         this.updateBatteryPopup();
+
+        // Update TDBN battery icon
+        this.updateTdbnBatteryIcon();
     }
 
     /**
@@ -425,7 +493,7 @@ class BatteryMonitor {
      */
     async cleanup() {
         window.removeEventListener('resize', this.handleViewportChange);
-        window.removeEventListener('win8-display-settings-changed', this.handleDisplaySettingsChange);
+        window.removeEventListener('win9-display-settings-changed', this.handleDisplaySettingsChange);
         await ipcRenderer.invoke('stop-battery-monitoring');
     }
 }

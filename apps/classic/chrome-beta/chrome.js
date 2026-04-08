@@ -8667,12 +8667,12 @@ class ChromeClassicApp {
         const versionRows = [
             ['Google Chrome Beta', '43.0.2357.62 beta-mock (Official Build) dev 64-bit'],
             ['Revision', 'a91d2f4d3f-ui-recreation'],
-            ['OS', 'Windows 8.1 Pro'],
+            ['OS', 'Windows 9 Pro'],
             ['Blink', '537.36 (@188492)'],
             ['JavaScript', 'V8 4.3.61.36'],
             ['Flash', '18.0.0.160'],
             ['User Agent', 'Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/43.0.2357.62 Safari/537.36'],
-            ['Command Line', '--simulate-windows8-shell --chrome-beta-classic'],
+            ['Command Line', '--simulate-windows9-shell --chrome-beta-classic'],
             ['Executable Path', 'C:\\Program Files\\Google\\Chrome Beta\\Application\\chrome.exe'],
             ['Profile Path', 'C:\\Users\\futur\\AppData\\Local\\Google\\Chrome Beta\\User Data\\Default']
         ];
@@ -10465,7 +10465,7 @@ class ChromeClassicApp {
 
                         const request = nodeHttps.get(requestUrl, {
                             headers: {
-                                'User-Agent': 'Mozilla/5.0 ChromeBetaWin8/1.0',
+                                'User-Agent': 'Mozilla/5.0 ChromeBetaWin9/1.0',
                                 'Accept': 'application/json, text/plain, */*'
                             }
                         }, (response) => {
@@ -10502,7 +10502,7 @@ class ChromeClassicApp {
 
                         const request = nodeHttps.get(requestUrl, {
                             headers: {
-                                'User-Agent': 'Mozilla/5.0 ChromeBetaWin8/1.0',
+                                'User-Agent': 'Mozilla/5.0 ChromeBetaWin9/1.0',
                                 'Accept': 'application/json, text/plain, */*'
                             }
                         }, (response) => {
@@ -10531,7 +10531,7 @@ class ChromeClassicApp {
 
             const request = nodeHttps.get(requestUrl, {
                 headers: {
-                    'User-Agent': 'Mozilla/5.0 ChromeBetaWin8/1.0',
+                    'User-Agent': 'Mozilla/5.0 ChromeBetaWin9/1.0',
                     'Accept': 'application/json, text/plain, */*'
                 }
             }, (response) => {

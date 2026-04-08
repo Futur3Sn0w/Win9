@@ -72,7 +72,10 @@ class WindowsRecycleBinProvider {
             'if ($null -ne $folder) { $count = [int]$folder.Items().Count }',
             'if ($count -gt 0) {',
             '  if (Get-Command Clear-RecycleBin -ErrorAction SilentlyContinue) {',
-            '    Clear-RecycleBin -Force -Confirm:$false -ErrorAction Stop | Out-Null',
+            '    try { Clear-RecycleBin -Force -Confirm:$false -ErrorAction Stop | Out-Null } catch { }',
+            '    $afterFolder = (New-Object -ComObject Shell.Application).Namespace(10)',
+            '    $afterCount = if ($null -ne $afterFolder) { [int]$afterFolder.Items().Count } else { 0 }',
+            "    if ($afterCount -gt 0) { throw 'Failed to empty the recycle bin.' }",
             "  } else { throw 'Clear-RecycleBin is unavailable on this host.' }",
             '}',
             "[Console]::Out.Write((@{ success = $true; deletedCount = $count } | ConvertTo-Json -Compress))"

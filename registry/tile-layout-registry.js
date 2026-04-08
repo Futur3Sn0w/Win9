@@ -38,6 +38,9 @@ const TILE_LAYOUT_PATH = 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Im
 const PINNED_APPS_VALUE = 'PinnedApps';
 const TILE_SIZES_PATH = 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\ImmersiveShell\\Launcher\\TileSizes';
 const TILE_ORDER_PATH = 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\ImmersiveShell\\Launcher\\Groups';
+const TILE_LIVE_ENABLED_PATH = 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\ImmersiveShell\\Launcher\\LiveTiles\\Enabled';
+const TILE_LIVE_CACHE_PATH = 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\ImmersiveShell\\Launcher\\LiveTiles\\Cache';
+const TILE_BADGE_STATE_PATH = 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\ImmersiveShell\\Launcher\\TileBadges';
 const TASKBAR_PATH = 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Taskband\\PinnedApplications';
 const TASKBAR_LIST_VALUE = 'List';
 const TASKBAR_ORDER_VALUE = 'Order';
@@ -314,6 +317,195 @@ function saveTileSizes(sizeMap) {
   return sizeMap;
 }
 
+function loadLiveTileEnabledStates() {
+  const registry = getRegistrySafe();
+  if (!registry) {
+    return {};
+  }
+
+  const savedValues = registry.getValue(TILE_LIVE_ENABLED_PATH, null, {});
+  if (!savedValues || typeof savedValues !== 'object') {
+    return {};
+  }
+
+  const enabledStates = {};
+  Object.keys(savedValues).forEach(key => {
+    const entry = savedValues[key];
+    if (!entry || typeof entry !== 'object') {
+      return;
+    }
+
+    const rawValue = entry.data;
+    if (rawValue == null) {
+      return;
+    }
+
+    enabledStates[key] = Number(rawValue) !== 0;
+  });
+
+  return enabledStates;
+}
+
+function saveLiveTileEnabledStates(stateMap) {
+  const registry = getRegistrySafe();
+  if (!registry) {
+    return {};
+  }
+
+  registry.deleteKey(TILE_LIVE_ENABLED_PATH);
+
+  if (!stateMap || typeof stateMap !== 'object') {
+    return {};
+  }
+
+  Object.keys(stateMap).forEach(key => {
+    if (!key) {
+      return;
+    }
+
+    registry.setValue(
+      TILE_LIVE_ENABLED_PATH,
+      key,
+      stateMap[key] ? 1 : 0,
+      REG_DWORD
+    );
+  });
+
+  return stateMap;
+}
+
+function loadLiveTileCache() {
+  const registry = getRegistrySafe();
+  if (!registry) {
+    return {};
+  }
+
+  const savedValues = registry.getValue(TILE_LIVE_CACHE_PATH, null, {});
+  if (!savedValues || typeof savedValues !== 'object') {
+    return {};
+  }
+
+  const cacheEntries = {};
+  Object.keys(savedValues).forEach(key => {
+    const entry = savedValues[key];
+    if (!entry || typeof entry !== 'object' || typeof entry.data !== 'string' || !entry.data) {
+      return;
+    }
+
+    try {
+      const parsed = JSON.parse(entry.data);
+      if (parsed && typeof parsed === 'object') {
+        cacheEntries[key] = parsed;
+      }
+    } catch (error) {
+      console.warn(`[TileLayoutRegistry] Failed to parse live tile cache for ${key}:`, error);
+    }
+  });
+
+  return cacheEntries;
+}
+
+function saveLiveTileCache(cacheMap) {
+  const registry = getRegistrySafe();
+  if (!registry) {
+    return {};
+  }
+
+  registry.deleteKey(TILE_LIVE_CACHE_PATH);
+
+  if (!cacheMap || typeof cacheMap !== 'object') {
+    return {};
+  }
+
+  Object.keys(cacheMap).forEach(key => {
+    const entry = cacheMap[key];
+    if (!key || !entry || typeof entry !== 'object') {
+      return;
+    }
+
+    try {
+      registry.setValue(
+        TILE_LIVE_CACHE_PATH,
+        key,
+        JSON.stringify(entry),
+        REG_SZ
+      );
+    } catch (error) {
+      console.warn(`[TileLayoutRegistry] Failed to save live tile cache for ${key}:`, error);
+    }
+  });
+
+  return cacheMap;
+}
+
+function loadTileBadgeState() {
+  const registry = getRegistrySafe();
+  if (!registry) {
+    return {};
+  }
+
+  const savedValues = registry.getValue(TILE_BADGE_STATE_PATH, null, {});
+  if (!savedValues || typeof savedValues !== 'object') {
+    return {};
+  }
+
+  const badgeEntries = {};
+  Object.keys(savedValues).forEach(key => {
+    const entry = savedValues[key];
+    if (!entry || typeof entry !== 'object' || typeof entry.data !== 'string' || !entry.data) {
+      return;
+    }
+
+    try {
+      const parsed = JSON.parse(entry.data);
+      if (parsed && typeof parsed === 'object') {
+        badgeEntries[key] = parsed;
+      }
+    } catch (error) {
+      console.warn(`[TileLayoutRegistry] Failed to parse tile badge state for ${key}:`, error);
+    }
+  });
+
+  return badgeEntries;
+}
+
+function saveTileBadgeState(stateMap) {
+  const registry = getRegistrySafe();
+  if (!registry) {
+    return {};
+  }
+
+  registry.deleteKey(TILE_BADGE_STATE_PATH);
+
+  if (!stateMap || typeof stateMap !== 'object') {
+    return {};
+  }
+
+  Object.keys(stateMap).forEach(key => {
+    if (!key) {
+      return;
+    }
+
+    const entry = stateMap[key];
+    if (!entry || typeof entry !== 'object') {
+      return;
+    }
+
+    try {
+      registry.setValue(
+        TILE_BADGE_STATE_PATH,
+        key,
+        JSON.stringify(entry),
+        REG_SZ
+      );
+    } catch (error) {
+      console.warn(`[TileLayoutRegistry] Failed to save tile badge state for ${key}:`, error);
+    }
+  });
+
+  return stateMap;
+}
+
 function loadTileOrder(groupId) {
   const registry = getRegistrySafe();
   if (!registry) {
@@ -476,6 +668,12 @@ const api = {
   savePinnedApps,
   loadTileSizes,
   saveTileSizes,
+  loadLiveTileEnabledStates,
+  saveLiveTileEnabledStates,
+  loadLiveTileCache,
+  saveLiveTileCache,
+  loadTileBadgeState,
+  saveTileBadgeState,
   loadTileOrder,
   saveTileOrder,
   clearTileOrder,

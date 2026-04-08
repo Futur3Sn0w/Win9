@@ -370,117 +370,161 @@ webview.modern-app-iframe {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-/* Modern Webview Navigation Bar */
+/* Modern Webview Navigation Bar / AppBar */
 .modern-webview-bar {
     position: absolute;
     bottom: 0;
     left: 0;
     width: 100%;
     box-sizing: border-box;
-    background: #000;
+    background: var(--start-menu-color, var(--ui-wall-color, #1a1a2e));
     border: 1px solid transparent;
-    border-top-color: #545454;
+    border-top-color: rgba(255, 255, 255, 0.1);
     z-index: 1000;
-    transition: height 0.2s ease;
-    min-height: 70px;
+    min-height: 76px;
 }
 
-.modern-webview-bar.expanded {
-    height: 90px;
-}
-
+/* Two-group layout: left and right sections */
 .modern-webview-bar-controls {
     display: flex;
-    align-items: flex-start;
-    justify-content: center;
-    gap: 25px;
-    height: 90px;
-    padding-top: 15px;
+    align-items: center;
+    justify-content: space-between;
+    height: 76px;
+    padding: 0 12px;
     position: relative;
-    overflow: hidden;
+}
+
+.modern-webview-bar-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.modern-webview-bar-group:last-child {
+    justify-content: flex-end;
+    margin-left: auto;
 }
 
 .modern-webview-bar-btn {
     background: transparent;
-    border: 2px solid #fff;
+    border: none;
     color: #fff;
-    font-size: 24px;
-    width: 40px;
-    height: 40px;
+    cursor: pointer;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-
-    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
-    border-radius: 50%;
-    position: relative;
+    gap: 7px;
+    width: 64px;
+    height: 60px;
+    padding: 0 2px;
     flex-shrink: 0;
+    transition: color 0.15s ease;
 }
 
-.modern-webview-bar-btn:hover:not(:disabled) {
+/* Icon circle */
+.modern-webview-bar-btn-icon {
+    width: 42px;
+    height: 42px;
+    border: 2px solid currentColor;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    transition: background 0.16s ease, color 0.16s ease, transform 0.12s ease;
+    flex-shrink: 0;
+    font-size: 20px;
+}
+
+.modern-webview-bar-btn-icon svg {
+    width: 19px;
+    height: 19px;
+    display: block;
+    fill: currentColor;
+}
+
+.modern-webview-bar-btn:hover:not(:disabled) .modern-webview-bar-btn-icon {
     background: rgba(255, 255, 255, 0.15);
 }
 
-.modern-webview-bar-btn:active:not(:disabled) {
+.modern-webview-bar-btn:active:not(:disabled) .modern-webview-bar-btn-icon {
+    background: rgba(255, 255, 255, 0.82);
+    transform: scale(0.96);
+}
+
+/* Persistent active/selected state for navigation route buttons */
+.modern-webview-bar-btn.active .modern-webview-bar-btn-icon {
     background: #fff;
-    color: #000;
+    border-color: #fff;
+    color: var(--start-menu-color, var(--ui-wall-color, #1a1a2e));
 }
 
 .modern-webview-bar-btn:disabled {
     opacity: 0.3;
     cursor: not-allowed;
-    border-color: rgba(255, 255, 255, 0.3);
 }
 
-/* Label attached to each button */
+/* Button label — hidden when collapsed, fades in as bar opens */
 .modern-webview-bar-btn-label {
-    position: absolute;
-    top: 42px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 100%;
-    text-align: center;
-    color: #fff !important;
-    font-size: var(--system-font-size);
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    opacity: 0;
-    transition: opacity 0.2s ease;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    color: #fff;
+    line-height: 1;
     pointer-events: none;
+    text-align: center;
+    width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    opacity: var(--appbar-label-opacity, 0);
+    transition: opacity 0.25s ease;
 }
 
 .modern-webview-bar.expanded .modern-webview-bar-btn-label {
-    opacity: 0.8;
+    --appbar-label-opacity: 0.6;
 }
 
-/* Ensure label stays white even when button is active */
-.modern-webview-bar-btn:active .modern-webview-bar-btn-label {
-    color: #fff !important;
+/* Collapsible AppBar: minimized to toggle strip, expands on demand */
+.modern-webview-bar.collapsible {
+    height: 22px;
+    min-height: 0;
+    overflow: hidden;
+    transition: height 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.modern-webview-bar-expand {
-    position: absolute;
-    right: 15px;
-    top: 15px;
-    background: transparent;
+.modern-webview-bar.collapsible.expanded {
+    height: 98px;
+    /* 22px toggle + 76px controls */
+}
+
+/* Toggle strip — always visible, sits at the top of the bar */
+.modern-webview-bar-toggle {
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-shrink: 0;
+    padding-right: 40px;
+}
+
+/* Ellipsis expand/collapse button — no label, no circle */
+.modern-webview-bar-ellipsis {
+    background: none;
     border: none;
-    color: #fff;
-    font-size: 20px;
-    width: 30px;
-    height: 30px;
+    color: rgba(255, 255, 255, 0.55);
+    cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-
-    transition: background 0.15s ease, transform 0.2s ease;
-    border-radius: 2px;
+    height: 22px;
+    padding: 0 6px;
+    transition: color 0.15s ease;
 }
 
-.modern-webview-bar-expand:hover {
-    background: rgba(255, 255, 255, 0.1);
-}
-
-.modern-webview-bar.expanded .modern-webview-bar-expand {
-    transform: rotate(180deg);
+.modern-webview-bar-ellipsis:hover {
+    color: #fff;
 }
 
 /* Modern context menus (e.g., usertile and power menus) */
@@ -703,15 +747,16 @@ webview.modern-app-iframe {
     position: relative;
     display: inline-flex;
     align-items: center;
-    width: 62px;
-    height: 26px;
+    width: 40px;
+    height: 15px;
     padding: 0;
-    border: 0;
-    background: #555;
+    border: none;
+    background: #a6a6a6;
     appearance: none;
     cursor: pointer;
     transition: background-color 0.2s ease, opacity 0.2s ease;
     flex-shrink: 0;
+    box-shadow: inset 0 0 0 1px #9D9D9D, inset 0 0 0 2px #fff;
 }
 
 .modern-switch:hover {
@@ -729,14 +774,14 @@ webview.modern-app-iframe {
 
 .modern-switch-thumb {
     position: absolute;
-    top: 3px;
-    left: 3px;
-    width: 20px;
-    height: 20px;
-    background: #fff;
+    top: 0;
+    left: 0;
+    width: 10px;
+    height: 15px;
+    background: #000;
     transition: transform 0.2s ease;
 }
 
 .modern-switch.is-on .modern-switch-thumb {
-    transform: translateX(36px);
+    transform: translateX(30px);
 }

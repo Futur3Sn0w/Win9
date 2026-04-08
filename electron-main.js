@@ -5,11 +5,13 @@ const brightnessControl = require('./components/brightness/brightness-control');
 const networkControl = require('./components/network/network-control');
 const bluetoothControl = require('./components/bluetooth/bluetooth-control');
 const batteryControl = require('./components/battery/battery-control');
+const autoRotationControl = require('./components/auto-rotation/auto-rotation-control');
 const USBMonitor = require('./components/device_connectivity/usb-monitor');
 const { setupRecycleBinHandlers } = require('./components/recycle_bin');
 const { decodeTextBuffer } = require('./components/explorer/file-openability');
 const DevicePostureMonitor = require('./components/continuum/device-posture-monitor');
 const { spawn } = require('child_process');
+const os = require('os');
 const crypto = require('crypto');
 const https = require('https');
 const fs = require('fs/promises');
@@ -108,6 +110,53 @@ function sendFullscreenState(window) {
   }
 
   window.webContents.send('fullscreen-state-changed', window.isFullScreen());
+}
+
+function sendFullscreenStateDeferred(window, delayMs = 0) {
+  if (!window || window.isDestroyed()) {
+    return;
+  }
+
+  setTimeout(() => {
+    sendFullscreenState(window);
+  }, delayMs);
+}
+
+function setWindowFullscreen(window, shouldBeFullscreen) {
+  if (!window || window.isDestroyed()) {
+    return Promise.resolve(false);
+  }
+
+  const nextState = Boolean(shouldBeFullscreen);
+  if (window.isFullScreen() === nextState) {
+    sendFullscreenState(window);
+    return Promise.resolve(window.isFullScreen());
+  }
+
+  return new Promise((resolve) => {
+    let settled = false;
+    const eventName = nextState ? 'enter-full-screen' : 'leave-full-screen';
+
+    const finish = () => {
+      if (settled) {
+        return;
+      }
+
+      settled = true;
+      clearTimeout(timeoutId);
+      window.removeListener(eventName, handleStateChange);
+      sendFullscreenState(window);
+      resolve(window.isFullScreen());
+    };
+
+    const handleStateChange = () => {
+      setTimeout(finish, 0);
+    };
+    const timeoutId = setTimeout(finish, 1000);
+
+    window.once(eventName, handleStateChange);
+    window.setFullScreen(nextState);
+  });
 }
 
 function enterStartupFullscreen(window) {
@@ -918,11 +967,11 @@ function createMainWindow(options = {}) {
   });
   mainWindow.on('enter-full-screen', () => {
     hideWindowMenuBar(mainWindow);
-    sendFullscreenState(mainWindow);
+    sendFullscreenStateDeferred(mainWindow);
   });
   mainWindow.on('leave-full-screen', () => {
     hideWindowMenuBar(mainWindow);
-    sendFullscreenState(mainWindow);
+    sendFullscreenStateDeferred(mainWindow);
   });
 
   // Load the index.html
@@ -1044,6 +1093,9 @@ if (!gotTheLock) {
   app.whenReady().then(() => {
     Menu.setApplicationMenu(null);
 
+    // Prewarm hardware info so it's cached before any window requests it
+    getWmiComputerSystem().catch(() => {});
+
     if (resetModeEnabled) {
       clearSetupData();
     }
@@ -1091,6 +1143,7 @@ if (!gotTheLock) {
     const winShortcuts = {
       'Super+C': 'c',
       'Super+I': 'i',
+      'Super+Shift+F': 'fullscreen',
       'Super+R': 'r',
       'Super+E': 'e',
       'Super+L': 'l',
@@ -1104,7 +1157,8 @@ if (!gotTheLock) {
       'Control+Alt+Shift+Left': 'ArrowLeft',
       'Control+Alt+Shift+Right': 'ArrowRight',
       'Control+Alt+Shift+Up': 'ArrowUp',
-      'Control+Alt+Shift+Down': 'ArrowDown'
+      'Control+Alt+Shift+Down': 'ArrowDown',
+      'Control+Alt+Shift+F': 'fullscreen'
     };
 
     for (const [accelerator, key] of Object.entries(winShortcuts)) {
@@ -1129,7 +1183,7 @@ let ahkProcess = null;
 function launchAhkKeymap() {
   if (process.platform !== 'win32') return;
 
-  const scriptPath = path.join(__dirname, 'resources', 'helpers', 'win8-keymap.ahk');
+  const scriptPath = path.join(__dirname, 'resources', 'helpers', 'winSimKeys.ahk');
   if (!fsSync.existsSync(scriptPath)) {
     console.warn('[Keyboard] AHK script not found:', scriptPath);
     return;
@@ -1258,11 +1312,19 @@ ipcMain.on('toggle-simple-fullscreen', (_event, shouldBeFullscreen) => {
     ? shouldBeFullscreen
     : !mainWindow.isFullScreen();
 
-  if (mainWindow.isFullScreen() !== nextState) {
-    mainWindow.setFullScreen(nextState);
-  } else {
-    sendFullscreenState(mainWindow);
+  void setWindowFullscreen(mainWindow, nextState);
+});
+
+ipcMain.handle('shell:set-fullscreen', async (_event, shouldBeFullscreen) => {
+  if (!mainWindow || mainWindow.isDestroyed()) {
+    return false;
   }
+
+  const nextState = typeof shouldBeFullscreen === 'boolean'
+    ? shouldBeFullscreen
+    : !mainWindow.isFullScreen();
+
+  return setWindowFullscreen(mainWindow, nextState);
 });
 
 ipcMain.handle('shell:capture-window-preview', async (_event, payload = {}) => {
@@ -1363,7 +1425,7 @@ ipcMain.handle('chrome-beta:fetch-search-suggestions', async (_event, payload = 
   return new Promise((resolve) => {
     const request = https.get(parsedUrl, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 ChromeBetaWin8/1.0',
+        'User-Agent': 'Mozilla/5.0 ChromeBetaWin9/1.0',
         'Accept': 'application/json, text/plain, */*'
       }
     }, (response) => {
@@ -1929,6 +1991,28 @@ ipcMain.handle('stop-battery-monitoring', async () => {
   return { success: true };
 });
 
+// ===== AUTO-ROTATION CONTROL =====
+
+ipcMain.handle('auto-rotation:get-state', async () => {
+  try {
+    const state = await autoRotationControl.getState();
+    return { success: true, ...state };
+  } catch (error) {
+    console.error('[Main] auto-rotation:get-state error:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('auto-rotation:set-lock', async (_event, locked) => {
+  try {
+    const state = await autoRotationControl.setRotationLock(Boolean(locked));
+    return { success: true, ...state };
+  } catch (error) {
+    console.error('[Main] auto-rotation:set-lock error:', error);
+    return { success: false, error: error.message };
+  }
+});
+
 // ===== USB DEVICE MONITORING =====
 
 // Start USB device monitoring
@@ -1964,6 +2048,114 @@ ipcMain.handle('get-usb-devices', async () => {
   } catch (error) {
     console.error('Error getting USB devices:', error);
     return { success: false, devices: [] };
+  }
+});
+
+// ===== SYSTEM INFORMATION =====
+
+// Query WMI for manufacturer and model via PowerShell (Windows only).
+// Result is cached in electron-store so subsequent calls are instant.
+function getWmiComputerSystem() {
+  const cached = store.get('system.hardware');
+  if (cached) return Promise.resolve(cached);
+
+  return new Promise((resolve) => {
+    if (process.platform !== 'win32') {
+      const fallback = { manufacturer: 'Microsoft', model: 'Microsoft Surface' };
+      store.set('system.hardware', fallback);
+      resolve(fallback);
+      return;
+    }
+    let stdout = '';
+    const child = spawn('powershell.exe', [
+      '-NoProfile', '-NonInteractive', '-Command',
+      '$cs = Get-WmiObject Win32_ComputerSystem; Write-Output "$($cs.Manufacturer)|$($cs.Model)"'
+    ]);
+    child.stdout.on('data', (data) => { stdout += data.toString(); });
+    child.on('close', () => {
+      const [manufacturer, model] = stdout.trim().split('|');
+      const result = {
+        manufacturer: manufacturer?.trim() || 'Microsoft',
+        model: model?.trim() || 'Microsoft Surface'
+      };
+      store.set('system.hardware', result);
+      resolve(result);
+    });
+    child.on('error', () => {
+      const fallback = { manufacturer: 'Microsoft', model: 'Microsoft Surface' };
+      store.set('system.hardware', fallback);
+      resolve(fallback);
+    });
+  });
+}
+
+// Get hardware system information
+ipcMain.handle('system:get-hardware-info', async () => {
+  try {
+    const userInfo = os.userInfo();
+    const cpus = os.cpus();
+    const totalMemory = os.totalmem();
+    const hostname = os.hostname();
+    const platform = os.platform();
+    const arch = os.arch();
+    const release = os.release();
+
+    // Format processor information
+    let processorInfo = 'Unknown';
+    if (cpus && cpus.length > 0) {
+      const cpu = cpus[0];
+      const modelName = cpu.model.trim();
+      // Extract speed in GHz
+      const speedInGHz = (cpu.speed / 1000).toFixed(2);
+      processorInfo = `${modelName} ${speedInGHz} GHz`;
+    }
+
+    // Determine system type (32-bit or 64-bit)
+    let systemType = `${arch === 'x64' ? '64-bit' : '32-bit'} Operating System`;
+    if (platform === 'win32') {
+      systemType += ', x86-based processor';
+    }
+
+    const { manufacturer, model } = await getWmiComputerSystem();
+
+    // Build the response object
+    const systemInfo = {
+      windowsEdition: 'Windows 9',
+      manufacturer,
+      model,
+      processor: {
+        model: cpus.length > 0 ? cpus[0].model.trim() : 'Unknown',
+        speed: cpus.length > 0 ? `${(cpus[0].speed / 1000).toFixed(2)} GHz` : 'Unknown'
+      },
+      totalMemory: totalMemory,
+      systemType: systemType,
+      penAndTouch: 'Full Windows Touch Support with 5 Touch Points',
+      computerName: hostname,
+      fullComputerName: hostname,
+      computerDescription: 'Not Available',
+      workgroup: 'Not Available'
+    };
+
+    return systemInfo;
+  } catch (error) {
+    console.error('Error getting system hardware info:', error);
+    // Return sensible defaults on error
+    return {
+      windowsEdition: 'Windows 9',
+      manufacturer: 'Unknown',
+      model: 'Unknown',
+      processor: {
+        model: 'Unknown',
+        speed: 'Unknown'
+      },
+      totalMemory: 0,
+      systemType: 'Unknown',
+      penAndTouch: 'Not available',
+      computerName: 'Unknown',
+      fullComputerName: 'Unknown',
+      computerDescription: 'Not Available',
+      workgroup: 'Not Available'
+    };
   }
 });
 

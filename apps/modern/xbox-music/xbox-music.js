@@ -4,7 +4,7 @@
     'use strict';
 
     // ===== CONSTANTS =====
-    const STORAGE_KEY = 'win8.music.libraryPath';
+    const STORAGE_KEY = 'win9.music.libraryPath';
     const AUDIO_TYPE_HINTS = {
         '.aac': ['audio/aac'],
         '.flac': ['audio/flac', 'audio/x-flac'],

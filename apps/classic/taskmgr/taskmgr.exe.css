@@ -5,93 +5,582 @@ body {
 
 body {
     margin: 0;
-    background: #ffffff;
-    color: #1f1f1f;
-    font-family: "Segoe UI", Tahoma, sans-serif;
     overflow: hidden;
+    background: #ffffff;
+    color: #202020;
+    font-family: "Segoe UI", Tahoma, sans-serif;
+    font-size: 12px;
 }
 
 .taskmgr-shell {
+    --taskmgr-border: #d6d6d6;
+    --taskmgr-soft-border: #e7e7e7;
+    --taskmgr-text-soft: #5e5e5e;
+    --taskmgr-blue: #4f9ed3;
+    --taskmgr-blue-fill: rgba(79, 158, 211, 0.16);
+    --taskmgr-memory: #9a68bf;
+    --taskmgr-memory-fill: rgba(154, 104, 191, 0.16);
+    --taskmgr-disk: #7aa548;
+    --taskmgr-disk-fill: rgba(122, 165, 72, 0.14);
+    --taskmgr-network: #c47a26;
+    --taskmgr-network-fill: rgba(196, 122, 38, 0.14);
     display: flex;
     flex-direction: column;
     height: 100%;
+    background: #ffffff;
+}
+
+.taskmgr-menubar {
+    flex-shrink: 0;
+    border-bottom-color: #dcdcdc;
+    background: #fafafa;
+}
+
+.taskmgr-menu {
+    width: 218px;
+}
+
+.taskmgr-menu .classic-context-menu-item-text {
+    white-space: nowrap;
+}
+
+.menu-checkbox.checked .checkbox::before {
+    content: "\2713";
+    font-size: 12px;
+    line-height: 1;
 }
 
 .taskmgr-tabs {
     display: flex;
-    gap: 2px;
-    padding: 8px 8px 0;
-    border-bottom: 1px solid #cfd8e1;
-    background: linear-gradient(#fbfcfd, #f1f4f7);
+    gap: 0;
+    padding: 8px 10px 0;
+    flex-shrink: 0;
+    background: linear-gradient(#fbfbfb, #f4f4f4);
+    border-bottom: 1px solid var(--taskmgr-border);
 }
 
 .taskmgr-tab {
-    border: 1px solid #cfd8e1;
-    border-bottom: 0;
-    background: #e9eef4;
-    padding: 7px 12px;
+    min-width: 82px;
+    height: 31px;
+    margin-right: 2px;
+    padding: 0 13px;
+    border: 1px solid transparent;
+    border-bottom: none;
+    border-radius: 3px 3px 0 0;
+    background: transparent;
+    color: #3d3d3d;
     font: inherit;
+}
+
+.taskmgr-tab:hover {
+    background: #f2f7fb;
+    border-color: #c9dcea;
 }
 
 .taskmgr-tab.is-active {
     background: #ffffff;
+    border-color: var(--taskmgr-border);
+    color: #1f1f1f;
     position: relative;
     top: 1px;
 }
 
-.taskmgr-panel {
+.taskmgr-content {
     flex: 1;
     min-height: 0;
-    padding: 18px 18px 12px;
-    overflow: auto;
+    display: flex;
+    background: #ffffff;
 }
 
-.taskmgr-summary h1 {
-    margin: 0;
-    font-size: 21px;
-    font-weight: 600;
+.taskmgr-view {
+    display: none;
+    flex: 1;
+    min-height: 0;
+    padding: 10px;
 }
 
-.taskmgr-summary p {
-    margin: 8px 0 18px;
-    color: #5f6b78;
-    font-size: 13px;
+.taskmgr-view.is-active {
+    display: flex;
+    flex-direction: column;
 }
 
 .taskmgr-table {
-    border: 1px solid #cfd8e1;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    border: 1px solid var(--taskmgr-border);
     background: #ffffff;
+}
+
+.taskmgr-table__body {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
 }
 
 .taskmgr-table__row {
     display: grid;
-    grid-template-columns: minmax(220px, 1fr) 140px 110px 110px;
-    gap: 12px;
+    grid-template-columns: minmax(280px, 1.8fr) 90px 72px 90px 78px 78px;
+    gap: 8px;
     align-items: center;
-    padding: 10px 12px;
-    border-top: 1px solid #e6ecf2;
-    font-size: 13px;
+    min-height: 28px;
+    padding: 0 10px;
+    border-top: 1px solid #f2f2f2;
+    font-size: 12px;
 }
 
 .taskmgr-table__row:first-child {
-    border-top: 0;
+    border-top: none;
 }
 
 .taskmgr-table__row--header {
-    background: #f4f7fa;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    min-height: 26px;
+    border-bottom: 1px solid var(--taskmgr-border);
+    border-top: none;
+    background: linear-gradient(#fafafa, #f3f3f3);
+    color: #4a4a4a;
+    font-size: 11px;
     font-weight: 600;
 }
 
+.taskmgr-table__row--group {
+    min-height: 26px;
+    background: #fafafa;
+    color: #5f5f5f;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.taskmgr-table__row--group span,
+.taskmgr-table__row--empty span {
+    grid-column: 1 / -1;
+}
+
 .taskmgr-table__row--empty {
+    min-height: 34px;
+    color: #727272;
+}
+
+.taskmgr-table__row--users {
+    grid-template-columns: minmax(220px, 1.7fr) 100px 64px 72px 90px;
+}
+
+.taskmgr-table__row--details {
+    grid-template-columns: minmax(240px, 1.6fr) minmax(220px, 1.4fr) 110px 96px;
+}
+
+.taskmgr-row {
+    cursor: default;
+}
+
+.taskmgr-row:hover {
+    background: #f6fbff;
+}
+
+.taskmgr-row.is-selected {
+    background: #d9ecfb;
+    box-shadow: inset 0 0 0 1px #8abde7;
+}
+
+.taskmgr-name-cell {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+
+.taskmgr-app-icon {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    border-radius: 3px;
+    background: #d6e3ef;
+    object-fit: contain;
+}
+
+.taskmgr-app-icon--fallback {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 700;
+    color: #35516b;
+}
+
+.taskmgr-name-copy {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    line-height: 1.2;
+}
+
+.taskmgr-name-copy strong,
+.taskmgr-name-copy span {
     display: block;
-    color: #6d7782;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.taskmgr-name-copy strong {
+    font-weight: 400;
+}
+
+.taskmgr-name-copy span,
+.taskmgr-muted {
+    color: #6d6d6d;
+}
+
+.taskmgr-performance-view {
+    display: none;
+    flex-direction: row;
+    align-items: stretch;
+    gap: 20px;
+    padding: 10px;
+}
+
+.taskmgr-performance-view.is-active {
+    display: flex;
+    flex-direction: row;
+}
+
+.taskmgr-performance-sidebar {
+    width: 172px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-top: 10px;
+}
+
+.taskmgr-performance-item {
+    display: grid;
+    grid-template-columns: 62px minmax(0, 1fr);
+    gap: 10px;
+    align-items: center;
+    min-height: 54px;
+    padding: 6px;
+    border: 1px solid #d9d9d9;
+    background: linear-gradient(#ffffff, #fbfbfb);
+    font: inherit;
+    color: #1f1f1f;
+    text-align: left;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.taskmgr-performance-item:hover {
+    background: linear-gradient(#fbfdff, #f5fbff);
+}
+
+.taskmgr-performance-item.is-active {
+    background: linear-gradient(#ffffff, #f1f1f1);
+    border-color: #cfcfcf;
+}
+
+.taskmgr-performance-item__copy {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1px;
+    min-width: 0;
+}
+
+.taskmgr-performance-item__title,
+.taskmgr-performance-item__meta {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.taskmgr-performance-item__title {
+    font-size: 13px;
+    font-weight: 400;
+}
+
+.taskmgr-performance-item__value {
+    font-size: 11px;
+    font-weight: 400;
+    line-height: 1.15;
+}
+
+.taskmgr-performance-item__meta {
+    color: #2f2f2f;
+    font-size: 11px;
+}
+
+.taskmgr-performance-item__chart {
+    width: 62px;
+    height: 42px;
+    display: block;
+    background: #ffffff;
+    border: 1px solid #8bc2e4;
+}
+
+.taskmgr-performance-item[data-performance-panel="memory"] .taskmgr-performance-item__chart {
+    border-color: #bf86d9;
+}
+
+.taskmgr-performance-item[data-performance-panel="disk"] .taskmgr-performance-item__chart {
+    border-color: #8fc15d;
+}
+
+.taskmgr-performance-item[data-performance-panel="network"] .taskmgr-performance-item__chart {
+    border-color: #cfcfcf;
+}
+
+.taskmgr-performance-main {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    padding-top: 6px;
+}
+
+.taskmgr-performance-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 14px;
+    margin-bottom: 4px;
+}
+
+.taskmgr-performance-header__copy {
+    min-width: 0;
+}
+
+.taskmgr-performance-header h1,
+.taskmgr-placeholder h1 {
+    margin: 0;
+    color: #252525;
+    font-size: 22px;
+    font-weight: 300;
+    line-height: 1.1;
+}
+
+.taskmgr-performance-subtitle,
+.taskmgr-placeholder p {
+    margin: 0 0 6px;
+    color: #666666;
+    line-height: 1.35;
+}
+
+.taskmgr-performance-header__device {
+    flex-shrink: 0;
+    color: #34517a;
+    font-size: 12px;
+    line-height: 1.2;
+    text-align: right;
+    padding-bottom: 3px;
+}
+
+.taskmgr-chart-card {
+    border: none;
+    background: #ffffff;
+    padding: 0;
+}
+
+.taskmgr-chart-card__header,
+.taskmgr-chart-card__footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    color: #2e2e2e;
+    font-size: 11px;
+}
+
+.taskmgr-chart-card__header {
+    margin-bottom: 3px;
+}
+
+.taskmgr-chart-card__footer {
+    margin-top: 4px;
+}
+
+#taskmgr-performance-chart {
+    width: 100%;
+    height: 342px;
+    display: block;
+    background: #ffffff;
+    border: 1px solid #78bce8;
+}
+
+.taskmgr-performance-details {
+    display: grid;
+    grid-template-columns: minmax(0, 1.2fr) minmax(240px, 0.9fr);
+    gap: 18px;
+    align-items: start;
+    margin-top: 8px;
+}
+
+.taskmgr-performance-summary {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px 18px;
+}
+
+.taskmgr-metric {
+    min-height: 30px;
+}
+
+.taskmgr-metric__label {
+    display: block;
+    margin-bottom: 2px;
+    color: #6a6a6a;
+    font-size: 11px;
+}
+
+.taskmgr-metric__value {
+    display: block;
+    color: #202020;
+    font-size: 17px;
+    font-weight: 300;
+    line-height: 1.15;
+}
+
+.taskmgr-performance-specs {
+    display: grid;
+    grid-template-columns: minmax(126px, 1fr) auto;
+    gap: 2px 12px;
+    align-items: baseline;
+    padding-top: 2px;
+}
+
+.taskmgr-spec__label,
+.taskmgr-spec__value {
+    font-size: 11px;
+    line-height: 1.35;
+}
+
+.taskmgr-spec__label {
+    color: #5d5d5d;
+}
+
+.taskmgr-spec__value {
+    color: #202020;
+    white-space: nowrap;
+}
+
+.taskmgr-placeholder {
+    padding: 14px 12px;
+}
+
+.taskmgr-footer {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border-top: 1px solid var(--taskmgr-border);
+    background: #f8f8f8;
+    flex-shrink: 0;
+}
+
+.taskmgr-footer__toggle {
+    min-width: 118px;
+}
+
+.taskmgr-footer__spacer {
+    flex: 1;
 }
 
 .taskmgr-statusbar {
     display: flex;
     gap: 18px;
-    padding: 7px 12px;
-    border-top: 1px solid #cfd8e1;
-    background: #f6f8fa;
-    font-size: 12px;
+    padding: 5px 10px;
+    border-top: 1px solid #e5e5e5;
+    background: #fbfbfb;
+    color: #626262;
+    font-size: 11px;
+    flex-shrink: 0;
+}
+
+.taskmgr-row-context-menu {
+    position: fixed;
+    left: 0;
+    top: 0;
+    z-index: 1200;
+    display: none;
+}
+
+.taskmgr-row-context-menu.is-open {
+    display: flex;
+}
+
+.taskmgr-row-context-menu::after {
+    display: none;
+}
+
+.taskmgr-shell.is-compact .taskmgr-menubar,
+.taskmgr-shell.is-compact .taskmgr-tabs,
+.taskmgr-shell.is-compact .taskmgr-statusbar {
+    display: none;
+}
+
+.taskmgr-shell.is-compact .taskmgr-view {
+    display: none;
+}
+
+.taskmgr-shell.is-compact .taskmgr-view[data-view-panel="processes"] {
+    display: flex;
+    padding: 0;
+}
+
+.taskmgr-shell.is-compact .taskmgr-footer {
+    border-top: none;
+    background: #ffffff;
+}
+
+.taskmgr-shell.is-compact .taskmgr-table {
+    border: none;
+}
+
+.taskmgr-shell.is-compact .taskmgr-table__row--header > span:nth-child(n + 3),
+.taskmgr-shell.is-compact .taskmgr-row > span:nth-child(n + 3) {
+    display: none;
+}
+
+.taskmgr-shell.is-compact .taskmgr-table__row,
+.taskmgr-shell.is-compact .taskmgr-table__row--header {
+    grid-template-columns: minmax(240px, 1fr) 96px;
+}
+
+@media (max-width: 780px) {
+    .taskmgr-performance-view.is-active {
+        flex-direction: column;
+    }
+
+    .taskmgr-performance-sidebar {
+        width: 100%;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(220px, 1fr));
+        padding-top: 0;
+    }
+
+    .taskmgr-performance-details {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 680px) {
+    .taskmgr-view,
+    .taskmgr-performance-view {
+        padding: 8px;
+    }
+
+    .taskmgr-performance-sidebar {
+        grid-template-columns: 1fr;
+    }
+
+    .taskmgr-performance-summary {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .taskmgr-table__row,
+    .taskmgr-table__row--header {
+        grid-template-columns: minmax(220px, 1.5fr) 84px 64px 86px 70px 70px;
+    }
 }

@@ -205,29 +205,41 @@
         <div class="start-menu-resize-handle"></div>
         <div class="start-menu-shell">
             <div class="start-menu-left">
-                <div class="start-menu-top">
-                    <div class="user-tile start-menu-user-tile active-scale-effect">
-                        <img src="resources/images/user.png" alt="User" class="user-tile-icon">
-                        <span class="user-tile-name">User</span>
+                <div class="start-menu-pages-viewport">
+                    <div class="start-menu-pages-track" id="start-menu-pages-track">
+                        <div class="start-menu-page">
+                            <div class="start-menu-top">
+                                <div class="user-tile start-menu-user-tile active-scale-effect">
+                                    <img src="resources/images/user.png" alt="User" class="user-tile-icon">
+                                    <span class="user-tile-name">User</span>
+                                </div>
+                                <div class="start-menu-top-actions">
+                                    <button class="start-menu-fullscreen-button active-scale-effect"
+                                        id="start-menu-fullscreen-button" title="Use full screen Start"
+                                        aria-label="Use full screen Start" aria-pressed="false">
+                                        <span class="start-menu-fullscreen-symbol sui-expand" id="start-menu-fullscreen-symbol"
+                                            aria-hidden="true"></span>
+                                    </button>
+                                    <button class="start-menu-power-button power-button active-scale-effect" title="Power">
+                                        <span class="start-power-symbol sui-power" aria-hidden="true"></span>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="start-menu-list-separator start-menu-header-separator"></div>
+                            <div class="start-menu-left-scroll">
+                                <div class="start-menu-left-list" id="start-menu-left-list"></div>
+                            </div>
+                        </div>
+                        <div class="start-menu-page">
+                            <div class="start-menu-left-scroll">
+                                <div class="start-menu-left-list" id="start-menu-all-apps-list"></div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="start-menu-top-actions">
-                        <button class="start-menu-fullscreen-button active-scale-effect" id="start-menu-fullscreen-button"
-                            title="Use full screen Start" aria-label="Use full screen Start" aria-pressed="false">
-                            <span class="start-menu-fullscreen-symbol sui-expand" id="start-menu-fullscreen-symbol"
-                                aria-hidden="true"></span>
-                        </button>
-                        <button class="start-menu-power-button power-button active-scale-effect" title="Power">
-                            <span class="start-power-symbol sui-power" aria-hidden="true"></span>
-                        </button>
-                    </div>
-                </div>
-                <div class="start-menu-list-separator"></div>
-                <div class="start-menu-left-scroll">
-                    <div class="start-menu-left-list" id="start-menu-left-list"></div>
                 </div>
                 <div class="start-menu-bottom">
                     <button class="start-menu-all-apps-toggle" id="start-menu-all-apps-toggle">
-                        <span class="start-menu-all-apps-icon"><span class="sui-arrow-down"></span></span>
+                        <span class="start-menu-all-apps-icon"><span class="sui-arrow-right"></span></span>
                         <span class="start-menu-all-apps-text">All apps</span>
                     </button>
                     <div class="start-menu-search">
@@ -268,6 +280,10 @@
         </div>
         <div class="context-menu-item" data-action="pin-taskbar">
             <span class="context-menu-item-text">Pin to Taskbar</span>
+        </div>
+        <div class="context-menu-separator" data-role="live-tile-separator"></div>
+        <div class="context-menu-item" data-action="toggle-live-tile">
+            <span class="context-menu-item-text">Disable live tile</span>
         </div>
         <div class="context-menu-separator" data-role="resize-separator"></div>
         <div class="context-menu-item context-menu-item-submenu" data-action="resize">
@@ -315,7 +331,7 @@
             <p class="desktop-watermark__line desktop-watermark__line--title" id="desktop-watermark-title">Windows
                 Technical Preview</p>
             <p class="desktop-watermark__line desktop-watermark__line--build" id="desktop-watermark-build">Evaluation
-                copy. Build 9999</p>
+                copy. Build 9889</p>
         </div>
         <div class="task-view-placeholder" id="task-view-placeholder" aria-hidden="true">
             <div class="task-view-window-grid" id="task-view-window-grid" aria-live="polite"></div>
@@ -358,6 +374,13 @@
             <img class="taskbar-shell-button-icon taskbar-shell-button-icon--search" data-icon-folder="search" alt=""
                 draggable="false">
         </button>
+        <div class="taskbar-search-box is-hidden" role="button" aria-label="Search" tabindex="0">
+            <input class="taskbar-search-box-input" type="text" autocomplete="off" spellcheck="false"
+                placeholder="Search everywhere" aria-label="Search">
+            <button class="taskbar-search-box-button" type="button" tabindex="-1" aria-hidden="true">
+                <span class="sui-search"></span>
+            </button>
+        </div>
         <button class="taskbar-shell-button taskbar-task-view-button" type="button" title="Task View"
             aria-label="Task View">
             <img class="taskbar-shell-button-icon taskbar-shell-button-icon--task-view" data-icon-folder="task_view"
@@ -588,7 +611,7 @@
         <div class="search-panel" id="search-panel" aria-hidden="true">
             <div class="search-panel-results" id="search-panel-results" role="listbox" aria-label="Search results">
             </div>
-            <div class="search-panel-input-row">
+            <div class="search-panel-input-row" id="search-panel-input-row">
                 <div class="search-panel-input-shell">
                     <input type="text" id="search-panel-input" autocomplete="off" spellcheck="false"
                         placeholder="Search apps, settings, and files">
@@ -620,7 +643,8 @@
         aria-labelledby="continuum-posture-prompt-title" aria-modal="false">
         <div class="continuum-posture-prompt__title" id="continuum-posture-prompt-title">Enter tablet mode?</div>
         <div class="continuum-posture-prompt__actions">
-            <button type="button" class="continuum-posture-prompt__button" id="continuum-posture-prompt-yes">Yes</button>
+            <button type="button" class="continuum-posture-prompt__button"
+                id="continuum-posture-prompt-yes">Yes</button>
             <button type="button" class="continuum-posture-prompt__button" id="continuum-posture-prompt-no">No</button>
         </div>
         <label class="continuum-posture-prompt__remember">
@@ -652,7 +676,8 @@
         </div>
         <div class="classic-context-menu-separator"></div>
         <div class="classic-context-menu-item taskbar-context-menu-button" data-action="properties">
-            <span class="classic-context-menu-item-icon"></span>
+            <span class="classic-context-menu-item-icon context-icon-plate--purple"><span
+                    class="sui-settings"></span></span>
             <span class="classic-context-menu-item-text">Properties</span>
         </div>
         <div class="classic-context-menu-item taskbar-context-menu-button" data-action="restart-explorer"
@@ -798,7 +823,8 @@
         <div class="tdbn-content">
             <div class="tdbn-status-icons">
                 <img class="tdbn-network-icon" id="tdbn-network-icon"
-                    src="resources/images/tray/network/wireless_5/32.png" alt="Network">
+                    src="resources/images/icons/charms/TDBN/net/wireless_5/32.png" alt="Network">
+                <div class="tdbn-battery-icon" id="tdbn-battery-icon" aria-label="Battery"></div>
             </div>
             <div class="tdbn-time">10:30</div>
             <div class="tdbn-date">
@@ -814,26 +840,43 @@
         <div class="modern-flyout-content">
             <div class="charms-search-shell">
                 <div class="charms-search-controls">
+                    <div class="charms-search-source-wrap">
+                        <button type="button" class="charms-search-source-btn" id="charms-search-source-btn"
+                            aria-haspopup="listbox" aria-expanded="false">
+                            <span class="charms-search-source-display" id="charms-search-source-display">Apps</span>
+                            <span class="sui-chevron-thin-down charms-search-source-chevron" aria-hidden="true"></span>
+                        </button>
+                        <ul class="charms-search-source-menu modern-dropdown" id="charms-search-source-menu"
+                            role="listbox">
+                            <li class="charms-search-source-option modern-dropdown-item" role="option"
+                                data-value="apps">Apps</li>
+                            <li class="charms-search-source-option modern-dropdown-item" role="option" data-value="all">
+                                Everywhere</li>
+                            <li class="charms-search-source-option modern-dropdown-item" role="option"
+                                data-value="settings">Settings</li>
+                            <li class="charms-search-source-option modern-dropdown-item" role="option"
+                                data-value="files">Files</li>
+                        </ul>
+                    </div>
+                    <select id="charms-search-source" class="charms-search-source" aria-hidden="true" tabindex="-1">
+                        <option value="apps">Apps</option>
+                        <option value="all">Everywhere</option>
+                        <option value="settings">Settings</option>
+                        <option value="files">Files</option>
+                    </select>
                     <div class="charms-search-input-shell">
+                        <div class="charms-search-suggestion" id="charms-search-suggestion" aria-hidden="true"><span
+                                id="charms-search-suggestion-typed"></span><span
+                                id="charms-search-suggestion-rest"></span></div>
                         <input type="text" id="charms-search-input" autocomplete="off" spellcheck="false"
                             placeholder="Search apps">
                         <button type="button" id="charms-search-submit" aria-label="Search">
                             <span class="sui-search" aria-hidden="true"></span>
                         </button>
                     </div>
-                    <label class="charms-search-source-label" for="charms-search-source">Search for</label>
-                    <select id="charms-search-source" class="charms-search-source">
-                        <option value="apps">Apps</option>
-                        <option value="all">Everything</option>
-                        <option value="settings">Settings</option>
-                        <option value="files">Files</option>
-                    </select>
                 </div>
                 <div class="charms-search-results" id="charms-search-results" role="listbox"
                     aria-label="Search results"></div>
-                <button type="button" class="charms-search-open-app" id="charms-search-open-app">
-                    Open Search app
-                </button>
             </div>
         </div>
     </div>
@@ -918,13 +961,19 @@
                     <div class="six-pack-grid">
                         <div class="six-pack-item" data-control="network">
                             <img class="six-pack-network-icon" id="six-pack-network-icon"
-                                src="resources/images/tray/network/wireless_5/32.png" alt="Network">
+                                src="resources/images/icons/charms/TDBN/net/wireless_5/44.png" alt="Network">
                             <span class="six-pack-label" id="six-pack-network-label">Network</span>
                         </div>
                         <div class="six-pack-item" data-control="volume">
-                            <span class="sui-volume-high"></span>
+                            <span class="sui-volume-high" id="six-pack-volume-icon"></span>
                             <span class="six-pack-label">Volume</span>
                             <div class="six-pack-slider-popup" data-popup="volume" aria-hidden="true">
+                                <button class="volume-popup-mute-btn" id="volume-popup-mute-btn" type="button"
+                                    aria-label="Toggle mute">
+                                    <span class="volume-popup-mute-icon sui-volume-high"
+                                        id="volume-popup-mute-icon"></span>
+                                </button>
+                                <div class="volume-popup-separator"></div>
                                 <div class="six-pack-slider-track-wrapper">
                                     <input type="range" min="0" max="100" value="50" step="1" class="six-pack-slider"
                                         id="settings-volume-slider" aria-label="Adjust volume">
@@ -932,20 +981,27 @@
                             </div>
                         </div>
                         <div class="six-pack-item" data-control="brightness">
-                            <span class="sui-brightness"></span>
-                            <span class="six-pack-label">Brightness</span>
+                            <img class="six-pack-auto-rotation-icon" id="six-pack-auto-rotation-icon"
+                                src="resources/images/icons/charms/autorotate/white/unlocked/50.png" alt="">
+                            <span class="six-pack-label" id="six-pack-brightness-label">Screen</span>
                             <div class="six-pack-slider-popup" data-popup="brightness" aria-hidden="true">
+                                <button class="brightness-popup-rotation-btn" id="brightness-rotation-btn" type="button"
+                                    aria-label="Toggle auto-rotation">
+                                    <img class="brightness-rotation-icon" id="brightness-rotation-icon"
+                                        src="resources/images/icons/charms/autorotate/black/unlocked/36.png" alt="">
+                                </button>
+                                <div class="brightness-popup-separator" id="brightness-popup-separator"></div>
                                 <div class="six-pack-slider-track-wrapper">
                                     <input type="range" min="0" max="100" value="100" step="1" class="six-pack-slider"
                                         id="settings-brightness-slider" aria-label="Adjust screen brightness">
                                 </div>
                             </div>
                         </div>
-                        <div class="six-pack-item" data-control="fullscreen">
-                            <span class="six-pack-glyph sui-expand"
-                                aria-hidden="true"></span>
+                        <button class="six-pack-item" data-control="fullscreen" type="button" title="Enter fullscreen"
+                            aria-label="Enter fullscreen" aria-pressed="false">
+                            <span class="six-pack-glyph sui-expand" aria-hidden="true"></span>
                             <span class="six-pack-label">Fullscreen</span>
-                        </div>
+                        </button>
                         <div class="six-pack-item" data-control="power">
                             <span class="sui-power"></span>
                             <span class="six-pack-label">Power</span>
@@ -999,10 +1055,9 @@
                             <div class="tiles-setting-label">Show more tiles on the Start screen</div>
                             <div class="tiles-setting-control">
                                 <span class="tiles-toggle-label" id="tiles-toggle-label">No</span>
-                                <label class="tiles-toggle-switch">
-                                    <input type="checkbox" id="tiles-toggle-input">
-                                    <span class="tiles-toggle-slider"></span>
-                                </label>
+                                <button class="modern-switch" id="tiles-toggle-input" type="button">
+                                    <span class="modern-switch-thumb"></span>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -1040,6 +1095,8 @@
     <script src="wallpaper-color.js"></script>
     <script src="apps/classic/personalization/restore-colors.js"></script>
     <script src="apps-manager.js"></script>
+    <script src="tile-badges.js"></script>
+    <script src="live-tiles.js"></script>
     <script src="tile.js"></script>
     <script src="tile-drag.js"></script>
     <script src="components/system_sounds/system-sounds.js"></script>

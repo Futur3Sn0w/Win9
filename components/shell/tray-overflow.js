@@ -986,7 +986,7 @@
         });
 
         $(window).on('resize.tray-overflow', refreshLayout);
-        window.addEventListener('win8-display-settings-changed', refreshLayout);
+        window.addEventListener('win9-display-settings-changed', refreshLayout);
         document.addEventListener('click', handleCapturedClick, true);
         document.addEventListener('click', handleDocumentClick);
         document.addEventListener('keydown', handleKeyDown);

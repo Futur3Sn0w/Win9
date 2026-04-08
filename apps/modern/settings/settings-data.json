@@ -2,23 +2,6 @@
   "pc-and-devices": {
     "name": "PC and devices",
     "items": {
-      "lock-screen": {
-        "name": "Lock screen",
-        "sections": [
-          {
-            "title": "Lock screen preview",
-            "settings": []
-          },
-          {
-            "title": "Lock screen apps",
-            "settings": []
-          },
-          {
-            "title": "Camera",
-            "settings": []
-          }
-        ]
-      },
       "display": {
         "name": "Display",
         "sections": [
@@ -76,19 +59,6 @@
         "sections": [
           {
             "title": "Spelling",
-            "settings": []
-          }
-        ]
-      },
-      "corners-and-edges": {
-        "name": "Corners and edges",
-        "sections": [
-          {
-            "title": "App switching",
-            "settings": []
-          },
-          {
-            "title": "Corner navigation",
             "settings": []
           }
         ]
@@ -153,6 +123,71 @@
           },
           {
             "title": "Windows",
+            "settings": []
+          }
+        ]
+      }
+    }
+  },
+  "personalize": {
+    "name": "Personalize",
+    "items": {
+      "lock-screen": {
+        "name": "Lock screen",
+        "sections": [
+          {
+            "title": "Lock screen preview",
+            "settings": []
+          },
+          {
+            "title": "Lock screen apps",
+            "settings": []
+          },
+          {
+            "title": "Camera",
+            "settings": []
+          }
+        ]
+      },
+      "start-surfaces": {
+        "name": "Start surfaces",
+        "sections": [
+          {
+            "title": "Start preview",
+            "settings": []
+          },
+          {
+            "title": "Start behavior",
+            "settings": []
+          },
+          {
+            "title": "Accent color",
+            "settings": []
+          }
+        ]
+      },
+      "taskbar": {
+        "name": "Taskbar",
+        "sections": [
+          {
+            "title": "Show on the taskbar",
+            "settings": []
+          },
+          {
+            "title": "Search",
+            "settings": []
+          }
+        ]
+      },
+      "corners-and-edges": {
+        "name": "Corners and edges",
+        "sections": [
+          {
+            "title": "App switching",
+            "settings": []
+          },
+          {
+            "title": "Corner navigation",
             "settings": []
           }
         ]

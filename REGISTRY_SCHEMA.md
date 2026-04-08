@@ -1,6 +1,6 @@
-# Windows 8 Simulator - Authentic Registry Schema
+# Windows 9 Simulator - Authentic Registry Schema
 
-This document defines the **authentic Windows registry structure** for the Windows 8 simulator, using **real Windows 8/8.1 registry paths** wherever possible.
+This document defines the **authentic Windows registry structure** for the Windows 9 simulator, using **real Windows 9/8.1 registry paths** wherever possible.
 
 ## Philosophy
 
@@ -37,7 +37,7 @@ const RegistryType = {
 
 **Path:** `HKEY_CURRENT_USER\Control Panel\Desktop`
 
-**Real Windows 8 Values:**
+**Real Windows 9 Values:**
 ```javascript
 {
   "Wallpaper": {
@@ -79,7 +79,7 @@ const RegistryType = {
 
 **Path:** `HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\Personalization`
 
-**Real Windows 8 Values:**
+**Real Windows 9 Values:**
 ```javascript
 {
   "LockScreenImage": {
@@ -112,7 +112,7 @@ const RegistryType = {
 
 **Path:** `HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\StuckRects2`
 
-**Real Windows 8 Value:**
+**Real Windows 9 Value:**
 ```javascript
 {
   "Settings": {
@@ -124,7 +124,7 @@ const RegistryType = {
 
 **Binary Structure (52 bytes):**
 ```
-Bytes 0-3:   Version (0x00000028 for Windows 8)
+Bytes 0-3:   Version (0x00000028 for Windows 9)
 Bytes 4-7:   Unknown
 Byte  8:     Taskbar state
              0x02 = Auto-hide OFF, always on top OFF
@@ -205,7 +205,7 @@ function decodeStuckRects2(buffer) {
 
 **Path:** `HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Taskband`
 
-**Real Windows 8 Value:**
+**Real Windows 9 Value:**
 ```javascript
 {
   "Favorites": {
@@ -249,7 +249,7 @@ function decodeStuckRects2(buffer) {
 
 **Path:** `HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Accent`
 
-**Real Windows 8.1 Values:**
+**Real Windows 9 Values:**
 ```javascript
 {
   "AccentColor": {
@@ -316,7 +316,7 @@ function argbToHex(argb) {
 
 **Path:** `HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Themes`
 
-**Real Windows 8 Values:**
+**Real Windows 9 Values:**
 ```javascript
 {
   "CurrentTheme": {
@@ -330,7 +330,7 @@ function argbToHex(argb) {
 }
 ```
 
-**Path:** `HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize` (Windows 8.1)
+**Path:** `HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize` (Windows 9)
 ```javascript
 {
   "EnableTransparency": {
@@ -343,7 +343,7 @@ function argbToHex(argb) {
   },
   "AppsUseLightTheme": {
     type: REG_DWORD,
-    data: 0  // 0=dark, 1=light (Windows 10+ feature, not in Windows 8)
+    data: 0  // 0=dark, 1=light (Windows 10+ feature, not in Windows 9)
   }
 }
 ```
@@ -374,7 +374,7 @@ function argbToHex(argb) {
 
 **Path:** `HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\ImmersiveShell\Launcher`
 
-**Windows 8.1 Values:**
+**Windows 9 Values:**
 ```javascript
 {
   "ShowDesktopBackgroundOnStart": {
@@ -421,7 +421,7 @@ function argbToHex(argb) {
 
 ### 8. Start Screen Tiles & Layout
 
-**Note:** Real Windows 8 stores tile layout in binary `.itemdata-ms` files at:
+**Note:** Real Windows 9 stores tile layout in binary `.itemdata-ms` files at:
 `%LocalAppData%\Microsoft\Windows\Application Shortcuts\`
 
 **For the simulator, we'll use a plausible registry path:**
@@ -484,11 +484,11 @@ function argbToHex(argb) {
 
 ---
 
-### 9. Navigation Settings (Windows 8.1 Features)
+### 9. Navigation Settings (Windows 9 Features)
 
 **Path:** `HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\ImmersiveShell\EdgeUI`
 
-**Real Windows 8.1 Values:**
+**Real Windows 9 Values:**
 ```javascript
 {
   "DisableCharmsHint": {
@@ -508,7 +508,7 @@ function argbToHex(argb) {
 
 **Path:** `HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\StartPage`
 
-**Windows 8.1 Values:**
+**Windows 9 Values:**
 ```javascript
 {
   "OpenAtLogon": {
@@ -574,7 +574,7 @@ function argbToHex(argb) {
 
 **Path:** `HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Appx`
 
-**Real Windows 8 Value:**
+**Real Windows 9 Value:**
 ```javascript
 {
   "PackageRoot": {
@@ -640,7 +640,7 @@ function argbToHex(argb) {
 
 **Path:** `HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced`
 
-**Real Windows 8 Values:**
+**Real Windows 9 Values:**
 ```javascript
 {
   "Hidden": {

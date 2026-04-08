@@ -1,11 +1,11 @@
 /**
  * Windows Registry API
  *
- * Provides a Windows Registry-like API for the Windows 8 simulator.
+ * Provides a Windows Registry-like API for the Windows 9 simulator.
  * Uses electron-store as the backend storage with authentic Windows registry paths.
  *
  * Features:
- * - Authentic Windows 8 registry paths
+ * - Authentic Windows 9 registry paths
  * - Binary data encoding (StuckRects2, AccentPalette, etc.)
  * - Type-safe value access (REG_DWORD, REG_SZ, REG_BINARY, etc.)
  * - Hierarchical path navigation
@@ -178,7 +178,7 @@ function encodeStuckRects2(settings) {
   const buffer = new Uint8Array(52);
   const view = new DataView(buffer.buffer);
 
-  // Bytes 0-3: Version (0x00000028 for Windows 8)
+  // Bytes 0-3: Version (0x00000028 for Windows 9)
   view.setUint32(0, 0x00000028, true);
 
   // Bytes 4-7: Unknown/reserved

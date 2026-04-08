@@ -7,18 +7,16 @@
         'device-form-'
     ];
     const TASKBAR_ADVANCED_PATH = 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced';
-    const THRESHOLD_FEATURES_ENABLED_VALUE_NAME = 'ThresholdFeaturesEnabled';
-    const CONTINUUM_BETA_ENABLED_VALUE_NAME = 'ContinuumBetaEnabled';
 
     function resolveElectronIpc() {
         if (continuumIpcRenderer) {
             return continuumIpcRenderer;
         }
 
-        if (window.Win8ElectronBridge &&
-            typeof window.Win8ElectronBridge.invoke === 'function' &&
-            typeof window.Win8ElectronBridge.on === 'function') {
-            continuumIpcRenderer = window.Win8ElectronBridge;
+        if (window.Win9ElectronBridge &&
+            typeof window.Win9ElectronBridge.invoke === 'function' &&
+            typeof window.Win9ElectronBridge.on === 'function') {
+            continuumIpcRenderer = window.Win9ElectronBridge;
             return continuumIpcRenderer;
         }
 
@@ -83,11 +81,7 @@
         constructor() {
             this.ipc = null;
             this.currentState = null;
-            this.continuumSettings = {
-                thresholdFeaturesEnabled: false,
-                continuumBetaEnabled: false,
-                enabled: false
-            };
+            this.continuumSettings = { enabled: true };
             this.retrySetupTimer = null;
             this.isSetupComplete = false;
             this.handlePostureChanged = this.handlePostureChanged.bind(this);
@@ -121,7 +115,7 @@
 
             this.isSetupComplete = true;
             console.log('[DevicePostureDOM] IPC bridge ready.');
-            window.addEventListener('win8-continuum-settings-changed', this.handleContinuumSettingsChanged);
+            window.addEventListener('win9-continuum-settings-changed', this.handleContinuumSettingsChanged);
             this.refreshContinuumSettings();
             this.ipc.on('device-posture:changed', this.handlePostureChanged);
 
@@ -145,43 +139,11 @@
         }
 
         refreshContinuumSettings() {
-            if (window.Win8ContinuumSettings) {
-                this.applyContinuumSettings(window.Win8ContinuumSettings);
-                return;
-            }
-
-            const registryModule = resolveRegistryModule();
-            if (!registryModule || typeof registryModule.getRegistry !== 'function') {
-                this.applyContinuumSettings({});
-                return;
-            }
-
-            try {
-                const registry = registryModule.getRegistry();
-                this.applyContinuumSettings({
-                    thresholdFeaturesEnabled: Number(
-                        registry.getValue(TASKBAR_ADVANCED_PATH, THRESHOLD_FEATURES_ENABLED_VALUE_NAME, 1)
-                    ) !== 0,
-                    continuumBetaEnabled: Number(
-                        registry.getValue(TASKBAR_ADVANCED_PATH, CONTINUUM_BETA_ENABLED_VALUE_NAME, 0)
-                    ) !== 0
-                });
-            } catch (error) {
-                console.warn('[DevicePostureDOM] Failed to load Continuum settings from registry:', error);
-                this.applyContinuumSettings({});
-            }
+            this.applyContinuumSettings();
         }
 
-        applyContinuumSettings(settings = {}) {
-            const thresholdFeaturesEnabled = settings.thresholdFeaturesEnabled === true;
-            const continuumBetaEnabled = settings.continuumBetaEnabled === true;
-
-            this.continuumSettings = {
-                thresholdFeaturesEnabled,
-                continuumBetaEnabled,
-                enabled: thresholdFeaturesEnabled && continuumBetaEnabled
-            };
-
+        applyContinuumSettings() {
+            this.continuumSettings = { enabled: true };
             console.log('[DevicePostureDOM] Continuum settings resolved:', this.continuumSettings);
         }
 
@@ -191,7 +153,7 @@
             }
 
             this.currentState = state || null;
-            window.Win8DevicePosture = {
+            window.Win9DevicePosture = {
                 currentState: this.currentState,
                 isEnabled: () => this.continuumSettings.enabled,
                 getCurrentState: () => this.currentState
@@ -215,7 +177,7 @@
                 delete document.body.dataset.deviceDocked;
                 delete document.body.dataset.deviceKeyboardAccessible;
 
-                window.dispatchEvent(new CustomEvent('win8-device-posture-changed', {
+                window.dispatchEvent(new CustomEvent('win9-device-posture-changed', {
                     detail: {
                         enabled: false,
                         state
@@ -245,7 +207,7 @@
             document.body.dataset.deviceDocked = state.isDocked ? 'true' : 'false';
             document.body.dataset.deviceKeyboardAccessible = state.keyboardAccessible ? 'true' : 'false';
 
-            window.dispatchEvent(new CustomEvent('win8-device-posture-changed', {
+            window.dispatchEvent(new CustomEvent('win9-device-posture-changed', {
                 detail: {
                     enabled: true,
                     state

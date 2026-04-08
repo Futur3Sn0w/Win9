@@ -1,7 +1,7 @@
 ﻿(function () {
     'use strict';
 
-    const SETTINGS_STORAGE_KEY = 'win8-calendar-preferences';
+    const SETTINGS_STORAGE_KEY = 'win9-calendar-preferences';
     const DEFAULT_EVENT_COLOR = '#5133ab';
     const COLOR_PRESETS = ['#00a4a4', '#1d71c9', '#8d6dd8', '#e25a90', '#0e9f1b', '#d14d41', '#5133ab'];
     const electronIpc = getElectronIpc();

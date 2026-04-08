@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Character Map</title>
+
+    <link rel="stylesheet" href="../../../css/classic-windows.css">
+    <link rel="stylesheet" href="../../../css/classic-controls.css">
+    <link rel="stylesheet" href="../../../css/styles.css">
+    <link rel="stylesheet" href="../../../css/fonts.css">
+    <link rel="stylesheet" href="charmap.exe.css">
+</head>
+
+<body>
+    <div class="charmap-container">
+
+        <!-- Toolbar: Font selector + Help -->
+        <div class="charmap-toolbar">
+            <label class="charmap-label" for="charmap-font"><u>F</u>ont:</label>
+            <select id="charmap-font" class="charmap-font-select classic-select"></select>
+            <button class="classic-button charmap-help-btn" id="charmap-help"><u>H</u>elp</button>
+        </div>
+
+        <!-- Character Grid -->
+        <div class="charmap-grid-wrapper">
+            <div class="charmap-grid" id="charmap-grid" tabindex="0"></div>
+            <div class="charmap-scrollbar-area">
+                <div class="charmap-scroll-track">
+                    <button class="charmap-scroll-btn charmap-scroll-up" id="scroll-up">▲</button>
+                    <div class="charmap-scroll-thumb-track" id="scroll-track">
+                        <div class="charmap-scroll-thumb" id="scroll-thumb"></div>
+                    </div>
+                    <button class="charmap-scroll-btn charmap-scroll-down" id="scroll-down">▼</button>
+                </div>
+            </div>
+            <!-- Zoom popup shown on cell hover/select -->
+            <div class="charmap-zoom" id="charmap-zoom" style="display:none;"></div>
+        </div>
+
+        <!-- Characters to copy row -->
+        <div class="charmap-copy-row">
+            <label class="charmap-label" for="charmap-copy-text">Ch<u>a</u>racters to copy:</label>
+            <input type="text" id="charmap-copy-text" class="charmap-copy-input classic-input" readonly>
+            <button class="classic-button" id="charmap-select-btn"><u>S</u>elect</button>
+            <button class="classic-button" id="charmap-copy-btn"><u>C</u>opy</button>
+        </div>
+
+        <!-- Advanced view toggle -->
+        <div class="charmap-advanced-toggle-row">
+            <label class="charmap-checkbox-label">
+                <input type="checkbox" id="charmap-advanced-toggle" class="charmap-checkbox">
+                Ad<u>v</u>anced view
+            </label>
+        </div>
+
+        <!-- Advanced panel (hidden by default) -->
+        <div class="charmap-advanced-panel" id="charmap-advanced-panel">
+            <div class="charmap-advanced-row">
+                <label class="charmap-label" for="charmap-charset">Charac<u>t</u>er set:</label>
+                <select id="charmap-charset" class="charmap-advanced-select classic-select">
+                    <option value="unicode">Unicode</option>
+                </select>
+                <label class="charmap-label charmap-label-unicode" for="charmap-unicode-input">Go to <u>U</u>nicode:</label>
+                <input type="text" id="charmap-unicode-input" class="charmap-unicode-input classic-input" maxlength="4" placeholder="0041">
+            </div>
+            <div class="charmap-advanced-row">
+                <label class="charmap-label" for="charmap-groupby"><u>G</u>roup by:</label>
+                <select id="charmap-groupby" class="charmap-advanced-select classic-select">
+                    <option value="all">All</option>
+                    <option value="category">Unicode Category</option>
+                    <option value="subrange">Unicode Subrange</option>
+                </select>
+            </div>
+            <div class="charmap-advanced-row">
+                <label class="charmap-label" for="charmap-search">S<u>e</u>arch for:</label>
+                <input type="text" id="charmap-search" class="charmap-search-input classic-input">
+                <button class="classic-button" id="charmap-search-btn">Sea<u>r</u>ch</button>
+            </div>
+        </div>
+
+        <!-- Status bar -->
+        <div class="charmap-statusbar" id="charmap-statusbar">
+            <span id="charmap-status-text">&nbsp;</span>
+        </div>
+
+    </div>
+
+    <script src="charmap.exe.js"></script>
+</body>
+
+</html>

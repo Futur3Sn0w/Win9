@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Paint</title>
+    <link rel="stylesheet" href="../../../css/classic-windows.css">
+    <link rel="stylesheet" href="../../../css/classic-controls.css">
+    <link rel="stylesheet" href="../../../css/styles.css">
+    <link rel="stylesheet" href="../../../css/fonts.css">
+    <link rel="stylesheet" href="mspaint.exe.css">
+</head>
+<body>
+<div class="paint-shell">
+
+    <!-- ── Ribbon ─────────────────────────────────────────── -->
+    <div class="paint-ribbon" id="paint-ribbon">
+
+        <!-- Application Menu Button -->
+        <div class="paint-appbtn" id="paint-appbtn" tabindex="0">Paint</div>
+
+        <!-- Quick Access Toolbar -->
+        <div class="paint-qat">
+            <button class="paint-qat-btn" data-action="undo" title="Undo (Ctrl+Z)" disabled>
+                <span class="paint-icon paint-icon-undo"></span>
+            </button>
+            <button class="paint-qat-btn" data-action="redo" title="Redo (Ctrl+Y)" disabled>
+                <span class="paint-icon paint-icon-redo"></span>
+            </button>
+        </div>
+
+        <!-- Tab Bar -->
+        <div class="paint-ribbon-tabbar">
+            <div class="paint-ribbon-tab active" data-tab="home">Home</div>
+            <div class="paint-ribbon-tab" data-tab="view">View</div>
+        </div>
+
+        <!-- Ribbon Body -->
+        <div class="paint-ribbon-body">
+
+            <!-- ── HOME TAB ─────────────────────────────────── -->
+            <div class="paint-ribbon-content active" data-tab="home">
+
+                <!-- Clipboard group -->
+                <div class="paint-ribbon-group">
+                    <div class="paint-ribbon-group-body">
+                        <div class="paint-ribbon-btn-large paint-ribbon-split" data-action="paste" title="Paste (Ctrl+V)">
+                            <div class="paint-ribbon-btn-large-icon">
+                                <span class="paint-icon paint-icon-paste"></span>
+                            </div>
+                            <div class="paint-ribbon-split-bottom">
+                                <span class="paint-ribbon-btn-label">Paste</span>
+                                <span class="paint-ribbon-split-arrow">&#9660;</span>
+                                <div class="paint-dropdown paint-clipboard-dropdown">
+                                    <div class="paint-dropdown-item" data-action="paste">Paste</div>
+                                    <div class="paint-dropdown-item" data-action="paste-from">Paste from</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="paint-ribbon-small-stack">
+                            <button class="paint-ribbon-btn-small" data-action="cut" title="Cut (Ctrl+X)">
+                                <span class="paint-icon paint-icon-cut"></span>
+                                <span class="paint-ribbon-btn-small-label">Cut</span>
+                            </button>
+                            <button class="paint-ribbon-btn-small" data-action="copy" title="Copy (Ctrl+C)">
+                                <span class="paint-icon paint-icon-copy"></span>
+                                <span class="paint-ribbon-btn-small-label">Copy</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="paint-ribbon-group-title">Clipboard</div>
+                </div>
+                <div class="paint-ribbon-separator"></div>
+
+                <!-- Image group -->
+                <div class="paint-ribbon-group">
+                    <div class="paint-ribbon-group-body">
+                        <!-- Select split button -->
+                        <div class="paint-ribbon-btn-large paint-ribbon-split" data-action="select-rect" title="Select">
+                            <div class="paint-ribbon-btn-large-icon">
+                                <span class="paint-icon paint-icon-select"></span>
+                            </div>
+                            <div class="paint-ribbon-split-bottom">
+                                <span class="paint-ribbon-btn-label">Select</span>
+                                <span class="paint-ribbon-split-arrow">&#9660;</span>
+                                <div class="paint-dropdown paint-select-dropdown">
+                                    <div class="paint-dropdown-section-label">Selection shape</div>
+                                    <div class="paint-dropdown-item paint-dropdown-icon-item" data-action="select-rect">
+                                        <span class="paint-icon paint-icon-select-rect-sm"></span>Rectangular selection
+                                    </div>
+                                    <div class="paint-dropdown-item paint-dropdown-icon-item" data-action="select-free">
+                                        <span class="paint-icon paint-icon-select-free-sm"></span>Free-form selection
+                                    </div>
+                                    <div class="paint-dropdown-separator"></div>
+                                    <div class="paint-dropdown-section-label">Selection options</div>
+                                    <div class="paint-dropdown-item" data-action="select-all">Select all</div>
+                                    <div class="paint-dropdown-item" data-action="select-invert">Invert selection</div>
+                                    <div class="paint-dropdown-item" data-action="select-delete">Delete</div>
+                                    <div class="paint-dropdown-separator"></div>
+                                    <div class="paint-dropdown-item paint-dropdown-check" data-action="toggle-transparent-select" id="dd-transparent-select">
+                                        Transparent selection
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="paint-ribbon-small-stack">
+                            <button class="paint-ribbon-btn-small" data-action="crop" title="Crop">
+                                <span class="paint-icon paint-icon-crop"></span>
+                                <span class="paint-ribbon-btn-small-label">Crop</span>
+                            </button>
+                            <button class="paint-ribbon-btn-small" data-action="resize" title="Resize/Skew (Ctrl+W)">
+                                <span class="paint-icon paint-icon-resize"></span>
+                                <span class="paint-ribbon-btn-small-label">Resize</span>
+                            </button>
+                            <!-- Rotate split button -->
+                            <div class="paint-ribbon-btn-small paint-ribbon-split paint-ribbon-split-h" data-action="rotate-right" title="Rotate">
+                                <span class="paint-icon paint-icon-rotate"></span>
+                                <span class="paint-ribbon-btn-small-label">Rotate</span>
+                                <span class="paint-ribbon-split-arrow-sm">&#9660;</span>
+                                <div class="paint-dropdown paint-rotate-dropdown">
+                                    <div class="paint-dropdown-item" data-action="rotate-right">Rotate right 90°</div>
+                                    <div class="paint-dropdown-item" data-action="rotate-left">Rotate left 90°</div>
+                                    <div class="paint-dropdown-item" data-action="rotate-180">Rotate 180°</div>
+                                    <div class="paint-dropdown-separator"></div>
+                                    <div class="paint-dropdown-item" data-action="flip-v">Flip vertical</div>
+                                    <div class="paint-dropdown-item" data-action="flip-h">Flip horizontal</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="paint-ribbon-group-title">Image</div>
+                </div>
+                <div class="paint-ribbon-separator"></div>
+
+                <!-- Tools group -->
+                <div class="paint-ribbon-group">
+                    <div class="paint-ribbon-group-body paint-tools-group">
+                        <button class="paint-ribbon-btn-tool active" data-tool="pencil" title="Pencil">
+                            <span class="paint-icon paint-icon-pencil"></span>
+                            <span class="paint-ribbon-btn-tool-label">Pencil</span>
+                        </button>
+                        <button class="paint-ribbon-btn-tool" data-tool="fill" title="Fill with color">
+                            <span class="paint-icon paint-icon-fill"></span>
+                            <span class="paint-ribbon-btn-tool-label">Fill</span>
+                        </button>
+                        <button class="paint-ribbon-btn-tool" data-tool="text" title="Text">
+                            <span class="paint-icon paint-icon-text"></span>
+                            <span class="paint-ribbon-btn-tool-label">Text</span>
+                        </button>
+                        <button class="paint-ribbon-btn-tool" data-tool="eraser" title="Eraser">
+                            <span class="paint-icon paint-icon-eraser"></span>
+                            <span class="paint-ribbon-btn-tool-label">Eraser</span>
+                        </button>
+                        <button class="paint-ribbon-btn-tool" data-tool="colorpick" title="Pick color">
+                            <span class="paint-icon paint-icon-colorpick"></span>
+                            <span class="paint-ribbon-btn-tool-label">Color picker</span>
+                        </button>
+                        <button class="paint-ribbon-btn-tool" data-tool="zoom" title="Magnifier">
+                            <span class="paint-icon paint-icon-zoom"></span>
+                            <span class="paint-ribbon-btn-tool-label">Magnifier</span>
+                        </button>
+                    </div>
+                    <div class="paint-ribbon-group-title">Tools</div>
+                </div>
+                <div class="paint-ribbon-separator"></div>
+
+                <!-- Brushes group -->
+                <div class="paint-ribbon-group paint-ribbon-group-brushes">
+                    <div class="paint-ribbon-group-body">
+                        <div class="paint-ribbon-gallery paint-brushes-gallery" id="brushes-gallery">
+                            <button class="paint-gallery-item paint-gallery-item-active" data-brush="round" title="Brush">
+                                <span class="paint-brush-icon paint-brush-round"></span>
+                            </button>
+                            <button class="paint-gallery-item" data-brush="cali1" title="Calligraphy brush 1">
+                                <span class="paint-brush-icon paint-brush-cali1"></span>
+                            </button>
+                            <button class="paint-gallery-item" data-brush="cali2" title="Calligraphy brush 2">
+                                <span class="paint-brush-icon paint-brush-cali2"></span>
+                            </button>
+                            <button class="paint-gallery-item" data-brush="airbrush" title="Airbrush">
+                                <span class="paint-brush-icon paint-brush-airbrush"></span>
+                            </button>
+                            <button class="paint-gallery-item" data-brush="oil" title="Oil brush">
+                                <span class="paint-brush-icon paint-brush-oil"></span>
+                            </button>
+                            <button class="paint-gallery-item" data-brush="crayon" title="Crayon">
+                                <span class="paint-brush-icon paint-brush-crayon"></span>
+                            </button>
+                            <button class="paint-gallery-item" data-brush="marker" title="Marker">
+                                <span class="paint-brush-icon paint-brush-marker"></span>
+                            </button>
+                            <button class="paint-gallery-item" data-brush="pencil" title="Natural pencil">
+                                <span class="paint-brush-icon paint-brush-pencil"></span>
+                            </button>
+                            <button class="paint-gallery-item" data-brush="watercolor" title="Watercolor brush">
+                                <span class="paint-brush-icon paint-brush-watercolor"></span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="paint-ribbon-group-title">Brushes</div>
+                </div>
+                <div class="paint-ribbon-separator"></div>
+
+                <!-- Shapes group -->
+                <div class="paint-ribbon-group paint-ribbon-group-shapes">
+                    <div class="paint-ribbon-group-body">
+                        <div class="paint-ribbon-gallery paint-shapes-gallery" id="shapes-gallery">
+                            <button class="paint-gallery-item" data-shape="line" title="Line">
+                                <span class="paint-shape-icon paint-shape-line"></span>
+                            </button>
+                            <button class="paint-gallery-item" data-shape="curve" title="Curve">
+                                <span class="paint-shape-icon paint-shape-curve"></span>
+                            </button>
+                            <button class="paint-gallery-item" data-shape="oval" title="Oval">
+                                <span class="paint-shape-icon paint-shape-oval"></span>
+                            </button>
+                            <button class="paint-gallery-item" data-shape="rect" title="Rectangle">
+                                <span class="paint-shape-icon paint-shape-rect"></span>
+                            </button>
+                            <button class="paint-gallery-item" data-shape="rrect" title="Rounded rectangle">
+                                <span class="paint-shape-icon paint-shape-rrect"></span>
+                            </button>
+                            <button class="paint-gallery-item" data-shape="polygon" title="Polygon">
+                                <span class="paint-shape-icon paint-shape-polygon"></span>
+                            </button>
+                            <button class="paint-gallery-item" data-shape="triangle" title="Triangle">
+                                <span class="paint-shape-icon paint-shape-triangle"></span>
+                            </button>
+                            <button class="paint-gallery-item" data-shape="rtriangle" title="Right triangle">
+                                <span class="paint-shape-icon paint-shape-rtriangle"></span>
+                            </button>
+                            <button class="paint-gallery-item" data-shape="diamond" title="Diamond">
+                                <span class="paint-shape-icon paint-shape-diamond"></span>
+                            </button>
+                            <button class="paint-gallery-item" data-shape="pentagon" title="Pentagon">
+                                <span class="paint-shape-icon paint-shape-pentagon"></span>
+                            </button>
+                            <button class="paint-gallery-item" data-shape="hexagon" title="Hexagon">
+                                <span class="paint-shape-icon paint-shape-hexagon"></span>
+                            </button>
+                            <button class="paint-gallery-item" data-shape="arrow-r" title="Right arrow">
+                                <span class="paint-shape-icon paint-shape-arrow-r"></span>
+                            </button>
+                            <button class="paint-gallery-item" data-shape="arrow-l" title="Left arrow">
+                                <span class="paint-shape-icon paint-shape-arrow-l"></span>
+                            </button>
+                            <button class="paint-gallery-item" data-shape="arrow-u" title="Up arrow">
+                                <span class="paint-shape-icon paint-shape-arrow-u"></span>
+                            </button>
+                            <button class="paint-gallery-item" data-shape="arrow-d" title="Down arrow">
+                                <span class="paint-shape-icon paint-shape-arrow-d"></span>
+                            </button>
+                            <button class="paint-gallery-item" data-shape="star4" title="Four-point star">
+                                <span class="paint-shape-icon paint-shape-star4"></span>
+                            </button>
+                            <button class="paint-gallery-item" data-shape="star5" title="Five-point star">
+                                <span class="paint-shape-icon paint-shape-star5"></span>
+                            </button>
+                            <button class="paint-gallery-item" data-shape="star6" title="Six-point star">
+                                <span class="paint-shape-icon paint-shape-star6"></span>
+                            </button>
+                            <button class="paint-gallery-item" data-shape="callout-rect" title="Rounded rectangular callout">
+                                <span class="paint-shape-icon paint-shape-callout-rect"></span>
+                            </button>
+                            <button class="paint-gallery-item" data-shape="callout-oval" title="Oval callout">
+                                <span class="paint-shape-icon paint-shape-callout-oval"></span>
+                            </button>
+                            <button class="paint-gallery-item" data-shape="callout-cloud" title="Cloud callout">
+                                <span class="paint-shape-icon paint-shape-callout-cloud"></span>
+                            </button>
+                        </div>
+                        <div class="paint-shape-options">
+                            <!-- Outline flyout -->
+                            <div class="paint-ribbon-split paint-shape-opt-btn" data-current-outline="solid" title="Outline">
+                                <span class="paint-shape-opt-icon paint-shape-opt-icon-outline"></span>
+                                <span class="paint-shape-opt-label">Outline</span>
+                                <span class="paint-ribbon-split-arrow-sm">&#9660;</span>
+                                <div class="paint-dropdown paint-outline-dropdown">
+                                    <div class="paint-dropdown-item paint-dropdown-icon-item" data-outline="none">
+                                        <span class="paint-outline-sample paint-outline-none"></span>No outline
+                                    </div>
+                                    <div class="paint-dropdown-item paint-dropdown-icon-item" data-outline="solid">
+                                        <span class="paint-outline-sample paint-outline-solid"></span>Solid color
+                                    </div>
+                                    <div class="paint-dropdown-item paint-dropdown-icon-item" data-outline="crayon">
+                                        <span class="paint-outline-sample paint-outline-crayon"></span>Crayon
+                                    </div>
+                                    <div class="paint-dropdown-item paint-dropdown-icon-item" data-outline="marker">
+                                        <span class="paint-outline-sample paint-outline-marker"></span>Marker
+                                    </div>
+                                    <div class="paint-dropdown-item paint-dropdown-icon-item" data-outline="oil">
+                                        <span class="paint-outline-sample paint-outline-oil"></span>Oil
+                                    </div>
+                                    <div class="paint-dropdown-item paint-dropdown-icon-item" data-outline="pencil">
+                                        <span class="paint-outline-sample paint-outline-pencil"></span>Natural pencil
+                                    </div>
+                                    <div class="paint-dropdown-item paint-dropdown-icon-item" data-outline="watercolor">
+                                        <span class="paint-outline-sample paint-outline-watercolor"></span>Watercolor
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Fill flyout -->
+                            <div class="paint-ribbon-split paint-shape-opt-btn" data-current-fill="none" title="Fill">
+                                <span class="paint-shape-opt-icon paint-shape-opt-icon-fill"></span>
+                                <span class="paint-shape-opt-label">Fill</span>
+                                <span class="paint-ribbon-split-arrow-sm">&#9660;</span>
+                                <div class="paint-dropdown paint-fill-dropdown">
+                                    <div class="paint-dropdown-item paint-dropdown-icon-item" data-fill="none">
+                                        <span class="paint-fill-sample paint-fill-none"></span>No fill
+                                    </div>
+                                    <div class="paint-dropdown-item paint-dropdown-icon-item" data-fill="solid">
+                                        <span class="paint-fill-sample paint-fill-solid"></span>Solid color
+                                    </div>
+                                    <div class="paint-dropdown-item paint-dropdown-icon-item" data-fill="crayon">
+                                        <span class="paint-fill-sample paint-fill-crayon"></span>Crayon
+                                    </div>
+                                    <div class="paint-dropdown-item paint-dropdown-icon-item" data-fill="marker">
+                                        <span class="paint-fill-sample paint-fill-marker"></span>Marker
+                                    </div>
+                                    <div class="paint-dropdown-item paint-dropdown-icon-item" data-fill="oil">
+                                        <span class="paint-fill-sample paint-fill-oil"></span>Oil
+                                    </div>
+                                    <div class="paint-dropdown-item paint-dropdown-icon-item" data-fill="pencil">
+                                        <span class="paint-fill-sample paint-fill-pencil"></span>Natural pencil
+                                    </div>
+                                    <div class="paint-dropdown-item paint-dropdown-icon-item" data-fill="watercolor">
+                                        <span class="paint-fill-sample paint-fill-watercolor"></span>Watercolor
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="paint-ribbon-group-title">Shapes</div>
+                </div>
+                <div class="paint-ribbon-separator"></div>
+
+                <!-- Size group -->
+                <div class="paint-ribbon-group">
+                    <div class="paint-ribbon-group-body">
+                        <div class="paint-size-gallery" id="size-gallery">
+                            <button class="paint-size-item active" data-size="1" title="1 pixel">
+                                <span class="paint-size-preview paint-size-1"></span>
+                            </button>
+                            <button class="paint-size-item" data-size="3" title="3 pixels">
+                                <span class="paint-size-preview paint-size-3"></span>
+                            </button>
+                            <button class="paint-size-item" data-size="5" title="5 pixels">
+                                <span class="paint-size-preview paint-size-5"></span>
+                            </button>
+                            <button class="paint-size-item" data-size="8" title="8 pixels">
+                                <span class="paint-size-preview paint-size-8"></span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="paint-ribbon-group-title">Size</div>
+                </div>
+                <div class="paint-ribbon-separator"></div>
+
+                <!-- Colors group -->
+                <div class="paint-ribbon-group paint-ribbon-group-colors">
+                    <div class="paint-ribbon-group-body">
+                        <!-- Color 1 / Color 2 swatches -->
+                        <div class="paint-color-active-area">
+                            <div class="paint-color2-swatch" id="color2-swatch" title="Color 2 (background)"></div>
+                            <div class="paint-color1-swatch" id="color1-swatch" title="Color 1 (foreground)"></div>
+                        </div>
+                        <!-- Color palette -->
+                        <div class="paint-color-palette" id="color-palette"></div>
+                        <!-- Edit Colors button -->
+                        <button class="paint-edit-colors-btn" data-action="edit-colors" title="Edit colors">
+                            <span class="paint-icon paint-icon-edit-colors"></span>
+                            <span>Edit colors</span>
+                        </button>
+                    </div>
+                    <div class="paint-ribbon-group-title">Colors</div>
+                </div>
+
+            </div><!-- /home tab -->
+
+            <!-- ── VIEW TAB ──────────────────────────────────── -->
+            <div class="paint-ribbon-content" data-tab="view">
+
+                <!-- Zoom group -->
+                <div class="paint-ribbon-group">
+                    <div class="paint-ribbon-group-body">
+                        <button class="paint-ribbon-btn-large" data-action="zoom-in" title="Zoom in (Ctrl+Page Up)">
+                            <span class="paint-icon paint-icon-zoom-in"></span>
+                            <span class="paint-ribbon-btn-label">Zoom<br>in</span>
+                        </button>
+                        <button class="paint-ribbon-btn-large" data-action="zoom-out" title="Zoom out (Ctrl+Page Down)">
+                            <span class="paint-icon paint-icon-zoom-out"></span>
+                            <span class="paint-ribbon-btn-label">Zoom<br>out</span>
+                        </button>
+                        <button class="paint-ribbon-btn-large" data-action="zoom-100" title="100% (Ctrl+/)">
+                            <span class="paint-icon paint-icon-zoom-100"></span>
+                            <span class="paint-ribbon-btn-label">100%</span>
+                        </button>
+                    </div>
+                    <div class="paint-ribbon-group-title">Zoom</div>
+                </div>
+                <div class="paint-ribbon-separator"></div>
+
+                <!-- Show/Hide group -->
+                <div class="paint-ribbon-group">
+                    <div class="paint-ribbon-group-body paint-showhide-group">
+                        <label class="paint-ribbon-checkbox" title="Rulers">
+                            <input type="checkbox" id="chk-rulers" data-action="toggle-rulers" checked>
+                            <span class="paint-icon paint-icon-ruler"></span>
+                            <span>Rulers</span>
+                        </label>
+                        <label class="paint-ribbon-checkbox" title="Gridlines">
+                            <input type="checkbox" id="chk-gridlines" data-action="toggle-gridlines">
+                            <span class="paint-icon paint-icon-gridlines"></span>
+                            <span>Gridlines</span>
+                        </label>
+                        <label class="paint-ribbon-checkbox" title="Status bar">
+                            <input type="checkbox" id="chk-statusbar" data-action="toggle-statusbar" checked>
+                            <span class="paint-icon paint-icon-statusbar"></span>
+                            <span>Status bar</span>
+                        </label>
+                    </div>
+                    <div class="paint-ribbon-group-title">Show or hide</div>
+                </div>
+                <div class="paint-ribbon-separator"></div>
+
+                <!-- Display group -->
+                <div class="paint-ribbon-group">
+                    <div class="paint-ribbon-group-body">
+                        <button class="paint-ribbon-btn-large" data-action="fullscreen" title="Full screen (F11)">
+                            <span class="paint-icon paint-icon-fullscreen"></span>
+                            <span class="paint-ribbon-btn-label">Full<br>screen</span>
+                        </button>
+                        <button class="paint-ribbon-btn-large" data-action="thumbnail" title="Thumbnail">
+                            <span class="paint-icon paint-icon-thumbnail"></span>
+                            <span class="paint-ribbon-btn-label">Thumbnail</span>
+                        </button>
+                    </div>
+                    <div class="paint-ribbon-group-title">Display</div>
+                </div>
+
+            </div><!-- /view tab -->
+
+        </div><!-- /ribbon-body -->
+    </div><!-- /ribbon -->
+
+    <!-- ── Application Menu Dropdown ───────────────────────── -->
+    <div class="paint-appmenu" id="paint-appmenu">
+        <div class="paint-appmenu-sidebar">
+            <span class="paint-appmenu-sidebar-label">Paint</span>
+        </div>
+        <div class="paint-appmenu-list">
+            <div class="paint-appmenu-item paint-appmenu-icon-item" data-action="new">
+                <span class="paint-appmenu-icon paint-icon-new"></span>
+                <div class="paint-appmenu-label">
+                    <span class="paint-appmenu-name">New</span>
+                    <span class="paint-appmenu-shortcut">Ctrl+N</span>
+                </div>
+            </div>
+            <div class="paint-appmenu-item paint-appmenu-icon-item" data-action="open">
+                <span class="paint-appmenu-icon paint-icon-open"></span>
+                <div class="paint-appmenu-label">
+                    <span class="paint-appmenu-name">Open</span>
+                    <span class="paint-appmenu-shortcut">Ctrl+O</span>
+                </div>
+            </div>
+            <div class="paint-appmenu-item paint-appmenu-icon-item" data-action="save">
+                <span class="paint-appmenu-icon paint-icon-save"></span>
+                <div class="paint-appmenu-label">
+                    <span class="paint-appmenu-name">Save</span>
+                    <span class="paint-appmenu-shortcut">Ctrl+S</span>
+                </div>
+            </div>
+            <div class="paint-appmenu-item paint-appmenu-icon-item paint-appmenu-has-sub">
+                <span class="paint-appmenu-icon paint-icon-save-as"></span>
+                <div class="paint-appmenu-label">
+                    <span class="paint-appmenu-name">Save as</span>
+                </div>
+                <span class="paint-appmenu-arrow">&#9654;</span>
+                <div class="paint-appmenu-sub">
+                    <div class="paint-appmenu-sub-title">Save this picture in a different format</div>
+                    <div class="paint-appmenu-sub-item" data-action="save-png">
+                        <span class="paint-appmenu-sub-icon"></span>
+                        <div>
+                            <div class="paint-appmenu-sub-name">PNG picture</div>
+                            <div class="paint-appmenu-sub-desc">High quality picture that is good for most images</div>
+                        </div>
+                    </div>
+                    <div class="paint-appmenu-sub-item" data-action="save-jpeg">
+                        <span class="paint-appmenu-sub-icon"></span>
+                        <div>
+                            <div class="paint-appmenu-sub-name">JPEG picture</div>
+                            <div class="paint-appmenu-sub-desc">Smaller file size, good for photos</div>
+                        </div>
+                    </div>
+                    <div class="paint-appmenu-sub-item" data-action="save-bmp">
+                        <span class="paint-appmenu-sub-icon"></span>
+                        <div>
+                            <div class="paint-appmenu-sub-name">BMP picture</div>
+                            <div class="paint-appmenu-sub-desc">The standard Windows picture format</div>
+                        </div>
+                    </div>
+                    <div class="paint-appmenu-sub-item" data-action="save-gif">
+                        <span class="paint-appmenu-sub-icon"></span>
+                        <div>
+                            <div class="paint-appmenu-sub-name">GIF picture</div>
+                            <div class="paint-appmenu-sub-desc">Good for simple drawings</div>
+                        </div>
+                    </div>
+                    <div class="paint-appmenu-sub-sep"></div>
+                    <div class="paint-appmenu-sub-item" data-action="save-other">
+                        <span class="paint-appmenu-sub-icon"></span>
+                        <div>
+                            <div class="paint-appmenu-sub-name">Other formats</div>
+                            <div class="paint-appmenu-sub-desc">Save this picture with a different format</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="paint-appmenu-separator"></div>
+            <div class="paint-appmenu-item paint-appmenu-icon-item paint-appmenu-has-sub">
+                <span class="paint-appmenu-icon paint-icon-print"></span>
+                <div class="paint-appmenu-label">
+                    <span class="paint-appmenu-name">Print</span>
+                </div>
+                <span class="paint-appmenu-arrow">&#9654;</span>
+                <div class="paint-appmenu-sub">
+                    <div class="paint-appmenu-sub-item" data-action="print">
+                        <div>
+                            <div class="paint-appmenu-sub-name">Print</div>
+                            <div class="paint-appmenu-sub-desc">Select a printer, number of copies, and other printing options before printing</div>
+                        </div>
+                    </div>
+                    <div class="paint-appmenu-sub-item" data-action="page-setup">
+                        <div>
+                            <div class="paint-appmenu-sub-name">Page setup</div>
+                            <div class="paint-appmenu-sub-desc">Change page layout and printing options</div>
+                        </div>
+                    </div>
+                    <div class="paint-appmenu-sub-item" data-action="print-preview">
+                        <div>
+                            <div class="paint-appmenu-sub-name">Print preview</div>
+                            <div class="paint-appmenu-sub-desc">Preview and make changes to pages before printing</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="paint-appmenu-item paint-appmenu-icon-item" data-action="send-email">
+                <span class="paint-appmenu-icon paint-icon-email"></span>
+                <div class="paint-appmenu-label">
+                    <span class="paint-appmenu-name">Send in email</span>
+                </div>
+            </div>
+            <div class="paint-appmenu-item paint-appmenu-icon-item paint-appmenu-has-sub">
+                <span class="paint-appmenu-icon paint-icon-desktop"></span>
+                <div class="paint-appmenu-label">
+                    <span class="paint-appmenu-name">Set as desktop background</span>
+                </div>
+                <span class="paint-appmenu-arrow">&#9654;</span>
+                <div class="paint-appmenu-sub">
+                    <div class="paint-appmenu-sub-item" data-action="wallpaper-fill">
+                        <div><div class="paint-appmenu-sub-name">Fill</div></div>
+                    </div>
+                    <div class="paint-appmenu-sub-item" data-action="wallpaper-tile">
+                        <div><div class="paint-appmenu-sub-name">Tile</div></div>
+                    </div>
+                    <div class="paint-appmenu-sub-item" data-action="wallpaper-center">
+                        <div><div class="paint-appmenu-sub-name">Center</div></div>
+                    </div>
+                </div>
+            </div>
+            <div class="paint-appmenu-separator"></div>
+            <div class="paint-appmenu-item paint-appmenu-icon-item" data-action="properties">
+                <span class="paint-appmenu-icon paint-icon-properties"></span>
+                <div class="paint-appmenu-label">
+                    <span class="paint-appmenu-name">Properties</span>
+                    <span class="paint-appmenu-shortcut">Ctrl+E</span>
+                </div>
+            </div>
+            <div class="paint-appmenu-separator"></div>
+            <div class="paint-appmenu-item paint-appmenu-icon-item" data-action="about">
+                <span class="paint-appmenu-icon paint-icon-about"></span>
+                <div class="paint-appmenu-label">
+                    <span class="paint-appmenu-name">About Paint</span>
+                </div>
+            </div>
+            <div class="paint-appmenu-item paint-appmenu-icon-item" data-action="exit">
+                <span class="paint-appmenu-icon paint-icon-exit"></span>
+                <div class="paint-appmenu-label">
+                    <span class="paint-appmenu-name">Exit</span>
+                </div>
+            </div>
+        </div>
+    </div><!-- /appmenu -->
+
+    <!-- ── Canvas Area ─────────────────────────────────────── -->
+    <div class="paint-work-area">
+        <!-- Rulers -->
+        <div class="paint-ruler-corner"></div>
+        <div class="paint-ruler-h" id="ruler-h">
+            <canvas id="ruler-h-canvas"></canvas>
+        </div>
+        <div class="paint-ruler-v" id="ruler-v">
+            <canvas id="ruler-v-canvas"></canvas>
+        </div>
+        <!-- Scrollable canvas area -->
+        <div class="paint-canvas-scroll" id="canvas-scroll">
+            <div class="paint-canvas-bg" id="canvas-bg">
+                <canvas id="paint-canvas" width="640" height="480"></canvas>
+                <canvas id="paint-overlay" width="640" height="480"></canvas>
+                <!-- Resize handles on canvas -->
+                <div class="paint-canvas-handle paint-canvas-handle-r" id="handle-r"></div>
+                <div class="paint-canvas-handle paint-canvas-handle-b" id="handle-b"></div>
+                <div class="paint-canvas-handle paint-canvas-handle-br" id="handle-br"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Status Bar ───────────────────────────────────────── -->
+    <div class="paint-statusbar" id="paint-statusbar">
+        <div class="paint-statusbar-section paint-statusbar-coords" id="sb-coords"></div>
+        <div class="paint-statusbar-divider"></div>
+        <div class="paint-statusbar-section paint-statusbar-selection" id="sb-selection"></div>
+        <div class="paint-statusbar-divider"></div>
+        <div class="paint-statusbar-right">
+            <div class="paint-statusbar-section paint-statusbar-imgsize" id="sb-imgsize">640 x 480px</div>
+            <div class="paint-statusbar-divider"></div>
+            <div class="paint-statusbar-zoom-control">
+                <button class="paint-zoom-btn" data-action="zoom-out-sb" title="Zoom out">&#8722;</button>
+                <div class="paint-zoom-slider-wrap">
+                    <input type="range" class="paint-zoom-slider" id="zoom-slider" min="1" max="800" value="100" step="1">
+                </div>
+                <button class="paint-zoom-btn" data-action="zoom-in-sb" title="Zoom in">+</button>
+                <div class="paint-zoom-pct" id="zoom-pct">100%</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Resize and Skew Dialog ────────────────────────────── -->
+    <div class="paint-modal-overlay" id="dlg-resize" style="display:none">
+        <div class="paint-classic-dlg" style="width:360px">
+            <div class="paint-classic-dlg-titlebar">
+                <span class="paint-classic-dlg-title">Resize and Skew</span>
+                <button class="paint-classic-dlg-close" id="dlg-resize-close" title="Close">✕</button>
+            </div>
+            <div class="paint-classic-dlg-body">
+                <fieldset class="paint-dialog-fieldset">
+                    <legend>Resize</legend>
+                    <div class="paint-dialog-row paint-dialog-row-center" style="margin-bottom:6px">
+                        <span>By:</span>
+                        <label class="paint-dialog-radio">
+                            <input type="radio" name="resize-by" value="percentage" checked> Percentage
+                        </label>
+                        <label class="paint-dialog-radio">
+                            <input type="radio" name="resize-by" value="pixels"> Pixels
+                        </label>
+                    </div>
+                    <div class="paint-dialog-row">
+                        <label class="paint-dialog-label-w">Horizontal:</label>
+                        <input type="number" class="paint-dialog-input" id="resize-h" value="100" min="1" max="9999">
+                        <span class="paint-dialog-unit" id="resize-unit">%</span>
+                    </div>
+                    <div class="paint-dialog-row">
+                        <label class="paint-dialog-label-w">Vertical:</label>
+                        <input type="number" class="paint-dialog-input" id="resize-v" value="100" min="1" max="9999">
+                        <span class="paint-dialog-unit" id="resize-unit-v">%</span>
+                    </div>
+                    <label class="paint-dialog-check-row" style="margin-top:6px">
+                        <input type="checkbox" id="resize-maintain-ar" checked> Maintain aspect ratio
+                    </label>
+                </fieldset>
+                <fieldset class="paint-dialog-fieldset">
+                    <legend>Skew (Degrees)</legend>
+                    <div class="paint-dialog-row">
+                        <label class="paint-dialog-label-w">Horizontal:</label>
+                        <input type="number" class="paint-dialog-input" id="skew-h" value="0" min="-89" max="89">
+                        <span class="paint-dialog-unit">°</span>
+                    </div>
+                    <div class="paint-dialog-row">
+                        <label class="paint-dialog-label-w">Vertical:</label>
+                        <input type="number" class="paint-dialog-input" id="skew-v" value="0" min="-89" max="89">
+                        <span class="paint-dialog-unit">°</span>
+                    </div>
+                </fieldset>
+            </div>
+            <div class="button-bar">
+                <button class="classic-button default-button" id="dlg-resize-ok">OK</button>
+                <button class="classic-button" id="dlg-resize-cancel">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Image Properties Dialog ───────────────────────────── -->
+    <div class="paint-modal-overlay" id="dlg-properties" style="display:none">
+        <div class="paint-classic-dlg" style="width:360px">
+            <div class="paint-classic-dlg-titlebar">
+                <span class="paint-classic-dlg-title">Image Properties</span>
+                <button class="paint-classic-dlg-close" id="dlg-properties-close" title="Close">✕</button>
+            </div>
+            <div class="paint-classic-dlg-body">
+                <div class="paint-dialog-info-row">
+                    <span class="paint-dialog-info-label">Last saved:</span>
+                    <span id="prop-last-saved">Not available</span>
+                </div>
+                <div class="paint-dialog-info-row">
+                    <span class="paint-dialog-info-label">Size on disk:</span>
+                    <span id="prop-size">Not available</span>
+                </div>
+                <div class="paint-dialog-info-row">
+                    <span class="paint-dialog-info-label">Resolution:</span>
+                    <span id="prop-resolution">96 DPI</span>
+                </div>
+                <fieldset class="paint-dialog-fieldset">
+                    <legend>Units</legend>
+                    <div style="display:flex; gap:16px; padding:4px 0">
+                        <label class="paint-dialog-radio"><input type="radio" name="prop-units" value="inches"> Inches</label>
+                        <label class="paint-dialog-radio"><input type="radio" name="prop-units" value="centimeters"> Centimeters</label>
+                        <label class="paint-dialog-radio"><input type="radio" name="prop-units" value="pixels" checked> Pixels</label>
+                    </div>
+                </fieldset>
+                <fieldset class="paint-dialog-fieldset">
+                    <legend>Colors</legend>
+                    <div style="display:flex; gap:16px; padding:4px 0">
+                        <label class="paint-dialog-radio"><input type="radio" name="prop-colors" value="bw"> Black and white</label>
+                        <label class="paint-dialog-radio"><input type="radio" name="prop-colors" value="color" checked> Color</label>
+                    </div>
+                </fieldset>
+                <div class="paint-dialog-row">
+                    <label class="paint-dialog-label-w">Width:</label>
+                    <input type="number" class="paint-dialog-input" id="prop-width" value="640" min="1">
+                    <span class="paint-dialog-unit" id="prop-unit">Pixels</span>
+                </div>
+                <div class="paint-dialog-row">
+                    <label class="paint-dialog-label-w">Height:</label>
+                    <input type="number" class="paint-dialog-input" id="prop-height" value="480" min="1">
+                </div>
+            </div>
+            <div class="button-bar">
+                <button class="classic-button default-button" id="dlg-properties-ok">OK</button>
+                <button class="classic-button" id="dlg-properties-cancel">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Edit Colors Dialog ────────────────────────────────── -->
+    <div class="paint-modal-overlay" id="dlg-edit-colors" style="display:none">
+        <div class="paint-classic-dlg" style="width:420px">
+            <div class="paint-classic-dlg-titlebar">
+                <span class="paint-classic-dlg-title">Edit Colors</span>
+                <button class="paint-classic-dlg-close" id="dlg-ec-close" title="Close">✕</button>
+            </div>
+            <div class="paint-classic-dlg-body">
+                <div class="paint-ec-body">
+                    <div class="paint-ec-left">
+                        <canvas id="ec-spectrum" width="200" height="160"></canvas>
+                        <input type="range" id="ec-hue-slider" min="0" max="360" value="0">
+                        <div class="paint-ec-palette" id="ec-palette"></div>
+                    </div>
+                    <div class="paint-ec-right">
+                        <div class="paint-ec-preview">
+                            <div class="paint-ec-preview-new" id="ec-preview-new" title="New color"></div>
+                            <div class="paint-ec-preview-cur" id="ec-preview-cur" title="Current color"></div>
+                        </div>
+                        <div class="paint-ec-fields">
+                            <span class="paint-ec-field-lbl">Hue:</span>
+                            <input class="paint-ec-field-inp" id="ec-hue" type="number" min="0" max="360" value="0">
+                            <span class="paint-ec-field-lbl">Red:</span>
+                            <input class="paint-ec-field-inp" id="ec-red" type="number" min="0" max="255" value="0">
+                            <span class="paint-ec-field-lbl">Sat:</span>
+                            <input class="paint-ec-field-inp" id="ec-sat" type="number" min="0" max="100" value="0">
+                            <span class="paint-ec-field-lbl">Green:</span>
+                            <input class="paint-ec-field-inp" id="ec-green" type="number" min="0" max="255" value="0">
+                            <span class="paint-ec-field-lbl">Lum:</span>
+                            <input class="paint-ec-field-inp" id="ec-lum" type="number" min="0" max="100" value="0">
+                            <span class="paint-ec-field-lbl">Blue:</span>
+                            <input class="paint-ec-field-inp" id="ec-blue" type="number" min="0" max="255" value="0">
+                        </div>
+                        <div class="paint-ec-hex-row">
+                            <span>#</span>
+                            <input class="paint-ec-hex-inp" id="ec-hex" type="text" maxlength="6" value="000000">
+                        </div>
+                        <div style="margin-top:auto; padding-top:8px; font-size:11px; color:#555">
+                            Left-click: Color 1&nbsp;&nbsp;Right-click: Color 2
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="button-bar">
+                <button class="classic-button default-button" id="dlg-ec-ok">OK</button>
+                <button class="classic-button" id="dlg-ec-cancel">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Text Toolbar (shown when Text tool active) ─────────── -->
+    <div class="paint-text-toolbar" id="text-toolbar" style="display:none">
+        <select class="paint-text-font" id="text-font">
+            <option>Arial</option>
+            <option>Calibri</option>
+            <option>Comic Sans MS</option>
+            <option>Courier New</option>
+            <option>Georgia</option>
+            <option>Impact</option>
+            <option selected>Segoe UI</option>
+            <option>Tahoma</option>
+            <option>Times New Roman</option>
+            <option>Verdana</option>
+        </select>
+        <input type="number" class="paint-text-size" id="text-size" value="16" min="6" max="200">
+        <button class="paint-text-fmt-btn" data-fmt="bold" title="Bold"><b>B</b></button>
+        <button class="paint-text-fmt-btn" data-fmt="italic" title="Italic"><i>I</i></button>
+        <button class="paint-text-fmt-btn" data-fmt="underline" title="Underline"><u>U</u></button>
+        <div class="paint-text-toolbar-sep"></div>
+        <button class="paint-text-fmt-btn" data-fmt="strike" title="Strikethrough"><s>S</s></button>
+    </div>
+
+</div><!-- /paint-shell -->
+
+<script src="mspaint.exe.js"></script>
+</body>
+</html>

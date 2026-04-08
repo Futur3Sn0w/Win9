@@ -50,11 +50,11 @@
     let volumeBaseRenderSize = VOLUME_BASE_RENDER_SIZE;
 
     function isModernVolumeFlyoutEnabled() {
-        return !!document.body && document.body.classList.contains('taskbar-modern-volume-popup-enabled');
+        return true;
     }
 
     function updateFlyoutVariantState() {
-        $volumeFlyout.toggleClass('modern-volume-flyout', isModernVolumeFlyoutEnabled());
+        $volumeFlyout.addClass('modern-volume-flyout');
     }
 
     function clearCloseTimer() {
@@ -208,6 +208,11 @@
         // Update flyout icon (still uses icon font)
         $volumeFlyoutIcon.attr('class', iconClass);
 
+        // Update six-pack icon and popup mute icon
+        const muteIconClass = muted ? 'sui-volume-mute2' : 'sui-volume-high';
+        $('#six-pack-volume-icon').attr('class', muteIconClass);
+        $('#volume-popup-mute-icon').attr('class', `volume-popup-mute-icon ${muteIconClass}`);
+
         // Update slider and display
         isUpdatingFromSystem = true;
         $volumeSlider.val(currentVolume);
@@ -216,8 +221,11 @@
         updateSliderVisualState(currentVolume);
 
         const settingsSlider = document.getElementById('settings-volume-slider');
-        if (settingsSlider && Number(settingsSlider.value) !== currentVolume) {
-            settingsSlider.value = currentVolume;
+        if (settingsSlider) {
+            if (Number(settingsSlider.value) !== currentVolume) {
+                settingsSlider.value = currentVolume;
+            }
+            settingsSlider.style.setProperty('--six-pack-slider-fill-pct', `${currentVolume}%`);
         }
     }
 
@@ -565,7 +573,7 @@
             }
         });
 
-        window.addEventListener('win8-display-settings-changed', function (event) {
+        window.addEventListener('win9-display-settings-changed', function (event) {
             displaySettingsState = event?.detail?.state || null;
             applyTaskbarVolumeIcon(currentVolume, currentMuted);
 

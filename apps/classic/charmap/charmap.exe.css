@@ -1,0 +1,301 @@
+:root {
+    --charmap-grid-columns: 20;
+    --charmap-grid-rows: 16;
+    --charmap-scrollbar-width: 17px;
+    --charmap-cell-size: 22px;
+    --charmap-hover-fill: rgb(209, 226, 242);
+    --charmap-hover-border: rgb(120, 174, 229);
+    --charmap-active-fill: #cce8ff;
+    --charmap-active-border: #7eb4ea;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    font-family: Tahoma, 'Segoe UI', Geneva, Verdana, sans-serif;
+    font-size: 11px;
+    background: #f0f0f0;
+}
+
+.charmap-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    width: 100%;
+    background: #f0f0f0;
+    box-sizing: border-box;
+    padding: 6px 8px 0 8px;
+    gap: 5px;
+}
+
+/* Toolbar */
+.charmap-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    flex-shrink: 0;
+}
+
+.charmap-font-select {
+    flex: 1;
+    height: 21px;
+    font-size: 11px;
+    font-family: Tahoma, 'Segoe UI', sans-serif;
+}
+
+.charmap-help-btn {
+    flex-shrink: 0;
+    width: 50px;
+}
+
+/* Grid wrapper */
+.charmap-grid-wrapper {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+    width: calc((var(--charmap-grid-columns) * var(--charmap-cell-size)) + var(--charmap-scrollbar-width));
+    align-self: flex-start;
+    position: relative;
+    border: 1px solid #808080;
+    border-right: none;
+    background: #fff;
+    overflow: visible;
+}
+
+.charmap-grid {
+    flex: 0 0 auto;
+    display: grid;
+    grid-template-columns: repeat(var(--charmap-grid-columns), var(--charmap-cell-size));
+    grid-auto-rows: var(--charmap-cell-size);
+    width: calc(var(--charmap-grid-columns) * var(--charmap-cell-size));
+    height: calc(var(--charmap-grid-rows) * var(--charmap-cell-size));
+    overflow: hidden;
+    outline: none;
+    user-select: none;
+    background: #fff;
+}
+
+.charmap-cell {
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--charmap-cell-size);
+    height: var(--charmap-cell-size);
+    border-right: 1px solid #c0c0c0;
+    border-bottom: 1px solid #c0c0c0;
+    cursor: default;
+    font-size: 15px;
+    line-height: 1;
+    position: relative;
+    color: #000;
+    background: #fff;
+}
+
+.charmap-cell:hover {
+    background: var(--charmap-hover-fill);
+    box-shadow: inset 0 0 0 1px var(--charmap-hover-border);
+    z-index: 1;
+}
+
+.charmap-cell.selected {
+    background: var(--charmap-active-fill);
+    box-shadow: inset 0 0 0 1px var(--charmap-active-border);
+    z-index: 2;
+}
+
+.charmap-cell.active-zoom {
+    background: var(--charmap-active-fill);
+    box-shadow:
+        inset 0 0 0 1px #5f91c5,
+        inset 0 0 0 2px #ffffff;
+    z-index: 3;
+}
+
+/* Custom scrollbar */
+.charmap-scrollbar-area {
+    width: var(--charmap-scrollbar-width);
+    border: 1px solid #808080;
+    border-left: 1px solid #c0c0c0;
+    background: #f0f0f0;
+    display: flex;
+    flex-direction: column;
+}
+
+.charmap-scroll-track {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.charmap-scroll-btn {
+    width: var(--charmap-scrollbar-width);
+    height: 17px;
+    flex-shrink: 0;
+    border: 1px solid #808080;
+    background: linear-gradient(to bottom, #f0f0f0, #e5e5e5);
+    font-size: 7px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: default;
+    padding: 0;
+    color: #000;
+    line-height: 1;
+}
+
+.charmap-scroll-btn:hover {
+    background: linear-gradient(to bottom, #ecf4fc, #dcecfc);
+    border-color: #7eb4ea;
+}
+
+.charmap-scroll-btn:active {
+    background: #cce8ff;
+}
+
+.charmap-scroll-thumb-track {
+    flex: 1;
+    position: relative;
+    background: #c8c8c8;
+    cursor: default;
+}
+
+.charmap-scroll-thumb {
+    position: absolute;
+    left: 0;
+    width: 15px;
+    background: linear-gradient(to bottom, #f0f0f0, #e5e5e5);
+    border: 1px solid #808080;
+    cursor: default;
+    min-height: 16px;
+}
+
+.charmap-scroll-thumb:hover {
+    background: linear-gradient(to bottom, #ecf4fc, #dcecfc);
+}
+
+/* Zoom popup */
+.charmap-zoom {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: calc(var(--charmap-cell-size) * 3 - 2px);
+    height: calc(var(--charmap-cell-size) * 3 - 2px);
+    background: #fff;
+    border: 1px solid #808080;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: calc(var(--charmap-cell-size) * 2.1);
+    line-height: 1;
+    pointer-events: none;
+    z-index: 10;
+    transform: translate(-50%, -50%);
+    box-shadow:
+        inset 1px 1px 0 #ffffff,
+        1px 1px 0 #404040;
+}
+
+/* Copy row */
+.charmap-copy-row {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    flex-shrink: 0;
+}
+
+.charmap-copy-input {
+    flex: 1;
+    height: 21px;
+    font-size: 11px;
+    font-family: Tahoma, 'Segoe UI', sans-serif;
+}
+
+/* Labels */
+.charmap-label {
+    white-space: nowrap;
+    color: #000;
+    font-size: 11px;
+}
+
+/* Advanced toggle */
+.charmap-advanced-toggle-row {
+    flex-shrink: 0;
+}
+
+.charmap-checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    cursor: default;
+    font-size: 11px;
+    user-select: none;
+}
+
+.charmap-checkbox {
+    margin: 0;
+    cursor: default;
+}
+
+/* Advanced panel */
+.charmap-advanced-panel {
+    display: none;
+    flex-direction: column;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+.charmap-advanced-panel.visible {
+    display: flex;
+}
+
+.charmap-advanced-row {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.charmap-advanced-select {
+    width: 135px;
+    height: 21px;
+    font-size: 11px;
+}
+
+.charmap-label-unicode {
+    margin-left: 8px;
+}
+
+.charmap-unicode-input {
+    width: 40px;
+    height: 19px;
+    font-size: 11px;
+    font-family: Tahoma, 'Segoe UI', sans-serif;
+    text-transform: uppercase;
+}
+
+.charmap-search-input {
+    width: 135px;
+    height: 19px;
+    font-size: 11px;
+    font-family: Tahoma, 'Segoe UI', sans-serif;
+}
+
+/* Status bar */
+.charmap-statusbar {
+    flex-shrink: 0;
+    height: 20px;
+    border-top: 1px solid #c0c0c0;
+    background: #f0f0f0;
+    display: flex;
+    align-items: center;
+    padding: 0 4px;
+    font-size: 11px;
+    color: #000;
+}
+
+#charmap-status-text {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}

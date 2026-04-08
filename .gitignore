@@ -35,3 +35,4 @@ coverage/
 
 # Generated debug/export artifacts
 registry-backup.json
+/.cache

@@ -1,5 +1,5 @@
 /**
- * Windows 8 Style Notification Component
+ * Windows 9 Style Notification Component
  * Creates toast notifications that appear on the desktop
  */
 
@@ -29,9 +29,7 @@ class NotificationManager {
 
     updateContainerPosition() {
         const taskbar = document.querySelector('.taskbar');
-        const useBottomStack = typeof thresholdFeaturesEnabled !== 'undefined'
-            && thresholdFeaturesEnabled
-            && typeof taskbarShowNotificationCenterIcon !== 'undefined'
+        const useBottomStack = typeof taskbarShowNotificationCenterIcon !== 'undefined'
             && taskbarShowNotificationCenterIcon;
 
         this.container.classList.toggle('bottom-stack', useBottomStack);
@@ -234,7 +232,7 @@ class NotificationManager {
         }
 
         if (typeof document !== 'undefined') {
-            document.dispatchEvent(new CustomEvent('win8:notification-shown', {
+            document.dispatchEvent(new CustomEvent('win9:notification-shown', {
                 detail: {
                     id: notificationId,
                     icon,
@@ -388,7 +386,7 @@ class NotificationManager {
             this.notifications.delete(notificationId);
 
             if (typeof document !== 'undefined') {
-                document.dispatchEvent(new CustomEvent('win8:notification-hidden', {
+                document.dispatchEvent(new CustomEvent('win9:notification-hidden', {
                     detail: {
                         id: notificationId
                     }

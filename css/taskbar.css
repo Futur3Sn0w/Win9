@@ -198,6 +198,7 @@ body.desktop-modern-taskbar-peek .desktop-modern-taskbar-edge-trigger {
 }
 
 body.primary-pointer-coarse.desktop-modern-metro-mode .desktop-modern-taskbar-edge-trigger {
+    pointer-events: none;
     width: calc(100% - 32px);
     height: 32px;
 }
@@ -476,7 +477,7 @@ body.start-menu-open .floating-start-button:hover {
     overflow: hidden;
 }
 
-/* Windows 8 signature glint animation */
+/* Windows 9 signature glint animation */
 .start-icon::after {
     content: '';
     position: absolute;
@@ -547,6 +548,64 @@ body.start-menu-open .floating-start-button:hover {
     display: none;
 }
 
+.taskbar-search-box {
+    display: flex;
+    align-items: center;
+    height: 30px;
+    width: 220px;
+    margin-right: 6px;
+    background: rgba(255, 255, 255, 0.96);
+    border: 1px solid rgba(0, 0, 0, 0.3);
+    color: #222;
+    cursor: text;
+    flex-shrink: 0;
+    overflow: hidden;
+    transition: border-color 0.15s;
+}
+
+.taskbar-search-box:hover {
+    border-color: rgba(0, 0, 0, 0.5);
+}
+
+.taskbar-search-box.is-active {
+    border-color: var(--ui-accent, #0078d7);
+}
+
+.taskbar-search-box.is-hidden {
+    display: none;
+}
+
+.taskbar-search-box-button {
+    width: 30px;
+    height: 30px;
+    flex-shrink: 0;
+    border: none;
+    background: transparent;
+    transform: rotateY(180deg);
+    color: #666;
+}
+
+.taskbar-search-box-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: #222;
+    font-family: 'Segoe UI', sans-serif;
+    font-size: var(--system-font-size);
+    min-width: 0;
+    padding: 0 10px;
+}
+
+.taskbar-search-box-input::placeholder {
+    color: #666;
+    opacity: 1;
+}
+
+#search-panel-input-row.is-hidden {
+    display: none;
+}
+
 .system-icon.is-hidden {
     display: none;
 }
@@ -558,6 +617,7 @@ body.start-menu-open .floating-start-button:hover {
         opacity: 0;
         transform: translateX(-6px);
     }
+
     to {
         max-width: 80px;
         opacity: 1;
@@ -571,6 +631,7 @@ body.start-menu-open .floating-start-button:hover {
         opacity: 1;
         transform: translateX(0);
     }
+
     to {
         max-width: 0;
         opacity: 0;
@@ -588,9 +649,17 @@ body.start-menu-open .floating-start-button:hover {
 
 /* ---- Taskbar ripple nudge ---- */
 @keyframes taskbar-ripple-nudge {
-    0%   { transform: translateX(0); }
-    35%  { transform: translateX(var(--ripple-magnitude, 6px)); }
-    100% { transform: translateX(0); }
+    0% {
+        transform: translateX(0);
+    }
+
+    35% {
+        transform: translateX(var(--ripple-magnitude, 6px));
+    }
+
+    100% {
+        transform: translateX(0);
+    }
 }
 
 .taskbar-ripple-nudge {
@@ -616,12 +685,34 @@ body.start-menu-open .floating-start-button:hover {
     opacity: 1;
 }
 
-.taskbar-task-view-button.is-active {
-    background: rgba(255, 255, 255, 0.14);
+.taskbar-task-view-button.is-active,
+.taskbar-search-button.is-active {
+    background: linear-gradient(to bottom, transparent, #00000088, transparent);
 }
 
-.taskbar-search-button.is-active {
-    background: rgba(255, 255, 255, 0.14);
+.taskbar-task-view-button.is-active::after,
+.taskbar-search-button.is-active::after {
+    opacity: .66;
+}
+
+.taskbar-task-view-button.is-active::before,
+.taskbar-search-button.is-active::before {
+    opacity: 1;
+}
+
+.system-icon.active,
+.clock.active {
+    background-image: linear-gradient(to bottom, transparent, #00000088, transparent);
+}
+
+.system-icon.active::after,
+.clock.active::after {
+    opacity: .66;
+}
+
+.system-icon.active::before,
+.clock.active::before {
+    opacity: 1;
 }
 
 .taskbar-shell-button-icon {
@@ -1897,7 +1988,7 @@ body.continuum-shell-mode-tablet .taskbar.resized .clock {
 
     background: var(--ui-wall-color);
     box-sizing: border-box;
-    padding: 6px .5px .5px .5px;
+    padding: 7px .5px .5px .5px;
     box-shadow:
         0 10px 40px rgba(0, 0, 0, 0.2);
 
@@ -1919,6 +2010,7 @@ body.continuum-shell-mode-tablet .taskbar.resized .clock {
 
         width: 100%;
         height: 100%;
+        top: 0;
 
         background-color: rgba(198, 198, 198, 0.3);
     }

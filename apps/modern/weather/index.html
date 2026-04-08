@@ -6,12 +6,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Weather</title>
     <link rel="stylesheet" href="../../../css/fonts.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
     <link rel="stylesheet" href="./weather.css">
 </head>
 
 <body>
     <div id="weather-app" class="weather-app">
-        <!-- Top app bar (navigation) -->
+
+        <!-- Top Navigation Bar (channels) -->
         <nav class="weather-navbar" aria-label="Weather navigation">
             <div class="weather-navbar__tabs" role="tablist">
                 <button type="button" class="weather-navbar__tab is-active" data-section="home" role="tab" aria-selected="true">Home</button>
@@ -32,6 +34,7 @@
 
         <!-- Home panorama view -->
         <main id="weather-home" class="weather-panorama">
+
             <!-- Loading state -->
             <div id="weather-loading" class="weather-loading">
                 <img src="apps/modern/weather/resources/splash.png" alt="" class="weather-loading__splash" draggable="false">
@@ -55,17 +58,17 @@
                 <button id="weather-retry-btn" class="weather-error__retry" type="button">Try again</button>
             </div>
 
-            <!-- Panorama content (horizontally scrolling) -->
+            <!-- Panorama content (horizontally scrolling clusters) -->
             <div id="weather-panorama-content" class="weather-panorama__content" hidden>
-                <!-- Current conditions hero -->
+
+                <!-- Cluster 001: Current conditions hero -->
                 <section class="weather-cluster weather-cluster--hero" aria-label="Current conditions">
-                    <!-- Panorama header (city name above hero) -->
                     <header class="weather-hero__pano-header">
                         <div class="weather-hero__eyebrow">Weather</div>
                         <h1 id="weather-location-name" class="weather-hero__city"></h1>
                     </header>
                     <div class="weather-hero">
-                        <!-- Big temperature -->
+                        <!-- Always visible: big temperature -->
                         <div class="weather-hero__temp-block">
                             <button id="weather-temp-toggle" class="weather-hero__temp" type="button" title="Click to toggle units">
                                 <span id="weather-temp-value" class="weather-hero__temp-value"></span>
@@ -73,63 +76,74 @@
                                 <span id="weather-temp-unit" class="weather-hero__temp-unit"></span>
                             </button>
                         </div>
-                        <!-- Floating skycode icon -->
+                        <!-- Always visible: floating skycode icon -->
                         <img id="weather-hero-icon" class="weather-hero__icon" alt="" draggable="false">
-                        <!-- Caption and feels-like -->
+                        <!-- Always visible: caption and feels-like -->
                         <div id="weather-caption" class="weather-hero__caption"></div>
                         <div id="weather-feelslike" class="weather-hero__feelslike"></div>
-                        <!-- Provider attribution -->
+                        <!-- Always visible: provider attribution -->
                         <div class="weather-hero__provider">
                             <span id="weather-last-updated" class="weather-hero__updated"></span>
                             <span class="weather-hero__provider-name">Open-Meteo</span>
                         </div>
-                        <!-- Daily forecast strip -->
-                        <div class="weather-hero__daily-strip">
-                            <div id="weather-daily-strip" class="weather-daily-strip"></div>
-                        </div>
-                        <!-- Precipitation row -->
-                        <div class="weather-hero__precip-row">
-                            <div id="weather-daily-precip" class="weather-daily-precip"></div>
-                        </div>
-                        <!-- Weather properties (expandable) -->
-                        <div class="weather-hero__details">
-                            <div class="weather-detail">
-                                <span class="weather-detail__key">Wind</span>
-                                <span id="weather-wind" class="weather-detail__value"></span>
+
+                        <!-- Slide 1: 5-day forecast strip + precipitation row -->
+                        <div id="weather-hero-slide1" class="weather-hero__slide is-active">
+                            <div class="weather-hero__daily-strip">
+                                <div id="weather-daily-strip" class="weather-daily-strip"></div>
                             </div>
-                            <div class="weather-detail">
-                                <span class="weather-detail__key">Humidity</span>
-                                <span id="weather-humidity" class="weather-detail__value"></span>
-                            </div>
-                            <div class="weather-detail">
-                                <span class="weather-detail__key">Pressure</span>
-                                <span id="weather-pressure" class="weather-detail__value"></span>
-                            </div>
-                            <div class="weather-detail">
-                                <span class="weather-detail__key">UV Index</span>
-                                <span id="weather-uv" class="weather-detail__value"></span>
+                            <div class="weather-hero__precip-row">
+                                <div id="weather-daily-precip" class="weather-daily-precip"></div>
                             </div>
                         </div>
+
+                        <!-- Slide 2: Current conditions properties (2×2 grid, matches ccExpanded) -->
+                        <div id="weather-hero-slide2" class="weather-hero__slide">
+                            <div class="weather-hero__details">
+                                <div class="weather-detail">
+                                    <span class="weather-detail__key">Wind</span>
+                                    <span id="weather-wind" class="weather-detail__value"></span>
+                                </div>
+                                <div class="weather-detail">
+                                    <span class="weather-detail__key">Humidity</span>
+                                    <span id="weather-humidity" class="weather-detail__value"></span>
+                                </div>
+                                <div class="weather-detail">
+                                    <span class="weather-detail__key">Pressure</span>
+                                    <span id="weather-pressure" class="weather-detail__value"></span>
+                                </div>
+                                <div class="weather-detail">
+                                    <span class="weather-detail__key">UV Index</span>
+                                    <span id="weather-uv" class="weather-detail__value"></span>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Alert indicator -->
                         <div id="weather-alert" class="weather-hero__alert" hidden>
                             <div id="weather-alert-text" class="weather-hero__alert-text"></div>
                         </div>
+
+                        <!-- Slide toggle button (forecastAnimateButton equivalent) -->
+                        <button id="weather-hero-slide-btn" class="weather-hero__slide-btn" type="button" aria-label="More conditions">
+                            <span id="weather-hero-slide-arrow" class="weather-hero__slide-btn-arrow">&#x276F;</span>
+                        </button>
                     </div>
                 </section>
 
-                <!-- Hourly forecast cluster -->
+                <!-- Cluster 002: Hourly forecast -->
                 <section class="weather-cluster" aria-label="Hourly forecast">
                     <h2 class="weather-cluster__title">Hourly forecast</h2>
                     <div id="weather-hourly" class="weather-hourly"></div>
                 </section>
 
-                <!-- Daily forecast detail cluster -->
-                <section class="weather-cluster" aria-label="Daily forecast">
-                    <h2 class="weather-cluster__title">Daily forecast</h2>
-                    <div id="weather-daily-detail" class="weather-daily-detail"></div>
+                <!-- Cluster 007: Interactive weather map (Leaflet + CartoDB dark tiles) -->
+                <section class="weather-cluster weather-cluster--map" aria-label="Weather map">
+                    <h2 class="weather-cluster__title">Maps</h2>
+                    <div id="weather-map" class="weather-map"></div>
                 </section>
 
-                <!-- Sun & atmosphere cluster -->
+                <!-- Cluster 003: Sun & atmosphere -->
                 <section class="weather-cluster" aria-label="Sun and atmosphere">
                     <h2 class="weather-cluster__title">Sun &amp; atmosphere</h2>
                     <div class="weather-sun-atmo">
@@ -152,19 +166,7 @@
                     </div>
                 </section>
 
-                <!-- Day/Night detail cluster -->
-                <section class="weather-cluster" aria-label="Day and night conditions">
-                    <h2 class="weather-cluster__title">Day &amp; night</h2>
-                    <div id="weather-daynight" class="weather-daynight"></div>
-                </section>
-
-                <!-- Precipitation chart cluster -->
-                <section class="weather-cluster" aria-label="Precipitation">
-                    <h2 class="weather-cluster__title">Precipitation</h2>
-                    <div id="weather-precip-chart" class="weather-precip-chart"></div>
-                </section>
-
-                <!-- Historical weather cluster -->
+                <!-- Cluster 004: Historical weather -->
                 <section class="weather-cluster weather-cluster--wide" aria-label="Historical weather">
                     <h2 class="weather-cluster__title">Historical weather</h2>
                     <div class="weather-historical">
@@ -179,74 +181,44 @@
                         <div id="weather-historical-detail" class="weather-historical__detail"></div>
                     </div>
                 </section>
+
+                <!-- Cluster: Precipitation chart -->
+                <section class="weather-cluster" aria-label="Precipitation">
+                    <h2 class="weather-cluster__title">Precipitation</h2>
+                    <div id="weather-precip-chart" class="weather-precip-chart"></div>
+                </section>
+
             </div>
         </main>
-
-        <!-- World Weather view -->
-        <section id="weather-world" class="weather-world" hidden>
-            <header class="weather-world__header">
-                <div class="weather-world__eyebrow">Weather</div>
-                <h1 class="weather-world__title">World weather</h1>
-            </header>
-            <div class="weather-world__layout">
-                <!-- Back button (shown when zoomed into a continent) -->
-                <button id="weather-world-back" class="weather-world__back" type="button" hidden>
-                    <span class="weather-world__back-arrow">&#xE0A6;</span>
-                    <span>Back</span>
-                </button>
-                <div class="weather-world__map-container" id="weather-world-map-container">
-                    <div class="weather-world__map-viewport" id="weather-world-viewport">
-                        <img id="weather-world-map" class="weather-world__map" src="apps/modern/weather/resources/worldweather/landscape/worldmap.png" draggable="false" alt="World weather map">
-                        <!-- SVG click polygons for continents -->
-                        <svg class="weather-world__svg" viewBox="0 0 1366 768" preserveAspectRatio="xMidYMid meet">
-                            <polygon data-continent="NorthAmerica" points="7,147 27,247 143,261 225,407 335,442 395,407 478,256 288,137" fill="transparent"/>
-                            <polygon data-continent="SouthAmerica" points="375,412 515,498 497,568 407,727 353,700 368,555 324,484" fill="transparent"/>
-                            <polygon data-continent="Europe" points="728,141 802,165 832,335 711,343 665,318 600,341 616,284 600,259 616,221" fill="transparent"/>
-                            <polygon data-continent="Africa" points="604,340 673,327 758,351 809,431 851,427 822,476 838,566 708,626 658,476 603,462 568,410" fill="transparent"/>
-                            <polygon data-continent="Asia" points="797,149 994,59 1335,142 1356,174 1356,204 1326,204 1106,394 1104,525 1037,510 992,459 980,402 944,467 885,387 814,431 758,343 828,333" fill="transparent"/>
-                            <polygon data-continent="Oceania" points="1145,510 1130,469 1213,478 1270,515 1320,628 1268,691 1178,646 1138,611 1070,621 1061,550" fill="transparent"/>
-                        </svg>
-                        <!-- Continent name labels -->
-                        <div class="weather-world__labels" id="weather-world-labels">
-                            <div class="weather-world__label" data-continent="NorthAmerica" style="left:18%;top:28%">North America</div>
-                            <div class="weather-world__label" data-continent="SouthAmerica" style="left:30%;top:68%">South America</div>
-                            <div class="weather-world__label" data-continent="Europe" style="left:50%;top:28%">Europe</div>
-                            <div class="weather-world__label" data-continent="Africa" style="left:50%;top:55%">Africa</div>
-                            <div class="weather-world__label" data-continent="Asia" style="left:75%;top:28%">Asia</div>
-                            <div class="weather-world__label" data-continent="Oceania" style="left:85%;top:72%">Oceania</div>
-                        </div>
-                        <!-- City overlays -->
-                        <div id="weather-world-cities" class="weather-world__cities"></div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Daily Forecast view -->
-        <section id="weather-dailyforecast" class="weather-dailyforecast" hidden>
-            <header class="weather-dailyforecast__header">
-                <div class="weather-dailyforecast__eyebrow">Weather</div>
-                <h1 class="weather-dailyforecast__title" id="weather-df-title">Daily forecast</h1>
-            </header>
-            <div class="weather-dailyforecast__content">
-                <div id="weather-df-cards" class="weather-df-cards"></div>
-            </div>
-        </section>
 
         <!-- Bottom App Bar -->
         <div id="weather-appbar" class="weather-appbar" hidden>
             <div class="weather-appbar__left">
-                <button type="button" class="weather-appbar__btn" data-action="add-favorite" aria-label="Add favorite">
+                <!-- Standard buttons (home / non-places) -->
+                <button type="button" class="weather-appbar__btn weather-appbar__btn--standard" data-action="add-favorite" aria-label="Add favorite">
                     <span class="weather-appbar__btn-icon">&#xE017;</span>
                     <span class="weather-appbar__btn-label">Favorite</span>
                 </button>
-                <button type="button" class="weather-appbar__btn" data-action="pin" aria-label="Pin to Start">
+                <button type="button" class="weather-appbar__btn weather-appbar__btn--standard" data-action="pin" aria-label="Pin to Start">
                     <span class="weather-appbar__btn-icon">&#xE015;</span>
                     <span class="weather-appbar__btn-label">Pin to Start</span>
                 </button>
-                <button type="button" class="weather-appbar__btn" data-action="set-home" aria-label="Set as home">
+                <button type="button" class="weather-appbar__btn weather-appbar__btn--standard" data-action="set-home" aria-label="Set as home">
                     <span class="weather-appbar__btn-icon">&#xE185;</span>
                     <span class="weather-appbar__btn-label">Home</span>
+                </button>
+                <!-- Places selection buttons (shown when places are selected) -->
+                <button type="button" class="weather-appbar__btn weather-appbar__btn--places" data-action="remove-places" aria-label="Remove selected" hidden>
+                    <span class="weather-appbar__btn-icon">&#xE018;</span>
+                    <span class="weather-appbar__btn-label">Remove</span>
+                </button>
+                <button type="button" class="weather-appbar__btn weather-appbar__btn--places" data-action="set-default-place" aria-label="Set as default" hidden>
+                    <span class="weather-appbar__btn-icon">&#xE137;</span>
+                    <span class="weather-appbar__btn-label">Default</span>
+                </button>
+                <button type="button" class="weather-appbar__btn weather-appbar__btn--places" data-action="clear-selection" aria-label="Clear selection" hidden>
+                    <span class="weather-appbar__btn-icon">&#xE10A;</span>
+                    <span class="weather-appbar__btn-label">Select none</span>
                 </button>
             </div>
             <div class="weather-appbar__right">
@@ -265,17 +237,80 @@
             </div>
         </div>
 
+        <!-- World Weather view -->
+        <section id="weather-world" class="weather-world" hidden>
+            <header class="weather-world__header">
+                <div class="weather-world__eyebrow">Weather</div>
+                <h1 class="weather-world__title">World weather</h1>
+            </header>
+            <div class="weather-world__layout">
+                <!-- Map area -->
+                <div class="weather-world__map-area">
+                    <button id="weather-world-back" class="weather-world__back" type="button" hidden>
+                        <span class="weather-world__back-arrow">&#xE0A6;</span>
+                        <span>Back</span>
+                    </button>
+                    <div class="weather-world__map-container" id="weather-world-map-container">
+                        <div class="weather-world__map-viewport" id="weather-world-viewport">
+                            <!-- World map image -->
+                            <img id="weather-world-map" class="weather-world__map" src="apps/modern/weather/resources/worldweather/landscape/worldmap.png" draggable="false" alt="World weather map">
+                            <!-- Continent image overlay (shown when zoomed in) -->
+                            <img id="weather-world-continent-img" class="weather-world__continent-img" draggable="false" alt="" hidden>
+                            <!-- SVG click polygons for continents -->
+                            <svg class="weather-world__svg" viewBox="0 0 1366 768" preserveAspectRatio="xMidYMid meet">
+                                <polygon data-continent="NorthAmerica" points="7,147 27,247 143,261 225,407 335,442 395,407 478,256 288,137" fill="transparent"/>
+                                <polygon data-continent="SouthAmerica" points="375,412 515,498 497,568 407,727 353,700 368,555 324,484" fill="transparent"/>
+                                <polygon data-continent="Europe" points="728,141 802,165 832,335 711,343 665,318 600,341 616,284 600,259 616,221" fill="transparent"/>
+                                <polygon data-continent="Africa" points="604,340 673,327 758,351 809,431 851,427 822,476 838,566 708,626 658,476 603,462 568,410" fill="transparent"/>
+                                <polygon data-continent="Asia" points="797,149 994,59 1335,142 1356,174 1356,204 1326,204 1106,394 1104,525 1037,510 992,459 980,402 944,467 885,387 814,431 758,343 828,333" fill="transparent"/>
+                                <polygon data-continent="Oceania" points="1145,510 1130,469 1213,478 1270,515 1320,628 1268,691 1178,646 1138,611 1070,621 1061,550" fill="transparent"/>
+                            </svg>
+                            <!-- Continent name labels -->
+                            <div class="weather-world__labels" id="weather-world-labels">
+                                <div class="weather-world__label" data-continent="NorthAmerica" style="left:18%;top:28%">North America</div>
+                                <div class="weather-world__label" data-continent="SouthAmerica" style="left:30%;top:68%">South America</div>
+                                <div class="weather-world__label" data-continent="Europe" style="left:50%;top:28%">Europe</div>
+                                <div class="weather-world__label" data-continent="Africa" style="left:50%;top:55%">Africa</div>
+                                <div class="weather-world__label" data-continent="Asia" style="left:75%;top:28%">Asia</div>
+                                <div class="weather-world__label" data-continent="Oceania" style="left:85%;top:72%">Oceania</div>
+                            </div>
+                            <!-- City weather overlays -->
+                            <div id="weather-world-cities" class="weather-world__cities"></div>
+                        </div>
+                    </div>
+                </div>
+                <!-- City list panel (cityListPanel equivalent) -->
+                <div id="weather-world-city-panel" class="weather-world__city-panel">
+                    <div class="weather-world__city-panel-header" id="weather-world-panel-header">World</div>
+                    <div id="weather-world-panel-list" class="weather-world__panel-list"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Daily Forecast view – horizontal per-day clusters (SemanticZoomPanorama equivalent) -->
+        <section id="weather-dailyforecast" class="weather-dailyforecast" hidden>
+            <header class="weather-dailyforecast__header">
+                <div class="weather-dailyforecast__eyebrow">Weather</div>
+                <h1 class="weather-dailyforecast__title" id="weather-df-title">Daily forecast</h1>
+            </header>
+            <div class="weather-dailyforecast__content">
+                <div id="weather-df-clusters" class="weather-df-clusters"></div>
+            </div>
+        </section>
+
         <!-- Places view -->
         <section id="weather-places" class="weather-places" hidden>
             <header class="weather-places__header">
                 <div class="weather-places__eyebrow">Weather</div>
                 <h1 class="weather-places__title">Places</h1>
-                <div class="weather-places__subtitle">Saved locations</div>
+                <div class="weather-places__subtitle" id="weather-places-subtitle">Saved locations</div>
             </header>
             <div id="weather-places-grid" class="weather-places__grid"></div>
         </section>
+
     </div>
 
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="./weather.js"></script>
 </body>
 

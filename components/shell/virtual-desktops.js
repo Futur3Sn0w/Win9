@@ -31,7 +31,7 @@
     }
 
     function emitChange(reason, detail = {}) {
-        document.dispatchEvent(new CustomEvent('win8:virtual-desktop-changed', {
+        document.dispatchEvent(new CustomEvent('win9:virtual-desktop-changed', {
             detail: Object.assign({ reason }, detail)
         }));
     }
@@ -255,7 +255,7 @@
         activeDesktopId = defaultId;
 
         // Listen for window register/unregister to auto-track
-        document.addEventListener('win8:running-windows-changed', function (e) {
+        document.addEventListener('win9:running-windows-changed', function (e) {
             const detail = e.detail || {};
             if (detail.reason === 'register' && detail.windowId) {
                 assignNewWindow(detail.windowId);

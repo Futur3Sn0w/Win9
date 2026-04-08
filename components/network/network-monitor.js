@@ -87,7 +87,7 @@ class NetworkMonitor {
         window.addEventListener('load', this.handleViewportChange, { once: true });
         window.addEventListener('focus', this.handleWindowFocus);
         document.addEventListener('visibilitychange', this.handleVisibilityChange);
-        window.addEventListener('win8-display-settings-changed', this.handleDisplaySettingsChange);
+        window.addEventListener('win9-display-settings-changed', this.handleDisplaySettingsChange);
     }
 
     setupFlyoutControls() {
@@ -370,6 +370,28 @@ class NetworkMonitor {
     }
 
     /**
+     * Map a tray icon state name to the charms/TDBN icon folder name
+     */
+    mapTrayStateToCharmsState(iconState) {
+        const state = iconState || this.getNetworkIconState();
+        if (state === 'wired') return 'wired_connection';
+        if (state === 'wired_nointernet') return 'wired_no_internet';
+        // wireless_X_nointernet → wireless_X_no-internet
+        if (state.endsWith('_nointernet')) {
+            return state.replace('_nointernet', '_no-internet');
+        }
+        return state;
+    }
+
+    /**
+     * Get a charms/TDBN network icon path for a given state and size (24, 32, or 44)
+     */
+    getCharmsNetworkIconPath(iconState, size = 32) {
+        const charmsState = this.mapTrayStateToCharmsState(iconState);
+        return `resources/images/icons/charms/TDBN/net/${charmsState}/${size}.png`;
+    }
+
+    /**
      * Updates the network icon image source
      */
     updateNetworkIcon() {
@@ -406,7 +428,7 @@ class NetworkMonitor {
         const tdbnIcon = document.getElementById('tdbn-network-icon');
         if (!tdbnIcon) return;
 
-        const iconPath = this.getHighQualityIconPath();
+        const iconPath = this.getCharmsNetworkIconPath(null, 32);
         if (tdbnIcon.getAttribute('src') !== iconPath) {
             tdbnIcon.setAttribute('src', iconPath);
         }
@@ -420,7 +442,7 @@ class NetworkMonitor {
         const sixPackLabel = document.getElementById('six-pack-network-label');
 
         if (sixPackIcon) {
-            const iconPath = this.getHighQualityIconPath();
+            const iconPath = this.getCharmsNetworkIconPath(null, 44);
             if (sixPackIcon.getAttribute('src') !== iconPath) {
                 sixPackIcon.setAttribute('src', iconPath);
             }
@@ -475,7 +497,7 @@ class NetworkMonitor {
             const item = document.createElement('div');
             item.className = 'network-connection-item';
             item.innerHTML = `
-                <img class="network-connection-icon" src="${this.getHighQualityIconPath('no_connection')}" alt="">
+                <img class="network-connection-icon" src="${this.getCharmsNetworkIconPath('no_connection', 32)}" alt="">
                 <div class="network-connection-info">
                     <div class="network-connection-name">Not connected</div>
                 </div>
@@ -493,7 +515,7 @@ class NetworkMonitor {
         const item = document.createElement('div');
         item.className = 'network-connection-item';
         item.innerHTML = `
-            <img class="network-connection-icon" src="${this.getHighQualityIconPath(iconState)}" alt="">
+            <img class="network-connection-icon" src="${this.getCharmsNetworkIconPath(iconState, 32)}" alt="">
             <div class="network-connection-info">
                 <div class="network-connection-name">${this.escapeHtml(connectionName)}</div>
                 <div class="network-connection-status">${statusText}</div>
@@ -560,7 +582,7 @@ class NetworkMonitor {
             const item = document.createElement('div');
             item.className = 'network-wifi-item';
             item.innerHTML = `
-                <img class="network-wifi-icon" src="resources/images/tray/network/${iconState}/32.png" alt="">
+                <img class="network-wifi-icon" src="${this.getCharmsNetworkIconPath(iconState, 24)}" alt="">
                 <span class="network-wifi-name">${this.escapeHtml(network.ssid)}</span>
             `;
             container.appendChild(item);
@@ -688,7 +710,7 @@ class NetworkMonitor {
         window.removeEventListener('resize', this.handleViewportChange);
         window.removeEventListener('focus', this.handleWindowFocus);
         document.removeEventListener('visibilitychange', this.handleVisibilityChange);
-        window.removeEventListener('win8-display-settings-changed', this.handleDisplaySettingsChange);
+        window.removeEventListener('win9-display-settings-changed', this.handleDisplaySettingsChange);
         await ipcRenderer.invoke('stop-network-monitoring');
     }
 }

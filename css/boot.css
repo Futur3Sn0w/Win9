@@ -27,8 +27,8 @@
 }
 
 .windows-logo {
-    width: 180px;
     height: 180px;
+    aspect-ratio: 370 / 426;
     margin-bottom: 60px;
     margin-top: auto;
     opacity: 0;

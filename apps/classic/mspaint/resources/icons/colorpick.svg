@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+  <!-- Eyedropper body -->
+  <path d="M11,3 L14,3 Q16,3 16,5 L16,6 L10,12 L8,10 Z" fill="#d0d0d0" stroke="#888" stroke-width="0.9" stroke-linejoin="round"/>
+  <!-- Dropper tip tube -->
+  <rect x="7" y="11.5" width="3" height="4" rx="0.5" transform="rotate(-45,8.5,13.5)" fill="#bbb" stroke="#888" stroke-width="0.8"/>
+  <!-- Tip point -->
+  <path d="M5.5,15 L4,16.5 Q3.5,18 5,18.5 Q6.5,19 7,17.5 L8.5,16 Z" fill="#777" stroke="#555" stroke-width="0.8" stroke-linejoin="round"/>
+  <!-- Color sample dot -->
+  <circle cx="13.5" cy="4.5" r="1.8" fill="#e8a000" stroke="#c07800" stroke-width="0.8"/>
+</svg>

@@ -1,14 +1,14 @@
 {
-  "name": "win8-electron",
+  "name": "win9-electron",
   "version": "1.0.0",
-  "description": "Windows 8(.1) UI Simulator built with Electron",
+  "description": "Windows 9 UI Simulator built with Electron",
   "main": "electron-main.js",
   "scripts": {
     "start": "electron .",
     "dev": "electron . --dev"
   },
   "keywords": [
-    "windows8",
+    "windows9",
     "electron",
     "ui-simulator"
   ],

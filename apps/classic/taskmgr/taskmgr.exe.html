@@ -15,51 +15,284 @@
 
 <body>
     <div class="taskmgr-shell">
-        <div class="classic-command-bar">
-            <div class="classic-command-bar-item"><span class="classic-command-bar-label"><u>F</u>ile</span></div>
-            <div class="classic-command-bar-item"><span class="classic-command-bar-label"><u>O</u>ptions</span></div>
-            <div class="classic-command-bar-item"><span class="classic-command-bar-label"><u>V</u>iew</span></div>
-            <div class="classic-command-bar-item"><span class="classic-command-bar-label"><u>H</u>elp</span></div>
+        <div class="classic-command-bar taskmgr-menubar">
+            <div class="classic-command-bar-item" data-menu="file">
+                <span class="classic-command-bar-label"><u>F</u>ile</span>
+                <div class="classic-context-menu classic-command-bar-dropdown taskmgr-menu">
+                    <div class="classic-context-menu-item" data-action="run-new-task">
+                        <div class="classic-context-menu-item-icon"></div>
+                        <span class="classic-context-menu-item-text">Run new task</span>
+                    </div>
+                    <div class="classic-context-menu-separator"></div>
+                    <div class="classic-context-menu-item" data-action="exit">
+                        <div class="classic-context-menu-item-icon"></div>
+                        <span class="classic-context-menu-item-text">Exit</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="classic-command-bar-item" data-menu="options">
+                <span class="classic-command-bar-label"><u>O</u>ptions</span>
+                <div class="classic-context-menu classic-command-bar-dropdown taskmgr-menu">
+                    <div class="classic-context-menu-item menu-checkbox" data-action="toggle-always-on-top">
+                        <div class="classic-context-menu-item-icon">
+                            <span class="checkbox"></span>
+                        </div>
+                        <span class="classic-context-menu-item-text">Always on top</span>
+                    </div>
+                    <div class="classic-context-menu-item menu-checkbox" data-action="toggle-minimize-on-use">
+                        <div class="classic-context-menu-item-icon">
+                            <span class="checkbox"></span>
+                        </div>
+                        <span class="classic-context-menu-item-text">Minimize on use</span>
+                    </div>
+                    <div class="classic-context-menu-item menu-checkbox" data-action="toggle-hide-when-minimized">
+                        <div class="classic-context-menu-item-icon">
+                            <span class="checkbox"></span>
+                        </div>
+                        <span class="classic-context-menu-item-text">Hide when minimized</span>
+                    </div>
+                    <div class="classic-context-menu-item menu-checkbox" data-action="toggle-show-full-account-name">
+                        <div class="classic-context-menu-item-icon">
+                            <span class="checkbox"></span>
+                        </div>
+                        <span class="classic-context-menu-item-text">Show full account name</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="classic-command-bar-item" data-menu="view">
+                <span class="classic-command-bar-label"><u>V</u>iew</span>
+                <div class="classic-context-menu classic-command-bar-dropdown taskmgr-menu">
+                    <div class="classic-context-menu-item" data-action="refresh-now">
+                        <div class="classic-context-menu-item-icon"></div>
+                        <span class="classic-context-menu-item-text">Refresh now</span>
+                        <span class="classic-command-bar-shortcut">F5</span>
+                    </div>
+                    <div class="classic-context-menu-separator"></div>
+                    <div class="classic-context-menu-item has-submenu">
+                        <div class="classic-context-menu-item-icon"></div>
+                        <span class="classic-context-menu-item-text">Update speed</span>
+                        <span class="classic-context-menu-submenu-arrow">&#9654;</span>
+                        <div class="classic-context-menu classic-context-submenu taskmgr-menu">
+                            <div class="classic-context-menu-item menu-checkbox" data-action="update-speed-high">
+                                <div class="classic-context-menu-item-icon">
+                                    <span class="checkbox"></span>
+                                </div>
+                                <span class="classic-context-menu-item-text">High</span>
+                            </div>
+                            <div class="classic-context-menu-item menu-checkbox" data-action="update-speed-normal">
+                                <div class="classic-context-menu-item-icon">
+                                    <span class="checkbox"></span>
+                                </div>
+                                <span class="classic-context-menu-item-text">Normal</span>
+                            </div>
+                            <div class="classic-context-menu-item menu-checkbox" data-action="update-speed-low">
+                                <div class="classic-context-menu-item-icon">
+                                    <span class="checkbox"></span>
+                                </div>
+                                <span class="classic-context-menu-item-text">Low</span>
+                            </div>
+                            <div class="classic-context-menu-item menu-checkbox" data-action="update-speed-paused">
+                                <div class="classic-context-menu-item-icon">
+                                    <span class="checkbox"></span>
+                                </div>
+                                <span class="classic-context-menu-item-text">Paused</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="classic-command-bar-item" data-menu="help">
+                <span class="classic-command-bar-label"><u>H</u>elp</span>
+                <div class="classic-context-menu classic-command-bar-dropdown taskmgr-menu">
+                    <div class="classic-context-menu-item" data-action="about-task-manager">
+                        <div class="classic-context-menu-item-icon"></div>
+                        <span class="classic-context-menu-item-text">About Task Manager</span>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div class="taskmgr-tabs" role="tablist" aria-label="Task Manager sections">
-            <button class="taskmgr-tab is-active" type="button" data-panel="applications">Applications</button>
-            <button class="taskmgr-tab" type="button" data-panel="processes">Processes</button>
-            <button class="taskmgr-tab" type="button" data-panel="services">Services</button>
-            <button class="taskmgr-tab" type="button" data-panel="performance">Performance</button>
-            <button class="taskmgr-tab" type="button" data-panel="networking">Networking</button>
-            <button class="taskmgr-tab" type="button" data-panel="users">Users</button>
+            <button class="taskmgr-tab is-active" type="button" data-view="processes">Processes</button>
+            <button class="taskmgr-tab" type="button" data-view="performance">Performance</button>
+            <button class="taskmgr-tab" type="button" data-view="app-history">App history</button>
+            <button class="taskmgr-tab" type="button" data-view="startup">Startup</button>
+            <button class="taskmgr-tab" type="button" data-view="users">Users</button>
+            <button class="taskmgr-tab" type="button" data-view="details">Details</button>
+            <button class="taskmgr-tab" type="button" data-view="services">Services</button>
         </div>
 
-        <div class="taskmgr-panel">
-            <div class="taskmgr-summary">
-                <h1 id="taskmgr-title">Applications</h1>
-                <p id="taskmgr-description">Blank scaffold for the future Task Manager implementation.</p>
-            </div>
+        <div class="taskmgr-content">
+            <section class="taskmgr-view is-active" data-view-panel="processes">
+                <div class="taskmgr-table">
+                    <div class="taskmgr-table__row taskmgr-table__row--header">
+                        <span>Name</span>
+                        <span>Status</span>
+                        <span>CPU</span>
+                        <span>Memory</span>
+                        <span>Disk</span>
+                        <span>Network</span>
+                    </div>
+                    <div class="taskmgr-table__body" id="taskmgr-processes-body"></div>
+                </div>
+            </section>
 
-            <div class="taskmgr-table">
-                <div class="taskmgr-table__row taskmgr-table__row--header">
-                    <span>Name</span>
-                    <span>Status</span>
-                    <span>CPU</span>
-                    <span>Memory</span>
+            <section class="taskmgr-view taskmgr-performance-view" data-view-panel="performance">
+                <aside class="taskmgr-performance-sidebar">
+                    <button class="taskmgr-performance-item is-active" type="button" data-performance-panel="cpu">
+                        <canvas class="taskmgr-performance-item__chart" id="taskmgr-sidebar-cpu-chart" width="62" height="42"></canvas>
+                        <span class="taskmgr-performance-item__copy">
+                            <span class="taskmgr-performance-item__title">CPU</span>
+                            <span class="taskmgr-performance-item__value" id="taskmgr-sidebar-cpu">0%</span>
+                            <span class="taskmgr-performance-item__meta" id="taskmgr-sidebar-cpu-meta">0.00 GHz</span>
+                        </span>
+                    </button>
+
+                    <button class="taskmgr-performance-item" type="button" data-performance-panel="memory">
+                        <canvas class="taskmgr-performance-item__chart" id="taskmgr-sidebar-memory-chart" width="62" height="42"></canvas>
+                        <span class="taskmgr-performance-item__copy">
+                            <span class="taskmgr-performance-item__title">Memory</span>
+                            <span class="taskmgr-performance-item__value" id="taskmgr-sidebar-memory">0%</span>
+                            <span class="taskmgr-performance-item__meta" id="taskmgr-sidebar-memory-meta">0 GB / 0 GB</span>
+                        </span>
+                    </button>
+
+                    <button class="taskmgr-performance-item" type="button" data-performance-panel="disk">
+                        <canvas class="taskmgr-performance-item__chart" id="taskmgr-sidebar-disk-chart" width="62" height="42"></canvas>
+                        <span class="taskmgr-performance-item__copy">
+                            <span class="taskmgr-performance-item__title">Disk 0 (C:)</span>
+                            <span class="taskmgr-performance-item__value" id="taskmgr-sidebar-disk">0%</span>
+                            <span class="taskmgr-performance-item__meta" id="taskmgr-sidebar-disk-meta">SSD</span>
+                        </span>
+                    </button>
+
+                    <button class="taskmgr-performance-item" type="button" data-performance-panel="network">
+                        <canvas class="taskmgr-performance-item__chart" id="taskmgr-sidebar-network-chart" width="62" height="42"></canvas>
+                        <span class="taskmgr-performance-item__copy">
+                            <span class="taskmgr-performance-item__title" id="taskmgr-sidebar-network-title">Ethernet</span>
+                            <span class="taskmgr-performance-item__value" id="taskmgr-sidebar-network">0 Kbps</span>
+                            <span class="taskmgr-performance-item__meta" id="taskmgr-sidebar-network-meta">Not connected</span>
+                        </span>
+                    </button>
+                </aside>
+
+                <div class="taskmgr-performance-main">
+                    <div class="taskmgr-performance-header">
+                        <div class="taskmgr-performance-header__copy">
+                            <h1 id="taskmgr-performance-title">CPU</h1>
+                        </div>
+                        <div class="taskmgr-performance-header__device" id="taskmgr-performance-device">Host processor</div>
+                    </div>
+                    <p class="taskmgr-performance-subtitle" id="taskmgr-performance-subtitle">Utilization over the last 60 seconds.</p>
+
+                    <div class="taskmgr-chart-card">
+                        <div class="taskmgr-chart-card__header">
+                            <span id="taskmgr-performance-chart-label">% Utilization</span>
+                            <span id="taskmgr-performance-chart-scale">100%</span>
+                        </div>
+                        <canvas id="taskmgr-performance-chart" width="640" height="260"></canvas>
+                        <div class="taskmgr-chart-card__footer">
+                            <span>60 seconds</span>
+                            <span>0</span>
+                        </div>
+                    </div>
+
+                    <div class="taskmgr-performance-details">
+                        <div class="taskmgr-performance-summary" id="taskmgr-performance-summary"></div>
+                        <div class="taskmgr-performance-specs" id="taskmgr-performance-specs"></div>
+                    </div>
                 </div>
-                <div class="taskmgr-table__row">
-                    <span>Task Manager</span>
-                    <span>Running</span>
-                    <span>--</span>
-                    <span>--</span>
+            </section>
+
+            <section class="taskmgr-view" data-view-panel="users">
+                <div class="taskmgr-table">
+                    <div class="taskmgr-table__row taskmgr-table__row--header taskmgr-table__row--users">
+                        <span>User</span>
+                        <span>Status</span>
+                        <span>Apps</span>
+                        <span>CPU</span>
+                        <span>Memory</span>
+                    </div>
+                    <div class="taskmgr-table__body" id="taskmgr-users-body"></div>
                 </div>
-                <div class="taskmgr-table__row taskmgr-table__row--empty">
-                    <span>No live task data is connected yet.</span>
+            </section>
+
+            <section class="taskmgr-view" data-view-panel="details">
+                <div class="taskmgr-table">
+                    <div class="taskmgr-table__row taskmgr-table__row--header taskmgr-table__row--details">
+                        <span>Name</span>
+                        <span>Window ID</span>
+                        <span>Type</span>
+                        <span>Status</span>
+                    </div>
+                    <div class="taskmgr-table__body" id="taskmgr-details-body"></div>
                 </div>
-            </div>
+            </section>
+
+            <section class="taskmgr-view" data-view-panel="app-history">
+                <div class="taskmgr-placeholder">
+                    <h1>App history</h1>
+                    <p>App history resources are present in the original shell, but host app-history telemetry is not wired into Win9 yet.</p>
+                </div>
+            </section>
+
+            <section class="taskmgr-view" data-view-panel="startup">
+                <div class="taskmgr-placeholder">
+                    <h1>Startup</h1>
+                    <p>Startup impact and enable/disable commands exist in the extracted resources, but Win9 does not currently expose host startup entries.</p>
+                </div>
+            </section>
+
+            <section class="taskmgr-view" data-view-panel="services">
+                <div class="taskmgr-placeholder">
+                    <h1>Services</h1>
+                    <p>The shell layout is present, but service enumeration is still pending in the simulator.</p>
+                </div>
+            </section>
+        </div>
+
+        <div class="taskmgr-footer">
+            <button class="classic-button taskmgr-footer__toggle" id="taskmgr-details-toggle">Fewer details</button>
+            <div class="taskmgr-footer__spacer"></div>
+            <button class="classic-button" id="taskmgr-end-task" disabled>End task</button>
         </div>
 
         <div class="taskmgr-statusbar">
             <span id="taskmgr-status-text">Processes: 0</span>
-            <span>CPU Usage: --</span>
-            <span>Physical Memory: --</span>
+            <span id="taskmgr-status-cpu">CPU: 0%</span>
+            <span id="taskmgr-status-memory">Memory: 0%</span>
+        </div>
+    </div>
+
+    <div class="classic-context-menu taskmgr-row-context-menu" id="taskmgr-row-context-menu">
+        <div class="classic-context-menu-item" data-action="switch-to">
+            <div class="classic-context-menu-item-icon"></div>
+            <span class="classic-context-menu-item-text">Switch to</span>
+        </div>
+        <div class="classic-context-menu-item" data-action="go-to-details">
+            <div class="classic-context-menu-item-icon"></div>
+            <span class="classic-context-menu-item-text">Go to details</span>
+        </div>
+        <div class="classic-context-menu-separator"></div>
+        <div class="classic-context-menu-item" data-action="restart-process">
+            <div class="classic-context-menu-item-icon"></div>
+            <span class="classic-context-menu-item-text">Restart</span>
+        </div>
+        <div class="classic-context-menu-item" data-action="open-file-location">
+            <div class="classic-context-menu-item-icon"></div>
+            <span class="classic-context-menu-item-text">Open file location</span>
+        </div>
+        <div class="classic-context-menu-item" data-action="properties">
+            <div class="classic-context-menu-item-icon"></div>
+            <span class="classic-context-menu-item-text">Properties</span>
+        </div>
+        <div class="classic-context-menu-separator"></div>
+        <div class="classic-context-menu-item" data-action="end-task">
+            <div class="classic-context-menu-item-icon"></div>
+            <span class="classic-context-menu-item-text">End task</span>
         </div>
     </div>
 

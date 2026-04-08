@@ -273,7 +273,7 @@
 
         window.addEventListener('resize', handleViewportChange);
         window.addEventListener('load', handleViewportChange, { once: true });
-        window.addEventListener('win8-display-settings-changed', handleDisplaySettingsChange);
+        window.addEventListener('win9-display-settings-changed', handleDisplaySettingsChange);
     }
 
     $(document).ready(function () {

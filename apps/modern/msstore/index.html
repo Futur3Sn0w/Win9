@@ -276,8 +276,8 @@
         }
 
         .app-card-image img {
-            width: 100%;
-            height: 100%;
+            width: auto !important;
+            height: 64px !important;
             object-fit: cover;
         }
 
@@ -477,6 +477,11 @@
             background: #fff;
         }
 
+        .bg-grey,
+        .bg-gray {
+            background: #76706A;
+        }
+
         /* Card colors for large image cards */
         .card-bg-green {
             background: #008A00;
@@ -532,6 +537,11 @@
 
         .card-bg-white {
             background: #DFDFDF;
+        }
+
+        .card-bg-grey,
+        .card-bg-gray {
+            background: #76706A;
         }
 
         /* ============ SEARCH RESULTS VIEW ============ */
@@ -886,7 +896,7 @@
             'social': { name: 'Social', order: 2 },
             'entertainment': { name: 'Entertainment', order: 3 },
             'video': { name: 'Photo & Video', order: 4 },
-            'photo': { name: 'Photo & Video', order: 4 },
+            'photo': { name: 'Photo & Video', order: 4, canonical: 'video' },
             'music': { name: 'Music & Video', order: 5 },
             'news': { name: 'News & Weather', order: 6 },
             'productivity': { name: 'Productivity', order: 7 },
@@ -964,9 +974,15 @@
 
         function getManifestLogoUrl(manifest, file) {
             if (manifest.files && Array.isArray(manifest.files)) {
-                const target = file || 'resources/logo.png';
-                const logoFile = manifest.files.find(f => f === target) ||
-                    manifest.files.find(f => f.match(/resources\/logo\.(png|jpg|svg)$/i));
+                // If a specific file was requested, honour it exactly
+                if (file) {
+                    const exact = manifest.files.find(f => f === file);
+                    if (exact) return `${MARKET_BASE_URL}/apps/${manifest.id}/${exact}`;
+                }
+                // Prefer SVG (resolution-independent), fall back to PNG/JPG
+                const logoFile =
+                    manifest.files.find(f => /resources\/logo\.svg$/i.test(f)) ||
+                    manifest.files.find(f => /resources\/logo\.(png|jpg)$/i.test(f));
                 if (logoFile) {
                     return `${MARKET_BASE_URL}/apps/${manifest.id}/${logoFile}`;
                 }
@@ -1008,7 +1024,8 @@
             // Group by category
             const categories = {};
             manifests.forEach(m => {
-                const cat = (m.category || 'uncategorized').toLowerCase();
+                let cat = (m.category || 'uncategorized').toLowerCase();
+                cat = CATEGORY_CONFIG[cat]?.canonical || cat;
                 if (!categories[cat]) categories[cat] = [];
                 categories[cat].push(m);
             });
@@ -1025,6 +1042,15 @@
                 homeView.appendChild(createHomeSection('Popular now', allApps, () => {
                     renderCategoryView(null, 'Popular now');
                     pushNav({ type: 'category', category: null, title: 'Popular now' });
+                }));
+            }
+
+            // "New releases" section — apps with a recent releaseDate or newly discovered
+            const newReleases = getNewReleases(manifests);
+            if (newReleases.length > 0) {
+                homeView.appendChild(createHomeSection('New releases', newReleases, () => {
+                    renderCategoryView('__new__', 'New releases');
+                    pushNav({ type: 'category', category: '__new__', title: 'New releases' });
                 }));
             }
 
@@ -1116,9 +1142,11 @@
         // --- CATEGORY VIEW (drill-down with compact list cards) ---
         function renderCategoryView(cat, title) {
             const manifests = window.marketManager.getAllManifests();
-            const apps = cat
-                ? manifests.filter(m => (m.category || '').toLowerCase() === cat)
-                : manifests;
+            const apps = cat === '__new__'
+                ? getNewReleases(manifests)
+                : cat
+                    ? manifests.filter(m => (m.category || '').toLowerCase() === cat)
+                    : manifests;
 
             homeView.innerHTML = '';
             currentView = 'category';
@@ -1405,6 +1433,124 @@
             if (e.key === 'Enter') doSearch(e.target.value);
         });
 
+        // --- Background catalog refresh ---
+        // Uses the GitHub Commits API as a cheap dirty-flag: if the latest commit
+        // SHA matches what we saw last time, nothing in the repo changed and we
+        // skip all further work. If it differs (or is unknown), we re-fetch the
+        // directory and all manifests fresh, then re-render only if the user is
+        // still on the home view.
+        const MARKET_REPO = 'futur3sn0w/WinStore';
+        const MARKET_SHA_KEY = 'market-last-commit-sha';
+        const MARKET_FIRST_SEEN_KEY = 'market-app-first-seen';
+        const NEW_RELEASE_MANIFEST_DAYS = 60; // releaseDate window
+        const NEW_RELEASE_DISCOVERED_DAYS = 14; // first-seen window
+
+        // Returns manifests that qualify as "new", sorted newest-first.
+        // Two signals: an explicit releaseDate in the manifest (within 60 days),
+        // or a first-seen timestamp recorded when the background check discovered
+        // the app for the first time (within 14 days).
+        function getNewReleases(manifests) {
+            const now = Date.now();
+            const manifestWindow = NEW_RELEASE_MANIFEST_DAYS * 86400000;
+            const discoveredWindow = NEW_RELEASE_DISCOVERED_DAYS * 86400000;
+
+            let firstSeen = {};
+            try {
+                firstSeen = JSON.parse(localStorage.getItem(MARKET_FIRST_SEEN_KEY) || '{}');
+            } catch (e) {}
+
+            const getEffectiveDate = m => {
+                if (m.releaseDate) {
+                    const t = new Date(m.releaseDate).getTime();
+                    if (!isNaN(t)) return t;
+                }
+                return firstSeen[m.id] || 0;
+            };
+
+            return manifests
+                .filter(m => {
+                    const t = getEffectiveDate(m);
+                    if (!t) return false;
+                    if (m.releaseDate) return (now - t) <= manifestWindow;
+                    return (now - t) <= discoveredWindow;
+                })
+                .sort((a, b) => getEffectiveDate(b) - getEffectiveDate(a))
+                .slice(0, 8);
+        }
+
+        async function getLatestCommitSha() {
+            const resp = await fetch(
+                `https://api.github.com/repos/${MARKET_REPO}/commits?per_page=1`,
+                { cache: 'no-store' }
+            );
+            if (!resp.ok) return null;
+            const data = await resp.json();
+            return (Array.isArray(data) && data[0]?.sha) || null;
+        }
+
+        async function checkForCatalogUpdates() {
+            try {
+                const latestSha = await getLatestCommitSha();
+                const storedSha = localStorage.getItem(MARKET_SHA_KEY);
+
+                // Nothing changed since last check — bail out
+                if (latestSha && latestSha === storedSha) return;
+
+                // Repo has new commits (or first run) — re-fetch everything fresh
+                const resp = await fetch(`${MARKET_BASE_URL}/directory.json`, { cache: 'no-store' });
+                if (!resp.ok) return;
+
+                const data = await resp.json();
+                const freshEntries = Array.isArray(data.apps) ? data.apps : [];
+
+                const currentIds = new Set(window.marketManager.catalogEntries.map(e => e.id));
+                const freshIds = new Set(freshEntries.map(e => e.id));
+                const newEntries = freshEntries.filter(e => !currentIds.has(e.id));
+                const removedIds = [...currentIds].filter(id => !freshIds.has(id));
+
+                // Update catalog entries and clear stale manifests for catalog apps
+                // so they get re-fetched fresh (picks up description/version changes)
+                window.marketManager.catalogEntries = freshEntries;
+                for (const entry of freshEntries) {
+                    window.marketManager.manifests.delete(entry.id);
+                }
+                for (const id of removedIds) {
+                    window.marketManager.manifests.delete(id);
+                }
+
+                await window.marketManager.fetchAllManifests();
+
+                // Record first-seen timestamps for genuinely new apps so they
+                // appear in the "New releases" section for the discovery window.
+                if (newEntries.length > 0) {
+                    let firstSeen = {};
+                    try {
+                        firstSeen = JSON.parse(localStorage.getItem(MARKET_FIRST_SEEN_KEY) || '{}');
+                    } catch (e) {}
+                    const now = Date.now();
+                    for (const entry of newEntries) {
+                        if (!firstSeen[entry.id]) firstSeen[entry.id] = now;
+                    }
+                    localStorage.setItem(MARKET_FIRST_SEEN_KEY, JSON.stringify(firstSeen));
+                }
+
+                // Persist the SHA so we don't re-fetch until the next commit
+                if (latestSha) localStorage.setItem(MARKET_SHA_KEY, latestSha);
+
+                console.log('[Store] Catalog refreshed — SHA:', latestSha?.slice(0, 7),
+                    `(+${newEntries.length} / -${removedIds.length})`);
+
+                // Re-render only if the user is still on the home view;
+                // otherwise the fresh data will be used next time they navigate home
+                if (currentView === 'home') {
+                    renderHome();
+                }
+
+            } catch (err) {
+                console.warn('[Store] Background catalog check failed:', err);
+            }
+        }
+
         // --- Init ---
         async function initStore() {
             showView(loadingView);
@@ -1414,6 +1560,7 @@
                 await window.marketManager.fetchAllManifests();
                 renderHome();
                 hideSplash();
+                checkForCatalogUpdates(); // fire-and-forget
             } catch (error) {
                 console.error('Store initialization failed:', error);
                 document.getElementById('errorMessage').textContent =

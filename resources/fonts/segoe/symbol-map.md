@@ -1,4 +1,4 @@
-# Segoe UI Symbol — Windows 8.1 App Bar Icon Map
+# Segoe UI Symbol — Windows 9 App Bar Icon Map
 
 Source: `Windows.UI.Xaml.Controls.Symbol` enum (`Windows.UI.Xaml.winmd`)
 
@@ -275,7 +275,6 @@ Identified from glyph-labeler review of the E2Cxx–E2Fxx block.
 | UsbDrive | 0xE2D8 | USB drive / flash drive |
 | OpticalDisc | 0xE2D9 | CD / optical disc |
 | HardDrive | 0xE2DB | Hard drive |
-| Printer | 0xE2E1 | Printer |
 | Speaker | 0xE2E3 | Speaker |
 | NetworkServerBridge | 0xE2E0 | Bridged network server |
 | Xbox | 0xE2E8 | Xbox console |
@@ -283,12 +282,27 @@ Identified from glyph-labeler review of the E2Cxx–E2Fxx block.
 | Headphones | 0xE2EB | Headphones |
 | Chip | 0xE2EC | Chip / processor |
 | OlderXbox | 0xE2EF | Older Xbox console |
-| SettingsCharm | 0xE2F9 | Settings charm (gear) |
-| DevicesCharm | 0xE2FA | Devices charm |
-| SearchCharm | 0xE2FB | Search charm |
-| ShareCharm | 0xE2F8 | Share charm |
+| Printer | 0xE2F6 | Printer (hardware icon) |
 | Share | 0xE2FD | Share |
 | DisplayWithSpeaker | 0xE2FE | Display with speaker indicator |
+
+## App Commands Bar Icons
+
+Identified from glyph-labeler review of the E24x and E2Ex–E2Fx blocks. These are UI chrome icons used in the Windows 8/8.1 app bar and charm bar.
+
+| Name | Codepoint | Notes |
+|------|-----------|-------|
+| Exit Fullscreen (App Commands) | 0xE24C | Exit fullscreen |
+| Enter Fullscreen (App Commands) | 0xE24D | Enter fullscreen |
+| Print (App Commands) | 0xE2E1 | Print command (app bar) |
+| Hide keyboard | 0xE2F0 | Hide standard touch keyboard |
+| Hide handwriting keyboard | 0xE2F1 | Hide handwriting keyboard |
+| Hide split keyboard | 0xE2F2 | Hide split touch keyboard |
+| Hide traditional keyboard | 0xE2F3 | Hide traditional keyboard layout |
+| Share (App Commands) | 0xE2F8 | Share charm / app command |
+| Settings (App Commands) | 0xE2F9 | Settings charm / app command |
+| Devices (App Commands) | 0xE2FA | Devices charm / app command |
+| Search (App Commands) | 0xE2FB | Search charm / app command |
 
 ## Non-Segoe One-Offs
 

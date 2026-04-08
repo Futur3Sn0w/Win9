@@ -4,7 +4,7 @@ A Windows-style system dialog component that provides authentic Windows system d
 
 ## Features
 
-- **Windows-authentic styling** - Matches Windows 8 desktop dialog appearance
+- **Windows-authentic styling** - Matches Windows 9 desktop dialog appearance
 - **Status presets** - Predefined configurations for common dialog types (error, warning, info, question, success, notice)
 - **Automatic icons** - Status-appropriate icons displayed based on dialog type
 - **Flexible button configurations** - Multiple button layouts (OK, OK/Cancel, Yes/No, Yes/No/Cancel, etc.)
@@ -234,7 +234,7 @@ async function newFile() {
 
 ## Styling
 
-The dialogs use Windows 8 classic desktop styling with:
+The dialogs use Windows 9 classic desktop styling with:
 - Classic window border with blue accent
 - Segoe UI font
 - Standard Windows button styling

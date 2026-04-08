@@ -231,7 +231,7 @@
 
     document.addEventListener('pointerdown', handleDocumentPointerDown, true);
     document.addEventListener('keydown', handleKeyDown);
-    document.addEventListener('win8:running-windows-changed', handleWindowsChanged);
+    document.addEventListener('win9:running-windows-changed', handleWindowsChanged);
     window.addEventListener('resize', handleWindowsChanged);
 
     window.SnapAssistShell = {

@@ -101,7 +101,7 @@
                     unread: false,
                     flagged: false,
                     body: [
-                        'This week we collected several Windows 8-era app references that are useful when reconstructing immersive layouts.',
+                        'This week we collected several Windows 9-era app references that are useful when reconstructing immersive layouts.',
                         'Pay close attention to the large left-aligned headings, the restraint around motion, and how often original apps used photographic or textured backgrounds only in very specific surfaces.'
                     ]
                 }

@@ -269,6 +269,10 @@
                     handleHostCommand(data);
                 });
 
+                ipcRenderer.on('trash:state-changed', (event, nextState) => {
+                    void applyRecycleBinStateUpdate(nextState);
+                });
+
                 // Helper function to send messages to parent
                 window.sendToParent = function (action, data) {
                     const messageData = {
@@ -1463,6 +1467,23 @@
             }, 5000);
         }
 
+        async function applyRecycleBinStateUpdate(nextState) {
+            recycleBinState = normalizeRecycleBinState(nextState);
+            updateRecycleBinSidebarIcon();
+
+            if (currentLocation !== RECYCLE_BIN_LOCATION) return;
+
+            const content = document.getElementById('content');
+            hideExplorerContextMenu();
+            cancelInlineRename();
+            content.innerHTML = '';
+            clearSelection();
+            renderedEntryElementsByPath = new Map();
+            await renderRecycleBinView();
+            updateBreadcrumbs();
+            updateTitlebar();
+        }
+
         async function refreshVisibleRecycleBinIfNeeded() {
             if (currentLocation !== RECYCLE_BIN_LOCATION) {
                 return;
@@ -1957,6 +1978,10 @@
             item.addEventListener('contextmenu', (e) => handleItemContextMenu(e, item, entry, type));
             item.addEventListener('mouseenter', () => handleItemMouseEnter(item));
             item.addEventListener('mouseleave', () => handleItemMouseLeave(item));
+            if (canCopyContextEntry(entry, type)) {
+                item.draggable = true;
+                item.addEventListener('dragstart', (e) => handleItemDragStart(e, item, entry, type));
+            }
             item.addEventListener('dblclick', (e) => {
                 e.stopPropagation();
                 if (type === 'folder' || type === 'drive') {
@@ -1977,6 +2002,35 @@
             const ext = path.extname(filePath).slice(1).toLowerCase();
             const displayableExtensions = ['png', 'jpg', 'jpeg', 'gif', 'bmp', 'webp', 'svg'];
             return displayableExtensions.includes(ext);
+        }
+
+        function handleItemDragStart(event, item, entry, type) {
+            // Block drag from the Desktop folder (items are already on the desktop)
+            const explorerDesktopPath = path.join(os.homedir(), 'Desktop');
+            if (currentLocation === RECYCLE_BIN_LOCATION) {
+                event.preventDefault();
+                return;
+            }
+            if (currentLocation === 'path' && currentPath && pathsMatch(currentPath, explorerDesktopPath)) {
+                event.preventDefault();
+                return;
+            }
+
+            // Use the full selection if this item is part of it, otherwise just this item
+            const dragPaths = selectedItems.has(item)
+                ? getSelectedEntryPaths(entry)
+                : (entry.path ? [entry.path] : []);
+
+            if (!dragPaths.length) {
+                event.preventDefault();
+                return;
+            }
+
+            event.dataTransfer.effectAllowed = 'copyMove';
+            event.dataTransfer.setData('application/x-win9-files', JSON.stringify({
+                paths: dragPaths,
+                sourceFolder: currentPath || null
+            }));
         }
 
         function handleItemClick(event, item) {
@@ -2437,16 +2491,31 @@
 
         async function deleteSelectedEntries(fallbackEntry = null) {
             const selectionPaths = getSelectedEntryPaths(fallbackEntry);
+            if (!selectionPaths.length) return;
 
-            if (!selectionPaths.length) {
-                return;
-            }
+            const hiddenItems = selectionPaths
+                .map(p => renderedEntryElementsByPath.get(normalizePathValue(p)))
+                .filter(Boolean);
+            hiddenItems.forEach(item => { item.style.visibility = 'hidden'; });
+
+            const previousState = { ...recycleBinState };
+            recycleBinState = { ...recycleBinState, empty: false, itemCount: recycleBinState.itemCount + selectionPaths.length };
+            updateRecycleBinSidebarIcon();
+
+            const engine = getSharedExplorerEngine();
+            const revertDesktop = engine && typeof engine.optimisticRecycleBinUpdate === 'function'
+                ? engine.optimisticRecycleBinUpdate(selectionPaths.length)
+                : null;
 
             try {
                 await movePathsToRecycleBinViaHost(selectionPaths);
                 setPendingSelectionPath(null);
                 await updateView();
             } catch (error) {
+                hiddenItems.forEach(item => { item.style.visibility = ''; });
+                recycleBinState = previousState;
+                updateRecycleBinSidebarIcon();
+                if (revertDesktop) revertDesktop();
                 console.error('[File Explorer] Delete failed:', error);
                 const systemDialog = getSystemDialogApi();
                 if (systemDialog && typeof systemDialog.error === 'function') {

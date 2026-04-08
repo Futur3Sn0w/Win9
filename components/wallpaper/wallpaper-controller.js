@@ -117,7 +117,7 @@ function createWallpaperController(options = {}) {
     };
 
     if (typeof window !== 'undefined' && typeof window.dispatchEvent === 'function' && typeof CustomEvent === 'function') {
-      window.dispatchEvent(new CustomEvent('win8-wallpaper-state-changed', { detail }));
+      window.dispatchEvent(new CustomEvent('win9-wallpaper-state-changed', { detail }));
     }
 
     if (typeof onStateChanged === 'function') {

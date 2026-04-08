@@ -698,6 +698,7 @@ body.snap-assist-open #desktop-window-layer>.classic-app-container:not(.snap-ass
     color: #fdfdfd;
     text-shadow: 0 1px 3px 1px rgba(0, 0, 0, 0.7);
     user-select: none;
+    touch-action: none;
     z-index: 1;
     overflow: visible;
     --label-extra-height: 0px;
@@ -725,6 +726,21 @@ body.snap-assist-open #desktop-window-layer>.classic-app-container:not(.snap-ass
 
 .desktop-item.is-selected.is-hovered {
     z-index: 10;
+}
+
+.desktop-item.desktop-item--drop-target::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: calc(100% + var(--label-extra-height, 0px));
+    background: linear-gradient(to bottom, rgba(0, 120, 215, 0.25), rgba(0, 100, 190, 0.25));
+    box-shadow:
+        inset 0 0 0 1px rgba(0, 120, 215, 0.75),
+        inset 0 0 0 2px rgba(255, 255, 255, 0.4);
+    z-index: 0;
+    pointer-events: none;
 }
 
 .desktop-item.is-selected::after {
@@ -823,15 +839,69 @@ body.snap-assist-open #desktop-window-layer>.classic-app-container:not(.snap-ass
 }
 
 .desktop-item__label {
+    position: relative;
+    /* required */
     width: 100%;
     text-align: center;
     font-size: var(--system-font-size);
     line-height: 1.2;
     word-break: break-word;
-    text-shadow: 0 1px 3px #000000;
+
+    color: #fff;
+
+    /* keep just a tiny crisp edge shadow */
+    text-shadow:
+        0 0 1px rgba(0, 0, 0, 1),
+        0 0 1px rgba(0, 0, 0, 0.9);
+}
+
+.desktop-item__label::before {
+    content: attr(data-label);
+    position: absolute;
+    inset: 0;
+
+    z-index: -1;
+    pointer-events: none;
+
+    filter: blur(1.25px);
+    transform: translateY(1px);
+    color: rgba(0, 0, 0, 0.95);
 }
 
 .desktop-item__label--truncated {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.desktop-item__label--truncated::before {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.desktop-item__label--truncated.desktop-item__label--wrapped {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+}
+
+.desktop-item__label-line {
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    position: relative;
+}
+
+.desktop-item__label-line::before {
+    content: attr(data-label);
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    filter: blur(1.25px);
+    transform: translateY(1px);
+    color: rgba(0, 0, 0, 0.95);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -894,6 +964,25 @@ body.desktop-drag-selecting,
 body.desktop-drag-selecting * {
     user-select: none !important;
     -webkit-user-select: none !important;
+}
+
+.desktop-drop-tooltip {
+    position: fixed;
+    display: none;
+    z-index: 10000;
+    background: rgba(28, 28, 28, 0.92);
+    color: #fff;
+    font-size: 12px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    padding: 4px 10px;
+    border-radius: 3px;
+    pointer-events: none;
+    white-space: nowrap;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+
+.desktop-drop-tooltip--visible {
+    display: block;
 }
 
 /* Taskbar context menu - specific positioning */

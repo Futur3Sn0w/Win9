@@ -296,7 +296,7 @@ async function mergeInstalledMarketApps() {
 
             if (entry && entry.manifestUrl) {
                 try {
-                    const resp = await fetch(`${MARKET_BASE_URL}/${entry.manifestUrl}`);
+                    const resp = await fetch(`${MARKET_BASE_URL}/${entry.manifestUrl}?_=${Date.now()}`, { cache: 'no-store' });
                     if (resp.ok) {
                         manifest = await resp.json();
                         // Cache it so we don't need to fetch again next startup
@@ -348,9 +348,16 @@ async function mergeInstalledMarketApps() {
             if (resourceFiles.length > 0) {
                 appDef._marketResourceBase = `${localAppPath}/resources`;
             }
-            if (resourceFiles.includes('resources/logo.png')) {
-                appDef.logoImage = `${localAppPath}/resources/logo.png`;
-                appDef.splashImage = `${localAppPath}/resources/logo.png`;
+            const logoFile = resourceFiles.includes('resources/logo.svg')
+                ? 'resources/logo.svg'
+                : resourceFiles.includes('resources/logo.png')
+                    ? 'resources/logo.png'
+                    : null;
+            if (logoFile) {
+                const logoUrl = `${localAppPath}/${logoFile}`;
+                appDef.logoImage = logoUrl;
+                appDef.tileImages = { default: logoUrl };
+                appDef.splashImage = logoUrl;
             }
         } else {
             // Build the remote URL from the directory entry
@@ -360,6 +367,16 @@ async function mergeInstalledMarketApps() {
                 ? entry.manifestUrl.substring(0, entry.manifestUrl.lastIndexOf('/'))
                 : `apps/${manifest.id}`;
             appDef.path = `${MARKET_BASE_URL}/${manifestDir}/${manifest.entryPoint || 'index.html'}`;
+
+            // Resolve logo from manifest files
+            const files = manifest.files || [];
+            const logoFile = files.find(f => /resources\/logo\.svg$/i.test(f)) ||
+                files.find(f => /resources\/logo\.(png|jpg)$/i.test(f));
+            if (logoFile) {
+                const logoUrl = `${MARKET_BASE_URL}/${manifestDir}/${logoFile}`;
+                appDef.logoImage = logoUrl;
+                appDef.tileImages = { default: logoUrl };
+            }
         }
 
         if (manifest.loadDirect) {
@@ -376,6 +393,14 @@ async function mergeInstalledMarketApps() {
 
         if (manifest.tileOptions) {
             appDef.tileOptions = { ...manifest.tileOptions };
+        }
+
+        if (manifest.tileSpecs) {
+            appDef.tileSpecs = { ...manifest.tileSpecs };
+        }
+
+        if (manifest.appbar) {
+            appDef.appbar = manifest.appbar;
         }
 
         appsData.push(appDef);
@@ -1056,16 +1081,9 @@ function applyTileSizesFromMap(tileSizes) {
     });
 }
 
-// Generate tile HTML for an app
-function generateTileHTML(app) {
-    const sizeClass = app.size === 'wide' ? 'tiles__tile--wide' :
-        app.size === 'large' ? 'tiles__tile--large' :
-            app.size === 'small' ? 'tiles__tile--small' : '';
-    const colorClass = `tiles__tile--${app.color}`;
-
+function buildTileVisualHTML(app) {
     // Check if this tile should display an image
     const hasImage = app.showImage || app.imageUrl;
-    const imageClass = hasImage ? 'tiles__tile--image' : '';
 
     // Build the tile content
     let tileContent = '';
@@ -1075,9 +1093,21 @@ function generateTileHTML(app) {
         const imageStyle = imageUrl ? `style="background-image: url(&quot;${imageUrl}&quot;);"` : '';
         tileContent = `
             <div class="tiles__tile-image" ${imageStyle}></div>
-            <span>${app.name}</span>
         `;
     } else {
+        // Market apps with only a logo (no size-specific tile assets): display the
+        // logo centered on the tile color — same treatment as classic Windows 8 tiles.
+        if (app.source === 'market' && app.logoImage) {
+            const hasSpecificTile = app.tileImages &&
+                Object.keys(app.tileImages).some(k => k !== 'default' && app.tileImages[k]);
+            if (!hasSpecificTile) {
+                return {
+                    hasImage: false,
+                    html: `<i class="tile-icon-image"><img src="${toAssetUrl(app.logoImage)}" alt=""></i>`
+                };
+            }
+        }
+
         // Check if app has a font icon class - this determines the fallback hierarchy
         const hasGlyphIcon = isGlyphIconClass(app.icon);
 
@@ -1087,7 +1117,6 @@ function generateTileHTML(app) {
             if (tileImage) {
                 tileContent = `
                     <div class="tiles__tile-image" style="background-image: url('${tileImage}'); background-size: cover; background-position: center;"></div>
-                    <span>${app.name}</span>
                 `;
             } else {
                 // App has a font icon - use the icon font or iconImages as fallback
@@ -1098,7 +1127,6 @@ function generateTileHTML(app) {
 
                 tileContent = `
                     <i class="${iconImage ? 'tile-icon-image' : ''}">${iconHTML}</i>
-                    <span>${app.name}</span>
                 `;
             }
         } else {
@@ -1109,24 +1137,58 @@ function generateTileHTML(app) {
                 // Use PNG icon (either from iconImages or generic_program fallback)
                 tileContent = `
                     <i class="tile-icon-image"><img src="${iconImage}" alt=""></i>
-                    <span>${app.name}</span>
                 `;
             } else {
                 // Assume app has tile image in resources
                 const tileImage = getTileImage(app, app.size);
                 tileContent = `
                     <div class="tiles__tile-image" style="background-image: url('${tileImage}'); background-size: cover; background-position: center;"></div>
-                    <span>${app.name}</span>
                 `;
             }
         }
     }
 
+    return {
+        hasImage,
+        html: tileContent
+    };
+}
+
+// Generate tile HTML for an app
+function generateTileHTML(app) {
+    const sizeClass = app.size === 'wide' ? 'tiles__tile--wide' :
+        app.size === 'large' ? 'tiles__tile--large' :
+            app.size === 'small' ? 'tiles__tile--small' : '';
+    const colorClass = `tiles__tile--${app.color}`;
+    const visual = buildTileVisualHTML(app);
+    const imageClass = visual.hasImage ? 'tiles__tile--image' : '';
     const typeClass = (app.type === 'classic' || app.type === 'meta-classic' || app.type === 'meta_classic') ? 'tiles__tile--classic' : '';
+    const isSmall = app.size === 'small';
+    const liveState = !isSmall && window.LiveTiles && typeof window.LiveTiles.getRenderState === 'function'
+        ? window.LiveTiles.getRenderState(app)
+        : { capable: false, enabled: false, active: false, refreshing: false, slideIndex: 0 };
+    const liveClasses = liveState.capable
+        ? `tiles__tile--live-capable ${liveState.enabled ? 'tiles__tile--live-enabled' : 'tiles__tile--live-disabled'} ${liveState.active ? 'tiles__tile--live-active' : ''} ${liveState.refreshing ? 'tiles__tile--live-refreshing' : ''}`
+        : '';
+    const liveMarkup = liveState.active && window.LiveTiles && typeof window.LiveTiles.renderLiveTileRegion === 'function'
+        ? window.LiveTiles.renderLiveTileRegion(app, {
+            baseVisualMarkup: visual.html,
+            baseLabelMarkup: `<span class="tiles__tile-label">${app.name}</span>`
+        })
+        : '';
+    const badgeMarkup = !isSmall && window.TileBadges && typeof window.TileBadges.renderBadgeMarkup === 'function'
+        ? window.TileBadges.renderBadgeMarkup(app)
+        : '';
+    const tileSpecs = app.tileSpecs || {};
+    const moveSpeed = Number.isFinite(Number(tileSpecs.moveSpeed)) ? Number(tileSpecs.moveSpeed) : '';
+    const staticMarkup = liveState.active ? '' : `${visual.html}<span class="tiles__tile-label">${app.name}</span>`;
 
     return `
-        <a href="" class="tiles__tile ${sizeClass} ${colorClass} ${imageClass} ${typeClass}" data-app="${app.id}" draggable="false">
-            ${tileContent}
+        <a href="" class="tiles__tile ${sizeClass} ${colorClass} ${imageClass} ${typeClass} ${liveClasses}" data-app="${app.id}" data-live-capable="${liveState.capable ? 'true' : 'false'}" data-live-enabled="${liveState.enabled ? 'true' : 'false'}" data-live-active="${liveState.active ? 'true' : 'false'}" data-live-slide-index="${liveState.slideIndex || 0}" data-live-move-speed="${moveSpeed}" draggable="false">
+            <div class="tiles__tile-hover-surface"></div>
+            ${staticMarkup}
+            ${liveMarkup}
+            ${badgeMarkup}
         </a>
     `;
 }
@@ -1245,7 +1307,7 @@ function emitRunningWindowsChanged(reason, windowData = null, extraDetail = {}) 
         return;
     }
 
-    document.dispatchEvent(new CustomEvent('win8:running-windows-changed', {
+    document.dispatchEvent(new CustomEvent('win9:running-windows-changed', {
         detail: {
             reason,
             windowId: windowData?.windowId || extraDetail.windowId || null,

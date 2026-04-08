@@ -30,6 +30,7 @@
             display: flex;
             flex-direction: column;
             width: 400px;
+            flex-shrink: 0;
             height: 100%;
             background: var(--ui-accent);
             padding: 40px 0;
@@ -174,6 +175,10 @@
             padding-bottom: 10px;
         }
 
+        .settings-content-title:not(:first-child) {
+            margin-top: 40px;
+        }
+
         .settings-section {
             margin-bottom: 40px;
         }
@@ -268,7 +273,7 @@
             flex-wrap: wrap;
             gap: 10px;
             margin-top: 20px;
-            width: 600px;
+            width: 720px;
         }
 
         .personalize-tile {
@@ -299,7 +304,7 @@
         }
 
         .personalize-tile.large {
-            width: 600px;
+            width: 720px;
             height: 337px;
         }
 
@@ -344,34 +349,370 @@
             text-decoration: underline;
         }
 
+        body:has(.settings-start-surfaces-page) .settings-start-surfaces-page {
+            max-width: 980px;
+        }
+
+        body:has(.settings-start-surfaces-page) .settings-start-surfaces-intro,
+        body:has(.settings-start-surfaces-page) .settings-start-surfaces-note,
+        body:has(.settings-start-surfaces-page) .settings-start-surfaces-mode-copy {
+            font-size: 14px;
+            line-height: 1.5;
+            color: #666;
+        }
+
+        body:has(.settings-start-surfaces-page) .settings-start-surfaces-intro {
+            margin: -8px 0 24px;
+            max-width: 760px;
+        }
+
+        body:has(.settings-start-surfaces-page) .settings-start-surfaces-mode-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 22px;
+        }
+
+        body:has(.settings-start-surfaces-page) .settings-start-surfaces-choice {
+            width: 100%;
+            padding: 0;
+            border: 2px solid #d7d7d7;
+            background: #fff;
+            text-align: left;
+            cursor: pointer;
+            transition: border-color 0.14s ease, transform 0.14s ease, box-shadow 0.14s ease;
+        }
+
+        body:has(.settings-start-surfaces-page) .settings-start-surfaces-choice:hover {
+            transform: translateY(-1px);
+            border-color: #bfbfbf;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.07);
+        }
+
+        body:has(.settings-start-surfaces-page) .settings-start-surfaces-choice.is-active {
+            border-color: var(--ui-accent);
+            box-shadow: 0 0 0 1px rgba(var(--accent-rgb, 0, 120, 215), 0.18);
+        }
+
+        body:has(.settings-start-surfaces-page) .settings-start-surfaces-choice-preview {
+            position: relative;
+            aspect-ratio: 16 / 10;
+            overflow: hidden;
+            background-color: var(--ui-wall-color, #2b2b2b);
+            background-size: cover;
+            background-position: center;
+        }
+
+        body:has(.settings-start-surfaces-page) .settings-start-surfaces-choice-desktop {
+            position: absolute;
+            inset: 0;
+        }
+
+        body:has(.settings-start-surfaces-page) .settings-start-surfaces-choice-taskbar {
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            height: 11%;
+            background: color-mix(in srgb, var(--ui-wall-color, #0078d7) 18%, #808080);
+            border-top: 1px solid rgba(0, 0, 0, 0.28);
+            display: flex;
+            align-items: center;
+            padding: 0 8px 0 6px;
+            gap: 5px;
+        }
+
+        body:has(.settings-start-surfaces-page) .settings-start-surfaces-choice-tb-logo {
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 5px;
+            opacity: 0.9;
+        }
+
+        body:has(.settings-start-surfaces-page) .settings-start-surfaces-choice-tb-logo svg {
+            width: 13px;
+            height: 13px;
+        }
+
+        body:has(.settings-start-surfaces-page) .settings-start-surfaces-choice-tb-dots {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            flex-shrink: 0;
+            margin-right: 5px;
+        }
+
+        body:has(.settings-start-surfaces-page) .settings-start-surfaces-choice-tb-dot {
+            width: 7px;
+            height: 7px;
+            background: rgba(255, 255, 255, 0.65);
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        body:has(.settings-start-surfaces-page) .settings-start-surfaces-choice-tb-apps {
+            display: flex;
+            gap: 4px;
+            flex: 1;
+        }
+
+        body:has(.settings-start-surfaces-page) .settings-start-surfaces-choice-tb-app {
+            width: 20px;
+            height: 20px;
+            background: rgba(255, 255, 255, 0.13);
+            flex-shrink: 0;
+        }
+
+        body:has(.settings-start-surfaces-page) .settings-start-surfaces-choice-tb-tray {
+            display: flex;
+            gap: 3px;
+            align-items: center;
+        }
+
+        body:has(.settings-start-surfaces-page) .settings-start-surfaces-choice-tb-tray-item {
+            width: 11px;
+            height: 11px;
+            background: rgba(255, 255, 255, 0.18);
+            flex-shrink: 0;
+        }
+
+        body:has(.settings-start-surfaces-page) .settings-start-surfaces-choice-tb-clock {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 3px;
+            flex-shrink: 0;
+        }
+
+        body:has(.settings-start-surfaces-page) .settings-start-surfaces-choice-tb-clock-row {
+            height: 4px;
+            background: rgba(255, 255, 255, 0.72);
+            width: 24px;
+        }
+
+        body:has(.settings-start-surfaces-page) .settings-start-surfaces-choice-tb-clock-row.short {
+            width: 18px;
+        }
+
+        body:has(.settings-start-surfaces-page) .settings-start-surfaces-choice-menu {
+            position: absolute;
+            left: 0;
+            bottom: 11%;
+            width: 40%;
+            height: 60%;
+            display: grid;
+            grid-template-columns: 49% 51%;
+            background: var(--preview-menu-color, var(--ui-wall-color, rgba(11, 11, 11, 0.84)));
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+        }
+
+        body:has(.settings-start-surfaces-page) .settings-start-surfaces-choice-menu.classic {
+            width: 22%;
+            grid-template-columns: 1fr;
+        }
+
+        body:has(.settings-start-surfaces-page) .settings-start-surfaces-choice-menu-left {
+            padding: 10px 9px;
+            background: transparent;
+            display: flex;
+            flex-direction: column;
+        }
+
+        body:has(.settings-start-surfaces-page) .settings-start-surfaces-choice-user-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 9px;
+            flex-shrink: 0;
+        }
+
+        body:has(.settings-start-surfaces-page) .settings-start-surfaces-choice-avatar {
+            width: 15px;
+            height: 15px;
+            background: rgba(255, 255, 255, 0.45);
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        body:has(.settings-start-surfaces-page) .settings-start-surfaces-choice-username {
+            height: 6px;
+            width: 52%;
+            background: rgba(255, 255, 255, 0.72);
+        }
+
+        body:has(.settings-start-surfaces-page) .settings-start-surfaces-choice-menu-sep {
+            height: 1px;
+            background: rgba(255, 255, 255, 0.11);
+            margin-bottom: 8px;
+            flex-shrink: 0;
+        }
+
+        body:has(.settings-start-surfaces-page) .settings-start-surfaces-choice-menu-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-bottom: 7px;
+        }
+
+        body:has(.settings-start-surfaces-page) .settings-start-surfaces-choice-item-icon {
+            width: 7px;
+            height: 7px;
+            background: rgba(255, 255, 255, 0.38);
+            flex-shrink: 0;
+        }
+
+        body:has(.settings-start-surfaces-page) .settings-start-surfaces-choice-item-text {
+            height: 6px;
+            background: rgba(255, 255, 255, 0.72);
+            flex: 1;
+        }
+
+        body:has(.settings-start-surfaces-page) .settings-start-surfaces-choice-item-text.short {
+            max-width: 52%;
+        }
+
+        body:has(.settings-start-surfaces-page) .settings-start-surfaces-choice-item-text.medium {
+            max-width: 68%;
+        }
+
+        body:has(.settings-start-surfaces-page) .settings-start-surfaces-choice-menu-right {
+            padding: 8px;
+            background: transparent;
+            width: 100%;
+        }
+
+        body:has(.settings-start-surfaces-page) .settings-start-surfaces-choice-titlebar {
+            width: 54%;
+            height: 10px;
+            background: rgba(255, 255, 255, 0.82);
+            margin-bottom: 12px;
+            opacity: 0.75;
+        }
+
+        body:has(.settings-start-surfaces-page) .settings-start-surfaces-choice-line {
+            height: 8px;
+            margin-bottom: 8px;
+            background: rgba(255, 255, 255, 0.8);
+            opacity: 0.78;
+        }
+
+        body:has(.settings-start-surfaces-page) .settings-start-surfaces-choice-line.short {
+            width: 62%;
+        }
+
+        body:has(.settings-start-surfaces-page) .settings-start-surfaces-choice-line.medium {
+            width: 78%;
+        }
+
+        body:has(.settings-start-surfaces-page) .settings-start-surfaces-choice-line.long {
+            width: 92%;
+        }
+
+        body:has(.settings-start-surfaces-page) .settings-start-surfaces-choice-tiles {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            grid-template-rows: repeat(4, 1fr);
+            gap: 4px;
+            height: 100%;
+        }
+
+        body:has(.settings-start-surfaces-page) .settings-start-surfaces-choice-tile {
+            background: rgba(255, 255, 255, 0.26);
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+        }
+
+        body:has(.settings-start-surfaces-page) .settings-start-surfaces-choice-tile.wide {
+            grid-column: span 2;
+        }
+
+        body:has(.settings-start-surfaces-page) .settings-start-surfaces-choice-tile.medium {
+            grid-column: span 1;
+        }
+
+        body:has(.settings-start-surfaces-page) .settings-start-surfaces-choice-copy {
+            padding: 16px 18px 18px;
+        }
+
+        body:has(.settings-start-surfaces-page) .settings-start-surfaces-choice-title {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            font-size: 24px;
+            font-weight: 300;
+            color: var(--ui-accent);
+        }
+
+        body:has(.settings-start-surfaces-page) .settings-start-surfaces-choice-pill {
+            padding: 2px 10px;
+            background: #ededed;
+            color: #555;
+            font-size: 11px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        body:has(.settings-start-surfaces-page) .settings-start-surfaces-choice.is-active .settings-start-surfaces-choice-pill {
+            background: var(--ui-accent);
+            color: #fff;
+        }
+
+        body:has(.settings-start-surfaces-page) .settings-start-surfaces-mode-copy {
+            margin-top: 18px;
+            max-width: 760px;
+        }
+
+        body:has(.settings-start-surfaces-page) .settings-start-surfaces-section {
+            margin-top: 34px;
+        }
+
+        body:has(.settings-start-surfaces-page) .settings-start-surfaces-swatches {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 14px;
+        }
+
+        body:has(.settings-start-surfaces-page) .settings-start-surfaces-swatch {
+            width: 34px;
+            height: 34px;
+            border: 2px solid transparent;
+            box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08);
+            cursor: pointer;
+            transition: transform 0.12s ease, border-color 0.12s ease, opacity 0.12s ease;
+        }
+
+        body:has(.settings-start-surfaces-page) .settings-start-surfaces-swatch:hover {
+            opacity: 0.86;
+            transform: translateY(-1px);
+        }
+
+        body:has(.settings-start-surfaces-page) .settings-start-surfaces-swatch.is-active {
+            border-color: var(--ui-accent);
+        }
+
+        body:has(.settings-start-surfaces-page) .settings-start-surfaces-swatch.is-active::after {
+            content: '';
+            display: block;
+            width: 100%;
+            height: 100%;
+            box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.72);
+        }
+
         /* Lock screen page */
         .settings-lock-screen-page {
             max-width: 860px;
         }
 
-        .settings-lock-screen-intro,
         .settings-lock-screen-note {
             font-size: 14px;
             line-height: 1.5;
             color: #666;
         }
 
-        .settings-lock-screen-intro {
-            margin: -8px 0 24px;
-        }
-
         .settings-lock-screen-stage {
-            display: grid;
-            grid-template-columns: minmax(0, 1fr) 220px;
-            gap: 28px;
-            align-items: start;
-            margin-bottom: 22px;
-        }
-
-        .settings-lock-screen-frame {
-            padding: 14px;
-            background: #2f2f2f;
-            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+            margin-bottom: 0;
         }
 
         .lock-screen-preview {
@@ -553,68 +894,54 @@
             font-family: 'Segoe UI', sans-serif;
         }
 
-        .settings-lock-screen-control-group {
-            margin-bottom: 18px;
+        .settings-lock-screen-browse-row {
+            padding: 10px 0 4px;
+        }
+
+        .settings-lock-screen-controls {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 24px;
+            padding: 14px 0 10px;
+            border-top: 1px solid #e0e0e0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .settings-lock-screen-controls-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
         }
 
         .settings-lock-screen-control-label,
         .settings-lock-screen-field-label {
             display: block;
-            margin-bottom: 10px;
-            font-size: 12px;
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
-            color: #666;
-        }
-
-        .settings-lock-screen-mode-group {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
-
-        .settings-lock-screen-mode-button {
-            min-width: 96px;
-            padding: 9px 14px;
-            border: 1px solid #cfcfcf;
-            background: #f5f5f5;
+            font-size: 15px;
             color: #222;
-            font-size: 13px;
-            cursor: pointer;
-            transition: background-color 0.12s ease, border-color 0.12s ease;
-        }
-
-        .settings-lock-screen-mode-button:hover,
-        .settings-lock-screen-status-app:hover {
-            background: #ededed;
-        }
-
-        .settings-lock-screen-mode-button.is-active {
-            border-color: var(--ui-accent);
-            background: rgba(var(--accent-rgb, 0, 120, 215), 0.08);
-            color: var(--ui-accent);
         }
 
         .lock-screen-wallpapers {
-            display: grid;
-            grid-template-columns: repeat(4, minmax(0, 1fr));
-            gap: 10px;
+            display: flex;
+            gap: 5px;
+            width: 100%;
+            padding-top: 12px;
         }
 
         .lock-screen-wallpaper-tile {
             position: relative;
-            width: 100%;
+            flex: 1;
             aspect-ratio: 1 / 1;
             overflow: hidden;
             border: 2px solid transparent;
             background: #1f1f1f;
             cursor: pointer;
-            transition: transform 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+            transition: border-color 0.1s ease, opacity 0.1s ease;
         }
 
         .lock-screen-wallpaper-tile:hover {
-            opacity: 0.8;
-            transform: translateY(-1px);
+            opacity: 0.88;
         }
 
         .lock-screen-wallpaper-tile.is-active {
@@ -629,25 +956,24 @@
 
         .lock-screen-wallpaper-check {
             position: absolute;
-            right: 8px;
-            bottom: 8px;
-            width: 22px;
-            height: 22px;
+            right: 4px;
+            bottom: 4px;
+            width: 18px;
+            height: 18px;
             display: inline-flex;
             align-items: center;
             justify-content: center;
             background: rgba(0, 0, 0, 0.55);
             color: #fff;
-            font-size: 13px;
+            font-size: 11px;
         }
 
         .browse-button {
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            min-width: 120px;
-            padding: 10px 18px;
-            margin-top: 16px;
+            min-width: 100px;
+            padding: 8px 16px;
             border: 1px solid #c7c7c7;
             background: #f3f3f3;
             color: #222;
@@ -850,7 +1176,7 @@
         }
 
         @media (max-width: 820px) {
-            .settings-lock-screen-stage {
+            body:has(.settings-start-surfaces-page) .settings-start-surfaces-mode-grid {
                 grid-template-columns: 1fr;
             }
 
@@ -874,12 +1200,90 @@
             }
         }
 
+        .settings-content-header {
+            display: none;
+        }
+
+        .settings-content-header .settings-back-btn {
+            margin-left: 0;
+            margin-right: 0;
+        }
+
+        /* Narrow mode — activated by ResizeObserver, not a media query */
+        .settings-container.narrow-mode {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .settings-container.narrow-mode .settings-sidebar {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            z-index: 1;
+            transform: translateX(0);
+            transition: transform 0.3s cubic-bezier(0.05, 0.7, 0.1, 1);
+        }
+
+        .settings-container.narrow-mode .settings-content {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            padding: 0;
+            transform: translateX(100%);
+            transition: transform 0.3s cubic-bezier(0.05, 0.7, 0.1, 1);
+        }
+
+        .settings-container.narrow-mode .settings-content-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+            padding: 40px 20px 30px 20px;
+            background: var(--ui-accent);
+            color: #fff;
+        }
+
+        .settings-container.narrow-mode .settings-content-header-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .settings-container.narrow-mode .settings-content-header-title {
+            font-size: 28px;
+            font-weight: 300;
+        }
+
+        .settings-container.narrow-mode .settings-content-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 40px 24px;
+        }
+
+        /* When content pane is shown, slide sidebar out left and content in */
+        .settings-container.narrow-mode.narrow-show-content .settings-sidebar {
+            transform: translateX(-100%);
+        }
+
+        .settings-container.narrow-mode.narrow-show-content .settings-content {
+            display: flex;
+            flex-direction: column;
+            transform: translateX(0);
+        }
+
         .settings-toggle-container {
             display: flex;
             align-items: center;
             justify-content: space-between;
             padding: 15px 0;
             border-bottom: 1px solid #e0e0e0;
+        }
+
+        .settings-toggle-container:last-child,
+        .settings-select-container:last-child,
+        .settings-toggle-container:has(+ .settings-content-title),
+        .settings-select-container:has(+ .settings-content-title) {
+            border-bottom: none;
         }
 
         .settings-toggle-label {
@@ -895,6 +1299,84 @@
         .settings-toggle-copy {
             flex: 1;
             padding-right: 20px;
+        }
+
+        .settings-select-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .settings-select-label {
+            flex: 1;
+            font-size: 15px;
+            padding-right: 20px;
+        }
+
+        .settings-dropdown-wrapper {
+            position: relative;
+        }
+
+        .settings-dropdown-trigger {
+            display: flex;
+            align-items: stretch;
+            min-width: 220px;
+            background: #fff;
+            border: 2px solid #C5C5C5;
+            padding: 0;
+            font-size: 12pt;
+            font-weight: 400;
+            font-family: inherit;
+            cursor: pointer;
+            color: #000;
+            text-align: left;
+        }
+
+        .settings-dropdown-trigger:focus {
+            outline: none;
+            border-color: var(--ui-accent);
+        }
+
+        .settings-dropdown-value {
+            flex: 1;
+            padding: 5px 8px;
+            line-height: 1.5;
+        }
+
+        .settings-dropdown-chevron {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            flex-shrink: 0;
+            font-size: 13px;
+            color: #444;
+        }
+
+        .settings-dropdown-menu {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            min-width: 100%;
+            margin-top: 2px;
+            z-index: 500;
+            transform: translateY(-8px);
+        }
+
+        .settings-dropdown-menu.active {
+            transform: translateY(0);
+        }
+
+        .settings-dropdown-trigger,
+        .settings-dropdown-item {
+            user-select: none;
+            white-space: nowrap;
+        }
+
+        .settings-dropdown-item.is-selected {
+            background: rgba(0, 0, 0, 0.06);
         }
 
         .settings-bluetooth-page {
@@ -1059,6 +1541,7 @@
         }
 
         @keyframes bluetoothSearchingPulse {
+
             0%,
             80%,
             100% {
@@ -1092,6 +1575,9 @@
                 <a href="#" class="active-scale-effect settings-category" data-category="pc-and-devices">
                     <span class="settings-category-name">PC and devices</span>
                 </a>
+                <a href="#" class="active-scale-effect settings-category" data-category="personalize">
+                    <span class="settings-category-name">Personalize</span>
+                </a>
                 <a href="#" class="active-scale-effect settings-category" data-category="accounts">
                     <span class="settings-category-name">Accounts</span>
                 </a>
@@ -1121,27 +1607,41 @@
         </div>
 
         <div class="settings-content" id="settings-content">
-            <div class="settings-content-wrapper">
-                <div class="settings-content-title">Personalize</div>
-
-                <div class="personalize-tiles">
-                    <div class="active-scale-effect personalize-tile large" id="tile-lock-screen">
-                        <img src="../../../resources/images/wallpapers/img100.jpg" alt="Lock screen">
-                        <div class="personalize-tile-label">Lock screen</div>
-                    </div>
-                    <div class="active-scale-effect personalize-tile user" id="tile-account-picture">
-                        <img src="../../../resources/images/user.png" alt="Account picture"
-                            style="object-fit: contain; background: #3a3a3a;">
-                        <div class="personalize-tile-label">Account picture</div>
-                    </div>
-                    <div class="active-scale-effect personalize-tile picpass">
-                        <img src="../../../resources/images/wallpapers/img101.png" alt="Picture password">
-                        <div class="personalize-tile-label">Picture password</div>
-                    </div>
+            <div class="settings-content-header" id="content-header">
+                <div class="settings-content-header-left">
+                    <button class="metro-back-btn settings-back-btn visible" id="content-header-back-btn">
+                        <span class="sui-back"></span>
+                    </button>
+                    <span class="settings-content-header-title" id="content-header-title"></span>
                 </div>
-
-                <a href="#" class="recently-used-link">View recently used settings</a>
+                <span class="settings-search-icon">
+                    <span class="sui-search"></span>
+                </span>
             </div>
+            <div class="settings-content-body" id="settings-content-body">
+                <div class="settings-content-wrapper">
+                    <div class="settings-content-title">Personalize</div>
+
+                    <div class="personalize-tiles">
+                        <div class="active-scale-effect personalize-tile large" id="tile-lock-screen">
+                            <img src="../../../resources/images/wallpapers/img100.jpg" alt="Lock screen">
+                            <div class="personalize-tile-label">Lock screen</div>
+                        </div>
+                        <div class="active-scale-effect personalize-tile user" id="tile-account-picture">
+                            <img src="../../../resources/images/user.png" alt="Account picture"
+                                style="object-fit: contain; background: #3a3a3a;">
+                            <div class="personalize-tile-label">Account picture</div>
+                        </div>
+                        <div class="active-scale-effect personalize-tile picpass">
+                            <img src="../../../resources/images/wallpapers/img101.png" alt="Picture password">
+                            <div class="personalize-tile-label">Picture password</div>
+                        </div>
+                    </div>
+
+                    <a href="#" class="recently-used-link" id="personalize-view-more-link">View more personalization
+                        settings</a>
+                </div>
+            </div><!-- /.settings-content-body -->
         </div>
     </div>
 
@@ -1169,6 +1669,68 @@
         let currentCategory = null;
         let currentItem = null;
         let settingsRenderToken = 0;
+
+        const settingsContainer = document.querySelector('.settings-container');
+
+        function isNarrowMode() {
+            return settingsContainer.classList.contains('narrow-mode');
+        }
+
+        function narrowShowContent() {
+            if (isNarrowMode()) {
+                contentHeaderTitle.textContent = sidebarTitleText.textContent;
+                settingsContainer.classList.add('narrow-show-content');
+            }
+        }
+
+        function narrowHideContent() {
+            settingsContainer.classList.remove('narrow-show-content');
+        }
+
+        function setNarrowMode(narrow) {
+            const wasNarrow = isNarrowMode();
+            if (narrow && !wasNarrow) {
+                settingsContainer.classList.add('narrow-mode');
+            } else if (!narrow && wasNarrow) {
+                settingsContainer.classList.remove('narrow-mode');
+                narrowHideContent();
+            }
+        }
+
+        const NARROW_BREAKPOINT = 720;
+        let isSnappedState = false;
+        let isNarrowWidthState = false;
+
+        function updateNarrowMode() {
+            setNarrowMode(isSnappedState || isNarrowWidthState);
+        }
+
+        // Watch width via ResizeObserver
+        const narrowModeObserver = new ResizeObserver(entries => {
+            for (const entry of entries) {
+                isNarrowWidthState = entry.contentRect.width < NARROW_BREAKPOINT;
+                updateNarrowMode();
+            }
+        });
+        narrowModeObserver.observe(settingsContainer);
+
+        // Watch snap state via MutationObserver on the parent app container.
+        // Use window.parent.AppsManager (known to be accessible) to get the
+        // container element directly — avoids any document querying issues.
+        try {
+            const appContainer = window.parent?.AppsManager?.getRunningApp?.('settings')?.$container?.[0];
+            if (appContainer) {
+                new MutationObserver(() => {
+                    isSnappedState = appContainer.classList.contains('snapped');
+                    updateNarrowMode();
+                }).observe(appContainer, { attributes: true, attributeFilter: ['class'] });
+
+                isSnappedState = appContainer.classList.contains('snapped');
+                updateNarrowMode();
+            }
+        } catch (e) {
+            // Restricted context — snap detection unavailable
+        }
 
         // Settings data will be loaded from JSON file
         let settingsData = {};
@@ -1205,6 +1767,21 @@
             return null;
         })();
 
+        function resolveShellContext(methodName) {
+            const contexts = [window, window.parent, window.top];
+            for (const ctx of contexts) {
+                if (!ctx) {
+                    continue;
+                }
+
+                if (!methodName || typeof ctx[methodName] === 'function') {
+                    return ctx;
+                }
+            }
+
+            return null;
+        }
+
         const settingsIpcRenderer = (function () {
             try {
                 if (typeof require === 'function') {
@@ -1216,10 +1793,10 @@
 
             try {
                 if (window.parent && window.parent !== window &&
-                    window.parent.Win8ElectronBridge &&
-                    typeof window.parent.Win8ElectronBridge.invoke === 'function') {
-                    console.log('[Settings] Using parent Win8ElectronBridge for IPC');
-                    return window.parent.Win8ElectronBridge;
+                    window.parent.Win9ElectronBridge &&
+                    typeof window.parent.Win9ElectronBridge.invoke === 'function') {
+                    console.log('[Settings] Using parent Win9ElectronBridge for IPC');
+                    return window.parent.Win9ElectronBridge;
                 }
             } catch (error) {
                 console.warn('[Settings] Parent IPC bridge is unavailable:', error);
@@ -1241,6 +1818,8 @@
         let bluetoothExpandedDeviceId = null;
         let bluetoothBusyDeviceId = null;
         let bluetoothBusyAction = null;
+        let taskbarSettingsPageState = null;
+        let cornersAndEdgesPageState = null;
 
         function escapeHtml(value) {
             return String(value || '')
@@ -1346,7 +1925,37 @@
         const MAX_RECENT_LOCK_WALLPAPERS = 8;
         const LOCK_SCREEN_PAGE_STATE_PATH = 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\ImmersiveControlPanel\\LockScreen';
         const LOCK_SCREEN_PAGE_STATE_VALUE = 'SimulatorState';
-        const LOCK_SCREEN_PAGE_LEGACY_STORAGE_KEY = 'win8-settings-lock-screen-state-v1';
+        const LOCK_SCREEN_PAGE_LEGACY_STORAGE_KEY = 'win9-settings-lock-screen-state-v1';
+        const PERSONALIZE_CATEGORY_ID = 'personalize';
+        const LEGACY_LOCK_SCREEN_CATEGORY_ID = 'pc-and-devices';
+        const TASKBAR_ADVANCED_REGISTRY_PATH = 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced';
+        const TASKBAR_STUCKRECTS2_REGISTRY_PATH = 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\StuckRects2';
+        const TASKBAR_SETTINGS_VALUE_NAMES = {
+            searchMode: 'ShowSearchButton',
+            showTaskViewButton: 'ShowTaskViewButton',
+            showNotificationCenterIcon: 'ShowNotificationCenterIcon'
+        };
+        const TASKBAR_POSITION_TO_LOCATION = Object.freeze({ 0: 'left', 1: 'top', 2: 'right', 3: 'bottom' });
+        const TASKBAR_LOCATION_TO_POSITION = Object.freeze({ left: 0, top: 1, right: 2, bottom: 3 });
+        const TASKBAR_GLOM_TO_BUTTONS = Object.freeze({ 0: 'always', 1: 'sometimes', 2: 'never' });
+        const TASKBAR_BUTTONS_TO_GLOM = Object.freeze({ always: 0, sometimes: 1, never: 2 });
+        const EDGE_UI_REGISTRY_PATH = 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\ImmersiveShell\\EdgeUI';
+        const START_SURFACES_SWATCHES = Object.freeze([
+            '#464646',
+            '#0078D7',
+            '#008A00',
+            '#D24726',
+            '#8C0095',
+            '#E3A21A',
+            '#00ABA9',
+            '#6A00FF'
+        ]);
+        const START_SURFACES_REGISTRY_PATH = 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\ImmersiveShell\\Launcher';
+        const START_SURFACES_MODE_VALUE = 'StartMenuDesktopMode';
+        const START_SURFACES_MODES = Object.freeze({
+            modern: 'modern',
+            classic: 'classic'
+        });
         const LOCK_SCREEN_STATUS_APPS = Object.freeze([
             { id: 'none', label: 'None', badge: '--', detailTitle: 'No app', detailText: 'No detailed status is currently selected.', iconClass: 'mif-blocked', tileColor: '#d0d0d0', supportsAlarm: false },
             { id: 'alarms', label: 'Alarms', badge: 'AL', detailTitle: 'Alarm', detailText: 'The next alarm is set for 6:30 AM.', iconClass: 'sui-alarm', tileColor: '#c22f5a', supportsAlarm: true },
@@ -1559,6 +2168,788 @@
 
         let lockScreenPageState = loadLockScreenPageState();
         let lockScreenChooserState = null;
+        let startSurfacesPageState = null;
+
+        function getSettingsRegistry() {
+            if (!registryAPI || typeof registryAPI.getRegistry !== 'function') {
+                return null;
+            }
+
+            try {
+                return registryAPI.getRegistry();
+            } catch (error) {
+                console.warn('[Settings] Failed to access registry instance:', error);
+                return null;
+            }
+        }
+
+        function getRegistryDwordType() {
+            return registryAPI && registryAPI.RegistryType && registryAPI.RegistryType.REG_DWORD
+                ? registryAPI.RegistryType.REG_DWORD
+                : 4;
+        }
+
+        function normalizeHexColor(color, fallback = '#464646') {
+            const rawValue = typeof color === 'string' ? color.trim() : '';
+            if (/^#[0-9a-f]{6}$/i.test(rawValue)) {
+                return rawValue.toUpperCase();
+            }
+            if (/^[0-9a-f]{6}$/i.test(rawValue)) {
+                return `#${rawValue.toUpperCase()}`;
+            }
+            return fallback;
+        }
+
+        function hexToRgbString(color) {
+            const normalized = normalizeHexColor(color);
+            const hex = normalized.slice(1);
+            const red = parseInt(hex.slice(0, 2), 16);
+            const green = parseInt(hex.slice(2, 4), 16);
+            const blue = parseInt(hex.slice(4, 6), 16);
+            return `${red}, ${green}, ${blue}`;
+        }
+
+        function isLockScreenTarget(categoryId, itemId) {
+            return itemId === 'lock-screen' && (
+                categoryId === PERSONALIZE_CATEGORY_ID ||
+                categoryId === LEGACY_LOCK_SCREEN_CATEGORY_ID
+            );
+        }
+
+        function normalizeNavigationTarget(categoryId, itemId) {
+            if (isLockScreenTarget(categoryId, itemId)) {
+                return {
+                    categoryId: PERSONALIZE_CATEGORY_ID,
+                    itemId: 'lock-screen'
+                };
+            }
+
+            return { categoryId, itemId };
+        }
+
+        function resolveColorRegistry() {
+            const contexts = [window, window.parent, window.top];
+            for (const ctx of contexts) {
+                if (ctx && ctx.ColorRegistry) {
+                    return ctx.ColorRegistry;
+                }
+            }
+            return null;
+        }
+
+        function getShellWallpaperUrl() {
+            const contexts = [window, window.parent, window.top];
+            for (const ctx of contexts) {
+                if (!ctx || !ctx.WallpaperController) continue;
+                try {
+                    const path = ctx.WallpaperController.getCurrentFullPath();
+                    if (!path) continue;
+                    const assetUrl = typeof ctx.toAssetUrl === 'function' ? ctx.toAssetUrl(path) : path;
+                    if (assetUrl && assetUrl.startsWith('resources/')) {
+                        return new URL('../../../' + assetUrl, window.location.href).href;
+                    }
+                    return assetUrl;
+                } catch (e) { }
+            }
+            return null;
+        }
+
+        let startSurfacesWallpaperThumb = null;
+
+        function getCachedWallpaperThumb(wallpaperUrl) {
+            return startSurfacesWallpaperThumb && startSurfacesWallpaperThumb.src === wallpaperUrl
+                ? startSurfacesWallpaperThumb.dataUrl
+                : null;
+        }
+
+        function preloadWallpaperThumb(wallpaperUrl) {
+            if (!wallpaperUrl) return;
+            if (startSurfacesWallpaperThumb && startSurfacesWallpaperThumb.src === wallpaperUrl) return;
+            const img = new Image();
+            img.onload = () => {
+                let dataUrl = wallpaperUrl;
+                try {
+                    const W = 320, H = 200;
+                    const canvas = document.createElement('canvas');
+                    canvas.width = W;
+                    canvas.height = H;
+                    const ctx = canvas.getContext('2d');
+                    const scale = Math.max(W / img.naturalWidth, H / img.naturalHeight);
+                    const sw = img.naturalWidth * scale;
+                    const sh = img.naturalHeight * scale;
+                    ctx.drawImage(img, (W - sw) / 2, (H - sh) / 2, sw, sh);
+                    dataUrl = canvas.toDataURL('image/jpeg', 0.72);
+                } catch (e) { }
+                startSurfacesWallpaperThumb = { src: wallpaperUrl, dataUrl };
+                if (document.querySelector('.settings-start-surfaces-page')) {
+                    renderStartSurfacesState(false);
+                }
+            };
+            img.onerror = () => {
+                startSurfacesWallpaperThumb = { src: wallpaperUrl, dataUrl: wallpaperUrl };
+            };
+            img.src = wallpaperUrl;
+        }
+
+        function getShellStartMenuColor() {
+            try {
+                const ctx = window.parent || window;
+                if (ctx && ctx.document) {
+                    const color = getComputedStyle(ctx.document.documentElement).getPropertyValue('--start-menu-color').trim();
+                    if (color) return color;
+                }
+            } catch (e) { }
+            return getComputedStyle(document.documentElement).getPropertyValue('--ui-wall-color').trim() || null;
+        }
+
+        function getCurrentAccentColor() {
+            return normalizeHexColor(
+                getComputedStyle(document.documentElement).getPropertyValue('--ui-accent').trim(),
+                '#464646'
+            );
+        }
+
+        function loadStartSurfacesPageState() {
+            const registry = getSettingsRegistry();
+            const colorRegistry = resolveColorRegistry();
+            const shellContext = resolveShellContext('getStartMenuDesktopMode');
+            let desktopMode = START_SURFACES_MODES.modern;
+            let accentColor = getCurrentAccentColor();
+
+            if (shellContext && typeof shellContext.getStartMenuDesktopMode === 'function') {
+                try {
+                    desktopMode = shellContext.getStartMenuDesktopMode();
+                } catch (error) {
+                    console.warn('[Settings] Failed to read Start menu desktop mode from shell context:', error);
+                }
+            } else if (registry) {
+                try {
+                    desktopMode = registry.getValue(START_SURFACES_REGISTRY_PATH, START_SURFACES_MODE_VALUE, START_SURFACES_MODES.modern);
+                } catch (error) {
+                    console.warn('[Settings] Failed to load Start surfaces mode from registry:', error);
+                }
+            }
+
+            if (colorRegistry && typeof colorRegistry.getAccentColorHex === 'function') {
+                try {
+                    accentColor = normalizeHexColor(colorRegistry.getAccentColorHex(accentColor), accentColor);
+                } catch (error) {
+                    console.warn('[Settings] Failed to load accent color for Start surfaces:', error);
+                }
+            }
+
+            return {
+                desktopMode: desktopMode === START_SURFACES_MODES.classic
+                    ? START_SURFACES_MODES.classic
+                    : START_SURFACES_MODES.modern,
+                accentColor
+            };
+        }
+
+        function getStartSurfacesState() {
+            if (!startSurfacesPageState) {
+                startSurfacesPageState = loadStartSurfacesPageState();
+            }
+
+            return startSurfacesPageState;
+        }
+
+        function getRegistryStringType() {
+            return registryAPI && registryAPI.RegistryType && registryAPI.RegistryType.REG_SZ
+                ? registryAPI.RegistryType.REG_SZ
+                : 1;
+        }
+
+        function persistStartSurfacesMode(mode) {
+            const registry = getSettingsRegistry();
+            if (!registry) {
+                return;
+            }
+
+            registry.setValue(
+                START_SURFACES_REGISTRY_PATH,
+                START_SURFACES_MODE_VALUE,
+                mode === START_SURFACES_MODES.classic ? START_SURFACES_MODES.classic : START_SURFACES_MODES.modern,
+                getRegistryStringType()
+            );
+        }
+
+        function broadcastStartMenuDesktopMode(mode) {
+            const normalizedMode = mode === START_SURFACES_MODES.classic
+                ? START_SURFACES_MODES.classic
+                : START_SURFACES_MODES.modern;
+            const contexts = [window.parent, window.top];
+            contexts.forEach((ctx) => {
+                if (!ctx || ctx === window) {
+                    return;
+                }
+
+                try {
+                    ctx.postMessage({
+                        action: 'setStartMenuDesktopMode',
+                        mode: normalizedMode
+                    }, '*');
+                } catch (error) {
+                    console.warn('[Settings] Failed to post Start menu desktop mode message:', error);
+                }
+            });
+        }
+
+        function applyStartSurfacesMode(mode) {
+            const normalizedMode = mode === START_SURFACES_MODES.classic
+                ? START_SURFACES_MODES.classic
+                : START_SURFACES_MODES.modern;
+            const shellContext = resolveShellContext('setStartMenuDesktopMode');
+            let appliedLive = false;
+
+            if (shellContext && typeof shellContext.setStartMenuDesktopMode === 'function') {
+                try {
+                    shellContext.setStartMenuDesktopMode(normalizedMode);
+                    appliedLive = true;
+                } catch (error) {
+                    console.warn('[Settings] Failed to apply Start menu desktop mode via shell context:', error);
+                }
+            }
+
+            persistStartSurfacesMode(normalizedMode);
+
+            if (!appliedLive) {
+                broadcastStartMenuDesktopMode(normalizedMode);
+            }
+
+            startSurfacesPageState = {
+                ...getStartSurfacesState(),
+                desktopMode: normalizedMode
+            };
+            renderStartSurfacesState(false);
+        }
+
+        function applyStartSurfacesAccentColor(color) {
+            const normalized = normalizeHexColor(color, getCurrentAccentColor());
+            const colorRegistry = resolveColorRegistry();
+
+            if (colorRegistry) {
+                try {
+                    if (typeof colorRegistry.saveColorSettings === 'function') {
+                        colorRegistry.saveColorSettings({ selectedColor: normalized });
+                    } else if (typeof colorRegistry.setAccentColorHex === 'function') {
+                        colorRegistry.setAccentColorHex(normalized);
+                    }
+                } catch (error) {
+                    console.warn('[Settings] Failed to persist accent color from Start surfaces:', error);
+                }
+            }
+
+            if (window.parent && typeof window.parent.setAccentColors === 'function') {
+                window.parent.setAccentColors(normalized);
+            } else {
+                document.documentElement.style.setProperty('--ui-accent', normalized);
+            }
+
+            startSurfacesPageState = {
+                ...getStartSurfacesState(),
+                accentColor: normalized
+            };
+            renderStartSurfacesState(false);
+        }
+
+        function renderStartSurfacesSwatches(state) {
+            return START_SURFACES_SWATCHES.map((color) => `
+                <button class="settings-start-surfaces-swatch ${normalizeHexColor(state.accentColor) === color ? 'is-active' : ''}"
+                    type="button"
+                    data-start-surfaces-accent="${escapeHtml(color)}"
+                    style="background:${escapeHtml(color)};"
+                    aria-label="Set accent color to ${escapeHtml(color)}"></button>
+            `).join('');
+        }
+
+        function renderStartSurfacesModeChoice(mode, state) {
+            const isClassic = mode === START_SURFACES_MODES.classic;
+            const isActive = state.desktopMode === mode;
+            const wallpaperUrl = getShellWallpaperUrl();
+            const thumbUrl = wallpaperUrl ? (getCachedWallpaperThumb(wallpaperUrl) || wallpaperUrl) : null;
+            const menuColor = getShellStartMenuColor();
+            const previewInlineStyle = [
+                `--accent-rgb: ${escapeHtml(hexToRgbString(state.accentColor))}`,
+                menuColor ? `--preview-menu-color: ${escapeHtml(menuColor)}` : '',
+                thumbUrl ? `background-image: linear-gradient(rgba(0,0,0,0.28), rgba(0,0,0,0.28)), url('${thumbUrl}')` : ''
+            ].filter(Boolean).join('; ');
+            return `
+                <button class="settings-start-surfaces-choice ${isActive ? 'is-active' : ''}"
+                    type="button"
+                    data-start-surfaces-mode="${escapeHtml(mode)}">
+                    <div class="settings-start-surfaces-choice-preview" style="${previewInlineStyle};">
+                        <div class="settings-start-surfaces-choice-desktop">
+                            <div class="settings-start-surfaces-choice-menu ${isClassic ? 'classic' : 'modern'}">
+                                <div class="settings-start-surfaces-choice-menu-left">
+                                    <div class="settings-start-surfaces-choice-user-row">
+                                        <div class="settings-start-surfaces-choice-avatar"></div>
+                                        <div class="settings-start-surfaces-choice-username"></div>
+                                    </div>
+                                    <div class="settings-start-surfaces-choice-menu-sep"></div>
+                                    <div class="settings-start-surfaces-choice-menu-item">
+                                        <div class="settings-start-surfaces-choice-item-icon"></div>
+                                        <div class="settings-start-surfaces-choice-item-text"></div>
+                                    </div>
+                                    <div class="settings-start-surfaces-choice-menu-item">
+                                        <div class="settings-start-surfaces-choice-item-icon"></div>
+                                        <div class="settings-start-surfaces-choice-item-text medium"></div>
+                                    </div>
+                                    <div class="settings-start-surfaces-choice-menu-item">
+                                        <div class="settings-start-surfaces-choice-item-icon"></div>
+                                        <div class="settings-start-surfaces-choice-item-text short"></div>
+                                    </div>
+                                    <div class="settings-start-surfaces-choice-menu-item">
+                                        <div class="settings-start-surfaces-choice-item-icon"></div>
+                                        <div class="settings-start-surfaces-choice-item-text medium"></div>
+                                    </div>
+                                    <div class="settings-start-surfaces-choice-menu-item">
+                                        <div class="settings-start-surfaces-choice-item-icon"></div>
+                                        <div class="settings-start-surfaces-choice-item-text short"></div>
+                                    </div>
+                                </div>
+                                ${isClassic ? '' : `
+                                    <div class="settings-start-surfaces-choice-menu-right">
+                                        <div class="settings-start-surfaces-choice-tiles">
+                                            <div class="settings-start-surfaces-choice-tile wide"></div>
+                                            <div class="settings-start-surfaces-choice-tile medium"></div>
+                                            <div class="settings-start-surfaces-choice-tile medium"></div>
+                                            <div class="settings-start-surfaces-choice-tile wide"></div>
+                                            <div class="settings-start-surfaces-choice-tile medium"></div>
+                                            <div class="settings-start-surfaces-choice-tile medium"></div>
+                                        </div>
+                                    </div>
+                                `}
+                            </div>
+                            <div class="settings-start-surfaces-choice-taskbar">
+                                <div class="settings-start-surfaces-choice-tb-logo">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12">
+                                        <rect x="0" y="0" width="5.5" height="5.5" fill="white"/>
+                                        <rect x="6.5" y="0" width="5.5" height="5.5" fill="white"/>
+                                        <rect x="0" y="6.5" width="5.5" height="5.5" fill="white"/>
+                                        <rect x="6.5" y="6.5" width="5.5" height="5.5" fill="white"/>
+                                    </svg>
+                                </div>
+                                <div class="settings-start-surfaces-choice-tb-dots">
+                                    <div class="settings-start-surfaces-choice-tb-dot"></div>
+                                    <div class="settings-start-surfaces-choice-tb-dot"></div>
+                                </div>
+                                <div class="settings-start-surfaces-choice-tb-apps">
+                                    <div class="settings-start-surfaces-choice-tb-app"></div>
+                                    <div class="settings-start-surfaces-choice-tb-app"></div>
+                                    <div class="settings-start-surfaces-choice-tb-app"></div>
+                                </div>
+                                <div class="settings-start-surfaces-choice-tb-tray">
+                                    <div class="settings-start-surfaces-choice-tb-tray-item"></div>
+                                    <div class="settings-start-surfaces-choice-tb-tray-item"></div>
+                                    <div class="settings-start-surfaces-choice-tb-tray-item"></div>
+                                    <div class="settings-start-surfaces-choice-tb-clock">
+                                        <div class="settings-start-surfaces-choice-tb-clock-row"></div>
+                                        <div class="settings-start-surfaces-choice-tb-clock-row short"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="settings-start-surfaces-choice-copy">
+                        <div class="settings-start-surfaces-choice-title">
+                            <span>${isClassic ? 'Classic' : 'Modern'}</span>
+                            <span class="settings-start-surfaces-choice-pill">${isActive ? 'Selected' : 'Desktop Start'}</span>
+                        </div>
+                        <div class="settings-start-surfaces-note">
+                            ${isClassic
+                    ? 'Hide the desktop Start menu tiles and focus on the app list.'
+                    : 'Show the desktop Start menu tiles alongside the app list.'}
+                        </div>
+                    </div>
+                </button>
+            `;
+        }
+
+        function renderStartSurfacesSettingsContent() {
+            const state = getStartSurfacesState();
+
+            return `
+                <div class="settings-start-surfaces-page">
+                    <div class="settings-content-title">Start surfaces</div>
+                    <div class="settings-start-surfaces-intro">
+                        Choose how the desktop Start menu should present itself. This choice does not affect tablet or full-screen Start.
+                    </div>
+                    <div class="settings-start-surfaces-mode-grid">
+                        ${renderStartSurfacesModeChoice(START_SURFACES_MODES.modern, state)}
+                        ${renderStartSurfacesModeChoice(START_SURFACES_MODES.classic, state)}
+                    </div>
+                    <div class="settings-start-surfaces-section">
+                        <div class="settings-content-title">Accent color</div>
+                        <div class="settings-start-surfaces-note">
+                            Choose the accent shared by Start and other modern surfaces.
+                        </div>
+                        <div class="settings-start-surfaces-swatches">
+                            ${renderStartSurfacesSwatches(state)}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderStartSurfacesState(animate = false) {
+            const wallpaperUrl = getShellWallpaperUrl();
+            if (wallpaperUrl && !getCachedWallpaperThumb(wallpaperUrl)) {
+                preloadWallpaperThumb(wallpaperUrl);
+            }
+            const wrapper = updateSettingsContentWrapper(renderStartSurfacesSettingsContent(), animate);
+            applyShellUserProfile(document);
+            setupStartSurfacesPageHandlers(wrapper);
+        }
+
+        function setupStartSurfacesPageHandlers(root = document) {
+            const scopedRoot = root && typeof root.querySelector === 'function' ? root : document;
+
+            scopedRoot.querySelectorAll('[data-start-surfaces-mode]').forEach((button) => {
+                button.addEventListener('click', function () {
+                    const mode = this.getAttribute('data-start-surfaces-mode');
+                    if (!mode) {
+                        return;
+                    }
+
+                    applyStartSurfacesMode(mode);
+                });
+            });
+
+            scopedRoot.querySelectorAll('[data-start-surfaces-accent]').forEach((button) => {
+                button.addEventListener('click', function () {
+                    const color = this.getAttribute('data-start-surfaces-accent');
+                    if (!color) {
+                        return;
+                    }
+
+                    applyStartSurfacesAccentColor(color);
+                });
+            });
+        }
+
+        function loadTaskbarSettingsPageState() {
+            const defaults = {
+                locked: true, autoHide: false, smallIcons: false, showUserTile: true,
+                location: 'bottom', taskbarButtons: 'always',
+                searchMode: 'icon', showTaskViewButton: true, showNotificationCenterIcon: true
+            };
+            const registry = getSettingsRegistry();
+            if (!registry) {
+                return { ...defaults };
+            }
+
+            try {
+                let locked = true, autoHide = false, location = 'bottom';
+                if (registryAPI && typeof registryAPI.decodeStuckRects2 === 'function') {
+                    const binary = registry.getValue(TASKBAR_STUCKRECTS2_REGISTRY_PATH, 'Settings');
+                    if (binary) {
+                        const decoded = registryAPI.decodeStuckRects2(binary);
+                        locked = decoded.locked !== undefined ? !!decoded.locked : true;
+                        autoHide = !!decoded.autoHide;
+                        location = TASKBAR_POSITION_TO_LOCATION[decoded.position] || 'bottom';
+                    }
+                }
+
+                const glomLevel = registry.getValue(TASKBAR_ADVANCED_REGISTRY_PATH, 'TaskbarGlomLevel', 0);
+
+                return {
+                    locked,
+                    autoHide,
+                    smallIcons: Number(registry.getValue(TASKBAR_ADVANCED_REGISTRY_PATH, 'TaskbarSmallIcons', 0)) === 1,
+                    showUserTile: Number(registry.getValue(TASKBAR_ADVANCED_REGISTRY_PATH, 'ShowUserTile', 1)) !== 0,
+                    location,
+                    taskbarButtons: TASKBAR_GLOM_TO_BUTTONS[glomLevel] || 'always',
+                    searchMode: (() => { const v = Number(registry.getValue(TASKBAR_ADVANCED_REGISTRY_PATH, TASKBAR_SETTINGS_VALUE_NAMES.searchMode, 1)); return v === 2 ? 'box' : v === 0 ? 'off' : 'icon'; })(),
+                    showTaskViewButton: Number(registry.getValue(TASKBAR_ADVANCED_REGISTRY_PATH, TASKBAR_SETTINGS_VALUE_NAMES.showTaskViewButton, 1)) !== 0,
+                    showNotificationCenterIcon: Number(registry.getValue(TASKBAR_ADVANCED_REGISTRY_PATH, TASKBAR_SETTINGS_VALUE_NAMES.showNotificationCenterIcon, 1)) !== 0
+                };
+            } catch (error) {
+                console.warn('[Settings] Failed to load taskbar settings from registry:', error);
+                return { ...defaults };
+            }
+        }
+
+        function getTaskbarSettingsPageState() {
+            if (!taskbarSettingsPageState) {
+                taskbarSettingsPageState = loadTaskbarSettingsPageState();
+            }
+            return taskbarSettingsPageState;
+        }
+
+        function persistTaskbarSetting(key, value) {
+            const registry = getSettingsRegistry();
+            if (!registry || !TASKBAR_SETTINGS_VALUE_NAMES[key]) {
+                return;
+            }
+
+            try {
+                const dwordValue = key === 'searchMode'
+                    ? ({ icon: 1, box: 2, off: 0 }[value] ?? 1)
+                    : (value ? 1 : 0);
+                registry.setValue(TASKBAR_ADVANCED_REGISTRY_PATH, TASKBAR_SETTINGS_VALUE_NAMES[key], dwordValue, getRegistryDwordType());
+            } catch (error) {
+                console.warn('[Settings] Failed to persist taskbar setting:', key, error);
+            }
+        }
+
+        function broadcastTaskbarSettingChange(key, value) {
+            const contexts = [window.parent, window.top];
+            const settings = {};
+            settings[key] = value;
+            contexts.forEach((ctx) => {
+                if (!ctx || ctx === window) {
+                    return;
+                }
+                try {
+                    ctx.postMessage({ action: 'applyTaskbarSettings', settings }, '*');
+                } catch (error) {
+                    console.warn('[Settings] Failed to broadcast taskbar setting change:', error);
+                }
+            });
+        }
+
+        function applyTaskbarSettingToggle(key) {
+            const state = getTaskbarSettingsPageState();
+            const newValue = !state[key];
+            persistTaskbarSetting(key, newValue);
+            broadcastTaskbarSettingChange(key, newValue);
+            taskbarSettingsPageState = { ...state, [key]: newValue };
+            renderTaskbarSettingsState(false);
+        }
+
+        function applyTaskbarSettingSelect(key, value) {
+            const state = getTaskbarSettingsPageState();
+            const registry = getSettingsRegistry();
+
+            if (key === 'location') {
+                if (registry && registryAPI && typeof registryAPI.decodeStuckRects2 === 'function' && typeof registryAPI.encodeStuckRects2 === 'function') {
+                    try {
+                        const binary = registry.getValue(TASKBAR_STUCKRECTS2_REGISTRY_PATH, 'Settings');
+                        const existing = binary ? registryAPI.decodeStuckRects2(binary) : { autoHide: false, alwaysOnTop: false, locked: true, height: 40, position: 3 };
+                        existing.position = TASKBAR_LOCATION_TO_POSITION[value] ?? 3;
+                        const regBinaryType = registryAPI.RegistryType ? registryAPI.RegistryType.REG_BINARY : 3;
+                        registry.setValue(TASKBAR_STUCKRECTS2_REGISTRY_PATH, 'Settings', Array.from(registryAPI.encodeStuckRects2(existing)), regBinaryType);
+                    } catch (error) {
+                        console.warn('[Settings] Failed to persist taskbar location:', error);
+                    }
+                }
+            } else if (key === 'taskbarButtons') {
+                if (registry) {
+                    try {
+                        registry.setValue(TASKBAR_ADVANCED_REGISTRY_PATH, 'TaskbarGlomLevel', TASKBAR_BUTTONS_TO_GLOM[value] ?? 0, getRegistryDwordType());
+                    } catch (error) {
+                        console.warn('[Settings] Failed to persist taskbar buttons setting:', error);
+                    }
+                }
+            } else if (key === 'searchMode') {
+                persistTaskbarSetting(key, value);
+            }
+
+            broadcastTaskbarSettingChange(key, value);
+            taskbarSettingsPageState = { ...state, [key]: value };
+            renderTaskbarSettingsState(false);
+        }
+
+        function renderTaskbarSettingsContent() {
+            const state = getTaskbarSettingsPageState();
+
+            const toggleRow = (label, key) => `
+                <div class="settings-toggle-container">
+                    <div class="settings-toggle-copy">
+                        <div class="settings-toggle-label">${escapeHtml(label)}</div>
+                    </div>
+                    <button class="modern-switch ${state[key] ? 'is-on' : ''}"
+                        type="button"
+                        data-taskbar-settings-toggle="${escapeHtml(key)}"
+                        aria-pressed="${state[key] ? 'true' : 'false'}">
+                        <span class="modern-switch-thumb"></span>
+                    </button>
+                </div>
+            `;
+
+            const selectRow = (label, key, options) => {
+                const current = options.find(o => o.value === state[key]) || options[0];
+                return `
+                <div class="settings-select-container">
+                    <div class="settings-select-label">${escapeHtml(label)}</div>
+                    <div class="settings-dropdown-wrapper">
+                        <button class="settings-dropdown-trigger" type="button"
+                            data-taskbar-settings-select="${escapeHtml(key)}">
+                            <span class="settings-dropdown-value">${escapeHtml(current.label)}</span>
+                            <span class="settings-dropdown-chevron sui-chevron-down"></span>
+                        </button>
+                        <div class="modern-dropdown settings-dropdown-menu">
+                            ${options.map(opt => `
+                                <div class="modern-dropdown-item settings-dropdown-item${state[key] === opt.value ? ' is-selected' : ''}"
+                                    data-taskbar-settings-select="${escapeHtml(key)}"
+                                    data-select-value="${escapeHtml(opt.value)}">
+                                    ${escapeHtml(opt.label)}
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+            };
+
+            return `
+                <div class="settings-content-title">Taskbar</div>
+                ${toggleRow('Lock the taskbar', 'locked')}
+                ${toggleRow('Auto-hide the taskbar', 'autoHide')}
+                ${toggleRow('Use small taskbar buttons', 'smallIcons')}
+                ${selectRow('Taskbar location on screen', 'location', [
+                { value: 'bottom', label: 'Bottom' },
+                { value: 'top', label: 'Top' },
+                { value: 'left', label: 'Left' },
+                { value: 'right', label: 'Right' }
+            ])}
+                ${selectRow('Taskbar buttons', 'taskbarButtons', [
+                { value: 'always', label: 'Always combine, hide labels' },
+                { value: 'sometimes', label: 'Combine when taskbar is full' },
+                { value: 'never', label: 'Never combine' }
+            ])}
+                <div class="settings-content-title">Show on the taskbar</div>
+                ${selectRow('Search', 'searchMode', [
+                { value: 'icon', label: 'Search icon' },
+                { value: 'box', label: 'Search box' },
+                { value: 'off', label: 'Off' }
+            ])}
+                ${toggleRow('Task View', 'showTaskViewButton')}
+                ${toggleRow('Notifications', 'showNotificationCenterIcon')}
+                ${toggleRow('User tile', 'showUserTile')}
+            `;
+        }
+
+        function renderTaskbarSettingsState(animate = false) {
+            const wrapper = updateSettingsContentWrapper(renderTaskbarSettingsContent(), animate);
+            setupTaskbarSettingsHandlers(wrapper);
+        }
+
+        function setupTaskbarSettingsHandlers(root = document) {
+            const scopedRoot = root && typeof root.querySelector === 'function' ? root : document;
+
+            scopedRoot.querySelectorAll('[data-taskbar-settings-toggle]').forEach((button) => {
+                button.addEventListener('click', function () {
+                    const key = this.getAttribute('data-taskbar-settings-toggle');
+                    if (!key) return;
+                    applyTaskbarSettingToggle(key);
+                });
+            });
+
+            scopedRoot.querySelectorAll('.settings-dropdown-trigger').forEach((trigger) => {
+                trigger.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    const wrapper = this.parentElement;
+                    const menu = wrapper && wrapper.querySelector('.settings-dropdown-menu');
+                    if (!menu) return;
+                    const isOpen = menu.classList.contains('active');
+                    scopedRoot.querySelectorAll('.settings-dropdown-menu.active').forEach(m => m.classList.remove('active'));
+                    if (!isOpen) menu.classList.add('active');
+                });
+            });
+
+            scopedRoot.querySelectorAll('.settings-dropdown-item').forEach((item) => {
+                item.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    const key = this.getAttribute('data-taskbar-settings-select');
+                    const value = this.getAttribute('data-select-value');
+                    if (!key || value == null) return;
+                    applyTaskbarSettingSelect(key, value);
+                });
+            });
+
+            if (!document._settingsDropdownOutsideHandler) {
+                document._settingsDropdownOutsideHandler = function () {
+                    document.querySelectorAll('.settings-dropdown-menu.active').forEach(m => m.classList.remove('active'));
+                };
+                document.addEventListener('click', document._settingsDropdownOutsideHandler);
+            }
+        }
+
+        function loadCornersAndEdgesPageState() {
+            const registry = getSettingsRegistry();
+            if (!registry) {
+                return { charmsHotCornersEnabled: true };
+            }
+
+            try {
+                const disableCharms = registry.getValue(EDGE_UI_REGISTRY_PATH, 'DisableCharmsHint', 0);
+                return { charmsHotCornersEnabled: Number(disableCharms) === 0 };
+            } catch (error) {
+                console.warn('[Settings] Failed to load corners and edges settings from registry:', error);
+                return { charmsHotCornersEnabled: true };
+            }
+        }
+
+        function getCornersAndEdgesPageState() {
+            if (!cornersAndEdgesPageState) {
+                cornersAndEdgesPageState = loadCornersAndEdgesPageState();
+            }
+            return cornersAndEdgesPageState;
+        }
+
+        function applyCornersAndEdgesToggle(key) {
+            const state = getCornersAndEdgesPageState();
+            const newValue = !state[key];
+            const registry = getSettingsRegistry();
+
+            if (registry) {
+                try {
+                    // charmsHotCornersEnabled is inverted in registry (DisableCharmsHint)
+                    registry.setValue(EDGE_UI_REGISTRY_PATH, 'DisableCharmsHint', newValue ? 0 : 1, getRegistryDwordType());
+                } catch (error) {
+                    console.warn('[Settings] Failed to persist corners and edges setting:', error);
+                }
+            }
+
+            const contexts = [window.parent, window.top];
+            contexts.forEach((ctx) => {
+                if (!ctx || ctx === window) return;
+                try {
+                    ctx.postMessage({ action: 'applyTaskbarSettings', settings: { navigation: { [key]: newValue } } }, '*');
+                } catch (error) {
+                    console.warn('[Settings] Failed to broadcast corners and edges setting change:', error);
+                }
+            });
+
+            cornersAndEdgesPageState = { ...state, [key]: newValue };
+            renderCornersAndEdgesState(false);
+        }
+
+        function renderCornersAndEdgesContent() {
+            const state = getCornersAndEdgesPageState();
+            return `
+                <div class="settings-content-title">Corner navigation</div>
+                <div class="settings-toggle-container">
+                    <div class="settings-toggle-copy">
+                        <div class="settings-toggle-label">When I point to the upper-right corner, show the charms</div>
+                    </div>
+                    <button class="modern-switch ${state.charmsHotCornersEnabled ? 'is-on' : ''}"
+                        type="button"
+                        data-corners-toggle="charmsHotCornersEnabled"
+                        aria-pressed="${state.charmsHotCornersEnabled ? 'true' : 'false'}">
+                        <span class="modern-switch-thumb"></span>
+                    </button>
+                </div>
+            `;
+        }
+
+        function renderCornersAndEdgesState(animate = false) {
+            const wrapper = updateSettingsContentWrapper(renderCornersAndEdgesContent(), animate);
+            setupCornersAndEdgesHandlers(wrapper);
+        }
+
+        function setupCornersAndEdgesHandlers(root = document) {
+            const scopedRoot = root && typeof root.querySelector === 'function' ? root : document;
+            scopedRoot.querySelectorAll('[data-corners-toggle]').forEach((button) => {
+                button.addEventListener('click', function () {
+                    const key = this.getAttribute('data-corners-toggle');
+                    if (!key) return;
+                    applyCornersAndEdgesToggle(key);
+                });
+            });
+        }
 
         function getLockScreenStatusApp(appId) {
             return LOCK_SCREEN_STATUS_APPS.find((app) => app.id === appId) || LOCK_SCREEN_STATUS_APPS[0];
@@ -1590,8 +2981,8 @@
             return `
                 <span class="lock-screen-app-icon ${variant === 'preview' ? 'is-preview' : ''}" aria-label="${escapeHtml(ariaLabel)}">
                     ${isEmpty
-                        ? `<span class="lock-screen-app-icon-plus">+</span>`
-                        : `<span class="${escapeHtml(iconClass)}"></span>`}
+                    ? `<span class="lock-screen-app-icon-plus">+</span>`
+                    : `<span class="${escapeHtml(iconClass)}"></span>`}
                 </span>
             `;
         }
@@ -1752,7 +3143,7 @@
                     </div>
                 </div>
 
-                <a href="#" class="recently-used-link">View recently used settings</a>
+                <a href="#" class="recently-used-link" id="personalize-view-more-link">View more personalization settings</a>
             `;
             return temp.innerHTML;
         }
@@ -1776,7 +3167,14 @@
         const sidebarTitle = document.getElementById('sidebar-title');
         const sidebarTitleText = document.getElementById('sidebar-title-text');
         const mainMenu = document.getElementById('main-menu');
-        const settingsContent = document.getElementById('settings-content');
+        const settingsContent = document.getElementById('settings-content-body');
+        const contentHeader = document.getElementById('content-header');
+        const contentHeaderTitle = document.getElementById('content-header-title');
+        const contentHeaderBackBtn = document.getElementById('content-header-back-btn');
+
+        contentHeaderBackBtn.addEventListener('click', function () {
+            narrowHideContent();
+        });
 
         function renderLockScreenPreviewFigure() {
             const now = latestTimeSnapshot && latestTimeSnapshot.now instanceof Date
@@ -1807,9 +3205,9 @@
                                     <div class="lock-screen-date">${escapeHtml(dateStr)}</div>
                                     <div class="lock-screen-preview-quick" aria-hidden="true">
                                         ${filledQuickApps.map((appId) => {
-                                            const app = getLockScreenStatusApp(appId);
-                                            return `<span class="lock-screen-preview-quick-slot">${getLockScreenAppIconMarkup(app, 'preview')}</span>`;
-                                        }).join('')}
+                const app = getLockScreenStatusApp(appId);
+                return `<span class="lock-screen-preview-quick-slot">${getLockScreenAppIconMarkup(app, 'preview')}</span>`;
+            }).join('')}
                                         ${Array.from({ length: emptySlots }, () => '<span class="lock-screen-preview-quick-slot is-empty"><span class="lock-screen-app-icon is-preview"><span class="sui-add"></span></span></span>').join('')}
                                     </div>
                                 </div>
@@ -1829,57 +3227,46 @@
         }
 
         function renderLockScreenWallpaperChooser() {
-            const label = lockScreenPageState.backgroundMode === 'slideshow'
-                ? 'Pictures for your slide show'
-                : 'Choose your picture';
+            const isSlideshowMode = lockScreenPageState.backgroundMode === 'slideshow';
+
+            const wallpaperTiles = lockScreenWallpapers.map((wallpaper) => {
+                const isActive = wallpaper === currentLockScreenWallpaper;
+                const tileType = isActive ? currentLockScreenWallpaperType : 'builtin';
+                const tileSrc = resolveLockScreenImageSrc(wallpaper, tileType);
+                return `
+                    <button class="lock-screen-wallpaper-tile ${isActive ? 'is-active' : ''}"
+                        type="button"
+                        data-lock-screen-wallpaper="${escapeHtml(wallpaper)}"
+                        data-lock-screen-wallpaper-type="${escapeHtml(tileType)}">
+                        <img src="${escapeHtml(tileSrc)}" alt="Lock screen wallpaper">
+                        ${isActive ? '<span class="lock-screen-wallpaper-check"><span class="sui-accept"></span></span>' : ''}
+                    </button>
+                `;
+            }).join('');
 
             return `
-                <div class="settings-lock-screen-control-group">
-                    <span class="settings-lock-screen-control-label">Background</span>
-                    <div class="settings-lock-screen-mode-group">
-                        <button class="settings-lock-screen-mode-button ${lockScreenPageState.backgroundMode === 'picture' ? 'is-active' : ''}"
-                            type="button"
-                            data-lock-screen-background-mode="picture">
-                            Picture
-                        </button>
-                        <button class="settings-lock-screen-mode-button ${lockScreenPageState.backgroundMode === 'slideshow' ? 'is-active' : ''}"
-                            type="button"
-                            data-lock-screen-background-mode="slideshow">
-                            Slideshow
-                        </button>
-                    </div>
+                <div class="lock-screen-wallpapers">
+                    ${wallpaperTiles}
                 </div>
-                <div class="settings-lock-screen-control-group">
-                    <span class="settings-lock-screen-control-label">${escapeHtml(label)}</span>
-                    <div class="lock-screen-wallpapers">
-                        ${lockScreenWallpapers.map((wallpaper) => {
-                            const isActive = wallpaper === currentLockScreenWallpaper;
-                            const tileType = isActive ? currentLockScreenWallpaperType : 'builtin';
-                            const tileSrc = resolveLockScreenImageSrc(wallpaper, tileType);
-                            return `
-                                <button class="lock-screen-wallpaper-tile ${isActive ? 'is-active' : ''}"
-                                    type="button"
-                                    data-lock-screen-wallpaper="${escapeHtml(wallpaper)}"
-                                    data-lock-screen-wallpaper-type="${escapeHtml(tileType)}">
-                                    <img src="${escapeHtml(tileSrc)}" alt="Lock screen wallpaper">
-                                    ${isActive ? '<span class="lock-screen-wallpaper-check">OK</span>' : ''}
-                                </button>
-                            `;
-                        }).join('')}
-                    </div>
+                <div class="settings-lock-screen-browse-row">
                     <button class="browse-button" type="button" data-lock-screen-browse>Browse</button>
                     <input type="file" accept="image/*" data-lock-screen-file hidden>
+                </div>
+                <div class="settings-lock-screen-controls">
+                    <span class="settings-lock-screen-control-label">Play a slide show on the lock screen</span>
+                    <button class="modern-switch ${isSlideshowMode ? 'is-on' : ''}"
+                        type="button"
+                        data-lock-screen-background-mode="slideshow"
+                        aria-pressed="${isSlideshowMode ? 'true' : 'false'}">
+                        <span class="modern-switch-thumb"></span>
+                    </button>
                 </div>
             `;
         }
 
         function renderLockScreenSlideshowOptions() {
             if (lockScreenPageState.backgroundMode !== 'slideshow') {
-                return `
-                    <div class="settings-lock-screen-note">
-                        Choose <strong>Slideshow</strong> above to reveal the extra lock screen background options used by the original page.
-                    </div>
-                `;
+                return '';
             }
 
             return `
@@ -1962,39 +3349,36 @@
 
             return `
                 <div class="settings-content-title">Lock screen apps</div>
-                <div class="settings-lock-screen-intro">
-                    Choose apps to run in the background and show quick status and notifications, even when your screen is locked.
-                </div>
                 <div class="settings-lock-screen-app-preview">
                     <div class="settings-lock-screen-app-preview-note">
-                        Choose apps to run in the background and show quick status and notifications, even when your screen is locked
+                        Choose apps to run in the background and show quick status and notifications, even when your screen is locked.
                     </div>
                     <div class="settings-lock-screen-slot-row">
                         ${Array.from({ length: 7 }, (_, index) => {
-                            const appId = quickApps[index] || 'none';
-                            return renderLockScreenSlot(appId, {
-                                attributes: `data-lock-screen-slot="quick" data-lock-screen-slot-index="${index}"`,
-                                isSelected: chooser && chooser.type === 'quick' && chooser.slotIndex === index
-                            });
-                        }).join('')}
+                const appId = quickApps[index] || 'none';
+                return renderLockScreenSlot(appId, {
+                    attributes: `data-lock-screen-slot="quick" data-lock-screen-slot-index="${index}"`,
+                    isSelected: chooser && chooser.type === 'quick' && chooser.slotIndex === index
+                });
+            }).join('')}
                     </div>
                 </div>
                 <div class="settings-lock-screen-slot-group">
                     <span class="settings-lock-screen-slot-label">Choose an app to display detailed status</span>
                     <div class="settings-lock-screen-slot-row">
                         ${renderLockScreenSlot(detailedApp.id, {
-                            attributes: 'data-lock-screen-slot="detailed"',
-                            isSelected: chooser && chooser.type === 'detailed'
-                        })}
+                attributes: 'data-lock-screen-slot="detailed"',
+                isSelected: chooser && chooser.type === 'detailed'
+            })}
                     </div>
                 </div>
                 <div class="settings-lock-screen-slot-group">
                     <span class="settings-lock-screen-slot-label">Choose an app to show alarms</span>
                     <div class="settings-lock-screen-slot-row">
                         ${renderLockScreenSlot(alarmsApp.id, {
-                            attributes: 'data-lock-screen-slot="alarms"',
-                            isSelected: chooser && chooser.type === 'alarms'
-                        })}
+                attributes: 'data-lock-screen-slot="alarms"',
+                isSelected: chooser && chooser.type === 'alarms'
+            })}
                     </div>
                 </div>
                 ${chooser ? `
@@ -2010,8 +3394,8 @@
                                         type="button"
                                         data-lock-screen-choose-app="${escapeHtml(app.id)}">
                                         ${app.id === 'none'
-                                            ? `<div class="settings-lock-screen-picker-option-text">${chooser.type === 'alarms' ? 'Don’t show alarms on the lock screen' : 'Don’t show this app on the lock screen'}</div>`
-                                            : `
+                    ? `<div class="settings-lock-screen-picker-option-text">${chooser.type === 'alarms' ? 'Don’t show alarms on the lock screen' : 'Don’t show this app on the lock screen'}</div>`
+                    : `
                                                 <span class="settings-lock-screen-picker-option-icon" style="background:${escapeHtml(getLockScreenSlotColor(app))};">
                                                     ${getLockScreenAppIconMarkup(app)}
                                                 </span>
@@ -2049,14 +3433,9 @@
             return `
                 <div class="settings-lock-screen-page">
                     <div class="settings-content-title">Lock screen preview</div>
-                    <div class="settings-lock-screen-intro">
-                        Pick a background for the lock screen, preview it at full size, and decide which apps can surface status before you sign in.
-                    </div>
                     <div class="settings-lock-screen-stage">
                         ${renderLockScreenPreviewFigure()}
-                        <div>
-                            ${renderLockScreenWallpaperChooser()}
-                        </div>
+                        ${renderLockScreenWallpaperChooser()}
                     </div>
                     ${renderLockScreenSlideshowOptions()}
                     <div class="settings-lock-screen-section">
@@ -2097,11 +3476,7 @@
 
             scopedRoot.querySelectorAll('[data-lock-screen-background-mode]').forEach((button) => {
                 button.addEventListener('click', function () {
-                    const nextMode = this.getAttribute('data-lock-screen-background-mode') === 'slideshow' ? 'slideshow' : 'picture';
-                    if (lockScreenPageState.backgroundMode === nextMode) {
-                        return;
-                    }
-
+                    const nextMode = lockScreenPageState.backgroundMode === 'slideshow' ? 'picture' : 'slideshow';
                     updateLockScreenPageState({ backgroundMode: nextMode });
                     renderLockScreenState(false);
                 });
@@ -2226,7 +3601,7 @@
         if (timeBankAPI && typeof timeBankAPI.subscribe === 'function') {
             timeBankAPI.subscribe((snapshot) => {
                 latestTimeSnapshot = snapshot;
-                if (currentCategory === 'pc-and-devices' && currentItem === 'lock-screen') {
+                if (isLockScreenTarget(currentCategory, currentItem)) {
                     renderLockScreenState(false);
                 }
             }, { immediate: true });
@@ -2398,10 +3773,10 @@
                         <div class="settings-bluetooth-section-title">Connected devices</div>
                         <div class="settings-bluetooth-device-list">
                             ${isEnabled
-                                ? (connectedDevices.length > 0
-                                    ? connectedDevices.map(renderBluetoothDeviceMarkup).join('')
-                                    : getBluetoothEmptyMarkup('No devices are currently connected.'))
-                                : getBluetoothEmptyMarkup('Turn Bluetooth on to see connected devices.')}
+                    ? (connectedDevices.length > 0
+                        ? connectedDevices.map(renderBluetoothDeviceMarkup).join('')
+                        : getBluetoothEmptyMarkup('No devices are currently connected.'))
+                    : getBluetoothEmptyMarkup('Turn Bluetooth on to see connected devices.')}
                         </div>
                     </div>
 
@@ -2409,10 +3784,10 @@
                         <div class="settings-bluetooth-section-title">Discovered devices</div>
                         <div class="settings-bluetooth-device-list">
                             ${isEnabled
-                                ? (discoveredDevices.length > 0
-                                    ? discoveredDevices.map(renderBluetoothDeviceMarkup).join('')
-                                    : getBluetoothEmptyMarkup('No Bluetooth devices found right now.'))
-                                : getBluetoothEmptyMarkup('Discovered devices will appear here when Bluetooth is on.')}
+                    ? (discoveredDevices.length > 0
+                        ? discoveredDevices.map(renderBluetoothDeviceMarkup).join('')
+                        : getBluetoothEmptyMarkup('No Bluetooth devices found right now.'))
+                    : getBluetoothEmptyMarkup('Discovered devices will appear here when Bluetooth is on.')}
                         </div>
                     </div>
                 </div>
@@ -2547,8 +3922,25 @@
             currentItem = itemId;
             const renderToken = ++settingsRenderToken;
 
-            if (categoryId === 'pc-and-devices' && itemId === 'lock-screen') {
+            if (isLockScreenTarget(categoryId, itemId)) {
                 renderLockScreenSubmenuContent(animate);
+                return;
+            }
+
+            if (categoryId === PERSONALIZE_CATEGORY_ID && itemId === 'start-surfaces') {
+                renderStartSurfacesState(animate);
+                return;
+            }
+
+            if (categoryId === PERSONALIZE_CATEGORY_ID && itemId === 'taskbar') {
+                taskbarSettingsPageState = null;
+                renderTaskbarSettingsState(animate);
+                return;
+            }
+
+            if (categoryId === PERSONALIZE_CATEGORY_ID && itemId === 'corners-and-edges') {
+                cornersAndEdgesPageState = null;
+                renderCornersAndEdgesState(animate);
                 return;
             }
 
@@ -2599,8 +3991,10 @@
 
         // Helper function to navigate to a specific submenu item
         function navigateToSubmenuItem(categoryId, itemId) {
+            const target = normalizeNavigationTarget(categoryId, itemId);
+
             // Find the category link in the main menu
-            const categoryLink = document.querySelector(`.settings-category[data-category="${categoryId}"]`);
+            const categoryLink = document.querySelector(`.settings-category[data-category="${target.categoryId}"]`);
             if (categoryLink) {
                 // Simulate clicking the category to open submenu
                 categoryLink.click();
@@ -2609,7 +4003,7 @@
                 setTimeout(() => {
                     const submenu = document.getElementById('submenu');
                     if (submenu) {
-                        const itemLink = submenu.querySelector(`.settings-category[data-submenu-item="${itemId}"]`);
+                        const itemLink = submenu.querySelector(`.settings-category[data-submenu-item="${target.itemId}"]`);
                         if (itemLink) {
                             // Remove active from all items
                             submenu.querySelectorAll('.settings-category').forEach(cat => {
@@ -2618,7 +4012,9 @@
                             // Add active to target item
                             itemLink.classList.add('active');
                             // Render content
-                            renderSubmenuContent(categoryId, itemId);
+                            renderSubmenuContent(target.categoryId, target.itemId);
+                            // In narrow mode, jump straight to the content pane
+                            narrowShowContent();
                         }
                     }
                 }, 100);
@@ -2630,19 +4026,21 @@
                 return;
             }
 
+            const target = normalizeNavigationTarget(categoryId, itemId);
+
             if (!settingsData || Object.keys(settingsData).length === 0) {
-                pendingNavigationRequest = { categoryId, itemId };
+                pendingNavigationRequest = target;
                 return;
             }
 
             pendingNavigationRequest = null;
 
-            if (itemId) {
-                navigateToSubmenuItem(categoryId, itemId);
+            if (target.itemId) {
+                navigateToSubmenuItem(target.categoryId, target.itemId);
                 return;
             }
 
-            const categoryLink = document.querySelector(`.settings-category[data-category="${categoryId}"]`);
+            const categoryLink = document.querySelector(`.settings-category[data-category="${target.categoryId}"]`);
             if (categoryLink) {
                 categoryLink.click();
             }
@@ -2652,16 +4050,24 @@
         function setupPersonalizeTileHandlers() {
             const lockScreenTile = document.getElementById('tile-lock-screen');
             const accountPictureTile = document.getElementById('tile-account-picture');
+            const viewMoreLink = document.getElementById('personalize-view-more-link');
 
             if (lockScreenTile) {
                 lockScreenTile.addEventListener('click', function () {
-                    navigateToSubmenuItem('pc-and-devices', 'lock-screen');
+                    navigateToSubmenuItem(PERSONALIZE_CATEGORY_ID, 'lock-screen');
                 });
             }
 
             if (accountPictureTile) {
                 accountPictureTile.addEventListener('click', function () {
                     navigateToSubmenuItem('accounts', 'your-account');
+                });
+            }
+
+            if (viewMoreLink) {
+                viewMoreLink.addEventListener('click', function (event) {
+                    event.preventDefault();
+                    handleSettingsNavigationRequest(PERSONALIZE_CATEGORY_ID);
                 });
             }
         }
@@ -2688,12 +4094,21 @@
 
         // Handle back button
         backBtn.addEventListener('click', function () {
+            // Narrow mode: if content pane is showing, slide back to submenu
+            if (isNarrowMode() && settingsContainer.classList.contains('narrow-show-content')) {
+                narrowHideContent();
+                return;
+            }
+
             // Return to main menu
             currentMenu = 'main';
             currentCategory = null;
             currentItem = null;
             settingsRenderToken += 1;
             bluetoothExpandedDeviceId = null;
+
+            // Always clear narrow-show-content when going to root
+            narrowHideContent();
 
             // Hide back button
             backBtn.classList.remove('visible');
@@ -2828,6 +4243,9 @@
 
                             // Render content for this item
                             renderSubmenuContent(categoryId, itemId);
+
+                            // In narrow mode, slide to the content pane
+                            narrowShowContent();
                         });
 
                         submenuContainer.appendChild(item);

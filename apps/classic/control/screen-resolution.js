@@ -418,11 +418,11 @@
             refreshState({ preserveSelection: true });
         };
 
-        topDisplayWindow.addEventListener('win8-display-settings-changed', topDisplayListener);
+        topDisplayWindow.addEventListener('win9-display-settings-changed', topDisplayListener);
 
         window.addEventListener('unload', function () {
             if (topDisplayWindow && topDisplayListener) {
-                topDisplayWindow.removeEventListener('win8-display-settings-changed', topDisplayListener);
+                topDisplayWindow.removeEventListener('win9-display-settings-changed', topDisplayListener);
             }
         }, { once: true });
     }

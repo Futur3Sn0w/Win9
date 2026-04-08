@@ -15,12 +15,7 @@
     const flyouts = new Map();
 
     function isModernClockFlyout($flyout) {
-        return Boolean(
-            $flyout &&
-            $flyout.is('#clock-flyout') &&
-            document.body &&
-            document.body.classList.contains('taskbar-modern-clock-popup-enabled')
-        );
+        return Boolean($flyout && $flyout.is('#clock-flyout'));
     }
 
     function usesThresholdShellAnimation($flyout) {
@@ -104,11 +99,7 @@
             return;
         }
 
-        if (
-            flyoutSelector === '#clock-flyout' &&
-            document.body &&
-            document.body.classList.contains('taskbar-modern-clock-popup-enabled')
-        ) {
+        if (flyoutSelector === '#clock-flyout') {
             $flyout.css({
                 left: 'auto',
                 top: 'auto',

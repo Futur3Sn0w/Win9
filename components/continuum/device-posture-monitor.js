@@ -54,7 +54,7 @@ function createWindowsHelpersScript() {
         '}',
         'Add-Type -TypeDefinition @"',
         'using System.Runtime.InteropServices;',
-        'public static class Win8DevicePostureNativeMethods {',
+        'public static class Win9DevicePostureNativeMethods {',
         '  [DllImport("user32.dll")]',
         '  public static extern int GetSystemMetrics(int nIndex);',
         '}',
@@ -89,8 +89,8 @@ function createWindowsDynamicQueryScript() {
     return [
         createWindowsHelpersScript(),
         '$result = @{',
-        `  convertibleSlateMode = [Win8DevicePostureNativeMethods]::GetSystemMetrics(${SM_CONVERTIBLESLATEMODE})`,
-        `  systemDocked = [Win8DevicePostureNativeMethods]::GetSystemMetrics(${SM_SYSTEMDOCKED})`,
+        `  convertibleSlateMode = [Win9DevicePostureNativeMethods]::GetSystemMetrics(${SM_CONVERTIBLESLATEMODE})`,
+        `  systemDocked = [Win9DevicePostureNativeMethods]::GetSystemMetrics(${SM_SYSTEMDOCKED})`,
         "  registryConvertibleSlateMode = Get-ItemValueSafe 'HKLM:\\SYSTEM\\CurrentControlSet\\Control\\PriorityControl' 'ConvertibleSlateMode'",
         '}',
         '[Console]::Out.Write(($result | ConvertTo-Json -Compress -Depth 4))'

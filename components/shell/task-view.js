@@ -657,7 +657,7 @@
     document.addEventListener('DOMContentLoaded', () => {
         renderWindowCards();
     });
-    document.addEventListener('win8:running-windows-changed', handleWindowsChanged);
+    document.addEventListener('win9:running-windows-changed', handleWindowsChanged);
 
     window.TaskViewShell = {
         getRunningWindowEntries,

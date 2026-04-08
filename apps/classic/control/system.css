@@ -1,0 +1,147 @@
+body {
+    margin: 0;
+    background: #fff;
+    color: #000;
+    font-family: "Segoe UI", Tahoma, sans-serif;
+    overflow: hidden;
+}
+
+.system-page {
+    box-sizing: border-box;
+    padding: 10px 20px 24px 20px;
+    font-size: 12px;
+    height: 100%;
+    overflow-y: auto;
+}
+
+.system-page-title {
+    font-size: 20px;
+    font-weight: 400;
+    color: #0b61d8;
+    margin: 0 0 12px 0;
+}
+
+/* Section container */
+.system-section {
+    margin-bottom: 12px;
+}
+
+/* Section header: title text + horizontal rule */
+.system-section-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.system-section-title {
+    font-size: 12px;
+    font-weight: 400;
+    margin: 0;
+    padding: 0 6px 0 0;
+    white-space: nowrap;
+    color: #000;
+}
+
+.system-section-rule {
+    flex: 1;
+    height: 1px;
+    background: #adadad;
+}
+
+/* Section body: info grid + optional right-aligned action button */
+.system-section-body {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+/* Two-column info grid: fixed label column + value column */
+.system-info-grid {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 170px 1fr;
+    row-gap: 4px;
+    column-gap: 8px;
+}
+
+.system-info-row {
+    display: contents;
+}
+
+.system-info-label {
+    text-align: left;
+    color: #000;
+    font-weight: 400;
+    line-height: 1.6;
+    padding-left: 25px;
+}
+
+.system-info-value {
+    text-align: left;
+    color: #000;
+    line-height: 1.6;
+}
+
+.system-info-value a {
+    color: #0b61d8;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.system-info-value a:hover {
+    text-decoration: underline;
+}
+
+/* Windows edition section: text on left, logo on right */
+.system-edition-info {
+    flex: 1;
+    line-height: 1.6;
+    padding-left: 25px;
+}
+
+.system-edition-logo-frame {
+    width: 256px;
+    height: 58px;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.system-edition-logo {
+    display: block;
+    width: 294px;
+    height: 58px;
+}
+
+/* Activation section: inline label + value with a single space between */
+.system-activation-lines {
+    flex: 1;
+    line-height: 1.6;
+    padding-left: 25px;
+}
+
+.system-activation-lines a {
+    margin-left: 6px;
+}
+
+/* Link-style action buttons aligned to the right of sections */
+.system-link-button {
+    padding: 0;
+    border: 0;
+    background: none;
+    font-family: inherit;
+    font-size: 12px;
+    color: #0b61d8;
+    cursor: pointer;
+    white-space: nowrap;
+    line-height: 1.6;
+    flex-shrink: 0;
+}
+
+.system-link-button:hover {
+    text-decoration: underline;
+}
+
+.system-link-button:focus-visible {
+    outline: 1px dotted #000;
+    outline-offset: 1px;
+}

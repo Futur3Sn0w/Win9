@@ -210,7 +210,7 @@ class StoreManager {
             'strands': 'Uncover the hidden theme by finding related words in this word search puzzle.',
             'mini-crossword': 'Quick daily crossword puzzle that can be solved in minutes.'
         };
-        return descriptions[app.id] || 'A great app for your Windows 8 device.';
+        return descriptions[app.id] || 'A great app for your Windows 9 device.';
     }
 }
 

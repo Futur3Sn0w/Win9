@@ -101,9 +101,9 @@ class MarketManager {
             return null;
         }
 
-        const url = `${this.baseUrl}/${entry.manifestUrl}`;
+        const url = `${this.baseUrl}/${entry.manifestUrl}?_=${Date.now()}`;
         try {
-            const response = await fetch(url);
+            const response = await fetch(url, { cache: 'no-store' });
             if (!response.ok) {
                 throw new Error(`HTTP ${response.status} fetching ${url}`);
             }
@@ -260,6 +260,23 @@ class MarketManager {
             appDef.windowOptions = { ...manifest.windowOptions };
         }
 
+        if (manifest.appbar) {
+            appDef.appbar = manifest.appbar;
+        }
+
+        // Resolve logo from manifest files — prefer SVG (resolution-independent),
+        // fall back to PNG/JPG. Sets logoImage (app list / taskbar) and
+        // tileImages.default (Start screen tiles at all sizes).
+        const logoFile = Array.isArray(manifest.files) && (
+            manifest.files.find(f => /resources\/logo\.svg$/i.test(f)) ||
+            manifest.files.find(f => /resources\/logo\.(png|jpg)$/i.test(f))
+        );
+        if (logoFile) {
+            const logoUrl = `${this.baseUrl}/${manifestDir}/${logoFile}`;
+            appDef.logoImage = logoUrl;
+            appDef.tileImages = { default: logoUrl };
+        }
+
         return appDef;
     }
 
@@ -321,6 +338,10 @@ class MarketManager {
             appDef.tileOptions = { ...manifest.tileOptions };
         }
 
+        if (manifest.appbar) {
+            appDef.appbar = manifest.appbar;
+        }
+
         // Build logo/tile image paths from downloaded resources
         this.applyLocalAssetPaths(appDef, manifest, localAppPath);
 
@@ -338,10 +359,17 @@ class MarketManager {
         const files = manifest.files || [];
         const resourceFiles = files.filter(f => f.startsWith('resources/'));
 
-        // Logo
-        if (resourceFiles.includes('resources/logo.png')) {
-            appDef.logoImage = `${localAppPath}/resources/logo.png`;
-            appDef.splashImage = `${localAppPath}/resources/logo.png`;
+        // Logo — prefer SVG (resolution-independent), fall back to PNG
+        const logoFile = resourceFiles.includes('resources/logo.svg')
+            ? 'resources/logo.svg'
+            : resourceFiles.includes('resources/logo.png')
+                ? 'resources/logo.png'
+                : null;
+        if (logoFile) {
+            const logoUrl = `${localAppPath}/${logoFile}`;
+            appDef.logoImage = logoUrl;
+            appDef.tileImages = { default: logoUrl };
+            appDef.splashImage = logoUrl;
         }
 
         // Tile images — build from available scale files
@@ -472,7 +500,8 @@ class MarketManager {
             this.installedAppIds.delete(appId);
             this.saveInstalledApps();
 
-            // Remove cached manifest from registry
+            // Remove cached manifest from registry and in-memory cache
+            this.manifests.delete(appId);
             const registry = window.MarketRegistry;
             if (registry && typeof registry.removeMarketAppData === 'function') {
                 registry.removeMarketAppData(appId);
@@ -572,6 +601,10 @@ class MarketManager {
 
         if (manifest.tileOptions) {
             appDef.tileOptions = { ...manifest.tileOptions };
+        }
+
+        if (manifest.appbar) {
+            appDef.appbar = manifest.appbar;
         }
 
         // Rebuild asset paths so tile images resolve correctly

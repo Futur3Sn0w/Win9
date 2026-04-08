@@ -995,7 +995,7 @@ class Notepad {
 
     // Help operations
     async showAbout() {
-        await systemDialog.info('Notepad\n\nA simple text editor for Windows 8 Simulator\n\nVersion 1.0', 'About Notepad');
+        await systemDialog.info('Notepad\n\nA simple text editor for Windows 9 Simulator\n\nVersion 1.0', 'About Notepad');
     }
 
     async showNotImplemented(feature) {

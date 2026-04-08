@@ -186,7 +186,7 @@
         }
 
         & iframe.classic-window-iframe,
-        & webview.classic-window-iframe {
+        & webview {
             pointer-events: none !important;
         }
 
@@ -292,7 +292,7 @@
     background: transparent;
     color: #000000;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    font-size: 13px;
+    font-size: 16px;
     line-height: 1;
     display: inline-flex;
     align-items: center;
@@ -311,11 +311,6 @@
 .modern-desktop-window-menu-button:active {
     background: #3D6099;
     color: white;
-}
-
-body.desktop-modern-app-commands-disabled .modern-desktop-window-menu-button,
-body.desktop-modern-app-commands-disabled #modern-desktop-titlebar-menu-overlay {
-    display: none !important;
 }
 
 .modern-desktop-titlebar-menu {
@@ -338,8 +333,9 @@ body.desktop-modern-app-commands-disabled #modern-desktop-titlebar-menu-overlay 
 }
 
 .modern-desktop-titlebar-menu-icon--more::before {
-    content: '...';
-    letter-spacing: -1px;
+    content: '\22EF';
+    font-family: 'Segoe UI Symbol', 'Segoe MDL2 Assets', 'Segoe UI Emoji', sans-serif;
+    letter-spacing: 0;
 }
 
 .modern-desktop-titlebar-menu-icon--play::before {
@@ -406,6 +402,7 @@ body.desktop-modern-app-commands-disabled #modern-desktop-titlebar-menu-overlay 
 .modern-desktop-window-icon img {
     width: 16px !important;
     height: 16px !important;
+    object-fit: contain !important;
 }
 
 .classic-window-icon {
@@ -474,7 +471,7 @@ body.desktop-modern-app-commands-disabled #modern-desktop-titlebar-menu-overlay 
 
 .classic-window-control-btn:hover {
     background: #3665B3;
-    color: white;
+    color: white !important;
     /* Remove transition on hover so it appears instantly */
     transition: none;
 }
@@ -526,28 +523,21 @@ body.desktop-modern-app-commands-disabled #modern-desktop-titlebar-menu-overlay 
 }
 
 .classic-window-control-btn.maximize .classic-window-control-glyph::before {
-    inset: 1px 0 1px 0;
-    border: 1px solid currentColor;
-    background: transparent;
+    content: '1';
+    position: static;
+    font-family: 'Marlett';
+    font-size: 12px;
+    line-height: 1;
 }
 
-.classic-window-control-btn.maximize.is-restored .classic-window-control-glyph::before,
-.classic-window-control-btn.maximize.is-restored .classic-window-control-glyph::after {
-    inset: auto;
-    width: 8px;
-    height: 6px;
-    border: 1px solid currentColor;
-    background: transparent;
+.classic-window-control-btn.maximize .classic-window-control-glyph {
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .classic-window-control-btn.maximize.is-restored .classic-window-control-glyph::before {
-    top: 2px;
-    left: 0;
-}
-
-.classic-window-control-btn.maximize.is-restored .classic-window-control-glyph::after {
-    top: 0;
-    right: 0;
+    content: '2';
 }
 
 .classic-window-control-btn.exit-fullscreen {
@@ -596,27 +586,6 @@ body.desktop-modern-app-commands-disabled #modern-desktop-titlebar-menu-overlay 
     z-index: 1;
 }
 
-body.modern-window-styling-disabled .classic-app-container {
-    border: 1px solid #00000044;
-    box-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
-    padding: 6px;
-    padding-top: 0;
-    transition: none;
-}
-
-body.modern-window-styling-disabled .classic-app-container.inactive {
-    border-color: #D3D3D3;
-    box-shadow: none;
-}
-
-body.modern-window-styling-disabled .classic-window-titlebar {
-    padding-left: 2px;
-}
-
-body.modern-window-styling-disabled .classic-window-content {
-    border: 1px solid #00000044;
-    background: transparent;
-}
 
 .modern-desktop-app-container.metro-mode {
     position: fixed !important;

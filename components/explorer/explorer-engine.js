@@ -163,6 +163,7 @@ const ExplorerEngine = (() => {
     };
 
     let dragState = null;
+    let externalDropTooltip = null;
     let clipboardData = null;
     let itemContextMenu = null;
     let renameState = null;
@@ -400,6 +401,9 @@ const ExplorerEngine = (() => {
         }
 
         desktopContainer.addEventListener('mousedown', handleDesktopMouseDown);
+        desktopContainer.addEventListener('dragover', handleExternalDragOver);
+        desktopContainer.addEventListener('dragleave', handleExternalDragLeave);
+        desktopContainer.addEventListener('drop', handleExternalDrop);
         window.addEventListener('resize', handleWindowResize);
         eventsBound = true;
     }
@@ -688,6 +692,81 @@ const ExplorerEngine = (() => {
 
     function resolveSizePreset(sizeKey) {
         return SIZE_PRESETS[sizeKey] || SIZE_PRESETS.small;
+    }
+
+    let _labelMeasureCanvas = null;
+    function measureTextWidth(text, font) {
+        if (!_labelMeasureCanvas) _labelMeasureCanvas = document.createElement('canvas');
+        const ctx = _labelMeasureCanvas.getContext('2d');
+        ctx.font = font;
+        return ctx.measureText(text).width;
+    }
+
+    function getLabelFont(preset) {
+        return `${preset.labelFontSize}px 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif`;
+    }
+
+    function getLabelMaxWidth(preset) {
+        return preset.itemWidth - 12; // 6px padding each side
+    }
+
+    function computeLabelLayout(name, maxWidth, font) {
+        const words = name.split(' ');
+        if (words.length === 1) return { mode: 'single' };
+
+        let fittingWords = [];
+        let breakIndex = -1;
+
+        for (let i = 0; i < words.length; i++) {
+            const candidate = [...fittingWords, words[i]].join(' ');
+            if (measureTextWidth(candidate, font) > maxWidth) {
+                breakIndex = i;
+                break;
+            }
+            fittingWords.push(words[i]);
+        }
+
+        if (breakIndex === -1) return { mode: 'single' }; // all fits on one line
+
+        // line1: words that fit (or the first word if even that overflows)
+        const line1 = fittingWords.length > 0 ? fittingWords.join(' ') : words[0];
+        const line2Start = fittingWords.length > 0 ? breakIndex : 1;
+        const line2 = words.slice(line2Start).join(' ');
+
+        if (!line2) return { mode: 'single' };
+
+        // only show 2 lines if line 2 fits without truncation
+        if (measureTextWidth(line2, font) <= maxWidth) {
+            return { mode: 'two-line', line1, line2 };
+        }
+
+        return { mode: 'single' };
+    }
+
+    function applyTruncatedLabelLayout(truncatedLabel, name, maxWidth, font) {
+        const layout = computeLabelLayout(name, maxWidth, font);
+        truncatedLabel.innerHTML = '';
+
+        if (layout.mode === 'single') {
+            truncatedLabel.textContent = name;
+            truncatedLabel.dataset.label = name;
+            truncatedLabel.classList.remove('desktop-item__label--wrapped');
+        } else {
+            const span1 = document.createElement('span');
+            span1.className = 'desktop-item__label-line';
+            span1.textContent = layout.line1;
+            span1.dataset.label = layout.line1;
+
+            const span2 = document.createElement('span');
+            span2.className = 'desktop-item__label-line';
+            span2.textContent = layout.line2;
+            span2.dataset.label = layout.line2;
+
+            truncatedLabel.appendChild(span1);
+            truncatedLabel.appendChild(span2);
+            truncatedLabel.dataset.label = ''; // suppress container ::before in favour of span ::before
+            truncatedLabel.classList.add('desktop-item__label--wrapped');
+        }
     }
 
     function computeCellMetrics(preset) {
@@ -1140,11 +1219,12 @@ const ExplorerEngine = (() => {
 
         const truncatedLabel = document.createElement('div');
         truncatedLabel.className = 'desktop-item__label desktop-item__label--truncated';
-        truncatedLabel.textContent = entry.name;
+        applyTruncatedLabelLayout(truncatedLabel, entry.name, getLabelMaxWidth(preset), getLabelFont(preset));
 
         const fullLabel = document.createElement('div');
         fullLabel.className = 'desktop-item__label desktop-item__label--full';
         fullLabel.textContent = entry.name;
+        fullLabel.dataset.label = entry.name;
 
         labelContainer.appendChild(truncatedLabel);
         labelContainer.appendChild(fullLabel);
@@ -1302,7 +1382,9 @@ const ExplorerEngine = (() => {
             initialTop,
             currentLeft: initialLeft,
             currentTop: initialTop,
-            isDragging: false
+            isDragging: false,
+            dropTarget: null,
+            dropType: null
         };
 
         item.setPointerCapture(event.pointerId);
@@ -1369,6 +1451,14 @@ const ExplorerEngine = (() => {
         dragState.currentTop = newTop;
 
         positionItemImmediate(dragState.item, newLeft, newTop);
+
+        const { item: dropItem, type: dropType } = findDropTarget(event.clientX, event.clientY, dragState.item);
+        if (dropItem !== dragState.dropTarget) {
+            if (dragState.dropTarget) dragState.dropTarget.classList.remove('desktop-item--drop-target');
+            dragState.dropTarget = dropItem;
+            dragState.dropType = dropType;
+            if (dropItem) dropItem.classList.add('desktop-item--drop-target');
+        }
     }
 
     function handleItemPointerUp(event) {
@@ -1376,22 +1466,146 @@ const ExplorerEngine = (() => {
             return;
         }
 
-        const { item, isDragging, currentLeft, currentTop } = dragState;
+        const { item, isDragging, currentLeft, currentTop, dropTarget, dropType } = dragState;
 
         item.releasePointerCapture(event.pointerId);
         item.classList.remove('desktop-item--dragging');
         item.classList.remove('drag-active');
         item.style.transition = '';
 
+        if (dropTarget) dropTarget.classList.remove('desktop-item--drop-target');
+
         document.removeEventListener('pointermove', handleItemPointerMove);
         document.removeEventListener('pointerup', handleItemPointerUp);
 
         if (isDragging) {
             item.dataset.suppressClick = '1';
-            finalizeDrag(item, currentLeft, currentTop);
+            if (dropTarget && dropType === 'folder') {
+                dropIntoFolder(item, dropTarget);
+            } else if (dropTarget && dropType === 'recycle-bin') {
+                dropIntoRecycleBin(item);
+            } else {
+                finalizeDrag(item, currentLeft, currentTop);
+            }
         }
 
         dragState = null;
+    }
+
+    function isExternalFileDrag(event) {
+        return Array.from(event.dataTransfer.types).includes('application/x-win9-files');
+    }
+
+    function showDropTooltip(x, y, isMove) {
+        if (!externalDropTooltip) {
+            externalDropTooltip = document.createElement('div');
+            externalDropTooltip.className = 'desktop-drop-tooltip';
+            document.body.appendChild(externalDropTooltip);
+        }
+        externalDropTooltip.textContent = isMove ? 'Move to Desktop' : 'Copy to Desktop';
+        externalDropTooltip.style.left = `${x + 16}px`;
+        externalDropTooltip.style.top = `${y + 16}px`;
+        externalDropTooltip.classList.add('desktop-drop-tooltip--visible');
+    }
+
+    function hideDropTooltip() {
+        if (externalDropTooltip) {
+            externalDropTooltip.classList.remove('desktop-drop-tooltip--visible');
+        }
+    }
+
+    function handleExternalDragOver(event) {
+        if (!isExternalFileDrag(event)) return;
+        event.preventDefault();
+        const isMove = event.shiftKey;
+        event.dataTransfer.dropEffect = isMove ? 'move' : 'copy';
+        showDropTooltip(event.clientX, event.clientY, isMove);
+    }
+
+    function handleExternalDragLeave(event) {
+        if (!desktopContainer || !desktopContainer.contains(event.relatedTarget)) {
+            hideDropTooltip();
+        }
+    }
+
+    async function handleExternalDrop(event) {
+        if (!isExternalFileDrag(event)) return;
+        event.preventDefault();
+        hideDropTooltip();
+
+        let payload;
+        try {
+            payload = JSON.parse(event.dataTransfer.getData('application/x-win9-files'));
+        } catch {
+            return;
+        }
+
+        const { paths: srcPaths, sourceFolder } = payload;
+        if (!srcPaths?.length) return;
+
+        // Belt-and-suspenders: refuse if source is already the desktop
+        if (sourceFolder && pathMatches(path.resolve(sourceFolder), path.resolve(desktopPath))) return;
+
+        const isMove = event.shiftKey;
+        const operation = isMove ? moveEntryToDirectory : copyEntryToDirectory;
+
+        for (const srcPath of srcPaths) {
+            try {
+                await operation(srcPath, desktopPath);
+            } catch (error) {
+                console.error('ExplorerEngine: Failed to drop external file to desktop.', error);
+                systemDialog.error(
+                    error?.message || `Unable to ${isMove ? 'move' : 'copy'} item to Desktop.`,
+                    isMove ? 'Move' : 'Copy'
+                );
+            }
+        }
+
+        await refreshDesktopIfAffected([...srcPaths, desktopPath]);
+    }
+
+    function findDropTarget(clientX, clientY, draggedItem) {
+        const elements = document.elementsFromPoint(clientX, clientY);
+        for (const el of elements) {
+            const itemEl = el.closest('.desktop-item');
+            if (!itemEl || itemEl === draggedItem) continue;
+            const entry = itemEntryMap.get(itemEl);
+            if (!entry) continue;
+            if (entry.type === 'folder') return { item: itemEl, type: 'folder' };
+            if (entry.type === 'recycle-bin') return { item: itemEl, type: 'recycle-bin' };
+        }
+        return { item: null, type: null };
+    }
+
+    async function dropIntoRecycleBin(draggedItem) {
+        const entry = itemEntryMap.get(draggedItem);
+        if (!entry?.path) return;
+
+        draggedItem.style.visibility = 'hidden';
+
+        try {
+            await movePathsToRecycleBin([entry.path]);
+        } catch (error) {
+            draggedItem.style.visibility = '';
+            console.error('ExplorerEngine: Failed to drop item into Recycle Bin.', error);
+            const recycleLabel = process.platform === 'darwin' ? 'Trash' : 'Recycle Bin';
+            systemDialog.error(`Unable to move item to the ${recycleLabel.toLowerCase()}.`, recycleLabel);
+        }
+    }
+
+    async function dropIntoFolder(draggedItem, folderItem) {
+        const draggedEntry = itemEntryMap.get(draggedItem);
+        const folderEntry = itemEntryMap.get(folderItem);
+        if (!draggedEntry?.path || !folderEntry?.path) return;
+
+        try {
+            await moveEntryToDirectory(draggedEntry.path, folderEntry.path);
+            await refreshDesktopIfAffected([draggedEntry.path, folderEntry.path]);
+        } catch (error) {
+            console.error('ExplorerEngine: Failed to drop item into folder.', error);
+            systemDialog.error(error?.message || 'Unable to move item into folder.', 'Move');
+            await refreshDesktop();
+        }
     }
 
     function finalizeDrag(item, left, top) {
@@ -2099,13 +2313,23 @@ const ExplorerEngine = (() => {
             return;
         }
 
-        const text = truncatedLabel.textContent || '';
+        let text, overflow;
+
+        if (truncatedLabel.classList.contains('desktop-item__label--wrapped')) {
+            const fullLabel = item.querySelector('.desktop-item__label--full');
+            text = fullLabel ? fullLabel.textContent : '';
+            const line1Span = truncatedLabel.querySelector('.desktop-item__label-line');
+            overflow = line1Span ? (line1Span.scrollWidth > line1Span.clientWidth + 0.5) : false;
+        } else {
+            text = truncatedLabel.textContent || '';
+            overflow = truncatedLabel.scrollWidth > (truncatedLabel.clientWidth + 0.5);
+        }
+
         if (!text) {
             item.removeAttribute('title');
             return;
         }
 
-        const overflow = truncatedLabel.scrollWidth > (truncatedLabel.clientWidth + 0.5);
         if (overflow) {
             item.setAttribute('title', text);
         } else {
@@ -2576,11 +2800,13 @@ const ExplorerEngine = (() => {
 
         if (truncatedLabel) {
             truncatedLabel.style.display = '';
-            truncatedLabel.textContent = resolvedLabel;
+            const preset = resolveSizePreset(settings.iconSize);
+            applyTruncatedLabelLayout(truncatedLabel, resolvedLabel, getLabelMaxWidth(preset), getLabelFont(preset));
         }
         if (fullLabel) {
             fullLabel.style.display = '';
             fullLabel.textContent = resolvedLabel;
+            fullLabel.dataset.label = resolvedLabel;
         }
 
         updateItemTooltip(item);
@@ -2657,16 +2883,57 @@ const ExplorerEngine = (() => {
         return !/[\\/:*?"<>|]/.test(value);
     }
 
+    function refreshRecycleBinItem() {
+        if (!gridElement) return;
+        const recycleBinItem = gridElement.querySelector('.desktop-item[data-type="recycle-bin"]');
+        if (!recycleBinItem) return;
+
+        const entry = buildRecycleEntry();
+        const itemKey = deriveItemKey(entry);
+        const renderSignature = getDesktopItemRenderSignature(entry);
+
+        if (recycleBinItem.dataset.renderSignature === renderSignature) return;
+
+        invalidateDesktopItemIconCache(itemEntryMap.get(recycleBinItem) || entry);
+        const newItem = buildDesktopItem(entry, { itemKey, renderSignature });
+
+        newItem.style.left = recycleBinItem.style.left;
+        newItem.style.top = recycleBinItem.style.top;
+        if (recycleBinItem.dataset.left) newItem.dataset.left = recycleBinItem.dataset.left;
+        if (recycleBinItem.dataset.top) newItem.dataset.top = recycleBinItem.dataset.top;
+
+        recycleBinItem.replaceWith(newItem);
+    }
+
     async function emptyRecycleBin() {
         const recycleLabel = process.platform === 'darwin' ? 'Trash' : 'Recycle Bin';
+        const count = recycleBinState.itemCount;
+        const isSingle = count === 1;
+        const dialogTitle = isSingle ? 'Delete 1 Item' : 'Delete Multiple Items';
+        const dialogBody = isSingle
+            ? 'Are you sure you want to permanently delete this 1 item?'
+            : `Are you sure you want to permanently delete these ${count} items?`;
+
+        const answer = await systemDialog.show({ title: dialogTitle, body: dialogBody, status: 'question', buttons: 'yesno' });
+        if (answer !== 'yes') return;
+
+        const previousState = { ...recycleBinState };
+
+        recycleBinState = { ...recycleBinState, empty: true, itemCount: 0 };
+        refreshRecycleBinItem();
 
         try {
             const result = await electronIpcRenderer.invoke('trash:empty');
 
             if (result.success && result.deletedCount === 0) {
+                recycleBinState = previousState;
+                refreshRecycleBinItem();
                 systemDialog.info(`The ${recycleLabel.toLowerCase()} is already empty.`, recycleLabel);
             }
         } catch (error) {
+            recycleBinState = previousState;
+            refreshRecycleBinItem();
+
             console.error('ExplorerEngine: Failed to empty recycle bin.', error);
 
             if (error.message) {
@@ -2680,13 +2947,21 @@ const ExplorerEngine = (() => {
 
     async function moveSelectionToRecycle(entry) {
         const targets = getSelectionPaths({ fallbackEntry: entry });
-        if (!targets.length) {
-            return;
-        }
+        if (!targets.length) return;
+
+        const hiddenItems = targets.map(p => entryElementsByPath.get(p)).filter(Boolean);
+        hiddenItems.forEach(item => { item.style.visibility = 'hidden'; });
+
+        const previousState = { ...recycleBinState };
+        recycleBinState = { ...recycleBinState, empty: false, itemCount: recycleBinState.itemCount + targets.length };
+        refreshRecycleBinItem();
 
         try {
             await movePathsToRecycleBin(targets);
         } catch (error) {
+            hiddenItems.forEach(item => { item.style.visibility = ''; });
+            recycleBinState = previousState;
+            refreshRecycleBinItem();
             console.error('ExplorerEngine: Failed to move item to recycle bin.', error);
             const recycleLabel = process.platform === 'darwin' ? 'Trash' : 'Recycle Bin';
             systemDialog.error(`Unable to move one or more items to the ${recycleLabel.toLowerCase()}.`, recycleLabel);
@@ -3000,8 +3275,12 @@ const ExplorerEngine = (() => {
             return [];
         }
 
-        for (const targetPath of targetPaths) {
-            await movePathToTrash(targetPath);
+        if (electronIpcRenderer && typeof electronIpcRenderer.invoke === 'function') {
+            await electronIpcRenderer.invoke('trash:move-items', targetPaths);
+        } else {
+            for (const targetPath of targetPaths) {
+                await movePathToTrash(targetPath);
+            }
         }
 
         clearClipboardForPaths(targetPaths);
@@ -3339,6 +3618,15 @@ const ExplorerEngine = (() => {
         canPasteToDesktop,
         renameEntryPath,
         movePathsToRecycleBin,
+        optimisticRecycleBinUpdate(additionalItems = 1) {
+            const previousState = { ...recycleBinState };
+            recycleBinState = { ...recycleBinState, empty: false, itemCount: recycleBinState.itemCount + additionalItems };
+            refreshRecycleBinItem();
+            return function revert() {
+                recycleBinState = previousState;
+                refreshRecycleBinItem();
+            };
+        },
         isHiddenEntryName,
         closeItemContextMenu: hideItemContextMenu,
         getSettings: getSettingsSnapshot,

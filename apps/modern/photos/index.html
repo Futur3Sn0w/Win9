@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Photos</title>
     <link rel="stylesheet" href="../../../css/fonts.css">
+    <link rel="stylesheet" href="../../../css/modern-ui.css">
     <link rel="stylesheet" href="./photos.css">
 </head>
 
@@ -131,21 +132,18 @@
                 <div class="photos-settings-panel">
                     <div class="photos-setting-group">
                         <h2 class="photos-setting-group__title">View and edit</h2>
-                        <label class="photos-toggle">
+                        <div class="photos-toggle">
                             <span class="photos-toggle__label">Automatically enhance my photos when they can be improved</span>
-                            <input id="photos-setting-autoenhance" type="checkbox" class="photos-toggle__input">
-                            <span class="photos-toggle__switch"></span>
-                        </label>
-                        <label class="photos-toggle">
+                            <button id="photos-setting-autoenhance" type="button" class="modern-switch"><span class="modern-switch-thumb"></span></button>
+                        </div>
+                        <div class="photos-toggle">
                             <span class="photos-toggle__label">Show similar photos grouped in stacks</span>
-                            <input id="photos-setting-stacking" type="checkbox" class="photos-toggle__input">
-                            <span class="photos-toggle__switch"></span>
-                        </label>
-                        <label class="photos-toggle">
+                            <button id="photos-setting-stacking" type="button" class="modern-switch"><span class="modern-switch-thumb"></span></button>
+                        </div>
+                        <div class="photos-toggle">
                             <span class="photos-toggle__label">When photos have online duplicates or digital negatives, show just one</span>
-                            <input id="photos-setting-hidedupes" type="checkbox" class="photos-toggle__input">
-                            <span class="photos-toggle__switch"></span>
-                        </label>
+                            <button id="photos-setting-hidedupes" type="button" class="modern-switch"><span class="modern-switch-thumb"></span></button>
+                        </div>
                     </div>
                     <div class="photos-setting-group">
                         <h2 class="photos-setting-group__title">Tile</h2>

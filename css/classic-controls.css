@@ -346,6 +346,20 @@
         background-color: rgb(209, 226, 242);
         font-size: var(--system-font-size);
     }
+
+    &[class*="context-icon-plate--"] {
+        color: white !important;
+    }
+
+    &.context-icon-plate--teal    { background: linear-gradient(to right, #008299 0%, #00A0B1 100%); }
+    &.context-icon-plate--blue    { background: linear-gradient(to right, #094AB2 0%, #0A5BC4 100%); }
+    &.context-icon-plate--magenta { background: linear-gradient(to right, #8C0095 0%, #A700AE 100%); }
+    &.context-icon-plate--purple  { background: linear-gradient(to right, #5133AB 0%, #643EBF 100%); }
+    &.context-icon-plate--red     { background: linear-gradient(to right, #AC193D 0%, #BF1E4B 100%); }
+    &.context-icon-plate--orange  { background: linear-gradient(to right, #D24726 0%, #DC572E 100%); }
+    &.context-icon-plate--green   { background: linear-gradient(to right, #008A00 0%, #00A600 100%); }
+    &.context-icon-plate--sky     { background: linear-gradient(to right, #2672EC 0%, #2E8DEF 100%); }
+    &.context-icon-plate--grey    { background: linear-gradient(to right, #595959 0%, #7D7D7D 100%); }
 }
 
 .classic-context-menu-item-text {

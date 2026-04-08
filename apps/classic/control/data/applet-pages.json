@@ -50,5 +50,25 @@
       ]
     },
     "sections": []
+  },
+  "system": {
+    "title": "System",
+    "externalPath": "system.html",
+    "sidebarFooter": {
+      "title": "See also",
+      "links": [
+        {
+          "text": "Device Manager",
+          "action": "open",
+          "target": "device-manager"
+        },
+        {
+          "text": "System Information",
+          "action": "open",
+          "target": "msinfo32"
+        }
+      ]
+    },
+    "sections": []
   }
 }

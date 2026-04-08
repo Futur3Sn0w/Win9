@@ -505,6 +505,10 @@ body {
     --label-extra-height: 0px;
 }
 
+.explorer-icon-item[draggable="true"] {
+    -webkit-user-drag: element;
+}
+
 .explorer-icon-item:not(.is-selected):hover {
     background: rgba(0, 153, 255, 0.102);
     box-shadow:

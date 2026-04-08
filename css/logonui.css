@@ -388,35 +388,34 @@
     font-family: 'Segoe UI Light', 'Segoe UI', sans-serif;
 }
 
-/* ===== THRESHOLD MODERN LOCK SCREEN ===== */
+/* ===== MODERN LOCK SCREEN ===== */
 
-/* When Threshold is enabled, the main user picker gets a horizontal layout
-   with circular avatar and name to the right */
-#login-screen.threshold-logonui .user-picker-container {
+/* Main user picker uses a horizontal layout with circular avatar and name to the right */
+#login-screen .user-picker-container {
     flex-direction: row;
     align-items: center;
     gap: 20px;
 }
 
-#login-screen.threshold-logonui .user-picker-item {
+#login-screen .user-picker-item {
     flex-direction: row;
     align-items: flex-start;
     gap: 20px;
 }
 
-#login-screen.threshold-logonui .user-picker-avatar {
+#login-screen .user-picker-avatar {
     border-radius: 50%;
 }
 
-#login-screen.threshold-logonui .user-picker-avatar::after {
+#login-screen .user-picker-avatar::after {
     border-radius: 50%;
 }
 
-#login-screen.threshold-logonui .user-picker-avatar img {
+#login-screen .user-picker-avatar img {
     border-radius: 50%;
 }
 
-#login-screen.threshold-logonui .user-picker-name {
+#login-screen .user-picker-name {
     font-size: 28px;
     font-weight: 300;
     margin-top: -8px;
@@ -514,39 +513,33 @@
     display: block;
 }
 
-/* When Threshold logonui is active, shrink and reposition the power button
-   to sit inline with the indicators */
-#login-screen.threshold-logonui .login-power-button {
+/* Power button sits inline with the indicators */
+#login-screen .login-power-button {
     position: static;
     width: 40px;
     height: 40px;
     padding: 8px;
 }
 
-#login-screen.threshold-logonui .login-power-icon {
+#login-screen .login-power-icon {
     width: 24px;
     height: 24px;
 }
 
-#login-screen.threshold-logonui .login-indicators {
-    display: flex;
-    align-items: center;
-}
-
-#login-screen.threshold-logonui .login-power-menu {
+#login-screen .login-power-menu {
     bottom: 90px;
     right: 40px;
 }
 
-/* Signing-in screen also gets circular avatar when Threshold is enabled */
-#signing-in-screen.threshold-logonui .signing-in-avatar {
+/* Signing-in screen uses circular avatar */
+#signing-in-screen .signing-in-avatar {
     border-radius: 50%;
 }
 
-#signing-in-screen.threshold-logonui .signing-in-avatar::after {
+#signing-in-screen .signing-in-avatar::after {
     border-radius: 50%;
 }
 
-#signing-in-screen.threshold-logonui .signing-in-avatar img {
+#signing-in-screen .signing-in-avatar img {
     border-radius: 50%;
 }

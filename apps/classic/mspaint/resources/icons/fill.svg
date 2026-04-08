@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+  <!-- Bucket body -->
+  <path d="M4,8 L4,16 Q4,18 6,18 L13,18 Q15,18 15,16 L15,8 Z" fill="#d0d0d0" stroke="#666" stroke-width="1"/>
+  <!-- Bucket top rim -->
+  <rect x="3" y="7" width="13" height="2" rx="0.5" fill="#aaa" stroke="#666" stroke-width="0.8"/>
+  <!-- Bucket handle -->
+  <path d="M6,7 Q6,4 9.5,4 Q13,4 13,7" fill="none" stroke="#777" stroke-width="1.3" stroke-linecap="round"/>
+  <!-- Paint drip coming out -->
+  <path d="M15,12 Q20,12 20,15 Q20,19 17,19 Q14,19 14,16 Q14,13 15,12 Z" fill="#e8a000" stroke="#c07800" stroke-width="0.9"/>
+  <!-- Drip tip -->
+  <ellipse cx="17" cy="19.5" rx="1.5" ry="1" fill="#e8a000"/>
+</svg>
